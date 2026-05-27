@@ -1,0 +1,56 @@
+﻿@model IEnumerable<EasyRent_Checking.Models.Vehicle>
+
+@{
+    ViewData["Title"] = "Available Vehicles";
+}
+
+<div class="container my-5">
+    <h1 class="text-center mb-4 text-primary">Explore Our Fleet</h1>
+    <p class="text-center text-muted mb-5">Find the perfect ride for your next journey.</p>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0">
+
+                    <div class="position-relative" style="height: 200px; overflow: hidden; background-color: #f8f9fa;">
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="/images/@item.ImagePath" class="card-img-top w-100 h-100" style="object-fit: cover;" alt="@item.Model" />
+                        }
+                        else
+                        {
+                            <img src="/images/default-vehicle.png" class="card-img-top w-100 h-100" style="object-fit: cover;" alt="No Image Available" />
+                        }
+
+                        <span class="badge bg-dark position-absolute top-0 start-0 m-3 px-3 py-2">@item.Status</span>
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold text-dark mb-1">@item.Model</h5>
+                        <p class="text-muted small mb-3">Type: <span class="fw-semibold text-secondary">@item.Type</span></p>
+
+                        <div class="mt-auto d-flex justify-content-between align-items-center bg-light p-2 rounded">
+                            <div>
+                                <small class="text-muted d-block">Plate Number</small>
+                                <span class="fw-bold text-dark">@item.PlateNumber</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Color</small>
+                                <span class="badge bg-secondary text-capitalize">@item.Color</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-top-0 p-3">
+                        <a asp-action="Details" asp-route-id="@item.VehicleId" class="btn btn-primary w-100 rounded-pill">
+                            View Detailss
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+</div>
