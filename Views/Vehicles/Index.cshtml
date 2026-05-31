@@ -5,14 +5,23 @@
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "Vehicle Management";
     ViewData["ActivePage"] = "Vehicles";
+
+    string currentSortName = ViewData["CurrentSort"]?.ToString() == "Model" ? "Model" :
+                             ViewData["CurrentSort"]?.ToString() == "Brand" ? "Brand" :
+                             ViewData["CurrentSort"]?.ToString() == "PlateNumber" ? "Plate Number" : "Sorting by";
+
+    string currentFilterName = ViewData["CurrentFilter"]?.ToString() == "Active" ? "Active" :
+                               ViewData["CurrentFilter"]?.ToString() == "Maintenance" ? "Maintenance" : "Filters";
 }
 
+<!-- Top KPI Summary Row Components -->
 <div class="row g-4 mb-4">
+    <!-- Active Fleets Block -->
     <div class="col-md-6">
         <div class="metric-card shadow-sm p-4 d-flex justify-content-between align-items-center bg-white rounded-4">
             <div>
                 <span class="text-muted small fw-bold">Active Vehicles</span>
-                <h2 class="fw-bold mt-1 mb-0 text-dark">NaN</h2>
+                <h2 class="fw-bold mt-1 mb-0 text-dark">@(ViewData["ActiveVehiclesCount"] ?? "0")</h2>
             </div>
             <div class="metric-icon-box">
                 <i class="bi bi-car-front fs-3 text-secondary"></i>
@@ -20,11 +29,12 @@
         </div>
     </div>
 
+    <!-- Total Fleets Block -->
     <div class="col-md-6">
         <div class="metric-card shadow-sm p-4 d-flex justify-content-between align-items-center bg-white rounded-4">
             <div>
                 <span class="text-muted small fw-bold">Total Vehicles</span>
-                <h2 class="fw-bold mt-1 mb-0 text-dark">NaN</h2>
+                <h2 class="fw-bold mt-1 mb-0 text-dark">@(ViewData["TotalVehiclesCount"] ?? "0")</h2>
             </div>
             <div class="metric-icon-box">
                 <i class="bi bi-truck fs-3 text-secondary"></i>
@@ -33,44 +43,61 @@
     </div>
 </div>
 
-<div class="card border-0 bg-white rounded-4 shadow-sm mb-4">
-    <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+<!-- Sorting, Filtering, & Create Action Menu Ribbon Form -->
+<form asp-action="Index" method="get" class="w-100">
+    <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+    <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
 
-        <div class="d-flex align-items-center gap-2">
-            <div class="dropdown">
-                <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter" type="button" data-bs-toggle="dropdown">
-                    Sorting by
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Model</a></li>
-                    <li><a class="dropdown-item" href="#">Brand</a></li>
-                </ul>
-            </div>
-            <div class="dropdown">
-                <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter" type="button" data-bs-toggle="dropdown">
-                    Filters
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Active</a></li>
-                    <li><a class="dropdown-item" href="#">Maintenance</a></li>
-                </ul>
-            </div>
-        </div>
+    <div class="card border-0 bg-white rounded-4 shadow-sm mb-4">
+        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
 
-        <div class="d-flex align-items-center gap-3 flex-grow-1 flex-sm-grow-0">
-            <div class="position-relative flex-grow-1">
-                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                <input type="text" class="form-control ps-5 pe-4 rounded-3 border bg-light text-secondary search-bar-input" placeholder="Search" />
-                <i class="bi bi-mic position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+            <!-- Filter Controls Dropdowns Group -->
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentSortName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?sortBy=Model&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Model</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=Brand&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Brand</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=PlateNumber&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Plate Number</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentFilterName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?currentFilter=Active&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Active Only</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Maintenance&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Maintenance Only</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
+                    </ul>
+                </div>
             </div>
 
-            <a asp-action="Create" class="btn btn-dark d-flex align-items-center gap-2 px-3 py-2 fw-bold text-nowrap rounded-3 shadow-sm btn-add-driver">
-                <i class="bi bi-plus-lg"></i> Add Vehicle
-            </a>
+            <!-- Directory Search Bar & Primary Form Trigger Button -->
+            <div class="d-flex align-items-center gap-3 flex-grow-1 flex-sm-grow-0">
+                <div class="position-relative flex-grow-1">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                    <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="form-control ps-5 pe-4 rounded-3 border bg-light text-secondary search-bar-input" placeholder="Search vehicle entries..." />
+                    @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
+                    {
+                        <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]" class="position-absolute top-50 end-0 translate-middle-y me-3 text-secondary text-decoration-none small">✕</a>
+                    }
+                </div>
+
+                <a asp-action="Create" class="btn btn-dark d-flex align-items-center gap-2 px-3 py-2 fw-bold text-nowrap rounded-3 shadow-sm btn-add-driver">
+                    <i class="bi bi-plus-lg"></i> Add Vehicle
+                </a>
+            </div>
         </div>
     </div>
-</div>
+</form>
 
+<!-- Primary Administrative Management Ledger Table -->
 <div class="admin-table-card shadow-sm border-0 mb-4">
     <div class="table-responsive">
         <table class="table admin-table mb-0 align-middle">
@@ -97,13 +124,22 @@
                             <td>@Html.DisplayFor(modelItem => item.Color)</td>
                             <td>@Html.DisplayFor(modelItem => item.Type)</td>
                             <td>
-                                @if (item.Status.ToString().ToLower() == "active")
+                                @{
+                                    // SAFE FIX: Convert the enum item to a string value to compare smoothly without casing friction
+                                    string statusString = item.Status.ToString() ?? "";
+                                }
+
+                                @if (statusString.Equals("Active", StringComparison.OrdinalIgnoreCase))
                                 {
                                     <span class="badge bg-success bg-opacity-10 text-success rounded-2 px-2.5 py-1.5 fw-bold">Active</span>
                                 }
+                                else if (statusString.Equals("Maintenance", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-2 px-2.5 py-1.5 fw-bold">Maintenance</span>
+                                }
                                 else
                                 {
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-2 px-2.5 py-1.5 fw-bold">@item.Status</span>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-2 px-2.5 py-1.5 fw-bold">@statusString</span>
                                 }
                             </td>
                             <td class="text-center">
@@ -125,29 +161,9 @@
                 else
                 {
                     <tr>
-                        <td class="fw-bold text-dark">Civic</td>
-                        <td class="text-uppercase font-monospace text-secondary fw-semibold">GAC 4821</td>
-                        <td>Toyota</td>
-                        <td>White</td>
-                        <td>SUV</td>
-                        <td><span class="badge bg-success bg-opacity-10 text-success rounded-2 px-2 py-1 fw-bold">Active</span></td>
-                        <td class="text-center">
-                            <button class="btn btn-link text-dark p-0 border-0" type="button">
-                                <i class="bi bi-three-dots fs-5"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="fw-bold text-dark">Odyssey</td>
-                        <td class="text-uppercase font-monospace text-secondary fw-semibold">GAC 4821</td>
-                        <td>Toyota</td>
-                        <td>White</td>
-                        <td>SUV</td>
-                        <td><span class="badge bg-success bg-opacity-10 text-success rounded-2 px-2 py-1 fw-bold">Active</span></td>
-                        <td class="text-center">
-                            <button class="btn btn-link text-dark p-0 border-0" type="button">
-                                <i class="bi bi-three-dots fs-5"></i>
-                            </button>
+                        <td colspan="7" class="text-center py-5 text-muted fw-medium">
+                            <i class="bi bi-car-front fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                            No matching vehicles located in fleet indexes.
                         </td>
                     </tr>
                 }
@@ -156,6 +172,7 @@
     </div>
 </div>
 
+<!-- Table Data Footer Pagination Component Row -->
 <div class="d-flex align-items-center justify-content-between px-2 text-secondary fw-semibold mb-5 pagination-wrapper">
     <div class="small">1-10 of 97</div>
     <div class="d-flex align-items-center gap-3">

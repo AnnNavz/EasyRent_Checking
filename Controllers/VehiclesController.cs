@@ -22,14 +22,58 @@ namespace EasyRent_Checking.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
-        // GET: Vehicles
-        public async Task<IActionResult> Index()
-        {
-            return View(await _context.Vehicle.ToListAsync());
-        }
+		// GET: Vehicles
+		public async Task<IActionResult> Index(string searchString, string sortBy, string currentFilter)
+		{
+			// Store parameters in ViewData to maintain UI control visibility states
+			ViewData["CurrentSearch"] = searchString;
+			ViewData["CurrentSort"] = sortBy;
+			ViewData["CurrentFilter"] = currentFilter;
 
-        // GET: Vehicles/Details/5
-        public async Task<IActionResult> Details(int? id)
+			// 1. Core LINQ data reference query
+			var vehiclesQuery = from v in _context.Vehicle select v;
+
+			// 2. Real-time KPI Card Computations safely handling case matching
+			ViewData["TotalVehiclesCount"] = await vehiclesQuery.CountAsync();
+
+			// SAFE FIX: Look for your active enum regardless of whether it's named 'Active' or 'ACTIVE'
+			if (Enum.TryParse("Active", true, out VehicleStatus activeEnumVal))
+			{
+				ViewData["ActiveVehiclesCount"] = await vehiclesQuery.CountAsync(v => v.Status == activeEnumVal);
+			}
+			else
+			{
+				ViewData["ActiveVehiclesCount"] = 0;
+			}
+
+			// 3. Handle Live Input Search Logic
+			if (!string.IsNullOrEmpty(searchString))
+			{
+				vehiclesQuery = vehiclesQuery.Where(v => v.Model.Contains(searchString)
+													  || v.Brand.Contains(searchString)
+													  || v.PlateNumber.Contains(searchString));
+			}
+
+			// 4. Handle Status Filter Categorization 
+			// SAFE FIX: Added 'true' parameter to make Enum.TryParse completely case-insensitive
+			if (!string.IsNullOrEmpty(currentFilter) && Enum.TryParse(currentFilter, true, out VehicleStatus filterStatus))
+			{
+				vehiclesQuery = vehiclesQuery.Where(v => v.Status == filterStatus);
+			}
+
+			// 5. Handle Query Layer Column Sorting
+			vehiclesQuery = sortBy switch
+			{
+				"Model" => vehiclesQuery.OrderBy(v => v.Model),
+				"Brand" => vehiclesQuery.OrderBy(v => v.Brand),
+				"PlateNumber" => vehiclesQuery.OrderBy(v => v.PlateNumber),
+				_ => vehiclesQuery.OrderByDescending(v => v.VehicleId)
+			};
+
+			return View(await vehiclesQuery.ToListAsync());
+		}
+		// GET: Vehicles/Details/5
+		public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {
