@@ -21,14 +21,56 @@ namespace EasyRent_Checking.Controllers
 			_webHostEnvironment = webHostEnvironment;
 		}
 
-        // GET: Drivers
-        public async Task<IActionResult> Index()
-        {
-            return View(await _context.Driver.ToListAsync());
-        }
+		// GET: Drivers
+		public async Task<IActionResult> Index(string searchString, string sortBy, string currentFilter)
+		{
+			// Keep parameters saved in ViewData so the active markup view can retain state tracking
+			ViewData["CurrentSearch"] = searchString;
+			ViewData["CurrentSort"] = sortBy;
+			ViewData["CurrentFilter"] = currentFilter;
 
-        // GET: Drivers/Details/5
-        public async Task<IActionResult> Details(int? id)
+			// 1. Base query to work with
+			var driversQuery = from d in _context.Driver select d;
+
+			// 2. Real-time KPI Metric Card Calculation
+			var systemDate = DateOnly.FromDateTime(DateTime.Now);
+			ViewData["TotalDriversCount"] = await driversQuery.CountAsync();
+			ViewData["ActiveDriversCount"] = await driversQuery.CountAsync(d => d.ExpiryDate >= systemDate);
+
+			// 3. Search Bar Functional Handler
+			if (!string.IsNullOrEmpty(searchString))
+			{
+				driversQuery = driversQuery.Where(d => d.Name.Contains(searchString)
+													|| d.LicenseNo.Contains(searchString)
+													|| d.Address.Contains(searchString));
+			}
+
+			// 4. Dropdown Filter Flags Handler
+			if (!string.IsNullOrEmpty(currentFilter))
+			{
+				if (currentFilter == "ActiveOnly")
+				{
+					driversQuery = driversQuery.Where(d => d.ExpiryDate >= systemDate);
+				}
+				else if (currentFilter == "Expired")
+				{
+					driversQuery = driversQuery.Where(d => d.ExpiryDate < systemDate);
+				}
+			}
+
+			// 5. "Sorting by" Rules Engine
+			driversQuery = sortBy switch
+			{
+				"Name" => driversQuery.OrderBy(d => d.Name),
+				"ExpiryDate" => driversQuery.OrderBy(d => d.ExpiryDate),
+				_ => driversQuery.OrderByDescending(d => d.DriverId) // Default sorting by newest
+			};
+
+			return View(await driversQuery.ToListAsync());
+		}
+
+		// GET: Drivers/Details/5
+		public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {

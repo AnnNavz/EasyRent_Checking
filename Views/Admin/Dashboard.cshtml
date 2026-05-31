@@ -1,0 +1,93 @@
+﻿@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Admin Dashboard";
+    ViewData["ActivePage"] = "Dashboard";
+}
+
+<!-- Top Dashboard Metrics Row -->
+<div class="row g-4 mb-4 match-height-row">
+    <!-- KPI Container Box -->
+    <div class="col-md-4 col-lg-3">
+        <div class="kpi-dash-container p-3 border rounded-4 bg-transparent d-flex flex-column justify-content-between h-100">
+            <div class="kpi-card-dark shadow-sm"></div>
+            <div class="kpi-card-dark shadow-sm mb-0"></div>
+        </div>
+    </div>
+
+    <!-- Main Analytics Wave Chart Box -->
+    <div class="col-md-8 col-lg-9">
+        <div class="chart-panel-placeholder p-4 position-relative d-flex align-items-end h-100">
+            <!-- Inline SVG replicating the exact layout line graph and pinpoint marker from image_b4b45e.png -->
+            <svg class="w-100 h-100 custom-wave-svg" viewBox="0 0 700 200" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#e0e0e0" stop-opacity="0.7" />
+                        <stop offset="100%" stop-color="#f5f5f5" stop-opacity="0.1" />
+                    </linearGradient>
+                </defs>
+                <!-- Filled Area Under Curve -->
+                <path d="M 0 0 C 30 60, 40 10, 60 40 C 80 70, 90 120, 110 140 C 130 160, 150 70, 180 100 C 210 130, 260 10, 290 80 C 320 150, 350 180, 380 140 C 410 100, 430 70, 470 70 C 510 70, 540 10, 570 30 C 590 45, 620 110, 700 120 L 700 200 L 0 200 Z" fill="url(#chartGradient)" />
+                <!-- Vector Stroke Curve -->
+                <path d="M 0 0 C 30 60, 40 10, 60 40 C 80 70, 90 120, 110 140 C 130 160, 150 70, 180 100 C 210 130, 260 10, 290 80 C 320 150, 350 180, 380 140 C 410 100, 430 70, 470 70 C 510 70, 540 10, 570 30 C 590 45, 620 110, 700 120" fill="none" stroke="#212529" stroke-width="2.5" />
+                <!-- Pointer Indicator Dot Line -->
+                <line x1="290" y1="80" x2="290" y2="200" stroke="#cccccc" stroke-dasharray="4" stroke-width="1.5" />
+                <circle cx="290" cy="80" r="4.5" fill="#212529" />
+            </svg>
+        </div>
+    </div>
+</div>
+
+<!-- Central Information Table Panel -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-table-card shadow-sm border-0">
+            <table class="table admin-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Header</th>
+                        <th>Header</th>
+                        <th>Header</th>
+                        <th>Header</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <tr>
+                            <td>Item</td>
+                            <td>Item</td>
+                            <td>Item</td>
+                            <td>Item</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Analytical Gauges Component Section -->
+<div class="row g-4 align-items-center mt-2">
+    <!-- Circular Percentage Meter Column -->
+    <div class="col-md-6 text-center py-3">
+        <div class="position-relative d-inline-block mx-auto">
+            <div class="rounded-circle d-flex align-items-center justify-content-center progress-gauge-outer">
+                <div class="bg-white rounded-circle d-flex flex-column align-items-center justify-content-center progress-gauge-inner">
+                    <h1 class="fw-bold mb-0 text-dark gauge-value">82</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vertical Layout Bar Chart Column -->
+    <div class="col-md-6">
+        <div class="d-flex align-items-end justify-content-center gap-4 bar-chart-canvas px-4">
+            <div class="bar-element" style="height: 40%;"></div>
+            <div class="bar-element" style="height: 20%;"></div>
+            <div class="bar-element" style="height: 65%;"></div>
+            <div class="bar-element" style="height: 100%;"></div>
+            <div class="bar-element" style="height: 50%;"></div>
+            <div class="bar-element" style="height: 75%;"></div>
+        </div>
+    </div>
+</div></div>

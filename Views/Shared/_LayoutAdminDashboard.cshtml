@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EasyRent</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/admin.css" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <header class="admin-topbar px-4">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-link text-dark p-0 me-3 fs-4 border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#adminSidebarFlyout" aria-controls="adminSidebarFlyout">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="d-flex align-items-center gap-2">
+                <div class="brand-logo-circle">L</div>
+                <div>
+                    <h4 class="fw-bold mb-0 text-dark brand-text">EasyRent</h4>
+                    <small class="text-muted d-block brand-subtext">Vehicle Rental System</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-4">
+            <h5 class="fw-bold mb-0 text-dark page-main-title d-none d-sm-block">@ViewData["Title"]</h5>
+
+            <div class="dropdown">
+                <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 border-0" type="button" data-bs-toggle="dropdown">
+                    <div class="bg-secondary bg-opacity-75 text-white rounded-circle d-flex align-items-center justify-content-center fw-bold profile-avatar">
+                        AD
+                    </div>
+                    <span class="fw-bold fs-6 text-dark profile-name">Admin</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li><a class="dropdown-item" href="#">Profile Settings</a></li>
+                    <li><hr class="dropdown-menu-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <div class="offcanvas offcanvas-start admin-sidebar-flyout" tabindex="-1" id="adminSidebarFlyout" aria-labelledby="adminSidebarFlyoutLabel">
+        <div class="offcanvas-header px-4 pt-4 pb-2">
+            <div class="d-flex align-items-center gap-2">
+                <div class="brand-logo-circle">L</div>
+                <div>
+                    <h4 class="fw-bold mb-0 text-dark brand-text">EasyRent</h4>
+                    <small class="text-muted d-block brand-subtext">Vehicle Rental System</small>
+                </div>
+            </div>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+
+        <div class="offcanvas-body d-flex flex-column justify-content-between px-0 py-3">
+            <div class="pe-3">
+                <a asp-controller="Admin" asp-action="Dashboard" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <div class="nav-icon-box"><i class="bi bi-grid"></i></div>
+                    Dashboard
+                </a>
+                <a asp-controller="Drivers" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Drivers" ? "active" : "")">
+                    <div class="nav-icon-box"><i class="bi bi-person-square"></i></div>
+                    Driver Management
+                </a>
+                <a asp-controller="Vehicles" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Vehicles" ? "active" : "")">
+                    <div class="nav-icon-box"><i class="bi bi-car-front"></i></div>
+                    Vehicle Management
+                </a>
+            </div>
+
+            <div>
+                <hr class="mx-3 my-3 text-muted opacity-25" />
+                <div class="pe-3">
+                    <a asp-controller="Vehicles" asp-action="Homepage" class="nav-link-admin text-dark fw-bold">
+                        <div class="nav-icon-box text-dark"><i class="bi bi-box-arrow-right"></i></div>
+                        Client Side
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-main-wrapper">
+        <main class="p-4">
+            <div class="container-fluid px-0">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html></html>

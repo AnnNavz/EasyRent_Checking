@@ -1,65 +1,175 @@
 ﻿@model IEnumerable<EasyRent_Checking.Models.Driver>
 
 @{
-    ViewData["Title"] = "Index";
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Driver Management";
+    ViewData["ActivePage"] = "Drivers";
+
+    string currentSortName = ViewData["CurrentSort"]?.ToString() == "Name" ? "Name" :
+                             ViewData["CurrentSort"]?.ToString() == "ExpiryDate" ? "Expiry Date" : "Sorting by";
+
+    string currentFilterName = ViewData["CurrentFilter"]?.ToString() == "ActiveOnly" ? "Active Only" :
+                               ViewData["CurrentFilter"]?.ToString() == "Expired" ? "Expired Licenses" : "Filters";
 }
 
-<h1>Index</h1>
+<!-- Top Metrics Cards Section -->
+<div class="row g-4 mb-4">
+    <!-- Active Drivers Card -->
+    <div class="col-md-6">
+        <div class="metric-card shadow-sm p-4 d-flex justify-content-between align-items-center bg-white rounded-4">
+            <div>
+                <span class="text-muted small fw-bold">Active Drivers</span>
+                <h2 class="fw-bold mt-1 mb-0 text-dark">@(ViewData["ActiveDriversCount"] ?? "0")</h2>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-person-check fs-3 text-secondary"></i>
+            </div>
+        </div>
+    </div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Address)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ContactNo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LicenseNo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ExpiryDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ImagePath)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Address)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ContactNo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LicenseNo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ExpiryDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ImagePath)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.DriverId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.DriverId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.DriverId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <!-- Total Drivers Card -->
+    <div class="col-md-6">
+        <div class="metric-card shadow-sm p-4 d-flex justify-content-between align-items-center bg-white rounded-4">
+            <div>
+                <span class="text-muted small fw-bold">Total Drivers</span>
+                <h2 class="fw-bold mt-1 mb-0 text-dark">@(ViewData["TotalDriversCount"] ?? "0")</h2>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-people fs-3 text-secondary"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filtering Actions Component Control Bar -->
+<form asp-action="Index" method="get" class="w-100">
+    <!-- Pass state preservation across form updates -->
+    <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+    <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
+
+    <div class="card border-0 bg-white rounded-4 shadow-sm mb-4">
+        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+
+            <!-- Dropdown Select Filters -->
+            <div class="d-flex align-items-center gap-2">
+                <!-- Sorting Dropdown Menu Component -->
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentSortName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?sortBy=Name&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Name</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=ExpiryDate&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Expiry Date</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
+                    </ul>
+                </div>
+
+                <!-- Status Filtering Dropdown Menu Component -->
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentFilterName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?currentFilter=ActiveOnly&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Active Only</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Expired&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Expired Licenses</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Search input and Add Action Button -->
+            <div class="d-flex align-items-center gap-3 flex-grow-1 flex-sm-grow-0">
+                <div class="position-relative flex-grow-1">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                    <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="form-control ps-5 pe-4 rounded-3 border bg-light text-secondary search-bar-input" placeholder="Search driver entries..." />
+                    @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
+                    {
+                        <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]" class="position-absolute top-50 end-0 translate-middle-y me-3 text-secondary text-decoration-none small">✕</a>
+                    }
+                </div>
+
+                <a asp-action="Create" class="btn btn-dark d-flex align-items-center gap-2 px-3 py-2 fw-bold text-nowrap rounded-3 shadow-sm btn-add-driver">
+                    <i class="bi bi-plus-lg"></i> Add Driver
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Primary Driver Directory Table Card Container -->
+<div class="admin-table-card shadow-sm border-0 mb-4">
+    <div class="table-responsive">
+        <table class="table admin-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Driver Picture</th>
+                    <th>Full Name</th>
+                    <th>Address</th>
+                    <th>Contact Number</th>
+                    <th>License Number</th>
+                    <th>License Expiry</th>
+                    <th class="text-center" style="width: 60px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <!-- Dynamic rows extracted from database model binding parameters -->
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-secondary rounded-circle overflow-hidden table-driver-avatar border shadow-sm mx-auto">
+                                    @if (!string.IsNullOrEmpty(item.ImagePath))
+                                    {
+                                        <img src="~/images/@item.ImagePath" alt="@item.Name" class="w-100 h-100 object-fit-cover" />
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-bold text-uppercase text-dark small">
+                                            @(string.IsNullOrEmpty(item.Name) ? "DR" : string.Join("", item.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0])))
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="fw-bold text-dark">@Html.DisplayFor(modelItem => item.Name)</td>
+                            <td>@Html.DisplayFor(modelItem => item.Address)</td>
+                            <td>@Html.DisplayFor(modelItem => item.ContactNo)</td>
+                            <td class="text-uppercase font-monospace text-secondary">@Html.DisplayFor(modelItem => item.LicenseNo)</td>
+                            <td>@(item.ExpiryDate.ToString("MM-dd-yyyy"))</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots fs-5"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                        <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.DriverId"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.DriverId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                        <li><hr class="dropdown-menu-divider"></li>
+                                        <li><a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.DriverId"><i class="bi bi-trash me-2"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Table Data Footer Pagination Component Row -->
+<div class="d-flex align-items-center justify-content-between px-2 text-secondary fw-semibold mb-5 pagination-wrapper">
+    <div class="small">1-10 of 97</div>
+    <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-link text-decoration-none text-secondary p-0 border-0"><i class="bi bi-chevron-left"></i></button>
+        <span class="small text-dark">1/10</span>
+        <button class="btn btn-link text-decoration-none text-secondary p-0 border-0"><i class="bi bi-chevron-right"></i></button>
+    </div>
+</div>
