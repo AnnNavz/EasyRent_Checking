@@ -1,0 +1,33 @@
+@{
+    var pageTitle = ViewData["Title"]?.ToString() ?? "";
+    var sectionTitle = ViewData["SectionTitle"]?.ToString();
+
+    if (string.IsNullOrWhiteSpace(sectionTitle))
+    {
+        sectionTitle = ViewData["ActivePage"]?.ToString() switch
+        {
+            "Dashboard" => "Admin Dashboard",
+            "Drivers" => "Driver Management",
+            "Vehicles" => "Vehicle Management",
+            _ => null
+        };
+    }
+
+    var displayTitle = string.IsNullOrWhiteSpace(pageTitle) ? sectionTitle : pageTitle;
+    var showBreadcrumb = !string.IsNullOrWhiteSpace(sectionTitle)
+        && !string.IsNullOrWhiteSpace(pageTitle)
+        && !string.Equals(sectionTitle, pageTitle, StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="topbar-page-title d-none d-sm-flex align-items-center">
+    @if (showBreadcrumb)
+    {
+        <span class="topbar-breadcrumb-section">@sectionTitle</span>
+        <span class="topbar-breadcrumb-separator" aria-hidden="true">&gt;</span>
+        <span class="topbar-breadcrumb-current">@pageTitle</span>
+    }
+    else
+    {
+        <span class="topbar-breadcrumb-current">@displayTitle</span>
+    }
+</div>

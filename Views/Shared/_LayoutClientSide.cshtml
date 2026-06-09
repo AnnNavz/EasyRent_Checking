@@ -16,23 +16,23 @@
 </head>
 <body>
 
-    <header class="admin-topbar d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center">
+    <header class="admin-topbar d-flex align-items-center">
+        <div class="d-flex align-items-center flex-grow-1 min-w-0">
             <button class="layout-toggle-btn me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#clientSidebarFlyout" aria-controls="clientSidebarFlyout">
                 <i class="bi bi-list"></i>
             </button>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 topbar-brand-cluster">
                 <div class="brand-logo-circle">L</div>
                 <div>
                     <h4 class="fw-bold text-dark brand-text">EasyRent</h4>
                     <small class="text-muted d-block brand-subtext">Vehicle Rental System</small>
                 </div>
             </div>
+
+            <partial name="_TopbarPageTitle" />
         </div>
 
-        <div class="d-flex align-items-center gap-4">
-            <h5 class="page-main-title text-dark d-none d-sm-block">@ViewData["Title"]</h5>
-
+        <div class="topbar-actions d-flex align-items-center">
             <div class="dropdown">
                 <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 border-0 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold">CL</div>

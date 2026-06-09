@@ -5,7 +5,7 @@
     var entityLabel = ViewData["DeleteEntityLabel"]?.ToString() ?? "item";
 }
 
-<div class="modal fade" id="@modalId" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+<div class="modal fade admin-delete-modal" id="@modalId" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered admin-delete-modal-dialog">
         <div class="modal-content modal-delete-content text-center shadow-lg">
             <div class="modal-delete-icon-box shadow-sm">
@@ -29,12 +29,24 @@
 </div>
 
 <script>
+    (function () {
+        var modalEl = document.getElementById('@modalId');
+        if (modalEl) {
+            modalEl.addEventListener('show.bs.modal', function () {
+                document.body.classList.add('admin-delete-modal-open');
+            });
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                document.body.classList.remove('admin-delete-modal-open');
+            });
+        }
+    })();
+
     function openDeletePopup(entityId, entityName) {
         document.getElementById('@hiddenInputId').value = entityId;
         document.getElementById('@messageId').innerHTML =
             'Are you sure you want to delete <strong>' + entityName + '</strong>? This action is permanent and cannot be undone.';
 
-        var deleteModal = new bootstrap.Modal(document.getElementById('@modalId'));
+        var deleteModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('@modalId'));
         deleteModal.show();
     }
 </script>
