@@ -1,55 +1,396 @@
 ﻿@model EasyRent_Checking.Models.Driver
 
 @{
-    ViewData["Title"] = "Details";
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Driver Management";
+    ViewData["ActivePage"] = "Drivers";
+
+    // Split Name for the wireframe First/Last Name UI structure safely
+    string firstName = "—";
+    string lastName = "—";
+    if (Model != null && !string.IsNullOrEmpty(Model.Name))
+    {
+        var nameParts = Model.Name.Trim().Split(' ', 2);
+        firstName = nameParts[0];
+        if (nameParts.Length > 1)
+        {
+            lastName = nameParts[1];
+        }
+    }
+
+    // Safe property extraction to completely avoid display formatting errors
+    string contactNo = Model?.ContactNo ?? "—";
+    string address = Model?.Address ?? "—";
+    string licenseNo = Model?.LicenseNo ?? "—";
+    string expiryText = Model != null ? Model.ExpiryDate.ToString("MMMM dd, yyyy") : "—";
 }
 
-<h1>Details</h1>
+<style>
+    /* Profile Header Styling */
+    .profile-header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        padding: 0 1rem;
+    }
 
-<div>
-    <h4>Driver</h4>
-    <hr />
-    <dl class="row">
-        <img src="~/images/@Model.ImagePath"/>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Address)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Address)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ContactNo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ContactNo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LicenseNo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LicenseNo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ExpiryDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ExpiryDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ImagePath)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ImagePath)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.DriverId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    .profile-avatar-circle {
+        width: 140px;
+        height: 140px;
+        background-color: #c4c4c4;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+        .profile-avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .profile-info-block {
+        flex-grow: 1;
+        padding-left: 2rem;
+    }
+
+    .profile-name-text {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #222222;
+        margin-bottom: 0.25rem;
+    }
+
+    .profile-meta-text {
+        font-size: 1.1rem;
+        color: #666666;
+    }
+
+    /* Header Control Buttons */
+    .btn-wireframe-back {
+        background-color: #ffffff !important;
+        color: #333333 !important;
+        border: 1px solid #999999 !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 2rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .btn-wireframe-back:hover {
+            background-color: #f5f5f5 !important;
+        }
+
+    .btn-wireframe-black-edit {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .btn-wireframe-black-edit:hover {
+            opacity: 0.9;
+            color: #ffffff !important;
+        }
+
+    /* Nav Tabs Underlines to match image_d058bc.png */
+    .custom-nav-tabs {
+        border-bottom: 1px solid #cccccc !important;
+        margin-bottom: 2rem;
+        padding-left: 1rem;
+    }
+
+        .custom-nav-tabs .nav-link {
+            border: none !important;
+            color: #666666 !important;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 0.5rem 2rem !important;
+            background: transparent !important;
+            position: relative;
+        }
+
+            .custom-nav-tabs .nav-link.active {
+                color: #000000 !important;
+            }
+
+                .custom-nav-tabs .nav-link.active::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -2px;
+                    left: 1.5rem;
+                    right: 1.5rem;
+                    height: 4px;
+                    background-color: #000000;
+                    border-radius: 2px;
+                }
+
+    /* Activity Timeline Log Blocks */
+    .timeline-title-bar {
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #444444;
+        border-left: 4px solid #000000;
+        padding-left: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .history-log-card {
+        background-color: #e5e5e5;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        border: none;
+    }
+
+    .log-timestamp {
+        font-size: 0.85rem;
+        color: #888888;
+        margin-bottom: 0.4rem;
+    }
+
+    .log-heading {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #222222;
+        margin-bottom: 0.4rem;
+    }
+
+    .log-description {
+        font-size: 0.95rem;
+        color: #555555;
+        line-height: 1.4;
+        margin-bottom: 0;
+    }
+
+    .btn-load-older {
+        background-color: #ffffff !important;
+        color: #333333 !important;
+        border: 1px solid #333333 !important;
+        border-radius: 10px !important;
+        width: 100%;
+        padding: 0.75rem;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+
+    /* Right Sidebar Badge Widget */
+    .license-expiry-sidebar-card {
+        background-color: #4a4a4a;
+        color: #ffffff;
+        border-radius: 12px;
+        padding: 2rem 1.5rem;
+    }
+
+    .sidebar-widget-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar-widget-date {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+    }
+
+    .badge-valid-status {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        padding: 0.4rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        display: inline-block;
+        margin-bottom: 2rem;
+    }
+
+    .btn-export-pdf-outline {
+        background-color: transparent !important;
+        color: #ffffff !important;
+        border: 1px solid #ffffff !important;
+        border-radius: 8px !important;
+        width: 100%;
+        padding: 0.6rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    /* Documents Clean Layout Configuration (image_d058bc.png) */
+    .documents-clean-container {
+        max-width: 1000px;
+        padding: 0.5rem 1rem;
+    }
+
+    .wireframe-section-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #333333;
+        margin-bottom: 0.4rem;
+    }
+
+    .wireframe-divider-line {
+        border-top: 1px solid #e0e0e0 !important;
+        margin-top: 0.25rem;
+        margin-bottom: 1.75rem;
+        opacity: 1;
+    }
+
+    .wireframe-field-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #666666;
+        margin-bottom: 0.5rem;
+    }
+
+    .wireframe-static-value {
+        background-color: #f6f6f6 !important;
+        border: 1px solid #e2e2e2 !important;
+        border-radius: 8px !important;
+        padding: 0.75rem 1rem !important;
+        color: #111111 !important;
+        font-weight: 500;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+<div class="container-fluid px-4 py-3">
+
+    <div class="profile-header-container">
+        <div class="d-flex align-items-center">
+            <div class="profile-avatar-circle shadow-sm">
+                @if (Model != null && !string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <img src="~/images/@Model.ImagePath" alt="@Model.Name" />
+                }
+                else
+                {
+                    <i class="bi bi-person text-secondary" style="font-size: 4rem;"></i>
+                }
+            </div>
+            <div class="profile-info-block">
+                <h1 class="profile-name-text">@(Model?.Name ?? "Jane Doe")</h1>
+                <span class="profile-meta-text">Verified Driver Directory Account</span>
+            </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <a asp-action="Index" class="btn btn-wireframe-back shadow-sm">Back</a>
+            <a asp-action="Edit" asp-route-id="@Model?.DriverId" class="btn btn-wireframe-black-edit shadow-sm">Edit Driver's Profile</a>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs custom-nav-tabs" id="driverDetailTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab" aria-selected="true">History</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-selected="false">Documents</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="driverDetailTabsContent">
+
+        <div class="tab-pane fade show active" id="history-pane" role="tabpanel" aria-labelledby="history-tab">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="timeline-title-bar">ACTIVITY TIMELINE</div>
+
+                    <div class="history-log-card shadow-sm">
+                        <div class="log-timestamp">August 20, 2026 | 12:00 AM</div>
+                        <div class="log-heading">Rent Trip Successful : #FL-882</div>
+                        <p class="log-description">Successful trip to Boljoon, Cebu for the first day and Alegria, Cebu for the second day of the reservation.</p>
+                    </div>
+
+                    <div class="history-log-card shadow-sm">
+                        <div class="log-timestamp">December 25, 2026 | 12:00 AM</div>
+                        <div class="log-heading">Rent Trip Successful : #FL-883</div>
+                        <p class="log-description">Successful trip to Dalaguete City for a business trip and team building event for one day.</p>
+                    </div>
+
+                    <button type="button" class="btn btn-load-older shadow-sm">Load Older Logs</button>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="license-expiry-sidebar-card shadow">
+                        <div class="sidebar-widget-label">License Expiry</div>
+                        <div class="sidebar-widget-date">@expiryText</div>
+
+                        @{
+                            int daysLeft = 365;
+                            if (Model != null)
+                            {
+                                DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+                                daysLeft = Model.ExpiryDate.DayNumber - today.DayNumber;
+                            }
+                            string statusText = daysLeft > 0 ? $"valid for {daysLeft} days" : "Expired";
+                        }
+                        <div class="badge-valid-status">@statusText</div>
+
+                        <button type="button" class="btn btn-export-pdf-outline" onclick="window.print()">Export PDF profile</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab">
+            <div class="documents-clean-container">
+
+                <div class="wireframe-section-title">Personal Information</div>
+                <hr class="wireframe-divider-line" />
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4 col-sm-6">
+                        <div class="wireframe-field-label">First Name</div>
+                        <div class="wireframe-static-value">@firstName</div>
+                    </div>
+                    <div class="col-md-6 col-sm-6">
+                        <div class="wireframe-field-label">Last Name</div>
+                        <div class="wireframe-static-value">@lastName</div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-4 col-sm-6">
+                        <div class="wireframe-field-label">Phone Number</div>
+                        <div class="wireframe-static-value">@contactNo</div>
+                    </div>
+                </div>
+
+                <div class="row mb-5">
+                    <div class="col-md-10 col-sm-12">
+                        <div class="wireframe-field-label">Address</div>
+                        <div class="wireframe-static-value">@address</div>
+                    </div>
+                </div>
+
+                <div class="wireframe-section-title">License</div>
+                <hr class="wireframe-divider-line" />
+
+                <div class="row g-4">
+                    <div class="col-md-4 col-sm-6">
+                        <div class="wireframe-field-label">License Number</div>
+                        <div class="wireframe-static-value text-uppercase font-monospace">@licenseNo</div>
+                    </div>
+                    <div class="col-md-6 col-sm-6">
+                        <div class="wireframe-field-label">Expiry Date</div>
+                        <div class="wireframe-static-value d-flex justify-content-between align-items-center">
+                            <span>@expiryText</span>
+                            <i class="bi bi-calendar3 text-secondary fs-5"></i>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
 </div>

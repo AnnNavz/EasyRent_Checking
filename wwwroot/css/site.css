@@ -19,4 +19,10 @@ html {
 
 body {
   margin-bottom: 60px;
+  font-family: 'Poppins', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6,
+.navbar-brand {
+  font-family: 'Roboto', sans-serif;
 }

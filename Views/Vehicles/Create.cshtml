@@ -1,72 +1,339 @@
 ﻿@model EasyRent_Checking.Models.Vehicle
 
 @{
-    ViewData["Title"] = "Create";
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Add New Vehicle";
+    ViewData["ActivePage"] = "Vehicles";
 }
 
-<h1>Create</h1>
-
-<h4>Vehicle</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Model" class="control-label"></label>
-                <input asp-for="Model" class="form-control" />
-                <span asp-validation-for="Model" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PlateNumber" class="control-label"></label>
-                <input asp-for="PlateNumber" class="form-control" />
-                <span asp-validation-for="PlateNumber" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Brand" class="control-label"></label>
-                <input asp-for="Brand" class="form-control" />
-                <span asp-validation-for="Brand" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Color" class="control-label"></label>
-                <input asp-for="Color" class="form-control" />
-                <span asp-validation-for="Color" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Type" class="control-label"></label>
-                <select asp-for="Type" class="form-control" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
-                <span asp-validation-for="Type" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RegistrationDate" class="control-label"></label>
-                <input asp-for="RegistrationDate" class="form-control" type="date"/>
-                <span asp-validation-for="RegistrationDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RegistrationExpiry" class="control-label"></label>
-                <input asp-for="RegistrationExpiry" class="form-control" type="date" />
-                <span asp-validation-for="RegistrationExpiry" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ImageFile"></label>
-                <input asp-for="ImageFile" type="file" class="form-control" />
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+<div class="wizard-max-wrapper py-3">
+    <div class="step-timeline">
+        <div class="step-node active" id="node-1">
+            <div class="step-circle" id="circle-1">1</div>
+            <div class="step-label">Info</div>
+        </div>
+        <div class="step-node" id="node-2">
+            <div class="step-circle" id="circle-2">2</div>
+            <div class="step-label">Documentation</div>
+        </div>
+        <div class="step-node" id="node-3">
+            <div class="step-circle" id="circle-3">3</div>
+            <div class="step-label">Review</div>
+        </div>
     </div>
+
+    <form asp-action="Create" enctype="multipart/form-data" id="vehicleWizardForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <div class="wizard-step-panel active" id="stepPanel-1">
+            <div class="text-start mb-3">
+                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Register New Vehicle</h5>
+                <p class="text-muted small">Enter the core vehicle details for fleet registration.</p>
+            </div>
+
+            <div class="form-container-card p-4 mb-4 shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-10">
+                    <i class="bi bi-car-front fs-5 text-secondary"></i>
+                    <span class="wizard-section-title fw-bold text-dark small">Vehicle Information</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Brand" class="form-label fw-semibold small text-secondary mb-1">Brand</label>
+                        <input asp-for="Brand" id="input-Brand" class="form-control form-control-thin shadow-sm" placeholder="e.g. Mercedes-Benz" />
+                        <span asp-validation-for="Brand" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Model" class="form-label fw-semibold small text-secondary mb-1">Model</label>
+                        <input asp-for="Model" id="input-Model" class="form-control form-control-thin shadow-sm" placeholder="e.g. Sprinter 2500" />
+                        <span asp-validation-for="Model" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Color" class="form-label fw-semibold small text-secondary mb-1">Color</label>
+                        <input asp-for="Color" id="input-Color" class="form-control form-control-thin shadow-sm" placeholder="e.g. Blue" />
+                        <span asp-validation-for="Color" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Type" class="form-label fw-semibold small text-secondary mb-1">Type</label>
+                        <select asp-for="Type" id="input-Type" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleType>()">
+                            <option value="" disabled selected>e.g. SUV</option>
+                        </select>
+                        <span asp-validation-for="Type" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PlateNumber" class="form-label fw-semibold small text-secondary mb-1">Plate Number</label>
+                        <input asp-for="PlateNumber" id="input-PlateNumber" class="form-control form-control-thin shadow-sm text-uppercase font-monospace" placeholder="e.g. GAP 4821" />
+                        <span asp-validation-for="PlateNumber" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Status" class="form-label fw-semibold small text-secondary mb-1">Status</label>
+                        <select asp-for="Status" id="input-Status" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleStatus>()">
+                            <option value="" disabled selected>Select status</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="RegistrationDate" class="form-label fw-semibold small text-secondary mb-1">Registration Date</label>
+                        <input asp-for="RegistrationDate" id="input-RegistrationDate" type="date" class="form-control form-control-thin shadow-sm" />
+                        <span asp-validation-for="RegistrationDate" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="RegistrationExpiry" class="form-label fw-semibold small text-secondary mb-1">Registration Expiry Date</label>
+                        <input asp-for="RegistrationExpiry" id="input-RegistrationExpiry" type="date" class="form-control form-control-thin shadow-sm" />
+                        <span asp-validation-for="RegistrationExpiry" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wizard-step-panel" id="stepPanel-2">
+            <div class="text-start mb-3">
+                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Vehicle Documentation</h5>
+                <p class="text-muted small">Upload registration scans or vehicle documentation.</p>
+            </div>
+
+            <div class="form-container-card p-4 mb-4 shadow-sm">
+                <div class="wizard-section-title fw-bold text-dark mb-2">Document Scans</div>
+                <hr class="section-divider" />
+                <div class="p-4 bg-white rounded-3 border border-2 border-dashed text-center position-relative shadow-sm">
+                    <i class="bi bi-cloud-arrow-up text-muted fs-3 d-block mb-2"></i>
+                    <span class="d-block small fw-bold text-dark mb-1" style="font-size:0.85rem;">Drag & drop license scan or click to browse</span>
+                    <span class="d-block text-muted text-opacity-70" style="font-size:0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                    <input asp-for="ImageFile" id="input-File" type="file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer;" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFileFeedback(this)" />
+                </div>
+                <div id="file-upload-feedback" class="mt-2 bg-white p-2 px-3 rounded-3 d-none align-items-center justify-content-between shadow-sm border">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                        <span id="feedback-filename" class="small fw-semibold text-dark font-monospace" style="font-size:0.8rem;">file_name.png</span>
+                    </div>
+                    <button type="button" class="btn btn-link text-muted small text-decoration-none p-0 border-0" style="font-size:0.8rem;" onclick="clearFileSelection()">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="wizard-step-panel" id="stepPanel-3">
+            <div class="text-start mb-3">
+                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Reviews & Verify</h5>
+                <p class="text-muted small">Please confirm the vehicle details before saving to the database.</p>
+            </div>
+
+            <div class="form-container-card p-4 mb-4 shadow-sm text-dark">
+                <div class="mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
+                        <i class="bi bi-car-front fs-5"></i>
+                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Information</h6>
+                    </div>
+                    <div class="row g-3 px-1" style="font-size: 0.9rem;">
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Brand</span>
+                            <span id="review-Brand" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Model</span>
+                            <span id="review-Model" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Color</span>
+                            <span id="review-Color" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Type</span>
+                            <span id="review-Type" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Plate Number</span>
+                            <span id="review-PlateNumber" class="fw-bold text-dark font-monospace text-uppercase">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Status</span>
+                            <span id="review-Status" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Registration Date</span>
+                            <span id="review-RegistrationDate" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Registration Expiry</span>
+                            <span id="review-RegistrationExpiry" class="fw-bold text-dark">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-top border-secondary border-opacity-10">
+                    <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
+                        <i class="bi bi-file-earmark-arrow-up fs-5"></i>
+                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Uploaded Documents</h6>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-3 d-flex align-items-center gap-3 border shadow-sm mx-1">
+                        <div class="border rounded px-2.5 py-1.5 bg-light">
+                            <i class="bi bi-file-earmark-image fs-5 text-muted"></i>
+                        </div>
+                        <div>
+                            <span id="review-Filename" class="d-block small fw-bold text-dark font-monospace" style="font-size:0.8rem;">No document chosen</span>
+                            <span class="text-muted d-block" style="font-size:0.75rem;">Vehicle Registration Scan</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 align-items-center">
+            <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;" id="btnWizardCancel" onclick="handleCancelClick()">Cancel</button>
+            <button type="button" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;" id="btnWizardNext" onclick="navigateStep(1)">Continue</button>
+        </div>
+    </form>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<script>
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Status', 'RegistrationDate', 'RegistrationExpiry'];
+
+    function validateStep1() {
+        const form = document.getElementById('vehicleWizardForm');
+        let valid = true;
+        let firstInvalid = null;
+
+        if (typeof jQuery !== 'undefined' && jQuery.fn.validate) {
+            const validator = jQuery(form).validate();
+            step1Fields.forEach(function (name) {
+                const el = form.querySelector('[name="' + name + '"]');
+                if (el && !validator.element(el)) {
+                    valid = false;
+                    if (!firstInvalid) firstInvalid = el;
+                }
+            });
+        } else {
+            step1Fields.forEach(function (name) {
+                const el = form.querySelector('[name="' + name + '"]');
+                if (!el) return;
+                const value = el.type === 'select-one' ? el.value : el.value.trim();
+                if (value === '') {
+                    valid = false;
+                    el.classList.add('input-validation-error');
+                    if (!firstInvalid) firstInvalid = el;
+                } else {
+                    el.classList.remove('input-validation-error');
+                }
+            });
+        }
+
+        if (!valid && firstInvalid) firstInvalid.focus();
+        return valid;
+    }
+
+    function navigateStep(direction) {
+        if (direction === 1 && currentStep === 1 && !validateStep1()) {
+            return;
+        }
+
+        if (direction === 1 && currentStep === totalSteps) {
+            document.getElementById('vehicleWizardForm').submit();
+            return;
+        }
+
+        document.getElementById(`stepPanel-${currentStep}`).classList.remove('active');
+
+        if (direction === 1) {
+            document.getElementById(`node-${currentStep}`).classList.add('completed');
+            currentStep++;
+        } else {
+            currentStep--;
+            document.getElementById(`node-${currentStep}`).classList.remove('completed');
+        }
+
+        document.getElementById(`stepPanel-${currentStep}`).classList.add('active');
+
+        for (let i = 1; i <= totalSteps; i++) {
+            const node = document.getElementById(`node-${i}`);
+            if (i === currentStep) {
+                node.classList.add('active');
+            } else if (i > currentStep) {
+                node.classList.remove('active');
+                node.classList.remove('completed');
+            }
+        }
+
+        updateWizardButtons();
+    }
+
+    function updateWizardButtons() {
+        const cancelBtn = document.getElementById('btnWizardCancel');
+        const nextBtn = document.getElementById('btnWizardNext');
+
+        if (currentStep === 1) {
+            cancelBtn.innerText = 'Cancel';
+            nextBtn.innerText = 'Continue';
+        } else if (currentStep === 2) {
+            cancelBtn.innerText = 'Back';
+            nextBtn.innerText = 'Continue';
+        } else if (currentStep === 3) {
+            cancelBtn.innerText = 'Edit Details';
+            nextBtn.innerText = 'Continue';
+            compileReviewSummary();
+        }
+    }
+
+    function handleCancelClick() {
+        if (currentStep === 1) {
+            window.location.href = '@Url.Action("Index")';
+        } else {
+            navigateStep(-1);
+        }
+    }
+
+    function updateFileFeedback(input) {
+        const feedbackContainer = document.getElementById('file-upload-feedback');
+        const nameSpan = document.getElementById('feedback-filename');
+
+        if (input.files && input.files.length > 0) {
+            nameSpan.innerText = input.files[0].name;
+            feedbackContainer.classList.remove('d-none');
+            feedbackContainer.classList.add('d-flex');
+        }
+    }
+
+    function clearFileSelection() {
+        const fileInput = document.getElementById('input-File');
+        const feedbackContainer = document.getElementById('file-upload-feedback');
+        fileInput.value = '';
+        feedbackContainer.classList.add('d-none');
+        feedbackContainer.classList.remove('d-flex');
+    }
+
+    function compileReviewSummary() {
+        document.getElementById('review-Brand').innerText = document.getElementById('input-Brand').value || 'N/A';
+        document.getElementById('review-Model').innerText = document.getElementById('input-Model').value || 'N/A';
+        document.getElementById('review-Color').innerText = document.getElementById('input-Color').value || 'N/A';
+
+        const typeEl = document.getElementById('input-Type');
+        document.getElementById('review-Type').innerText = typeEl.options[typeEl.selectedIndex]?.text || 'N/A';
+
+        document.getElementById('review-PlateNumber').innerText = document.getElementById('input-PlateNumber').value || 'N/A';
+
+        const statusEl = document.getElementById('input-Status');
+        document.getElementById('review-Status').innerText = statusEl.options[statusEl.selectedIndex]?.text || 'N/A';
+
+        const regDate = document.getElementById('input-RegistrationDate').value;
+        document.getElementById('review-RegistrationDate').innerText = regDate
+            ? new Date(regDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+            : 'N/A';
+
+        const regExpiry = document.getElementById('input-RegistrationExpiry').value;
+        document.getElementById('review-RegistrationExpiry').innerText = regExpiry
+            ? new Date(regExpiry).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+            : 'N/A';
+
+        const fileInput = document.getElementById('input-File');
+        if (fileInput.files && fileInput.files.length > 0) {
+            document.getElementById('review-Filename').innerText = fileInput.files[0].name;
+        } else {
+            document.getElementById('review-Filename').innerText = 'No document chosen';
+        }
+    }
+</script>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

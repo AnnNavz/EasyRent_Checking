@@ -1,0 +1,27 @@
+@model EasyRent_Checking.Models.CreateSuccessViewModel
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = Model.PageTitle;
+    ViewData["ActivePage"] = Model.ActivePage;
+}
+
+<div class="admin-success-screen">
+    <div class="admin-success-icon-wrap">
+        <div class="admin-success-icon">
+            <i class="bi bi-check-lg"></i>
+        </div>
+    </div>
+
+    <h2 class="admin-success-heading">@Model.Heading</h2>
+    <p class="admin-success-message">@Html.Raw(Model.MessageHtml)</p>
+
+    <div class="admin-success-actions">
+        <a href="@Model.PrimaryActionUrl" class="btn btn-admin-primary">
+            @Model.PrimaryActionText <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+        <a href="@Model.SecondaryActionUrl" class="btn btn-admin-outline">
+            <i class="bi bi-plus-lg me-1"></i> @Model.SecondaryActionText
+        </a>
+    </div>
+</div>

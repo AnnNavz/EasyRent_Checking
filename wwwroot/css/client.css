@@ -1,0 +1,156 @@
+/* Client-side layout refinements (base design preserved) */
+.client-page-header {
+    margin-bottom: 1.75rem;
+}
+
+.client-page-header h1 {
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.3px;
+}
+
+.client-page-header p {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    color: #777;
+    margin: 0;
+}
+
+.blueprint-vehicle-card {
+    background-color: #ffffff;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 18px;
+    padding: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.blueprint-vehicle-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+    border-color: #d0d0d0;
+}
+
+.blueprint-image-bounding-box {
+    width: 100%;
+    aspect-ratio: 1.6 / 1;
+    border: 1.5px solid #222;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    background-color: #fafafa;
+}
+
+.blueprint-img-tag {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.blueprint-vehicle-card:hover .blueprint-img-tag {
+    transform: scale(1.03);
+}
+
+.blueprint-status-pill {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    color: #444;
+    text-transform: capitalize;
+    backdrop-filter: blur(4px);
+}
+
+.card-meta-details-box {
+    margin-top: 15px;
+    margin-bottom: 20px;
+}
+
+.meta-primary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.vehicle-model-header {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #222;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.color-dot-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #1a3a8f;
+    margin-right: 6px;
+    box-shadow: 0 0 0 2px rgba(26, 58, 143, 0.15);
+}
+
+.color-text-lbl {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+}
+
+.vehicle-make-sub {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: #888;
+    margin-top: 2px;
+}
+
+.blueprint-btn-action {
+    background-color: #1a3a8f;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    width: 100%;
+    padding: 12px 0;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.blueprint-btn-action:hover {
+    background-color: #122863;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.client-empty-state {
+    text-align: center;
+    padding: 4rem 1.5rem;
+    color: #888;
+    font-family: var(--font-body);
+}
+
+.client-empty-state i {
+    font-size: 2.5rem;
+    opacity: 0.35;
+    margin-bottom: 0.75rem;
+}

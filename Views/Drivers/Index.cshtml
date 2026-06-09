@@ -99,7 +99,7 @@
 </form>
 
 <!-- Primary Driver Directory Table Card Container -->
-<div class="admin-table-card shadow-sm border-0 mb-4">
+<div class="admin-table-card shadow-sm border-0 mb-4 bg-white rounded-4 overflow-hidden">
     <div class="table-responsive">
         <table class="table admin-table mb-0 align-middle">
             <thead>
@@ -118,17 +118,16 @@
                 {
                     @foreach (var item in Model)
                     {
-                        <!-- Dynamic rows extracted from database model binding parameters -->
                         <tr>
                             <td>
-                                <div class="d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-secondary rounded-circle overflow-hidden table-driver-avatar border shadow-sm mx-auto">
+                                <div class="d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-secondary rounded-circle overflow-hidden table-driver-avatar border shadow-sm mx-auto" style="width: 40px; height: 40px;">
                                     @if (!string.IsNullOrEmpty(item.ImagePath))
                                     {
                                         <img src="~/images/@item.ImagePath" alt="@item.Name" class="w-100 h-100 object-fit-cover" />
                                     }
                                     else
                                     {
-                                        <span class="fw-bold text-uppercase text-dark small">
+                                        <span class="fw-bold text-uppercase text-dark small" style="font-size: 0.8rem;">
                                             @(string.IsNullOrEmpty(item.Name) ? "DR" : string.Join("", item.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0])))
                                         </span>
                                     }
@@ -148,28 +147,29 @@
                                         <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.DriverId"><i class="bi bi-pencil me-2"></i> Edit</a></li>
                                         <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.DriverId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
                                         <li><hr class="dropdown-menu-divider"></li>
-                                        <li><a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.DriverId"><i class="bi bi-trash me-2"></i> Delete</a></li>
+                                        <li>
+                                            <!-- Intercepted to trigger popup instead of changing pages -->
+                                            <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.DriverId', '@item.Name')">
+                                                <i class="bi bi-trash me-2"></i> Delete
+                                            </button>
+                                        </li>
                                     </ul>
                                 </div>
                             </td>
                         </tr>
                     }
                 }
-                else
-                {
-                    
-                }
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Table Data Footer Pagination Component Row -->
-<div class="d-flex align-items-center justify-content-between px-2 text-secondary fw-semibold mb-5 pagination-wrapper">
-    <div class="small">1-10 of 97</div>
-    <div class="d-flex align-items-center gap-3">
-        <button class="btn btn-link text-decoration-none text-secondary p-0 border-0"><i class="bi bi-chevron-left"></i></button>
-        <span class="small text-dark">1/10</span>
-        <button class="btn btn-link text-decoration-none text-secondary p-0 border-0"><i class="bi bi-chevron-right"></i></button>
-    </div>
-</div>
+<partial name="_AdminPagination" />
+
+@{
+    ViewData["DeleteModalId"] = "driverDeletePopup";
+    ViewData["DeleteHiddenInputId"] = "popupDriverId";
+    ViewData["DeleteMessageId"] = "deletePopupMessage";
+    ViewData["DeleteEntityLabel"] = "driver";
+}
+<partial name="_DeleteConfirmModal" />

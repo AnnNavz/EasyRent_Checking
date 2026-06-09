@@ -1,58 +1,149 @@
 ﻿@model EasyRent_Checking.Models.Driver
 
 @{
-    ViewData["Title"] = "Edit";
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Edit Details";
+    ViewData["ActivePage"] = "Drivers";
+
+    // Split Name for the First/Last Name UI structure safely
+    string firstName = "";
+    string lastName = "";
+    if (Model != null && !string.IsNullOrEmpty(Model.Name))
+    {
+        var nameParts = Model.Name.Trim().Split(' ', 2);
+        firstName = nameParts[0];
+        if (nameParts.Length > 1)
+        {
+            lastName = nameParts[1];
+        }
+    }
 }
 
-<h1>Edit</h1>
+<div class="edit-container">
+    <form asp-action="Edit" enctype="multipart/form-data" id="editDriverForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="DriverId" />
 
-<h4>Driver</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="DriverId" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Address" class="control-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ContactNo" class="control-label"></label>
-                <input asp-for="ContactNo" class="form-control" />
-                <span asp-validation-for="ContactNo" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LicenseNo" class="control-label"></label>
-                <input asp-for="LicenseNo" class="form-control" />
-                <span asp-validation-for="LicenseNo" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ExpiryDate" class="control-label"></label>
-                <input asp-for="ExpiryDate" class="form-control" />
-                <span asp-validation-for="ExpiryDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ImageFile"></label>
-                <input asp-for="ImageFile" type="file" class="form-control" />
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
-</div>
+        <!-- Combined hidden element to process back into single model Name database attribute safely -->
+        <input type="hidden" asp-for="Name" id="combinedFullName" />
 
-<div>
-    <a asp-action="Index">Back to List</a>
+        <div class="form-card-wireframe shadow-sm mb-4">
+
+            <!-- 1. Personal Information Section -->
+            <div class="section-header">Personal Information</div>
+            <hr class="section-divider" />
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="wireframe-label">First Name</label>
+                    <input type="text" id="uiFirstName" value="@firstName" class="form-control wireframe-input" placeholder="Jane" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="wireframe-label">Last Name</label>
+                    <input type="text" id="uiLastName" value="@lastName" class="form-control wireframe-input" placeholder="Doe" required />
+                </div>
+                <span asp-validation-for="Name" class="text-danger small px-2"></span>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="ContactNo" class="wireframe-label">Phone Number</label>
+                    <input asp-for="ContactNo" class="form-control wireframe-input" placeholder="+63 963 690 2998" />
+                    <span asp-validation-for="ContactNo" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <label asp-for="Address" class="wireframe-label">Address</label>
+                    <input asp-for="Address" class="form-control wireframe-input" placeholder="842 Industrial Pkwy, Unit 4B Seattle, WA 98104" />
+                    <span asp-validation-for="Address" class="text-danger small"></span>
+                </div>
+            </div>
+
+
+            <!-- 2. License Details Section -->
+            <div class="section-header mt-5">License</div>
+            <hr class="section-divider" />
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="LicenseNo" class="wireframe-label">License Number</label>
+                    <input asp-for="LicenseNo" class="form-control wireframe-input" placeholder="WDK89234X7" />
+                    <span asp-validation-for="LicenseNo" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ExpiryDate" class="wireframe-label">Expiry Date</label>
+                    <div class="position-relative">
+                        <!-- native date picker component wrapper matching design wireframe context -->
+                        <input asp-for="ExpiryDate" type="date" class="form-control wireframe-input" value="@(Model?.ExpiryDate.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
+                </div>
+            </div>
+
+
+            <!-- 3. Uploaded Documents Section -->
+            <div class="section-header mt-5">Uploaded Documents</div>
+            <hr class="section-divider" />
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="upload-zone-box">
+                        <i class="bi bi-cloud-upload fs-1 text-muted mb-2 d-block"></i>
+                        <span class="d-block fw-bold text-dark small mb-1">Drag & drop license scan or <span class="text-decoration-underline">click to browse</span></span>
+                        <span class="text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+
+                        <!-- Core platform file hook handler -->
+                        <input asp-for="ImageFile" type="file" class="upload-file-input" id="licenseFileInput" onchange="displayFileName()" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing file context row presentation metadata placeholder -->
+            <div class="upload-preview-bar d-flex align-items-center justify-content-between p-3 mt-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                    <span class="small fw-semibold text-dark" id="fileNameDisplay">
+                        @(string.IsNullOrEmpty(Model?.ImagePath) ? "front_license.png" : Model.ImagePath)
+                    </span>
+                </div>
+                <button type="button" class="btn btn-link p-0 text-muted small text-decoration-none fw-bold" onclick="clearSelectedFile()">Remove</button>
+            </div>
+
+        </div>
+
+        <!-- Lower Panel Form Control Action Elements Alignment Row -->
+        <div class="d-flex align-items-center justify-content-end gap-3 pe-1">
+            <a asp-action="Index" class="btn btn-edit-wireframe-outline">Back to List</a>
+            <button type="submit" class="btn btn-continue-wireframe-black">Continue</button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Synchronizes split interactive input values into singular Name field prior to posting payload
+        document.getElementById('editDriverForm').addEventListener('submit', function (e) {
+            var fName = document.getElementById('uiFirstName').value.trim();
+            var lName = document.getElementById('uiLastName').value.trim();
+            document.getElementById('combinedFullName').value = fName + " " + lName;
+        });
+
+        // Live filename UI updater hook
+        function displayFileName() {
+            var fileInput = document.getElementById('licenseFileInput');
+            var nameDisplay = document.getElementById('fileNameDisplay');
+            if (fileInput.files.length > 0) {
+                nameDisplay.textContent = fileInput.files[0].name;
+            }
+        }
+
+        function clearSelectedFile() {
+            document.getElementById('licenseFileInput').value = "";
+            document.getElementById('fileNameDisplay').textContent = "No file selected";
+        }
+    </script>
 }

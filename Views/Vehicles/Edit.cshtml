@@ -1,74 +1,111 @@
 ﻿@model EasyRent_Checking.Models.Vehicle
 
 @{
-    ViewData["Title"] = "Edit";
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Edit Details";
+    ViewData["ActivePage"] = "Vehicles";
 }
 
-<h1>Edit</h1>
+<div class="edit-container">
+    <form asp-action="Edit" enctype="multipart/form-data" id="editVehicleForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="VehicleId" />
+        <input type="hidden" asp-for="ImagePath" />
 
-<h4>Vehicle</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="VehicleId" />
-            <div class="form-group">
-                <label asp-for="Model" class="control-label"></label>
-                <input asp-for="Model" class="form-control" />
-                <span asp-validation-for="Model" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PlateNumber" class="control-label"></label>
-                <input asp-for="PlateNumber" class="form-control" />
-                <span asp-validation-for="PlateNumber" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Brand" class="control-label"></label>
-                <input asp-for="Brand" class="form-control" />
-                <span asp-validation-for="Brand" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Color" class="control-label"></label>
-                <input asp-for="Color" class="form-control" />
-                <span asp-validation-for="Color" class="text-danger"></span>
+        <div class="form-card-wireframe shadow-sm mb-4">
+            <div class="section-header">Vehicle Information</div>
+            <hr class="section-divider" />
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="Brand" class="wireframe-label">Brand</label>
+                    <input asp-for="Brand" class="form-control wireframe-input" placeholder="e.g. Mercedes-Benz" />
+                    <span asp-validation-for="Brand" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Model" class="wireframe-label">Model</label>
+                    <input asp-for="Model" class="form-control wireframe-input" placeholder="e.g. Sprinter 2500" />
+                    <span asp-validation-for="Model" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Color" class="wireframe-label">Color</label>
+                    <input asp-for="Color" class="form-control wireframe-input" placeholder="e.g. Blue" />
+                    <span asp-validation-for="Color" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Type" class="wireframe-label">Type</label>
+                    <select asp-for="Type" class="form-select wireframe-input" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
+                    <span asp-validation-for="Type" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PlateNumber" class="wireframe-label">Plate Number</label>
+                    <input asp-for="PlateNumber" class="form-control wireframe-input text-uppercase font-monospace" placeholder="GAP 4821" />
+                    <span asp-validation-for="PlateNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Status" class="wireframe-label">Status</label>
+                    <select asp-for="Status" class="form-select wireframe-input" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
+                    <span asp-validation-for="Status" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="RegistrationDate" class="wireframe-label">Registration Date</label>
+                    <input asp-for="RegistrationDate" type="date" class="form-control wireframe-input" />
+                    <span asp-validation-for="RegistrationDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="RegistrationExpiry" class="wireframe-label">Expiry Date</label>
+                    <input asp-for="RegistrationExpiry" type="date" class="form-control wireframe-input" />
+                    <span asp-validation-for="RegistrationExpiry" class="text-danger small"></span>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="Type" class="control-label"></label>
-                <select asp-for="Type" class="form-control" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
-                <span asp-validation-for="Type" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RegistrationDate" class="control-label"></label>
-                <input asp-for="RegistrationDate" class="form-control" type="date" />
-                <span asp-validation-for="RegistrationDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RegistrationExpiry" class="control-label"></label>
-                <input asp-for="RegistrationExpiry" class="form-control" type="date" />
-                <span asp-validation-for="RegistrationExpiry" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ImageFile"></label>
-                <input asp-for="ImageFile" type="file" class="form-control" />
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
-</div>
+            <div class="section-header mt-5">Uploaded Documents</div>
+            <hr class="section-divider" />
 
-<div>
-    <a asp-action="Index">Back to List</a>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="upload-zone-box">
+                        <i class="bi bi-cloud-upload fs-1 text-muted mb-2 d-block"></i>
+                        <span class="d-block fw-bold text-dark small mb-1">Drag & drop license scan or <span class="text-decoration-underline">click to browse</span></span>
+                        <span class="text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                        <input asp-for="ImageFile" type="file" class="upload-file-input" id="vehicleFileInput" accept=".png,.jpg,.jpeg,.pdf" onchange="displayFileName()" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-preview-bar d-flex align-items-center justify-content-between p-3 mt-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                    <span class="small fw-semibold text-dark" id="fileNameDisplay">
+                        @(string.IsNullOrEmpty(Model?.ImagePath) ? "No file selected" : Model.ImagePath)
+                    </span>
+                </div>
+                <button type="button" class="btn btn-link p-0 text-muted small text-decoration-none fw-bold" onclick="clearSelectedFile()">Remove</button>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-end gap-3 pe-1">
+            <a asp-action="Index" class="btn btn-edit-wireframe-outline">Back to List</a>
+            <button type="submit" class="btn btn-continue-wireframe-black">Continue</button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function displayFileName() {
+            var fileInput = document.getElementById('vehicleFileInput');
+            var nameDisplay = document.getElementById('fileNameDisplay');
+            if (fileInput.files.length > 0) {
+                nameDisplay.textContent = fileInput.files[0].name;
+            }
+        }
+
+        function clearSelectedFile() {
+            document.getElementById('vehicleFileInput').value = '';
+            document.getElementById('fileNameDisplay').textContent = 'No file selected';
+        }
+    </script>
 }

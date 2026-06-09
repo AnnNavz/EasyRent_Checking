@@ -22,8 +22,14 @@ namespace EasyRent_Checking.Controllers
 		}
 
 		// GET: Drivers
-		public async Task<IActionResult> Index(string searchString, string sortBy, string currentFilter)
+		public async Task<IActionResult> Index(string searchString, string sortBy, string currentFilter, int? page)
 		{
+			const int pageSize = 10;
+			var pageNumber = page.GetValueOrDefault(1);
+			if (pageNumber < 1)
+			{
+				pageNumber = 1;
+			}
 			// Keep parameters saved in ViewData so the active markup view can retain state tracking
 			ViewData["CurrentSearch"] = searchString;
 			ViewData["CurrentSort"] = sortBy;
@@ -66,7 +72,24 @@ namespace EasyRent_Checking.Controllers
 				_ => driversQuery.OrderByDescending(d => d.DriverId) // Default sorting by newest
 			};
 
-			return View(await driversQuery.ToListAsync());
+			var totalCount = await driversQuery.CountAsync();
+			var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
+			if (pageNumber > totalPages)
+			{
+				pageNumber = totalPages;
+			}
+
+			ViewData["PageIndex"] = pageNumber;
+			ViewData["TotalPages"] = totalPages;
+			ViewData["TotalCount"] = totalCount;
+			ViewData["PageSize"] = pageSize;
+
+			var drivers = await driversQuery
+				.Skip((pageNumber - 1) * pageSize)
+				.Take(pageSize)
+				.ToListAsync();
+
+			return View(drivers);
 		}
 
 		// GET: Drivers/Details/5
@@ -125,9 +148,38 @@ namespace EasyRent_Checking.Controllers
 
 				_context.Add(driver);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(CreateSuccess), new { id = driver.DriverId });
             }
             return View(driver);
+        }
+
+        // GET: Drivers/CreateSuccess/5
+        public async Task<IActionResult> CreateSuccess(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var driver = await _context.Driver.FindAsync(id);
+            if (driver == null)
+            {
+                return NotFound();
+            }
+
+            var model = new CreateSuccessViewModel
+            {
+                PageTitle = "Add New Driver",
+                ActivePage = "Drivers",
+                Heading = "Driver Profile Created",
+                MessageHtml = $"<strong>{driver.Name}</strong> has been successfully added to the system and is ready for assignment.",
+                PrimaryActionText = "View Driver's Profile",
+                PrimaryActionUrl = Url.Action(nameof(Details), new { id = driver.DriverId }) ?? "",
+                SecondaryActionText = "Add Another Driver",
+                SecondaryActionUrl = Url.Action(nameof(Create)) ?? ""
+            };
+
+            return View("CreateSuccess", model);
         }
 
         // GET: Drivers/Edit/5

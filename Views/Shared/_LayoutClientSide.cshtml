@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/client.css" asp-append-version="true" />
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -17,7 +18,7 @@
 
     <header class="admin-topbar d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
-            <button class="layout-toggle-btn me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#adminSidebarFlyout" aria-controls="adminSidebarFlyout">
+            <button class="layout-toggle-btn me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#clientSidebarFlyout" aria-controls="clientSidebarFlyout">
                 <i class="bi bi-list"></i>
             </button>
             <div class="d-flex align-items-center gap-2">
@@ -34,10 +35,11 @@
 
             <div class="dropdown">
                 <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 border-0 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold">AD</div>
-                    <span class="profile-name">Admin</span>
+                    <div class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold">CL</div>
+                    <span class="profile-name">Client</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li><a class="dropdown-item" href="#">My Bookings</a></li>
                     <li><a class="dropdown-item" href="#">Profile Settings</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="#">Logout</a></li>
@@ -46,7 +48,7 @@
         </div>
     </header>
 
-    <div class="offcanvas offcanvas-start admin-sidebar-flyout" tabindex="-1" id="adminSidebarFlyout" aria-labelledby="adminSidebarFlyoutLabel">
+    <div class="offcanvas offcanvas-start admin-sidebar-flyout" tabindex="-1" id="clientSidebarFlyout" aria-labelledby="clientSidebarFlyoutLabel">
         <div class="offcanvas-header">
             <div class="d-flex align-items-center gap-2">
                 <div class="brand-logo-circle">L</div>
@@ -60,26 +62,22 @@
 
         <div class="offcanvas-body d-flex flex-column justify-content-between px-0 py-3">
             <div class="pe-0">
-                <a asp-controller="Admin" asp-action="Dashboard" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
+                <a asp-controller="Vehicles" asp-action="ClientDashboard" class="nav-link-client @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
                     <div class="mock-icon-square"></div>
                     Dashboard
                 </a>
-                <a asp-controller="Drivers" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Drivers" ? "active" : "")">
+                <a asp-controller="Vehicles" asp-action="Homepage" class="nav-link-client @(ViewData["ActivePage"]?.ToString() == "Vehicles" ? "active" : "")">
                     <div class="mock-icon-square"></div>
-                    Driver Management
-                </a>
-                <a asp-controller="Vehicles" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Vehicles" ? "active" : "")">
-                    <div class="mock-icon-square"></div>
-                    Vehicle Management
+                    Vehicles
                 </a>
             </div>
 
             <div>
                 <hr class="mx-3 my-3 text-muted opacity-25" />
                 <div class="pe-0">
-                    <a asp-controller="Vehicles" asp-action="Homepage" class="nav-link-admin client-side-link">
+                    <a asp-controller="Admin" asp-action="Dashboard" class="nav-link-client layout-switch-link">
                         <div class="mock-icon-square"></div>
-                        Client Side
+                        Admin
                     </a>
                 </div>
             </div>
@@ -94,7 +92,6 @@
         </main>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

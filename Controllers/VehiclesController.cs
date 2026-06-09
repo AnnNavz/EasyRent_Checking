@@ -23,8 +23,14 @@ namespace EasyRent_Checking.Controllers
         }
 
 		// GET: Vehicles
-		public async Task<IActionResult> Index(string searchString, string sortBy, string currentFilter)
+		public async Task<IActionResult> Index(string searchString, string sortBy, string currentFilter, int? page)
 		{
+			const int pageSize = 10;
+			var pageNumber = page.GetValueOrDefault(1);
+			if (pageNumber < 1)
+			{
+				pageNumber = 1;
+			}
 			// Store parameters in ViewData to maintain UI control visibility states
 			ViewData["CurrentSearch"] = searchString;
 			ViewData["CurrentSort"] = sortBy;
@@ -70,7 +76,24 @@ namespace EasyRent_Checking.Controllers
 				_ => vehiclesQuery.OrderByDescending(v => v.VehicleId)
 			};
 
-			return View(await vehiclesQuery.ToListAsync());
+			var totalCount = await vehiclesQuery.CountAsync();
+			var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
+			if (pageNumber > totalPages)
+			{
+				pageNumber = totalPages;
+			}
+
+			ViewData["PageIndex"] = pageNumber;
+			ViewData["TotalPages"] = totalPages;
+			ViewData["TotalCount"] = totalCount;
+			ViewData["PageSize"] = pageSize;
+
+			var vehicles = await vehiclesQuery
+				.Skip((pageNumber - 1) * pageSize)
+				.Take(pageSize)
+				.ToListAsync();
+
+			return View(vehicles);
 		}
 		// GET: Vehicles/Details/5
 		public async Task<IActionResult> Details(int? id)
@@ -128,9 +151,39 @@ namespace EasyRent_Checking.Controllers
 
                 _context.Add(vehicle);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(CreateSuccess), new { id = vehicle.VehicleId });
             }
             return View(vehicle);
+        }
+
+        // GET: Vehicles/CreateSuccess/5
+        public async Task<IActionResult> CreateSuccess(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var vehicle = await _context.Vehicle.FindAsync(id);
+            if (vehicle == null)
+            {
+                return NotFound();
+            }
+
+            var vehicleLabel = $"{vehicle.Brand} {vehicle.Model}".Trim();
+            var model = new CreateSuccessViewModel
+            {
+                PageTitle = "Add New Vehicle",
+                ActivePage = "Vehicles",
+                Heading = "New Registered Vehicle",
+                MessageHtml = $"<strong>{vehicleLabel}</strong> has been successfully registered and added to the fleet inventory.",
+                PrimaryActionText = "View Vehicles",
+                PrimaryActionUrl = Url.Action(nameof(Index)) ?? "",
+                SecondaryActionText = "Add Another Vehicle",
+                SecondaryActionUrl = Url.Action(nameof(Create)) ?? ""
+            };
+
+            return View("CreateSuccess", model);
         }
 
         // GET: Vehicles/Edit/5

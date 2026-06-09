@@ -14,9 +14,7 @@
                                ViewData["CurrentFilter"]?.ToString() == "Maintenance" ? "Maintenance" : "Filters";
 }
 
-<!-- Top KPI Summary Row Components -->
 <div class="row g-4 mb-4">
-    <!-- Active Fleets Block -->
     <div class="col-md-6">
         <div class="metric-card shadow-sm p-4 d-flex justify-content-between align-items-center bg-white rounded-4">
             <div>
@@ -29,7 +27,6 @@
         </div>
     </div>
 
-    <!-- Total Fleets Block -->
     <div class="col-md-6">
         <div class="metric-card shadow-sm p-4 d-flex justify-content-between align-items-center bg-white rounded-4">
             <div>
@@ -43,7 +40,6 @@
     </div>
 </div>
 
-<!-- Sorting, Filtering, & Create Action Menu Ribbon Form -->
 <form asp-action="Index" method="get" class="w-100">
     <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
     <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
@@ -51,7 +47,6 @@
     <div class="card border-0 bg-white rounded-4 shadow-sm mb-4">
         <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
 
-            <!-- Filter Controls Dropdowns Group -->
             <div class="d-flex align-items-center gap-2">
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
@@ -78,7 +73,6 @@
                 </div>
             </div>
 
-            <!-- Directory Search Bar & Primary Form Trigger Button -->
             <div class="d-flex align-items-center gap-3 flex-grow-1 flex-sm-grow-0">
                 <div class="position-relative flex-grow-1">
                     <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
@@ -97,7 +91,6 @@
     </div>
 </form>
 
-<!-- Primary Administrative Management Ledger Table -->
 <div class="admin-table-card shadow-sm border-0 mb-4">
     <div class="table-responsive">
         <table class="table admin-table mb-0 align-middle">
@@ -125,7 +118,6 @@
                             <td>@Html.DisplayFor(modelItem => item.Type)</td>
                             <td>
                                 @{
-                                    // SAFE FIX: Convert the enum item to a string value to compare smoothly without casing friction
                                     string statusString = item.Status.ToString() ?? "";
                                 }
 
@@ -151,7 +143,11 @@
                                         <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.VehicleId"><i class="bi bi-pencil me-2"></i> Edit</a></li>
                                         <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.VehicleId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
                                         <li><hr class="dropdown-menu-divider"></li>
-                                        <li><a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.VehicleId"><i class="bi bi-trash me-2"></i> Delete</a></li>
+                                        <li>
+                                            <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.VehicleId', '@item.Model')">
+                                                <i class="bi bi-trash me-2"></i> Delete
+                                            </button>
+                                        </li>
                                     </ul>
                                 </div>
                             </td>
@@ -172,12 +168,12 @@
     </div>
 </div>
 
-<!-- Table Data Footer Pagination Component Row -->
-<div class="d-flex align-items-center justify-content-between px-2 text-secondary fw-semibold mb-5 pagination-wrapper">
-    <div class="small">1-10 of 97</div>
-    <div class="d-flex align-items-center gap-3">
-        <button class="btn btn-link text-decoration-none text-secondary p-0 border-0"><i class="bi bi-chevron-left"></i></button>
-        <span class="small text-dark">1/10</span>
-        <button class="btn btn-link text-decoration-none text-secondary p-0 border-0"><i class="bi bi-chevron-right"></i></button>
-    </div>
-</div>
+<partial name="_AdminPagination" />
+
+@{
+    ViewData["DeleteModalId"] = "vehicleDeletePopup";
+    ViewData["DeleteHiddenInputId"] = "popupVehicleId";
+    ViewData["DeleteMessageId"] = "deletePopupMessage";
+    ViewData["DeleteEntityLabel"] = "vehicle";
+}
+<partial name="_DeleteConfirmModal" />

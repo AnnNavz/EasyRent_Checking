@@ -1,0 +1,61 @@
+@{
+    var pageIndex = ViewData["PageIndex"] is int pi ? pi : 1;
+    var totalPages = ViewData["TotalPages"] is int tp ? tp : 1;
+    var totalCount = ViewData["TotalCount"] is int tc ? tc : 0;
+    var pageSize = ViewData["PageSize"] is int ps ? ps : 10;
+
+    var start = totalCount == 0 ? 0 : ((pageIndex - 1) * pageSize) + 1;
+    var end = totalCount == 0 ? 0 : Math.Min(pageIndex * pageSize, totalCount);
+
+    var searchString = ViewData["CurrentSearch"]?.ToString();
+    var sortBy = ViewData["CurrentSort"]?.ToString();
+    var currentFilter = ViewData["CurrentFilter"]?.ToString();
+
+    var hasPrevious = pageIndex > 1;
+    var hasNext = pageIndex < totalPages;
+}
+
+<div class="d-flex align-items-center justify-content-between px-2 text-secondary fw-semibold mb-5 pagination-wrapper">
+    <div class="small">@start-@end of @totalCount</div>
+    <div class="d-flex align-items-center gap-3">
+        @if (hasPrevious)
+        {
+            <a asp-action="Index"
+               asp-route-page="@(pageIndex - 1)"
+               asp-route-searchString="@searchString"
+               asp-route-sortBy="@sortBy"
+               asp-route-currentFilter="@currentFilter"
+               class="btn btn-link text-decoration-none text-secondary p-0 border-0"
+               aria-label="Previous page">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        }
+        else
+        {
+            <button class="btn btn-link text-decoration-none text-secondary p-0 border-0 disabled opacity-50" disabled aria-label="Previous page">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        }
+
+        <span class="small text-dark">@pageIndex/@(totalPages == 0 ? 1 : totalPages)</span>
+
+        @if (hasNext)
+        {
+            <a asp-action="Index"
+               asp-route-page="@(pageIndex + 1)"
+               asp-route-searchString="@searchString"
+               asp-route-sortBy="@sortBy"
+               asp-route-currentFilter="@currentFilter"
+               class="btn btn-link text-decoration-none text-secondary p-0 border-0"
+               aria-label="Next page">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        }
+        else
+        {
+            <button class="btn btn-link text-decoration-none text-secondary p-0 border-0 disabled opacity-50" disabled aria-label="Next page">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        }
+    </div>
+</div>

@@ -3,21 +3,54 @@
     --dark-neutral: #4a4a4a;
     --light-bg: #f3f2f2;
     --border-dashed: #b5b5b5;
-    --flyout-width: 280px;
+    --flyout-width: 240px;
+    --font-title: 'Roboto', sans-serif;
+    --font-body: 'Poppins', sans-serif;
 }
 
+/* --- Project typography --- */
 body {
     background-color: var(--light-bg);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: var(--font-body);
     color: #212529;
-    padding-top: var(--topbar-height); /* Leaves space for sticky header bar */
+    padding-top: var(--topbar-height);
+}
+
+h1, h2, h3, h4, h5, h6,
+.font-title,
+.page-main-title,
+.brand-text,
+.admin-success-heading,
+.section-header,
+.wizard-page-title,
+.wizard-section-title,
+.vehicle-model-header,
+.metric-card h2,
+.admin-table thead th {
+    font-family: var(--font-title);
+}
+
+label,
+.form-label,
+input,
+select,
+textarea,
+.btn,
+small,
+.dropdown-item,
+.nav-link-admin,
+.nav-link-client,
+.pagination-wrapper,
+.step-label,
+.admin-success-message {
+    font-family: var(--font-body);
 }
 
 /* --- Fixed Top Header Component --- */
 .admin-topbar {
     height: var(--topbar-height);
     background-color: #ffffff;
-    border-bottom: 1px solid #e2e2e2;
+    border-bottom: 1px solid #eaeaea;
     position: fixed;
     top: 0;
     left: 0;
@@ -26,84 +59,156 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.layout-toggle-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #222;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.layout-toggle-btn:hover {
+    opacity: 0.7;
 }
 
 /* --- Main View Content Workspace Frame --- */
 .admin-main-wrapper {
     width: 100%;
     min-height: calc(100vh - var(--topbar-height));
-    background-color: var(--light-bg);
+    background-color: #f9f9f9;
+}
+
+.admin-main-wrapper main {
+    padding: 1.5rem;
 }
 
 /* --- Collapsible Flyout Architecture --- */
 .admin-sidebar-flyout {
     width: var(--flyout-width) !important;
-    border-right: 1px solid #e2e2e2 !important;
-    box-shadow: 4px 0 24px rgba(0,0,0,0.05);
+    border-right: 1px solid #eaeaea !important;
+    background: #fff !important;
 }
 
-/* --- Branding Graphics & Typography --- */
+.admin-sidebar-flyout .offcanvas-header {
+    padding: 1.5rem 1.5rem 0.75rem 1.5rem !important;
+    border-bottom: none;
+}
+
+/* X-box nav icon (shared admin + client) */
+.mock-icon-square {
+    width: 24px;
+    height: 22px;
+    border: 1.5px solid #333;
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.mock-icon-square::before,
+.mock-icon-square::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background-color: #333;
+    top: 50%;
+    left: 0;
+}
+
+.mock-icon-square::before {
+    transform: rotate(35deg);
+}
+
+.mock-icon-square::after {
+    transform: rotate(-35deg);
+}
+
+/* --- Sidebar Menu Selection Styling --- */
+.nav-link-admin,
+.nav-link-client {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 24px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 0 8px 8px 0;
+    margin-right: 8px;
+    transition: background-color 0.2s ease, padding-left 0.2s ease, color 0.2s ease;
+}
+
+.nav-link-admin:hover,
+.nav-link-client:hover,
+.nav-link-admin.active,
+.nav-link-client.active {
+    background-color: #f0f0f0;
+    color: #000;
+    padding-left: 28px;
+}
+
+.nav-link-admin.client-side-link,
+.nav-link-client.layout-switch-link {
+    color: #333;
+    font-weight: 700;
+}
 .brand-logo-circle {
     width: 38px;
     height: 38px;
-    border: 3px solid #212529;
+    border: 2px solid #222;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 900;
-    font-size: 19px;
-    color: #212529;
+    font-family: var(--font-title);
+    font-weight: 700;
+    font-size: 18px;
+    color: #222;
+    flex-shrink: 0;
 }
 
 .brand-text {
-    font-size: 1.25rem;
-    letter-spacing: -0.5px;
+    font-size: 16px;
+    line-height: 1.1;
+    letter-spacing: -0.3px;
+    margin-bottom: 0;
 }
 
 .brand-subtext {
-    font-size: 10px;
-    margin-top: -2px;
-    font-weight: 600;
+    font-size: 9px;
+    letter-spacing: 0.3px;
+    color: #888;
+    font-weight: 400;
 }
 
 .page-main-title {
-    font-size: 1.25rem;
+    font-size: 1rem;
     letter-spacing: -0.3px;
-}
-
-/* --- Sidebar Menu Selection Styling --- */
-.nav-link-admin {
-    display: flex;
-    align-items: center;
-    padding: 0.85rem 1.75rem;
-    color: #333333;
-    text-decoration: none;
     font-weight: 700;
-    font-size: 0.9rem;
-    gap: 1rem;
-    border-radius: 0 25px 25px 0;
-    margin-bottom: 0.25rem;
-    transition: all 0.15s ease-in-out;
+    margin-bottom: 0;
 }
 
-    .nav-link-admin:hover {
-        background-color: #f5f5f5;
-        color: #000000;
-    }
+.profile-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+    background: #222 !important;
+    border: 2px solid #555;
+    border-radius: 50%;
+}
 
-    .nav-link-admin.active {
-        background-color: #e0dede;
-        color: #000000;
-    }
-
-.nav-icon-box {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
+.profile-name {
+    font-size: 13px !important;
+    font-weight: 700;
+    color: #222 !important;
 }
 
 /* --- Dashboard Elements & Containers --- */
@@ -291,4 +396,390 @@ body {
 
 .pagination-wrapper {
     font-size: 0.85rem;
+}
+
+/* --- Shared wizard (Create) --- */
+.wizard-page-title {
+    font-size: 1.1rem;
+}
+
+.wizard-section-title {
+    font-size: 1.05rem;
+    color: #4a4a4a;
+}
+
+.wizard-max-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.step-timeline {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    max-width: 480px;
+    margin: 0 auto 2rem auto;
+}
+
+.step-timeline::before {
+    content: "";
+    position: absolute;
+    top: 16px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #dee2e6;
+    z-index: 1;
+}
+
+.step-node {
+    position: relative;
+    z-index: 2;
+    background: #f5f5f5;
+    text-align: center;
+    padding: 0 8px;
+}
+
+.step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid #ced4da;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0 auto 6px auto;
+    transition: all 0.25s ease;
+}
+
+.step-node.active .step-circle {
+    border-color: #000;
+    color: #000;
+}
+
+.step-node.completed .step-circle {
+    border-color: #000;
+    background-color: #000;
+    color: #fff;
+}
+
+.step-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #adb5bd;
+}
+
+.step-node.active .step-label,
+.step-node.completed .step-label {
+    color: #000;
+}
+
+.wizard-step-panel {
+    display: none;
+}
+
+.wizard-step-panel.active {
+    display: block;
+}
+
+.form-container-card {
+    background-color: #d9d9d9;
+    border-radius: 12px;
+}
+
+.form-control-thin {
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.9rem;
+    background-color: #ffffff !important;
+}
+
+.form-control-thin:focus {
+    border-color: #000 !important;
+    box-shadow: none !important;
+}
+
+.review-avatar-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+/* --- Shared edit form --- */
+.edit-container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.form-card-wireframe {
+    background-color: #dcdcdc !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 2.5rem;
+}
+
+.section-header {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #4a4a4a;
+    margin-bottom: 0.5rem;
+}
+
+.section-divider {
+    border-top: 1px solid #b5b5b5 !important;
+    margin-top: 0.25rem;
+    margin-bottom: 1.5rem;
+    opacity: 1;
+}
+
+.wireframe-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555555;
+    margin-bottom: 0.4rem;
+}
+
+.wireframe-input {
+    background-color: #f1f1f1 !important;
+    border: 1px solid #cccccc !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1rem !important;
+    color: #222222 !important;
+    font-weight: 500;
+    transition: border-color 0.2s ease;
+}
+
+.wireframe-input:focus {
+    border-color: #888888 !important;
+    box-shadow: none !important;
+}
+
+.upload-zone-box {
+    background-color: #f1f1f1;
+    border: 2px dashed #cccccc;
+    border-radius: 10px;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease;
+}
+
+.upload-zone-box:hover {
+    background-color: #e9e9e9;
+}
+
+.upload-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-preview-bar {
+    background-color: #f1f1f1;
+    border-radius: 8px;
+    border: 1px solid #cccccc;
+}
+
+.btn-edit-wireframe-outline {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border: 1px solid #333333 !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.btn-edit-wireframe-outline:hover {
+    background-color: #f5f5f5 !important;
+    color: #333333;
+}
+
+.btn-continue-wireframe-black {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 2.25rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.btn-continue-wireframe-black:hover {
+    opacity: 0.9;
+    color: #ffffff;
+}
+
+/* --- Delete confirmation modal --- */
+.admin-delete-modal-dialog {
+    max-width: 440px;
+}
+
+.modal-delete-content {
+    background-color: #dcdcdc !important;
+    border: none !important;
+    border-radius: 16px !important;
+    padding: 3rem 2rem;
+}
+
+.modal-delete-icon-box {
+    width: 80px;
+    height: 80px;
+    background-color: #f8d7da;
+    color: #dc3545;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+}
+
+.btn-confirm-delete {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: opacity 0.2s ease;
+}
+
+.btn-confirm-delete:hover {
+    opacity: 0.9;
+    color: #ffffff;
+}
+
+.btn-cancel-delete {
+    background-color: transparent !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.btn-cancel-delete:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: #000000;
+}
+
+.admin-delete-actions {
+    max-width: 85%;
+}
+
+/* --- Create success screen --- */
+.admin-success-screen {
+    max-width: 640px;
+    margin: 4rem auto;
+    text-align: center;
+    padding: 0 1rem 3rem;
+}
+
+.admin-success-icon-wrap {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 2rem;
+}
+
+.admin-success-icon-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.15);
+    transform: scale(1.35);
+}
+
+.admin-success-icon {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    margin: 11px auto;
+    border-radius: 50%;
+    background: #22c55e;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.admin-success-heading {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.3px;
+}
+
+.admin-success-message {
+    font-size: 0.95rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.admin-success-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.btn-admin-primary {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-admin-primary:hover {
+    opacity: 0.9;
+    color: #fff;
+}
+
+.btn-admin-outline {
+    background-color: #fff !important;
+    color: #111 !important;
+    border: 1px solid #111 !important;
+    border-radius: 8px !important;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-admin-outline:hover {
+    background-color: #f5f5f5 !important;
+    color: #111;
 }
