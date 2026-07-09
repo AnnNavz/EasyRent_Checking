@@ -13,6 +13,18 @@
         };
     }
 
+    var sectionUrl = ViewData["SectionUrl"]?.ToString();
+    if (string.IsNullOrWhiteSpace(sectionUrl))
+    {
+        sectionUrl = ViewData["ActivePage"]?.ToString() switch
+        {
+            "Dashboard" => Url.Action("Dashboard", "Admin"),
+            "Drivers" => Url.Action("Index", "Drivers"),
+            "Vehicles" => Url.Action("Index", "Vehicles"),
+            _ => null
+        };
+    }
+
     var displayTitle = string.IsNullOrWhiteSpace(pageTitle) ? sectionTitle : pageTitle;
     var showBreadcrumb = !string.IsNullOrWhiteSpace(sectionTitle)
         && !string.IsNullOrWhiteSpace(pageTitle)
@@ -22,7 +34,14 @@
 <div class="topbar-page-title d-none d-sm-flex align-items-center">
     @if (showBreadcrumb)
     {
-        <span class="topbar-breadcrumb-section">@sectionTitle</span>
+        @if (!string.IsNullOrWhiteSpace(sectionUrl))
+        {
+            <a href="@sectionUrl" class="topbar-breadcrumb-section topbar-breadcrumb-link">@sectionTitle</a>
+        }
+        else
+        {
+            <span class="topbar-breadcrumb-section">@sectionTitle</span>
+        }
         <span class="topbar-breadcrumb-separator" aria-hidden="true">&gt;</span>
         <span class="topbar-breadcrumb-current">@pageTitle</span>
     }

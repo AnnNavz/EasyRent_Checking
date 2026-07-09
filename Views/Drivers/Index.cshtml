@@ -10,6 +10,14 @@
 
     string currentFilterName = ViewData["CurrentFilter"]?.ToString() == "ActiveOnly" ? "Active Only" :
                                ViewData["CurrentFilter"]?.ToString() == "Expired" ? "Expired Licenses" : "Filters";
+
+    string indexReturnUrl = Url.Action("Index", new
+    {
+        searchString = ViewData["CurrentSearch"],
+        sortBy = ViewData["CurrentSort"],
+        currentFilter = ViewData["CurrentFilter"],
+        page = ViewData["PageIndex"]
+    }) ?? "";
 }
 
 <div class="row g-4 mb-4">
@@ -131,11 +139,11 @@
                             <td>@(item.ExpiryDate.ToString("MM-dd-yyyy"))</td>
                             <td class="text-center">
                                 <div class="dropdown">
-                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown">
+                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport">
                                         <i class="bi bi-three-dots fs-5"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                        <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.DriverId"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.DriverId" asp-route-returnUrl="@indexReturnUrl"><i class="bi bi-pencil me-2"></i> Edit</a></li>
                                         <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.DriverId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
                                         <li><hr class="dropdown-menu-divider"></li>
                                         <li>
@@ -149,6 +157,15 @@
                             </td>
                         </tr>
                     }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted fw-medium">
+                            <i class="bi bi-person-badge fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                            No matching drivers located in directory indexes.
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>

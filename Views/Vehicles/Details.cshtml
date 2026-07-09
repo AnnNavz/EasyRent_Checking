@@ -1,119 +1,88 @@
 ﻿@model EasyRent_Checking.Models.Vehicle
 
 @{
-    Layout = "~/Views/Shared/_LayoutAdminDashboard.cshtml";
+    Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "View Details";
     ViewData["ActivePage"] = "Vehicles";
+
+    string registrationFrom = Model?.RegistrationDate.ToString("MMMM dd, yyyy") ?? "—";
+    string registrationTo = Model?.RegistrationExpiry.ToString("MMMM dd, yyyy") ?? "—";
+    string detailsReturnUrl = Url.Action("Details", new { id = Model?.VehicleId }) ?? "";
 }
 
-<div class="d-flex justify-content-end align-items-center mb-4 px-2">
-    <div class="d-flex gap-3">
-        <a asp-action="Index" class="btn text-center" style="border: 1px solid #999; background-color: #fff; color: #666; font-size: 11px; font-weight: 600; border-radius: 6px; width: 110px; padding: 10px 0; text-decoration: none; transition: all 0.2s;">Back</a>
-        <a asp-action="Edit" asp-route-id="@Model?.VehicleId" class="btn text-center text-white" style="background-color: #000; font-size: 11px; font-weight: 600; border-radius: 6px; padding: 10px 24px; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;">Edit Vehicle Information</a>
-    </div>
-</div>
+<div class="container-fluid px-4 py-3">
 
-<div class="container-fluid" style="font-family: 'Poppins', sans-serif; padding-left: 20px;">
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="wireframe-image-box">
+    <div class="details-page-header">
+        <div class="d-flex align-items-center gap-4 flex-grow-1">
+            <div class="vehicle-details-image">
                 @if (!string.IsNullOrEmpty(Model?.ImagePath))
                 {
-                    <img src="~/images/@Model.ImagePath" alt="Vehicle Image" class="img-fluid vehicle-img-cover" />
+                    <img src="~/images/@Model.ImagePath" alt="@Model.Model" />
                 }
                 else
                 {
-                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width: 100%; height: 100%; stroke: #222; stroke-width: 1.2;">
-                        <line x1="0" y1="0" x2="100" y2="100" />
-                        <line x1="100" y1="0" x2="0" y2="100" />
-                    </svg>
+                    <div class="license-preview-placeholder"></div>
                 }
             </div>
+            <div>
+                <h1 class="vehicle-details-model mb-1">@Model?.Model</h1>
+                <p class="vehicle-details-brand mb-0">@Model?.Brand</p>
+            </div>
+        </div>
+        <div class="details-page-actions">
+            <a asp-action="Index" class="btn btn-page-back">Back</a>
+            <a asp-action="Edit" asp-route-id="@Model?.VehicleId" asp-route-returnUrl="@detailsReturnUrl" class="btn btn-page-primary">Edit Vehicle Information</a>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-12 pt-2">
-            <h1 class="mb-2" style="font-size: 32px; font-weight: 700; color: #2d2d2d; letter-spacing: -0.2px;">@Model.Model</h1>
-            <h3 style="font-size: 20px; font-weight: 600; color: #5a5a5a; margin-bottom: 40px;">@Model.Brand</h3>
+    <ul class="nav nav-tabs vehicle-details-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" type="button" role="tab" aria-selected="true">Information</button>
+        </li>
+    </ul>
 
-            <div class="specs-data-container">
-                <div class="spec-data-row">
-                    <span class="spec-lbl">Color :</span>
-                    <span class="spec-val">@Model.Color</span>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="vehicle-info-card shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-car-front fs-5 text-secondary"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Vehicle Details</h6>
                 </div>
-
-                <div class="spec-data-row">
-                    <span class="spec-lbl">Type :</span>
-                    <span class="spec-val">@Model.Type</span>
+                <hr class="wizard-section-divider" />
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Color</span>
+                    <span class="vehicle-info-value">@Model?.Color</span>
                 </div>
-
-                <div class="spec-data-row">
-                    <span class="spec-lbl">Plate Number :</span>
-                    <span class="spec-val">@Model.PlateNumber</span>
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Type</span>
+                    <span class="vehicle-info-value">@Model?.Type</span>
                 </div>
-
-                <div class="spec-data-row">
-                    <span class="spec-lbl">Status :</span>
-                    <span class="spec-val">@Model.Status</span>
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Plate Number</span>
+                    <span class="vehicle-info-value font-monospace text-uppercase">@Model?.PlateNumber</span>
                 </div>
-
-                <div class="spec-data-row">
-                    <span class="spec-lbl">License Number :</span>
-                    <span class="spec-val">@Model.RegistrationDate.ToString("MMMM dd, yyyy")</span>
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Status</span>
+                    <span class="vehicle-info-value">@Model?.Status</span>
                 </div>
-
-                <div class="spec-data-row">
-                    <span class="spec-lbl">License Expiry :</span>
-                    <span class="spec-val">@Model.RegistrationExpiry.ToString("MMMM dd, yyyy")</span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="vehicle-info-card shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-card-text fs-5 text-secondary"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Vehicle Registration Details</h6>
+                </div>
+                <hr class="wizard-section-divider" />
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Valid from</span>
+                    <span class="vehicle-info-value">@registrationFrom</span>
+                </div>
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Valid to</span>
+                    <span class="vehicle-info-value">@registrationTo</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    /* Absolute Square Aspect Ratio Frame Styling */
-    .wireframe-image-box {
-        width: 100%;
-        max-width: 275px;
-        aspect-ratio: 1 / 1;
-        border: 2px solid #222;
-        background-color: transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
-
-    .vehicle-img-cover {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    /* Typographic Meta Data Rules styling */
-    .specs-data-container .spec-data-row {
-        margin-bottom: 14px;
-        font-size: 16px;
-        letter-spacing: 0.1px;
-    }
-
-    .specs-data-container .spec-lbl {
-        color: #333;
-        font-weight: 600;
-        display: inline-block;
-    }
-
-    .specs-data-container .spec-val {
-        color: #444;
-        font-weight: 500;
-        margin-left: 6px;
-    }
-
-    /* Button hover tweaks */
-    .btn:hover {
-        opacity: 0.85;
-    }
-</style>

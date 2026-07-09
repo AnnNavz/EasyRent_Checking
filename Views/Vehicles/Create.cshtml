@@ -14,28 +14,30 @@
         </div>
         <div class="step-node" id="node-2">
             <div class="step-circle" id="circle-2">2</div>
-            <div class="step-label">Documentation</div>
+            <div class="step-label">Review</div>
         </div>
         <div class="step-node" id="node-3">
             <div class="step-circle" id="circle-3">3</div>
-            <div class="step-label">Review</div>
+            <div class="step-label">Complete</div>
         </div>
     </div>
 
     <form asp-action="Create" enctype="multipart/form-data" id="vehicleWizardForm">
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
+        <!-- STEP 1: INFO -->
         <div class="wizard-step-panel active" id="stepPanel-1">
-            <div class="text-start mb-3">
-                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Register New Vehicle</h5>
-                <p class="text-muted small">Enter the core vehicle details for fleet registration.</p>
+            <div class="text-start mb-4">
+                <h5 class="wizard-page-title fw-bold text-dark mb-1" id="step1-title" style="letter-spacing: -0.3px;">Register New Vehicle</h5>
+                <p class="text-muted small" id="step1-subtitle">Enter the core vehicle details for fleet registration.</p>
             </div>
 
             <div class="form-container-card p-4 mb-4 shadow-sm">
-                <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-10">
+                <div class="d-flex align-items-center gap-2 mb-3">
                     <i class="bi bi-car-front fs-5 text-secondary"></i>
-                    <span class="wizard-section-title fw-bold text-dark small">Vehicle Information</span>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Information</h6>
                 </div>
+                <hr class="wizard-section-divider" />
 
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -55,9 +57,7 @@
                     </div>
                     <div class="col-md-6">
                         <label asp-for="Type" class="form-label fw-semibold small text-secondary mb-1">Type</label>
-                        <select asp-for="Type" id="input-Type" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleType>()">
-                            <option value="" disabled selected>e.g. SUV</option>
-                        </select>
+                        <select asp-for="Type" id="input-Type" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
                         <span asp-validation-for="Type" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
@@ -67,9 +67,7 @@
                     </div>
                     <div class="col-md-6">
                         <label asp-for="Status" class="form-label fw-semibold small text-secondary mb-1">Status</label>
-                        <select asp-for="Status" id="input-Status" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleStatus>()">
-                            <option value="" disabled selected>Select status</option>
-                        </select>
+                        <select asp-for="Status" id="input-Status" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
                         <span asp-validation-for="Status" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
@@ -84,35 +82,45 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="wizard-step-panel" id="stepPanel-2">
-            <div class="text-start mb-3">
-                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Vehicle Documentation</h5>
-                <p class="text-muted small">Upload registration scans or vehicle documentation.</p>
-            </div>
 
             <div class="form-container-card p-4 mb-4 shadow-sm">
-                <div class="wizard-section-title fw-bold text-dark mb-2">Document Scans</div>
-                <hr class="section-divider" />
-                <div class="p-4 bg-white rounded-3 border border-2 border-dashed text-center position-relative shadow-sm">
-                    <i class="bi bi-cloud-arrow-up text-muted fs-3 d-block mb-2"></i>
-                    <span class="d-block small fw-bold text-dark mb-1" style="font-size:0.85rem;">Drag & drop license scan or click to browse</span>
-                    <span class="d-block text-muted text-opacity-70" style="font-size:0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
-                    <input asp-for="ImageFile" id="input-File" type="file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer;" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFileFeedback(this)" />
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Image</h6>
                 </div>
-                <div id="file-upload-feedback" class="mt-2 bg-white p-2 px-3 rounded-3 d-none align-items-center justify-content-between shadow-sm border">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-check-circle-fill text-success fs-6"></i>
-                        <span id="feedback-filename" class="small fw-semibold text-dark font-monospace" style="font-size:0.8rem;">file_name.png</span>
+                <hr class="wizard-section-divider" />
+
+                <div id="vehicle-image-upload-zone" class="license-upload-zone">
+                    <div>
+                        <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
+                        <span class="d-block small fw-bold text-dark mb-1">Drag & drop image scan or <span class="text-decoration-underline">click to browse</span></span>
+                        <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
                     </div>
-                    <button type="button" class="btn btn-link text-muted small text-decoration-none p-0 border-0" style="font-size:0.8rem;" onclick="clearFileSelection()">Remove</button>
+                    <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFileFeedback(this)" />
+                </div>
+
+                <div id="vehicle-image-preview-state" class="d-none">
+                    <div class="edit-license-preview-wrap">
+                        <div class="license-preview-box" id="vehicle-image-preview-box" title="Click to replace image">
+                            <img id="vehicle-preview-img" class="d-none" alt="Vehicle image preview" />
+                            <div id="vehicle-preview-placeholder" class="license-preview-placeholder"></div>
+                        </div>
+                        <button type="button" id="vehicle-image-edit-remove" class="edit-license-remove-btn d-none" onclick="clearFileSelection()" aria-label="Remove vehicle image">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <span id="vehicle-image-edit-filename" class="d-none small text-muted font-monospace text-center d-block mt-2"></span>
+                    </div>
+                    <div id="vehicle-image-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between p-3 mt-2">
+                        <span id="feedback-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">vehicle_image.png</span>
+                        <button type="button" class="btn btn-link text-dark small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearFileSelection()">Remove</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="wizard-step-panel" id="stepPanel-3">
-            <div class="text-start mb-3">
+        <!-- STEP 2: REVIEW -->
+        <div class="wizard-step-panel" id="stepPanel-2">
+            <div class="text-start mb-4">
                 <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Reviews & Verify</h5>
                 <p class="text-muted small">Please confirm the vehicle details before saving to the database.</p>
             </div>
@@ -123,6 +131,7 @@
                         <i class="bi bi-car-front fs-5"></i>
                         <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Information</h6>
                     </div>
+                    <hr class="wizard-section-divider" />
                     <div class="row g-3 px-1" style="font-size: 0.9rem;">
                         <div class="col-md-6">
                             <span class="text-muted d-block small mb-0.5">Brand</span>
@@ -153,26 +162,42 @@
                             <span id="review-RegistrationDate" class="fw-bold text-dark">-</span>
                         </div>
                         <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Registration Expiry</span>
+                            <span class="text-muted d-block small mb-0.5">Registration Expiry Date</span>
                             <span id="review-RegistrationExpiry" class="fw-bold text-dark">-</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="pt-3 border-top border-secondary border-opacity-10">
+                <div>
                     <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
                         <i class="bi bi-file-earmark-arrow-up fs-5"></i>
-                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Uploaded Documents</h6>
+                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Uploaded image</h6>
                     </div>
-                    <div class="bg-white p-2.5 rounded-3 d-flex align-items-center gap-3 border shadow-sm mx-1">
-                        <div class="border rounded px-2.5 py-1.5 bg-light">
-                            <i class="bi bi-file-earmark-image fs-5 text-muted"></i>
+                    <hr class="wizard-section-divider" />
+                    <div class="review-doc-card" style="max-width: 320px;">
+                        <div class="review-doc-preview">
+                            <img id="review-VehicleImg" class="d-none" alt="Vehicle image" />
+                            <div id="review-VehiclePlaceholder" class="license-preview-placeholder"></div>
                         </div>
-                        <div>
-                            <span id="review-Filename" class="d-block small fw-bold text-dark font-monospace" style="font-size:0.8rem;">No document chosen</span>
-                            <span class="text-muted d-block" style="font-size:0.75rem;">Vehicle Registration Scan</span>
-                        </div>
+                        <span id="review-Filename" class="review-doc-filename">No image chosen</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: COMPLETE -->
+        <div class="wizard-step-panel" id="stepPanel-3">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <div class="success-circle mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background-color: #d4edda; border-radius: 50%;">
+                        <i class="bi bi-check-lg text-success fs-2"></i>
+                    </div>
+                </div>
+                <h5 class="wizard-page-title fw-bold text-dark mb-2" style="letter-spacing: -0.3px;">Vehicle Registered Successfully!</h5>
+                <p class="text-muted small mb-4">The vehicle has been added to the fleet inventory.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="@Url.Action("Index")" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;">Back to Vehicles List</a>
+                    <a href="@Url.Action("Create")" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;">Add Another Vehicle</a>
                 </div>
             </div>
         </div>
@@ -186,9 +211,27 @@
 
 <script>
     let currentStep = 1;
+    let isEditMode = false;
     const totalSteps = 3;
 
     const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Status', 'RegistrationDate', 'RegistrationExpiry'];
+
+    function setExpiryOneYearAfterRegistration() {
+        const regDateInput = document.getElementById('input-RegistrationDate');
+        const expiryInput = document.getElementById('input-RegistrationExpiry');
+        if (!regDateInput.value) {
+            return;
+        }
+
+        const parts = regDateInput.value.split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const expiryDate = new Date(year + 1, month, day);
+        const formattedMonth = String(expiryDate.getMonth() + 1).padStart(2, '0');
+        const formattedDay = String(expiryDate.getDate()).padStart(2, '0');
+        expiryInput.value = `${expiryDate.getFullYear()}-${formattedMonth}-${formattedDay}`;
+    }
 
     function validateStep1() {
         const form = document.getElementById('vehicleWizardForm');
@@ -224,114 +267,315 @@
     }
 
     function navigateStep(direction) {
-        if (direction === 1 && currentStep === 1 && !validateStep1()) {
+        if (direction === 1 && isEditMode) {
+            if (!validateStep1()) return;
+            closeEditMode(true);
             return;
         }
 
-        if (direction === 1 && currentStep === totalSteps) {
+        if (direction === 1 && currentStep === 2) {
             document.getElementById('vehicleWizardForm').submit();
             return;
         }
 
-        document.getElementById(`stepPanel-${currentStep}`).classList.remove('active');
-
-        if (direction === 1) {
-            document.getElementById(`node-${currentStep}`).classList.add('completed');
-            currentStep++;
-        } else {
-            currentStep--;
-            document.getElementById(`node-${currentStep}`).classList.remove('completed');
+        if (direction === 1 && currentStep === 1 && !validateStep1()) {
+            return;
         }
 
+        if (direction === 1 && currentStep === 1) {
+            compileReviewSummary();
+        }
+
+        const nextStep = direction === 1 ? currentStep + 1 : currentStep - 1;
+        setActiveStep(nextStep);
+    }
+
+    function setActiveStep(targetStep) {
+        document.getElementById('stepPanel-1').classList.remove('active');
+        document.getElementById('stepPanel-2').classList.remove('active');
+        document.getElementById('stepPanel-3').classList.remove('active');
+
+        if (targetStep > currentStep) {
+            for (let step = currentStep; step < targetStep; step++) {
+                document.getElementById(`node-${step}`).classList.add('completed');
+            }
+        } else if (targetStep < currentStep) {
+            for (let step = targetStep; step <= totalSteps; step++) {
+                document.getElementById(`node-${step}`).classList.remove('completed');
+            }
+        }
+
+        currentStep = targetStep;
+        isEditMode = false;
+        resetStep1Header();
+        setImagePreviewMode(false);
         document.getElementById(`stepPanel-${currentStep}`).classList.add('active');
 
         for (let i = 1; i <= totalSteps; i++) {
             const node = document.getElementById(`node-${i}`);
             if (i === currentStep) {
                 node.classList.add('active');
-            } else if (i > currentStep) {
+            } else {
                 node.classList.remove('active');
-                node.classList.remove('completed');
             }
         }
 
         updateWizardButtons();
     }
 
+    function openEditMode() {
+        isEditMode = true;
+        document.getElementById('stepPanel-2').classList.remove('active');
+        document.getElementById('stepPanel-1').classList.add('active');
+        document.getElementById('step1-title').innerText = 'Edit Details';
+        document.getElementById('step1-subtitle').innerText = 'Update the vehicle information before confirming.';
+        setImagePreviewMode(true);
+        refreshImageStateForEdit();
+        setTopbarTitle('Edit Details');
+        updateWizardButtons();
+    }
+
+    function closeEditMode(refreshReview) {
+        isEditMode = false;
+        document.getElementById('stepPanel-1').classList.remove('active');
+        document.getElementById('stepPanel-2').classList.add('active');
+        resetStep1Header();
+        setImagePreviewMode(false);
+        setTopbarTitle('Add New Vehicle');
+        if (refreshReview) compileReviewSummary();
+        updateWizardButtons();
+    }
+
+    function resetStep1Header() {
+        document.getElementById('step1-title').innerText = 'Register New Vehicle';
+        document.getElementById('step1-subtitle').innerText = 'Enter the core vehicle details for fleet registration.';
+    }
+
+    function setTopbarTitle(title) {
+        const breadcrumbCurrent = document.querySelector('.topbar-breadcrumb-current');
+        if (breadcrumbCurrent) breadcrumbCurrent.innerText = title;
+    }
+
+    function setImagePreviewMode(isEdit) {
+        const removeBtn = document.getElementById('vehicle-image-edit-remove');
+        const filenameBar = document.getElementById('vehicle-image-filename-bar');
+        const editFilename = document.getElementById('vehicle-image-edit-filename');
+        const previewBox = document.getElementById('vehicle-image-preview-box');
+
+        if (isEdit) {
+            removeBtn.classList.remove('d-none');
+            filenameBar.classList.add('d-none');
+            editFilename.classList.remove('d-none');
+            previewBox.classList.add('edit-clickable');
+            editFilename.innerText = document.getElementById('feedback-filename').innerText;
+        } else {
+            removeBtn.classList.add('d-none');
+            filenameBar.classList.remove('d-none');
+            editFilename.classList.add('d-none');
+            previewBox.classList.remove('edit-clickable');
+        }
+    }
+
+    function refreshImageStateForEdit() {
+        const fileInput = document.getElementById('input-File');
+        const uploadZone = document.getElementById('vehicle-image-upload-zone');
+        const previewState = document.getElementById('vehicle-image-preview-state');
+        const previewImg = document.getElementById('vehicle-preview-img');
+
+        const hasFile = fileInput.files && fileInput.files.length > 0;
+        const hasPreview = previewImg.src && !previewImg.classList.contains('d-none');
+
+        if (hasFile || hasPreview) {
+            uploadZone.classList.add('d-none');
+            previewState.classList.remove('d-none');
+            if (hasFile && !hasPreview) updateFileFeedback(fileInput);
+        } else {
+            uploadZone.classList.remove('d-none');
+            previewState.classList.add('d-none');
+        }
+    }
+
     function updateWizardButtons() {
         const cancelBtn = document.getElementById('btnWizardCancel');
         const nextBtn = document.getElementById('btnWizardNext');
 
-        if (currentStep === 1) {
+        if (isEditMode) {
+            cancelBtn.innerText = 'Edit Details';
+            cancelBtn.classList.remove('d-none');
+            nextBtn.innerText = 'Continue';
+            nextBtn.classList.remove('d-none');
+        } else if (currentStep === 1) {
             cancelBtn.innerText = 'Cancel';
+            cancelBtn.classList.remove('d-none');
             nextBtn.innerText = 'Continue';
+            nextBtn.classList.remove('d-none');
         } else if (currentStep === 2) {
-            cancelBtn.innerText = 'Back';
-            nextBtn.innerText = 'Continue';
-        } else if (currentStep === 3) {
             cancelBtn.innerText = 'Edit Details';
             nextBtn.innerText = 'Continue';
-            compileReviewSummary();
+        } else if (currentStep === 3) {
+            cancelBtn.classList.add('d-none');
+            nextBtn.classList.add('d-none');
         }
     }
 
     function handleCancelClick() {
+        if (isEditMode) {
+            closeEditMode(true);
+            return;
+        }
         if (currentStep === 1) {
             window.location.href = '@Url.Action("Index")';
+        } else if (currentStep === 2) {
+            openEditMode();
         } else {
             navigateStep(-1);
         }
     }
 
     function updateFileFeedback(input) {
-        const feedbackContainer = document.getElementById('file-upload-feedback');
+        const uploadZone = document.getElementById('vehicle-image-upload-zone');
+        const previewState = document.getElementById('vehicle-image-preview-state');
         const nameSpan = document.getElementById('feedback-filename');
+        const previewImg = document.getElementById('vehicle-preview-img');
+        const previewPlaceholder = document.getElementById('vehicle-preview-placeholder');
+        const editFilename = document.getElementById('vehicle-image-edit-filename');
 
         if (input.files && input.files.length > 0) {
-            nameSpan.innerText = input.files[0].name;
-            feedbackContainer.classList.remove('d-none');
-            feedbackContainer.classList.add('d-flex');
+            const file = input.files[0];
+            nameSpan.innerText = file.name;
+            uploadZone.classList.add('d-none');
+            previewState.classList.remove('d-none');
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    previewPlaceholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImg.classList.add('d-none');
+                previewImg.src = '';
+                previewPlaceholder.classList.remove('d-none');
+            }
+
+            if (isEditMode && editFilename) editFilename.innerText = file.name;
         }
     }
 
     function clearFileSelection() {
         const fileInput = document.getElementById('input-File');
-        const feedbackContainer = document.getElementById('file-upload-feedback');
+        const uploadZone = document.getElementById('vehicle-image-upload-zone');
+        const previewState = document.getElementById('vehicle-image-preview-state');
+        const previewImg = document.getElementById('vehicle-preview-img');
+        const previewPlaceholder = document.getElementById('vehicle-preview-placeholder');
+        const editFilename = document.getElementById('vehicle-image-edit-filename');
+
         fileInput.value = '';
-        feedbackContainer.classList.add('d-none');
-        feedbackContainer.classList.remove('d-flex');
+        uploadZone.classList.remove('d-none');
+        previewState.classList.add('d-none');
+        previewImg.src = '';
+        previewImg.classList.add('d-none');
+        previewPlaceholder.classList.remove('d-none');
+        if (editFilename) editFilename.innerText = '';
+    }
+
+    function formatReviewDate(value) {
+        if (!value) return 'N/A';
+        const parts = value.split('-');
+        const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     }
 
     function compileReviewSummary() {
-        document.getElementById('review-Brand').innerText = document.getElementById('input-Brand').value || 'N/A';
-        document.getElementById('review-Model').innerText = document.getElementById('input-Model').value || 'N/A';
-        document.getElementById('review-Color').innerText = document.getElementById('input-Color').value || 'N/A';
+        document.getElementById('review-Brand').innerText = document.getElementById('input-Brand').value.trim() || 'N/A';
+        document.getElementById('review-Model').innerText = document.getElementById('input-Model').value.trim() || 'N/A';
+        document.getElementById('review-Color').innerText = document.getElementById('input-Color').value.trim() || 'N/A';
 
         const typeEl = document.getElementById('input-Type');
         document.getElementById('review-Type').innerText = typeEl.options[typeEl.selectedIndex]?.text || 'N/A';
-
-        document.getElementById('review-PlateNumber').innerText = document.getElementById('input-PlateNumber').value || 'N/A';
+        document.getElementById('review-PlateNumber').innerText = document.getElementById('input-PlateNumber').value.trim() || 'N/A';
 
         const statusEl = document.getElementById('input-Status');
         document.getElementById('review-Status').innerText = statusEl.options[statusEl.selectedIndex]?.text || 'N/A';
-
-        const regDate = document.getElementById('input-RegistrationDate').value;
-        document.getElementById('review-RegistrationDate').innerText = regDate
-            ? new Date(regDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-            : 'N/A';
-
-        const regExpiry = document.getElementById('input-RegistrationExpiry').value;
-        document.getElementById('review-RegistrationExpiry').innerText = regExpiry
-            ? new Date(regExpiry).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-            : 'N/A';
+        document.getElementById('review-RegistrationDate').innerText = formatReviewDate(document.getElementById('input-RegistrationDate').value);
+        document.getElementById('review-RegistrationExpiry').innerText = formatReviewDate(document.getElementById('input-RegistrationExpiry').value);
 
         const fileInput = document.getElementById('input-File');
-        if (fileInput.files && fileInput.files.length > 0) {
-            document.getElementById('review-Filename').innerText = fileInput.files[0].name;
+        const reviewImg = document.getElementById('review-VehicleImg');
+        const reviewPlaceholder = document.getElementById('review-VehiclePlaceholder');
+        const reviewFilename = document.getElementById('review-Filename');
+        const stepPreviewImg = document.getElementById('vehicle-preview-img');
+
+        if (stepPreviewImg && stepPreviewImg.src && !stepPreviewImg.classList.contains('d-none')) {
+            reviewImg.src = stepPreviewImg.src;
+            reviewImg.classList.remove('d-none');
+            reviewPlaceholder.classList.add('d-none');
+            reviewFilename.innerText = fileInput.files?.length > 0 ? fileInput.files[0].name : 'vehicle_image.png';
+        } else if (fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            reviewFilename.innerText = file.name;
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    reviewImg.src = e.target.result;
+                    reviewImg.classList.remove('d-none');
+                    reviewPlaceholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                reviewImg.classList.add('d-none');
+                reviewPlaceholder.classList.remove('d-none');
+            }
         } else {
-            document.getElementById('review-Filename').innerText = 'No document chosen';
+            reviewFilename.innerText = 'No image chosen';
+            reviewImg.classList.add('d-none');
+            reviewImg.src = '';
+            reviewPlaceholder.classList.remove('d-none');
         }
     }
+
+    function setupImageDragDrop() {
+        const zone = document.getElementById('vehicle-image-upload-zone');
+        const input = document.getElementById('input-File');
+        if (!zone || !input) return;
+
+        ['dragenter', 'dragover'].forEach(function (eventName) {
+            zone.addEventListener(eventName, function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                zone.style.backgroundColor = '#e9e9e9';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(function (eventName) {
+            zone.addEventListener(eventName, function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                zone.style.backgroundColor = '';
+            });
+        });
+
+        zone.addEventListener('drop', function (event) {
+            const files = event.dataTransfer.files;
+            if (files && files.length > 0) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(files[0]);
+                input.files = dataTransfer.files;
+                updateFileFeedback(input);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('input-RegistrationDate').addEventListener('change', setExpiryOneYearAfterRegistration);
+        document.getElementById('input-RegistrationDate').addEventListener('input', setExpiryOneYearAfterRegistration);
+        document.getElementById('vehicle-image-preview-box').addEventListener('click', function () {
+            if (isEditMode) document.getElementById('input-File').click();
+        });
+        setupImageDragDrop();
+    });
 </script>
 
 @section Scripts {

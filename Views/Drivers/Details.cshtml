@@ -23,6 +23,23 @@
     string address = Model?.Address ?? "—";
     string licenseNo = Model?.LicenseNo ?? "—";
     string expiryText = Model != null ? Model.ExpiryDate.ToString("MMMM dd, yyyy") : "—";
+
+    string GetDocumentFileName(string? path, string fallback)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return fallback;
+        }
+
+        var separatorIndex = path.IndexOf('_');
+        return separatorIndex >= 0 && separatorIndex < path.Length - 1
+            ? path[(separatorIndex + 1)..]
+            : path;
+    }
+
+    string frontLicenseFileName = GetDocumentFileName(Model?.FrontLicenseImagePath, "No front license");
+    string backLicenseFileName = GetDocumentFileName(Model?.BackLicenseImagePath, "No back license");
+    string detailsReturnUrl = Url.Action("Details", new { id = Model?.DriverId }) ?? "";
 }
 
 <style>
@@ -265,8 +282,8 @@
 
 <div class="container-fluid px-4 py-3">
 
-    <div class="profile-header-container">
-        <div class="d-flex align-items-center">
+    <div class="details-page-header">
+        <div class="d-flex align-items-center gap-4 flex-grow-1">
             <div class="profile-avatar-circle shadow-sm">
                 @if (Model != null && !string.IsNullOrEmpty(Model.ImagePath))
                 {
@@ -277,14 +294,14 @@
                     <i class="bi bi-person text-secondary" style="font-size: 4rem;"></i>
                 }
             </div>
-            <div class="profile-info-block">
-                <h1 class="profile-name-text">@(Model?.Name ?? "Jane Doe")</h1>
+            <div>
+                <h1 class="profile-name-text mb-1">@(Model?.Name ?? "Jane Doe")</h1>
                 <span class="profile-meta-text">Verified Driver Directory Account</span>
             </div>
         </div>
-        <div class="d-flex gap-2 align-items-center">
-            <a asp-action="Index" class="btn btn-wireframe-back shadow-sm">Back</a>
-            <a asp-action="Edit" asp-route-id="@Model?.DriverId" class="btn btn-wireframe-black-edit shadow-sm">Edit Driver's Profile</a>
+        <div class="details-page-actions">
+            <a asp-action="Index" class="btn btn-page-back">Back</a>
+            <a asp-action="Edit" asp-route-id="@Model?.DriverId" asp-route-returnUrl="@detailsReturnUrl" class="btn btn-page-primary">Edit Driver's Profile</a>
         </div>
     </div>
 
@@ -343,52 +360,48 @@
 
         <div class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab">
             <div class="documents-clean-container">
-
-                <div class="wireframe-section-title">Personal Information</div>
-                <hr class="wireframe-divider-line" />
-
-                <div class="row g-4 mb-4">
-                    <div class="col-md-4 col-sm-6">
-                        <div class="wireframe-field-label">First Name</div>
-                        <div class="wireframe-static-value">@firstName</div>
-                    </div>
-                    <div class="col-md-6 col-sm-6">
-                        <div class="wireframe-field-label">Last Name</div>
-                        <div class="wireframe-static-value">@lastName</div>
-                    </div>
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-md-4 col-sm-6">
-                        <div class="wireframe-field-label">Phone Number</div>
-                        <div class="wireframe-static-value">@contactNo</div>
-                    </div>
-                </div>
-
-                <div class="row mb-5">
-                    <div class="col-md-10 col-sm-12">
-                        <div class="wireframe-field-label">Address</div>
-                        <div class="wireframe-static-value">@address</div>
-                    </div>
-                </div>
-
-                <div class="wireframe-section-title">License</div>
-                <hr class="wireframe-divider-line" />
-
                 <div class="row g-4">
-                    <div class="col-md-4 col-sm-6">
-                        <div class="wireframe-field-label">License Number</div>
-                        <div class="wireframe-static-value text-uppercase font-monospace">@licenseNo</div>
+                    <div class="col-md-6">
+                        <div class="driver-doc-card shadow-sm">
+                            <div class="driver-doc-preview">
+                                @if (!string.IsNullOrEmpty(Model?.FrontLicenseImagePath))
+                                {
+                                    <img src="~/images/@Model.FrontLicenseImagePath" alt="Front license" />
+                                }
+                                else
+                                {
+                                    <div class="license-preview-placeholder"></div>
+                                }
+                            </div>
+                            <div class="driver-doc-footer">
+                                <span class="driver-doc-filename">@frontLicenseFileName</span>
+                                <button type="button" class="btn btn-link p-0 text-secondary" aria-label="Front license options">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-6 col-sm-6">
-                        <div class="wireframe-field-label">Expiry Date</div>
-                        <div class="wireframe-static-value d-flex justify-content-between align-items-center">
-                            <span>@expiryText</span>
-                            <i class="bi bi-calendar3 text-secondary fs-5"></i>
+                    <div class="col-md-6">
+                        <div class="driver-doc-card shadow-sm">
+                            <div class="driver-doc-preview">
+                                @if (!string.IsNullOrEmpty(Model?.BackLicenseImagePath))
+                                {
+                                    <img src="~/images/@Model.BackLicenseImagePath" alt="Back license" />
+                                }
+                                else
+                                {
+                                    <div class="license-preview-placeholder"></div>
+                                }
+                            </div>
+                            <div class="driver-doc-footer">
+                                <span class="driver-doc-filename">@backLicenseFileName</span>
+                                <button type="button" class="btn btn-link p-0 text-secondary" aria-label="Back license options">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
 

@@ -130,10 +130,12 @@ namespace EasyRent_Checking.Controllers
             {
                 if (vehicle.ImageFile != null)
                 {
-                    // Folder path
                     string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+                    if (!Directory.Exists(folder))
+                    {
+                        Directory.CreateDirectory(folder);
+                    }
 
-                    // Create unique filename
                     string fileName = Guid.NewGuid().ToString() + "_" + vehicle.ImageFile.FileName;
 
                     // Full save path
@@ -187,7 +189,7 @@ namespace EasyRent_Checking.Controllers
         }
 
         // GET: Vehicles/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int? id, string? returnUrl)
         {
             if (id == null)
             {
@@ -199,6 +201,12 @@ namespace EasyRent_Checking.Controllers
             {
                 return NotFound();
             }
+
+            if (Url.IsLocalUrl(returnUrl))
+            {
+                ViewData["ReturnUrl"] = returnUrl;
+            }
+
             return View(vehicle);
         }
 
@@ -207,63 +215,56 @@ namespace EasyRent_Checking.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,ImagePath,ImageFile")] Vehicle vehicle)
+        public async Task<IActionResult> Edit(int id, [Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,ImagePath,ImageFile")] Vehicle vehicle, string? returnUrl)
         {
             if (id != vehicle.VehicleId)
             {
                 return NotFound();
             }
 
+            var existingVehicle = await _context.Vehicle.FindAsync(vehicle.VehicleId);
+            if (existingVehicle == null)
+            {
+                return NotFound();
+            }
+
             if (ModelState.IsValid)
             {
-                //try
-                //{
-                //    _context.Update(vehicle);
-                //    await _context.SaveChangesAsync();
-                //}
-                //catch (DbUpdateConcurrencyException)
-                //{
-                //    if (!VehicleExists(vehicle.VehicleId))
-                //    {
-                //        return NotFound();
-                //    }
-                //    else
-                //    {
-                //        throw;
-                //    }
-                //}
-                //return RedirectToAction(nameof(Index));
-
                 try
                 {
+                    existingVehicle.Model = vehicle.Model;
+                    existingVehicle.PlateNumber = vehicle.PlateNumber;
+                    existingVehicle.Brand = vehicle.Brand;
+                    existingVehicle.Color = vehicle.Color;
+                    existingVehicle.Type = vehicle.Type;
+                    existingVehicle.Status = vehicle.Status;
+                    existingVehicle.RegistrationDate = vehicle.RegistrationDate;
+                    existingVehicle.RegistrationExpiry = vehicle.RegistrationExpiry;
+
+                    string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+                    if (!Directory.Exists(folder))
+                    {
+                        Directory.CreateDirectory(folder);
+                    }
+
                     if (vehicle.ImageFile != null)
                     {
-                        // Folder path
-                        string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-
-                        // 2. FIXED: Safely ensure the directory exists before trying to save files into it
-                        if (!Directory.Exists(folder))
-                        {
-                            Directory.CreateDirectory(folder);
-                        }
-
-                        // Create unique filename
                         string fileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(vehicle.ImageFile.FileName);
-
-                        // Full save path
                         string filePath = Path.Combine(folder, fileName);
 
-                        // Save image
                         using (var stream = new FileStream(filePath, FileMode.Create))
                         {
                             await vehicle.ImageFile.CopyToAsync(stream);
                         }
 
-                        // Save filename to database
-                        vehicle.ImagePath = fileName;
+                        existingVehicle.ImagePath = fileName;
+                    }
+                    else if (string.IsNullOrEmpty(vehicle.ImagePath))
+                    {
+                        existingVehicle.ImagePath = null;
                     }
 
-                    _context.Update(vehicle);
+                    _context.Update(existingVehicle);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -277,8 +278,14 @@ namespace EasyRent_Checking.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Details), new { id = existingVehicle.VehicleId });
             }
+
+            if (Url.IsLocalUrl(returnUrl))
+            {
+                ViewData["ReturnUrl"] = returnUrl;
+            }
+
             return View(vehicle);
         }
 

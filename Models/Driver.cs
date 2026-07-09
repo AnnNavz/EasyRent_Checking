@@ -40,5 +40,21 @@ namespace EasyRent_Checking.Models
 		[NotMapped]
 		[Display(Name = "Upload Driver Picture")]
 		public IFormFile? ImageFile { get; set; }
+
+		[StringLength(255)]
+		[Display(Name = "Front License Picture")]
+		public string? FrontLicenseImagePath { get; set; }
+
+		[NotMapped]
+		[Display(Name = "Upload Front License Picture")]
+		public IFormFile? FrontLicenseImageFile { get; set; }
+
+		[StringLength(255)]
+		[Display(Name = "Back License Picture")]
+		public string? BackLicenseImagePath { get; set; }
+
+		[NotMapped]
+		[Display(Name = "Upload Back License Picture")]
+		public IFormFile? BackLicenseImageFile { get; set; }
 	}
 }

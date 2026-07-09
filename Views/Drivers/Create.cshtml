@@ -16,11 +16,11 @@
         </div>
         <div class="step-node" id="node-2">
             <div class="step-circle" id="circle-2">2</div>
-            <div class="step-label">License</div>
+            <div class="step-label">Review</div>
         </div>
         <div class="step-node" id="node-3">
             <div class="step-circle" id="circle-3">3</div>
-            <div class="step-label">Review</div>
+            <div class="step-label">Complete</div>
         </div>
     </div>
 
@@ -30,20 +30,26 @@
 
         <!-- STEP 1: PERSONAL INFORMATION PANEL -->
         <div class="wizard-step-panel active" id="stepPanel-1">
-            <div class="text-start mb-3">
-                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Personal Information</h5>
-                <p class="text-muted small">Enter the foundational identity and contact details for the new driver.</p>
+            <div class="text-start mb-4">
+                <h5 class="wizard-page-title fw-bold text-dark mb-1" id="step1-title" style="letter-spacing: -0.3px;">Register new driver</h5>
+                <p class="text-muted small" id="step1-subtitle">Enter the foundational identity and contact details for the new driver.</p>
             </div>
 
+            <!-- Personal Information Section -->
             <div class="form-container-card p-4 mb-4 shadow-sm">
-                <div class="text-center mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-person-circle fs-5 text-secondary"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Personal Information</h6>
+                </div>
+                <hr class="wizard-section-divider" />
+
+                <div class="text-center mb-4" id="profile-upload-section">
                     <label for="input-File" class="d-inline-block mb-0" style="cursor: pointer;">
-                        <div id="photo-preview-circle" class="review-avatar-circle shadow-sm mx-auto position-relative overflow-hidden" style="width: 80px; height: 80px;">
-                            <i class="bi bi-image-fill text-muted fs-4" id="photo-placeholder-icon"></i>
-                            <img id="photo-preview-img" class="d-none position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;" alt="Driver photo preview" />
+                        <div id="photo-preview-circle" class="review-avatar-circle shadow-sm mx-auto position-relative overflow-hidden" style="width: 100px; height: 100px; border-radius: 50%; border: 2px dashed #dee2e6;">
+                            <i class="bi bi-cloud-upload text-muted fs-3" id="photo-placeholder-icon"></i>
+                            <img id="photo-preview-img" class="d-none position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; border-radius: 50%;" alt="Driver photo preview" />
                         </div>
-                        <span class="d-block small text-muted mt-2">Click to upload driver photo</span>
-                        <span class="d-block text-muted" style="font-size:0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                        <span class="d-block small text-muted mt-2 fw-semibold">Upload profile picture</span>
                         <input asp-for="ImageFile" id="input-File" type="file" class="d-none" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFileFeedback(this)" />
                     </label>
                     <div id="file-upload-feedback" class="mt-2 bg-white p-2 px-3 rounded-3 d-none align-items-center justify-content-between shadow-sm border mx-auto" style="max-width: 320px;">
@@ -51,7 +57,9 @@
                             <i class="bi bi-check-circle-fill text-success fs-6"></i>
                             <span id="feedback-filename" class="small fw-semibold text-dark font-monospace" style="font-size:0.8rem;">file_name.png</span>
                         </div>
-                        <button type="button" class="btn btn-link text-muted small text-decoration-none p-0 border-0" style="font-size:0.8rem;" onclick="clearFileSelection()">Remove</button>
+                        <button type="button" class="btn btn-link text-muted small text-decoration-none p-0 border-0" style="font-size:0.8rem;" onclick="clearFileSelection()">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -75,31 +83,27 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label class="form-label fw-semibold small text-secondary mb-1">Phone Number</label>
-                            <input asp-for="ContactNo" id="input-Contact" class="form-control form-control-thin shadow-sm" placeholder="+63 563 093 3939" />
+                            <input asp-for="ContactNo" id="input-Contact" class="form-control form-control-thin shadow-sm" placeholder="+63 963 690 2998" />
                             <span asp-validation-for="ContactNo" class="text-danger small mt-1 d-block"></span>
                         </div>
                     </div>
                     <div class="col-12">
                         <div class="form-group">
                             <label class="form-label fw-semibold small text-secondary mb-1">Address</label>
-                            <input asp-for="Address" id="input-Address" class="form-control form-control-thin shadow-sm" placeholder="123 Fleet Street, Suite 450, City, State, ZIP Code" />
+                            <input asp-for="Address" id="input-Address" class="form-control form-control-thin shadow-sm" placeholder="123 Fleet Street, Suite 400, City, State, ZIP Code" />
                             <span asp-validation-for="Address" class="text-danger small mt-1 d-block"></span>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- STEP 2: LICENSE PANEL -->
-        <div class="wizard-step-panel" id="stepPanel-2">
-            <div class="text-start mb-3">
-                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">License and Uploads</h5>
-                <p class="text-muted small">Provide legal driving permissions and scanned documentation uploads.</p>
-            </div>
-
+            <!-- License and Uploads Section -->
             <div class="form-container-card p-4 mb-4 shadow-sm">
-                <div class="wizard-section-title fw-bold text-dark mb-2">Regulatory Details</div>
-                <hr class="section-divider" />
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">License and Uploads</h6>
+                </div>
+                <hr class="wizard-section-divider" />
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
@@ -118,30 +122,76 @@
                     </div>
                 </div>
 
-                <div class="wizard-section-title fw-bold text-dark mb-2">Document Scans</div>
-                <hr class="section-divider" />
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="text-center fw-semibold small text-secondary mb-2">Front</div>
 
-                <div class="form-group">
-                    <div class="p-4 bg-white rounded-3 border border-2 border-dashed text-center position-relative shadow-sm">
-                        <i class="bi bi-cloud-arrow-up text-muted fs-3 d-block mb-2"></i>
-                        <span class="d-block small fw-bold text-dark mb-1" style="font-size:0.85rem;">Drag & drop license scan or click to browse</span>
-                        <span class="d-block text-muted text-opacity-70" style="font-size:0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
-                        <input type="file" id="input-LicenseScan" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer;" accept=".png,.jpg,.jpeg,.pdf" onchange="updateLicenseScanFeedback(this)" />
-                    </div>
-                    <div id="license-scan-feedback" class="upload-preview-bar d-none align-items-center justify-content-between p-3 mt-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                            <span id="license-scan-filename" class="small fw-semibold text-dark font-monospace" style="font-size:0.8rem;">front_license.png</span>
+                            <div id="front-license-upload-zone" class="license-upload-zone">
+                                <div>
+                                    <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
+                                    <span class="d-block small fw-bold text-dark mb-1">Drag & drop image scan or <span class="text-decoration-underline">click to browse</span></span>
+                                    <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                                </div>
+                                <input asp-for="FrontLicenseImageFile" id="input-FrontLicense" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFrontLicenseFeedback(this)" />
+                            </div>
+
+                            <div id="front-license-preview-state" class="d-none">
+                                <div class="edit-license-preview-wrap">
+                                    <div class="license-preview-box" id="front-license-preview-box" title="Click to replace image">
+                                        <img id="front-license-preview-img" class="d-none" alt="Front license preview" />
+                                        <div id="front-license-preview-placeholder" class="license-preview-placeholder"></div>
+                                    </div>
+                                    <button type="button" id="front-license-edit-remove" class="edit-license-remove-btn d-none" onclick="clearFrontLicenseSelection()" aria-label="Remove front license">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    <span id="front-license-edit-filename" class="d-none small text-muted font-monospace text-center d-block mt-2"></span>
+                                </div>
+                                <div id="front-license-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between p-3">
+                                    <span id="front-license-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">front_license.png</span>
+                                    <button type="button" class="btn btn-link text-dark small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearFrontLicenseSelection()">Remove</button>
+                                </div>
+                            </div>
                         </div>
-                        <button type="button" class="btn btn-link text-muted small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearLicenseScanSelection()">Remove</button>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="text-center fw-semibold small text-secondary mb-2">Back</div>
+
+                            <div id="back-license-upload-zone" class="license-upload-zone">
+                                <div>
+                                    <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
+                                    <span class="d-block small fw-bold text-dark mb-1">Drag & drop image scan or <span class="text-decoration-underline">click to browse</span></span>
+                                    <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                                </div>
+                                <input asp-for="BackLicenseImageFile" id="input-BackLicense" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,.pdf" onchange="updateBackLicenseFeedback(this)" />
+                            </div>
+
+                            <div id="back-license-preview-state" class="d-none">
+                                <div class="edit-license-preview-wrap">
+                                    <div class="license-preview-box" id="back-license-preview-box" title="Click to replace image">
+                                        <img id="back-license-preview-img" class="d-none" alt="Back license preview" />
+                                        <div id="back-license-preview-placeholder" class="license-preview-placeholder"></div>
+                                    </div>
+                                    <button type="button" id="back-license-edit-remove" class="edit-license-remove-btn d-none" onclick="clearBackLicenseSelection()" aria-label="Remove back license">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    <span id="back-license-edit-filename" class="d-none small text-muted font-monospace text-center d-block mt-2"></span>
+                                </div>
+                                <div id="back-license-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between p-3">
+                                    <span id="back-license-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">back_license.png</span>
+                                    <button type="button" class="btn btn-link text-dark small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearBackLicenseSelection()">Remove</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- STEP 3: REVIEWS & VERIFY PANEL -->
-        <div class="wizard-step-panel" id="stepPanel-3">
-            <div class="text-start mb-3">
+        <!-- STEP 2: REVIEW PANEL -->
+        <div class="wizard-step-panel" id="stepPanel-2">
+            <div class="text-start mb-4">
                 <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Reviews & Verify</h5>
                 <p class="text-muted small">Please confirm the driver details before saving to the database.</p>
             </div>
@@ -150,12 +200,13 @@
                 <!-- Summary: Personal Info -->
                 <div class="mb-4">
                     <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
-                        <i class="bi bi-person fs-5"></i>
+                        <i class="bi bi-person-circle fs-5"></i>
                         <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Personal Information</h6>
                     </div>
-                    <div class="review-avatar-circle mb-3 shadow-sm position-relative overflow-hidden" id="review-avatar-circle">
+                    <hr class="wizard-section-divider" />
+                    <div class="review-avatar-circle mb-4 shadow-sm position-relative overflow-hidden mx-auto" id="review-avatar-circle" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #dee2e6;">
                         <i class="bi bi-person-fill text-muted fs-4" id="review-avatar-icon"></i>
-                        <img id="review-avatar-img" class="d-none position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;" alt="Driver photo" />
+                        <img id="review-avatar-img" class="d-none position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; border-radius: 50%;" alt="Driver photo" />
                     </div>
                     <div class="row g-3 px-1" style="font-size: 0.9rem;">
                         <div class="col-md-6">
@@ -178,11 +229,12 @@
                 </div>
 
                 <!-- Summary: License Details -->
-                <div class="mb-4 pt-3 border-top border-secondary border-opacity-10">
+                <div class="mb-4">
                     <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
                         <i class="bi bi-card-text fs-5"></i>
                         <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">License Details</h6>
                     </div>
+                    <hr class="wizard-section-divider" />
                     <div class="row g-3 px-1" style="font-size: 0.9rem;">
                         <div class="col-md-6">
                             <span class="text-muted d-block small mb-0.5">License Number</span>
@@ -195,28 +247,57 @@
                     </div>
                 </div>
 
-                <!-- Summary: Document File Upload -->
-                <div class="pt-3 border-top border-secondary border-opacity-10">
+                <!-- Summary: Uploaded Documents -->
+                <div>
                     <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
                         <i class="bi bi-file-earmark-arrow-up fs-5"></i>
                         <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Uploaded Documents</h6>
                     </div>
-                    <div class="bg-white p-2.5 rounded-3 d-flex align-items-center gap-3 border shadow-sm mx-1">
-                        <div class="border rounded px-2.5 py-1.5 bg-light">
-                            <i class="bi bi-file-earmark-image fs-5 text-muted"></i>
+                    <hr class="wizard-section-divider" />
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="review-doc-card">
+                                <div class="review-doc-preview">
+                                    <img id="review-FrontLicenseImg" class="d-none" alt="Front License" />
+                                    <div id="review-FrontLicensePlaceholder" class="license-preview-placeholder"></div>
+                                </div>
+                                <span id="review-FrontLicenseName" class="review-doc-filename">No front license</span>
+                            </div>
                         </div>
-                        <div>
-                            <span id="review-Filename" class="d-block small fw-bold text-dark font-monospace" style="font-size:0.8rem;">No document chosen</span>
-                            <span class="text-muted d-block" style="font-size:0.75rem;">License Verification Image Scan</span>
+                        <div class="col-md-6">
+                            <div class="review-doc-card">
+                                <div class="review-doc-preview">
+                                    <img id="review-BackLicenseImg" class="d-none" alt="Back License" />
+                                    <div id="review-BackLicensePlaceholder" class="license-preview-placeholder"></div>
+                                </div>
+                                <span id="review-BackLicenseName" class="review-doc-filename">No back license</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- STEP 3: COMPLETE PANEL -->
+        <div class="wizard-step-panel" id="stepPanel-3">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <div class="success-circle mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background-color: #d4edda; border-radius: 50%;">
+                        <i class="bi bi-check-lg text-success fs-2"></i>
+                    </div>
+                </div>
+                <h5 class="wizard-page-title fw-bold text-dark mb-2" style="letter-spacing: -0.3px;">Driver Created Successfully!</h5>
+                <p class="text-muted small mb-4">The driver has been added to the system and is ready for assignment.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="@Url.Action("Index")" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;">View Drivers</a>
+                    <a href="@Url.Action("Create")" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;">Add Another Driver</a>
+                </div>
+            </div>
+        </div>
+
         <!-- Bottom Actions Row -->
         <div class="d-flex justify-content-end gap-2 align-items-center">
-            <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;" id="btnWizardCancel" onclick="handleCancelClick()">Cancel</button>
+            <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;" id="btnWizardCancel" onclick="handleCancelClick()">Back</button>
             <button type="button" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;" id="btnWizardNext" onclick="navigateStep(1)">Continue</button>
         </div>
     </form>
@@ -224,11 +305,12 @@
 
 <script>
     let currentStep = 1;
+    let isEditMode = false;
     const totalSteps = 3;
 
     const stepFields = {
-        1: ['Name', 'ContactNo', 'Address'],
-        2: ['LicenseNo', 'ExpiryDate'],
+        1: ['Name', 'ContactNo', 'Address', 'LicenseNo', 'ExpiryDate'],
+        2: [],
         3: []
     };
 
@@ -313,60 +395,245 @@
     }
 
     function navigateStep(direction) {
-        if (direction === 1 && !validateStep(currentStep)) {
+        if (direction === 1 && isEditMode) {
+            if (!validateStep(1)) {
+                return;
+            }
+            closeEditMode(true);
             return;
         }
 
-        if (direction === 1 && currentStep === totalSteps) {
+        if (direction === 1 && currentStep === 2) {
             document.getElementById("driverWizardForm").submit();
             return;
         }
 
-        document.getElementById(`stepPanel-${currentStep}`).classList.remove("active");
-
-        if (direction === 1) {
-            document.getElementById(`node-${currentStep}`).classList.add("completed");
-            currentStep++;
-        } else {
-            currentStep--;
-            document.getElementById(`node-${currentStep}`).classList.remove("completed");
+        if (direction === 1 && !validateStep(currentStep)) {
+            return;
         }
 
-        document.getElementById(`stepPanel-${currentStep}`).classList.add("active");
+        if (direction === 1 && currentStep === 1) {
+            compileReviewSummary();
+        }
 
-        for(let i = 1; i <= totalSteps; i++) {
+        const nextStep = direction === 1 ? currentStep + 1 : currentStep - 1;
+        setActiveStep(nextStep);
+    }
+
+    function setActiveStep(targetStep) {
+        document.getElementById('stepPanel-1').classList.remove('active');
+        document.getElementById('stepPanel-2').classList.remove('active');
+        document.getElementById('stepPanel-3').classList.remove('active');
+
+        if (targetStep > currentStep) {
+            for (let step = currentStep; step < targetStep; step++) {
+                document.getElementById(`node-${step}`).classList.add('completed');
+            }
+        } else if (targetStep < currentStep) {
+            for (let step = targetStep; step <= totalSteps; step++) {
+                document.getElementById(`node-${step}`).classList.remove('completed');
+            }
+        }
+
+        currentStep = targetStep;
+        isEditMode = false;
+        resetStep1Header();
+        setLicensePreviewMode(false);
+        document.getElementById(`stepPanel-${currentStep}`).classList.add('active');
+
+        for (let i = 1; i <= totalSteps; i++) {
             const node = document.getElementById(`node-${i}`);
             if (i === currentStep) {
-                node.classList.add("active");
-            } else if (i > currentStep) {
-                node.classList.remove("active");
-                node.classList.remove("completed");
+                node.classList.add('active');
+            } else {
+                node.classList.remove('active');
             }
         }
 
         updateWizardButtons();
     }
 
+    function openEditMode() {
+        isEditMode = true;
+        document.getElementById('stepPanel-2').classList.remove('active');
+        document.getElementById('stepPanel-1').classList.add('active');
+
+        document.getElementById('step1-title').innerText = 'Edit Details';
+        document.getElementById('step1-subtitle').innerText = 'Update the driver information before confirming.';
+        setLicensePreviewMode(true);
+        refreshPhotoStatesForEdit();
+        setTopbarTitle('Edit Details');
+        updateWizardButtons();
+    }
+
+    function closeEditMode(refreshReview) {
+        isEditMode = false;
+        document.getElementById('stepPanel-1').classList.remove('active');
+        document.getElementById('stepPanel-2').classList.add('active');
+        resetStep1Header();
+        setLicensePreviewMode(false);
+        setTopbarTitle('Add New Driver');
+
+        if (refreshReview) {
+            compileReviewSummary();
+        }
+
+        updateWizardButtons();
+    }
+
+    function setTopbarTitle(title) {
+        const breadcrumbCurrent = document.querySelector('.topbar-breadcrumb-current');
+        if (breadcrumbCurrent) {
+            breadcrumbCurrent.innerText = title;
+        }
+    }
+
+    function resetStep1Header() {
+        document.getElementById('step1-title').innerText = 'Register new driver';
+        document.getElementById('step1-subtitle').innerText = 'Enter the foundational identity and contact details for the new driver.';
+        document.getElementById('profile-upload-section').classList.remove('d-none');
+    }
+
+    function setLicensePreviewMode(isEdit) {
+        const frontRemoveBtn = document.getElementById('front-license-edit-remove');
+        const backRemoveBtn = document.getElementById('back-license-edit-remove');
+        const frontFilenameBar = document.getElementById('front-license-filename-bar');
+        const backFilenameBar = document.getElementById('back-license-filename-bar');
+        const frontEditFilename = document.getElementById('front-license-edit-filename');
+        const backEditFilename = document.getElementById('back-license-edit-filename');
+        const frontPreviewBox = document.getElementById('front-license-preview-box');
+        const backPreviewBox = document.getElementById('back-license-preview-box');
+
+        if (isEdit) {
+            frontRemoveBtn.classList.remove('d-none');
+            backRemoveBtn.classList.remove('d-none');
+            frontFilenameBar.classList.add('d-none');
+            backFilenameBar.classList.add('d-none');
+            frontEditFilename.classList.remove('d-none');
+            backEditFilename.classList.remove('d-none');
+            frontPreviewBox.classList.add('edit-clickable');
+            backPreviewBox.classList.add('edit-clickable');
+            frontEditFilename.innerText = document.getElementById('front-license-filename').innerText;
+            backEditFilename.innerText = document.getElementById('back-license-filename').innerText;
+        } else {
+            frontRemoveBtn.classList.add('d-none');
+            backRemoveBtn.classList.add('d-none');
+            frontFilenameBar.classList.remove('d-none');
+            backFilenameBar.classList.remove('d-none');
+            frontEditFilename.classList.add('d-none');
+            backEditFilename.classList.add('d-none');
+            frontPreviewBox.classList.remove('edit-clickable');
+            backPreviewBox.classList.remove('edit-clickable');
+        }
+    }
+
+    function refreshPhotoStatesForEdit() {
+        const profileInput = document.getElementById('input-File');
+        const profilePreview = document.getElementById('photo-preview-img');
+        const profileIcon = document.getElementById('photo-placeholder-icon');
+        const profileFeedback = document.getElementById('file-upload-feedback');
+
+        if (profileInput.files && profileInput.files.length > 0) {
+            updateFileFeedback(profileInput);
+        } else if (profilePreview.src && !profilePreview.classList.contains('d-none')) {
+            profileFeedback.classList.remove('d-none');
+            profileFeedback.classList.add('d-flex');
+            document.getElementById('feedback-filename').innerText = profileInput.files.length > 0
+                ? profileInput.files[0].name
+                : 'profile_picture.png';
+        } else {
+            profilePreview.classList.add('d-none');
+            profileIcon.classList.remove('d-none');
+            profileFeedback.classList.add('d-none');
+            profileFeedback.classList.remove('d-flex');
+        }
+
+        refreshLicensePreviewState('front');
+        refreshLicensePreviewState('back');
+    }
+
+    function refreshLicensePreviewState(side) {
+        const prefix = side === 'front' ? 'front' : 'back';
+        const fileInput = document.getElementById(side === 'front' ? 'input-FrontLicense' : 'input-BackLicense');
+        const previewState = document.getElementById(`${prefix}-license-preview-state`);
+        const uploadZone = document.getElementById(`${prefix}-license-upload-zone`);
+        const previewImg = document.getElementById(`${prefix}-license-preview-img`);
+        const previewPlaceholder = document.getElementById(`${prefix}-license-preview-placeholder`);
+        const editFilename = document.getElementById(`${prefix}-license-edit-filename`);
+        const filename = document.getElementById(`${prefix}-license-filename`);
+
+        const hasFile = fileInput.files && fileInput.files.length > 0;
+        const hasPreview = previewImg.src && !previewImg.classList.contains('d-none');
+
+        if (hasFile || hasPreview) {
+            uploadZone.classList.add('d-none');
+            previewState.classList.remove('d-none');
+            if (hasFile && !hasPreview) {
+                if (side === 'front') {
+                    updateFrontLicenseFeedback(fileInput);
+                } else {
+                    updateBackLicenseFeedback(fileInput);
+                }
+            }
+            if (isEditMode && editFilename) {
+                editFilename.innerText = hasFile ? fileInput.files[0].name : filename.innerText;
+            }
+        } else {
+            uploadZone.classList.remove('d-none');
+            previewState.classList.add('d-none');
+            previewImg.src = '';
+            previewImg.classList.add('d-none');
+            previewPlaceholder.classList.remove('d-none');
+        }
+    }
+
+    function setupEditPreviewClicks() {
+        document.getElementById('front-license-preview-box').addEventListener('click', function () {
+            if (isEditMode) {
+                document.getElementById('input-FrontLicense').click();
+            }
+        });
+
+        document.getElementById('back-license-preview-box').addEventListener('click', function () {
+            if (isEditMode) {
+                document.getElementById('input-BackLicense').click();
+            }
+        });
+    }
+
     function updateWizardButtons() {
         const cancelBtn = document.getElementById("btnWizardCancel");
         const nextBtn = document.getElementById("btnWizardNext");
 
-        if (currentStep === 1) {
-            cancelBtn.innerText = "Cancel";
-            nextBtn.innerText = "Continue";
-        } else if (currentStep === 2) {
-            cancelBtn.innerText = "Back";
-            nextBtn.innerText = "Continue";
-        } else if (currentStep === 3) {
+        if (isEditMode) {
             cancelBtn.innerText = "Edit Details";
+            cancelBtn.classList.remove('d-none');
             nextBtn.innerText = "Continue";
-            compileReviewSummary();
+            nextBtn.classList.remove('d-none');
+        } else if (currentStep === 1) {
+            cancelBtn.innerText = "Cancel";
+            cancelBtn.classList.remove('d-none');
+            nextBtn.innerText = "Continue";
+            nextBtn.classList.remove('d-none');
+        } else if (currentStep === 2) {
+            cancelBtn.innerText = "Edit Details";
+            nextBtn.innerText = "Confirm";
+        } else if (currentStep === 3) {
+            cancelBtn.classList.add('d-none');
+            nextBtn.classList.add('d-none');
         }
     }
 
     function handleCancelClick() {
+        if (isEditMode) {
+            closeEditMode(true);
+            return;
+        }
+
         if (currentStep === 1) {
             window.location.href = '@Url.Action("Index")';
+        } else if (currentStep === 2) {
+            openEditMode();
         } else {
             navigateStep(-1);
         }
@@ -399,24 +666,155 @@
         }
     }
 
-    function updateLicenseScanFeedback(input) {
-        const feedbackContainer = document.getElementById('license-scan-feedback');
-        const nameSpan = document.getElementById('license-scan-filename');
+    function updateFrontLicenseFeedback(input) {
+        const uploadZone = document.getElementById('front-license-upload-zone');
+        const previewState = document.getElementById('front-license-preview-state');
+        const nameSpan = document.getElementById('front-license-filename');
+        const previewImg = document.getElementById('front-license-preview-img');
+        const previewPlaceholder = document.getElementById('front-license-preview-placeholder');
 
         if (input.files && input.files.length > 0) {
-            nameSpan.innerText = input.files[0].name;
-            feedbackContainer.classList.remove('d-none');
-            feedbackContainer.classList.add('d-flex');
+            const file = input.files[0];
+            nameSpan.innerText = file.name;
+            uploadZone.classList.add('d-none');
+            previewState.classList.remove('d-none');
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    previewPlaceholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImg.classList.add('d-none');
+                previewImg.src = '';
+                previewPlaceholder.classList.remove('d-none');
+            }
+
+            if (isEditMode) {
+                const editFilename = document.getElementById('front-license-edit-filename');
+                if (editFilename) {
+                    editFilename.innerText = file.name;
+                }
+            }
         }
     }
 
-    function clearLicenseScanSelection() {
-        const fileInput = document.getElementById('input-LicenseScan');
-        const feedbackContainer = document.getElementById('license-scan-feedback');
-        fileInput.value = '';
-        feedbackContainer.classList.add('d-none');
-        feedbackContainer.classList.remove('d-flex');
+    function updateBackLicenseFeedback(input) {
+        const uploadZone = document.getElementById('back-license-upload-zone');
+        const previewState = document.getElementById('back-license-preview-state');
+        const nameSpan = document.getElementById('back-license-filename');
+        const previewImg = document.getElementById('back-license-preview-img');
+        const previewPlaceholder = document.getElementById('back-license-preview-placeholder');
+
+        if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            nameSpan.innerText = file.name;
+            uploadZone.classList.add('d-none');
+            previewState.classList.remove('d-none');
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    previewPlaceholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImg.classList.add('d-none');
+                previewImg.src = '';
+                previewPlaceholder.classList.remove('d-none');
+            }
+
+            if (isEditMode) {
+                const editFilename = document.getElementById('back-license-edit-filename');
+                if (editFilename) {
+                    editFilename.innerText = file.name;
+                }
+            }
+        }
     }
+
+    function clearFrontLicenseSelection() {
+        const fileInput = document.getElementById('input-FrontLicense');
+        const uploadZone = document.getElementById('front-license-upload-zone');
+        const previewState = document.getElementById('front-license-preview-state');
+        const previewImg = document.getElementById('front-license-preview-img');
+        const previewPlaceholder = document.getElementById('front-license-preview-placeholder');
+        const editFilename = document.getElementById('front-license-edit-filename');
+
+        fileInput.value = '';
+        uploadZone.classList.remove('d-none');
+        previewState.classList.add('d-none');
+        previewImg.src = '';
+        previewImg.classList.add('d-none');
+        previewPlaceholder.classList.remove('d-none');
+        if (editFilename) {
+            editFilename.innerText = '';
+        }
+    }
+
+    function clearBackLicenseSelection() {
+        const fileInput = document.getElementById('input-BackLicense');
+        const uploadZone = document.getElementById('back-license-upload-zone');
+        const previewState = document.getElementById('back-license-preview-state');
+        const previewImg = document.getElementById('back-license-preview-img');
+        const previewPlaceholder = document.getElementById('back-license-preview-placeholder');
+
+        fileInput.value = '';
+        uploadZone.classList.remove('d-none');
+        previewState.classList.add('d-none');
+        previewImg.src = '';
+        previewImg.classList.add('d-none');
+        previewPlaceholder.classList.remove('d-none');
+        const editFilename = document.getElementById('back-license-edit-filename');
+        if (editFilename) {
+            editFilename.innerText = '';
+        }
+    }
+
+    function setupLicenseDragDrop(zoneId, inputId, updateFn) {
+        const zone = document.getElementById(zoneId);
+        const input = document.getElementById(inputId);
+        if (!zone || !input) {
+            return;
+        }
+
+        ['dragenter', 'dragover'].forEach(function (eventName) {
+            zone.addEventListener(eventName, function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                zone.style.backgroundColor = '#e9e9e9';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(function (eventName) {
+            zone.addEventListener(eventName, function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                zone.style.backgroundColor = '';
+            });
+        });
+
+        zone.addEventListener('drop', function (event) {
+            const files = event.dataTransfer.files;
+            if (files && files.length > 0) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(files[0]);
+                input.files = dataTransfer.files;
+                updateFn(input);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setupLicenseDragDrop('front-license-upload-zone', 'input-FrontLicense', updateFrontLicenseFeedback);
+        setupLicenseDragDrop('back-license-upload-zone', 'input-BackLicense', updateBackLicenseFeedback);
+        setupEditPreviewClicks();
+    });
 
     function clearFileSelection() {
         const fileInput = document.getElementById('input-File');
@@ -433,53 +831,100 @@
     }
 
     function compileReviewSummary() {
-        document.getElementById("review-FirstName").innerText = document.getElementById("input-FirstName").value || "N/A";
-        document.getElementById("review-LastName").innerText = document.getElementById("input-LastName").value || "N/A";
-        document.getElementById("review-Contact").innerText = document.getElementById("input-Contact").value || "N/A";
-        document.getElementById("review-Address").innerText = document.getElementById("input-Address").value || "N/A";
-        document.getElementById("review-License").innerText = document.getElementById("input-License").value || "N/A";
+        document.getElementById("review-FirstName").innerText = document.getElementById("input-FirstName").value.trim() || "N/A";
+        document.getElementById("review-LastName").innerText = document.getElementById("input-LastName").value.trim() || "N/A";
+        document.getElementById("review-Contact").innerText = document.getElementById("input-Contact").value.trim() || "N/A";
+        document.getElementById("review-Address").innerText = document.getElementById("input-Address").value.trim() || "N/A";
+        document.getElementById("review-License").innerText = document.getElementById("input-License").value.trim() || "N/A";
 
         const expiryVal = document.getElementById("input-Expiry").value;
         if (expiryVal) {
-            const dateObj = new Date(expiryVal);
+            const dateParts = expiryVal.split('-');
+            const dateObj = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10));
             document.getElementById("review-Expiry").innerText = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
         } else {
             document.getElementById("review-Expiry").innerText = "N/A";
         }
 
-        const fileInput = document.getElementById('input-File');
         const reviewAvatarImg = document.getElementById('review-avatar-img');
         const reviewAvatarIcon = document.getElementById('review-avatar-icon');
+        const photoPreviewImg = document.getElementById('photo-preview-img');
+        const fileInput = document.getElementById('input-File');
 
-        const licenseScanInput = document.getElementById('input-LicenseScan');
-        const licenseScanName = licenseScanInput.files && licenseScanInput.files.length > 0
-            ? licenseScanInput.files[0].name
-            : null;
+        if (photoPreviewImg && photoPreviewImg.src && !photoPreviewImg.classList.contains('d-none')) {
+            reviewAvatarImg.src = photoPreviewImg.src;
+            reviewAvatarImg.classList.remove('d-none');
+            reviewAvatarIcon.classList.add('d-none');
+        } else if (fileInput.files && fileInput.files.length > 0 && fileInput.files[0].type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                reviewAvatarImg.src = e.target.result;
+                reviewAvatarImg.classList.remove('d-none');
+                reviewAvatarIcon.classList.add('d-none');
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        } else {
+            reviewAvatarImg.src = '';
+            reviewAvatarImg.classList.add('d-none');
+            reviewAvatarIcon.classList.remove('d-none');
+        }
+
+        setReviewLicensePreview(
+            'input-FrontLicense',
+            'front-license-preview-img',
+            'review-FrontLicenseImg',
+            'review-FrontLicensePlaceholder',
+            'review-FrontLicenseName',
+            'No front license'
+        );
+
+        setReviewLicensePreview(
+            'input-BackLicense',
+            'back-license-preview-img',
+            'review-BackLicenseImg',
+            'review-BackLicensePlaceholder',
+            'review-BackLicenseName',
+            'No back license'
+        );
+    }
+
+    function setReviewLicensePreview(inputId, stepPreviewImgId, reviewImgId, reviewPlaceholderId, reviewNameId, emptyLabel) {
+        const fileInput = document.getElementById(inputId);
+        const stepPreviewImg = document.getElementById(stepPreviewImgId);
+        const reviewImg = document.getElementById(reviewImgId);
+        const reviewPlaceholder = document.getElementById(reviewPlaceholderId);
+        const reviewName = document.getElementById(reviewNameId);
+
+        if (stepPreviewImg && stepPreviewImg.src && !stepPreviewImg.classList.contains('d-none')) {
+            reviewImg.src = stepPreviewImg.src;
+            reviewImg.classList.remove('d-none');
+            reviewPlaceholder.classList.add('d-none');
+            reviewName.innerText = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0].name : 'license_image.png';
+            return;
+        }
 
         if (fileInput.files && fileInput.files.length > 0) {
             const file = fileInput.files[0];
-            document.getElementById('review-Filename').innerText = licenseScanName || file.name;
+            reviewName.innerText = file.name;
 
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    reviewAvatarImg.src = e.target.result;
-                    reviewAvatarImg.classList.remove('d-none');
-                    reviewAvatarIcon.classList.add('d-none');
+                    reviewImg.src = e.target.result;
+                    reviewImg.classList.remove('d-none');
+                    reviewPlaceholder.classList.add('d-none');
                 };
                 reader.readAsDataURL(file);
             } else {
-                reviewAvatarImg.classList.add('d-none');
-                reviewAvatarIcon.classList.remove('d-none');
+                reviewImg.classList.add('d-none');
+                reviewImg.src = '';
+                reviewPlaceholder.classList.remove('d-none');
             }
-        } else if (licenseScanName) {
-            document.getElementById('review-Filename').innerText = licenseScanName;
-            reviewAvatarImg.classList.add('d-none');
-            reviewAvatarIcon.classList.remove('d-none');
         } else {
-            document.getElementById('review-Filename').innerText = 'No document chosen';
-            reviewAvatarImg.classList.add('d-none');
-            reviewAvatarIcon.classList.remove('d-none');
+            reviewName.innerText = emptyLabel;
+            reviewImg.classList.add('d-none');
+            reviewImg.src = '';
+            reviewPlaceholder.classList.remove('d-none');
         }
     }
 </script>

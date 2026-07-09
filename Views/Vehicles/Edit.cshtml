@@ -4,89 +4,141 @@
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "Edit Details";
     ViewData["ActivePage"] = "Vehicles";
+
+    string GetDisplayFileName(string? path, string fallback)
+    {
+        if (string.IsNullOrEmpty(path)) return fallback;
+        var separatorIndex = path.IndexOf('_');
+        return separatorIndex >= 0 && separatorIndex < path.Length - 1
+            ? path[(separatorIndex + 1)..]
+            : path;
+    }
+
+    bool hasVehicleImage = !string.IsNullOrEmpty(Model?.ImagePath);
+    string vehicleFileName = GetDisplayFileName(Model?.ImagePath, "No vehicle image");
+    string? backUrl = ViewData["ReturnUrl"]?.ToString();
 }
 
-<div class="edit-container">
+<div class="wizard-max-wrapper py-3">
     <form asp-action="Edit" enctype="multipart/form-data" id="editVehicleForm">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
         <input type="hidden" asp-for="VehicleId" />
         <input type="hidden" asp-for="ImagePath" />
+        @if (!string.IsNullOrEmpty(backUrl))
+        {
+            <input type="hidden" name="returnUrl" value="@backUrl" />
+        }
 
-        <div class="form-card-wireframe shadow-sm mb-4">
-            <div class="section-header">Vehicle Information</div>
-            <hr class="section-divider" />
+        <div class="text-start mb-4">
+            <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Edit Details</h5>
+            <p class="text-muted small">Update the vehicle information and uploaded image.</p>
+        </div>
 
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <label asp-for="Brand" class="wireframe-label">Brand</label>
-                    <input asp-for="Brand" class="form-control wireframe-input" placeholder="e.g. Mercedes-Benz" />
-                    <span asp-validation-for="Brand" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Model" class="wireframe-label">Model</label>
-                    <input asp-for="Model" class="form-control wireframe-input" placeholder="e.g. Sprinter 2500" />
-                    <span asp-validation-for="Model" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Color" class="wireframe-label">Color</label>
-                    <input asp-for="Color" class="form-control wireframe-input" placeholder="e.g. Blue" />
-                    <span asp-validation-for="Color" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Type" class="wireframe-label">Type</label>
-                    <select asp-for="Type" class="form-select wireframe-input" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
-                    <span asp-validation-for="Type" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="PlateNumber" class="wireframe-label">Plate Number</label>
-                    <input asp-for="PlateNumber" class="form-control wireframe-input text-uppercase font-monospace" placeholder="GAP 4821" />
-                    <span asp-validation-for="PlateNumber" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Status" class="wireframe-label">Status</label>
-                    <select asp-for="Status" class="form-select wireframe-input" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
-                    <span asp-validation-for="Status" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="RegistrationDate" class="wireframe-label">Registration Date</label>
-                    <input asp-for="RegistrationDate" type="date" class="form-control wireframe-input" />
-                    <span asp-validation-for="RegistrationDate" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="RegistrationExpiry" class="wireframe-label">Expiry Date</label>
-                    <input asp-for="RegistrationExpiry" type="date" class="form-control wireframe-input" />
-                    <span asp-validation-for="RegistrationExpiry" class="text-danger small"></span>
-                </div>
+        <div class="form-container-card p-4 mb-4 shadow-sm">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-car-front fs-5 text-secondary"></i>
+                <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Information</h6>
             </div>
+            <hr class="wizard-section-divider" />
 
-            <div class="section-header mt-5">Uploaded Documents</div>
-            <hr class="section-divider" />
-
-            <div class="row mb-3">
-                <div class="col-12">
-                    <div class="upload-zone-box">
-                        <i class="bi bi-cloud-upload fs-1 text-muted mb-2 d-block"></i>
-                        <span class="d-block fw-bold text-dark small mb-1">Drag & drop license scan or <span class="text-decoration-underline">click to browse</span></span>
-                        <span class="text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
-                        <input asp-for="ImageFile" type="file" class="upload-file-input" id="vehicleFileInput" accept=".png,.jpg,.jpeg,.pdf" onchange="displayFileName()" />
-                    </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Brand" class="form-label fw-semibold small text-secondary mb-1">Brand</label>
+                    <input asp-for="Brand" class="form-control form-control-thin shadow-sm" placeholder="e.g. Mercedes-Benz" />
+                    <span asp-validation-for="Brand" class="text-danger small mt-1 d-block"></span>
                 </div>
-            </div>
-
-            <div class="upload-preview-bar d-flex align-items-center justify-content-between p-3 mt-2">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                    <span class="small fw-semibold text-dark" id="fileNameDisplay">
-                        @(string.IsNullOrEmpty(Model?.ImagePath) ? "No file selected" : Model.ImagePath)
-                    </span>
+                <div class="col-md-6">
+                    <label asp-for="Model" class="form-label fw-semibold small text-secondary mb-1">Model</label>
+                    <input asp-for="Model" class="form-control form-control-thin shadow-sm" placeholder="e.g. Sprinter 2500" />
+                    <span asp-validation-for="Model" class="text-danger small mt-1 d-block"></span>
                 </div>
-                <button type="button" class="btn btn-link p-0 text-muted small text-decoration-none fw-bold" onclick="clearSelectedFile()">Remove</button>
+                <div class="col-md-6">
+                    <label asp-for="Color" class="form-label fw-semibold small text-secondary mb-1">Color</label>
+                    <input asp-for="Color" class="form-control form-control-thin shadow-sm" placeholder="e.g. Blue" />
+                    <span asp-validation-for="Color" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Type" class="form-label fw-semibold small text-secondary mb-1">Type</label>
+                    <select asp-for="Type" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
+                    <span asp-validation-for="Type" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PlateNumber" class="form-label fw-semibold small text-secondary mb-1">Plate Number</label>
+                    <input asp-for="PlateNumber" class="form-control form-control-thin shadow-sm text-uppercase font-monospace" placeholder="e.g. GAP 4821" />
+                    <span asp-validation-for="PlateNumber" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Status" class="form-label fw-semibold small text-secondary mb-1">Status</label>
+                    <select asp-for="Status" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
+                    <span asp-validation-for="Status" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="RegistrationDate" class="form-label fw-semibold small text-secondary mb-1">Registration Date</label>
+                    <input asp-for="RegistrationDate" id="input-RegistrationDate" type="date" class="form-control form-control-thin shadow-sm" value="@Model?.RegistrationDate.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="RegistrationDate" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="RegistrationExpiry" class="form-label fw-semibold small text-secondary mb-1">Registration Expiry Date</label>
+                    <input asp-for="RegistrationExpiry" id="input-RegistrationExpiry" type="date" class="form-control form-control-thin shadow-sm" value="@Model?.RegistrationExpiry.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="RegistrationExpiry" class="text-danger small mt-1 d-block"></span>
+                </div>
             </div>
         </div>
 
-        <div class="d-flex align-items-center justify-content-end gap-3 pe-1">
-            <a asp-action="Index" class="btn btn-edit-wireframe-outline">Back to List</a>
-            <button type="submit" class="btn btn-continue-wireframe-black">Continue</button>
+        <div class="form-container-card p-4 mb-4 shadow-sm">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
+                <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Image</h6>
+            </div>
+            <hr class="wizard-section-divider" />
+
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-6">
+                    <div class="text-center fw-semibold small text-secondary mb-2">Vehicle Image</div>
+
+                    <div id="vehicle-image-upload-zone" class="license-upload-zone @(hasVehicleImage ? "d-none" : "")">
+                        <div>
+                            <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
+                            <span class="d-block small fw-bold text-dark mb-1">Drag & drop image scan or <span class="text-decoration-underline">click to browse</span></span>
+                            <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                        </div>
+                        <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFileFeedback(this)" />
+                    </div>
+
+                    <div id="vehicle-image-preview-state" class="@(hasVehicleImage ? "" : "d-none")">
+                        <div class="edit-license-preview-wrap">
+                            <div class="license-preview-box edit-clickable" id="vehicle-image-preview-box" title="Click to replace image" onclick="document.getElementById('input-File').click()">
+                                @if (hasVehicleImage)
+                                {
+                                    <img id="vehicle-preview-img" src="~/images/@Model.ImagePath" alt="Vehicle image preview" />
+                                    <div id="vehicle-preview-placeholder" class="license-preview-placeholder d-none"></div>
+                                }
+                                else
+                                {
+                                    <img id="vehicle-preview-img" class="d-none" alt="Vehicle image preview" />
+                                    <div id="vehicle-preview-placeholder" class="license-preview-placeholder"></div>
+                                }
+                            </div>
+                            <button type="button" class="edit-license-remove-btn" onclick="clearFileSelection()" aria-label="Remove vehicle image">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            <span id="vehicle-image-edit-filename" class="small text-muted font-monospace text-center d-block mt-2">@vehicleFileName</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-action-bar">
+            @if (!string.IsNullOrEmpty(backUrl))
+            {
+                <a href="@backUrl" class="btn btn-page-back">Back</a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-page-back" onclick="window.history.back()">Back</button>
+            }
+            <button type="submit" class="btn btn-page-primary">Continue</button>
         </div>
     </form>
 </div>
@@ -95,17 +147,106 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        function displayFileName() {
-            var fileInput = document.getElementById('vehicleFileInput');
-            var nameDisplay = document.getElementById('fileNameDisplay');
-            if (fileInput.files.length > 0) {
-                nameDisplay.textContent = fileInput.files[0].name;
+        let imageCleared = false;
+
+        function setExpiryOneYearAfterRegistration() {
+            const regDateInput = document.getElementById('input-RegistrationDate');
+            const expiryInput = document.getElementById('input-RegistrationExpiry');
+            if (!regDateInput.value) return;
+
+            const parts = regDateInput.value.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+            const expiryDate = new Date(year + 1, month, day);
+            const formattedMonth = String(expiryDate.getMonth() + 1).padStart(2, '0');
+            const formattedDay = String(expiryDate.getDate()).padStart(2, '0');
+            expiryInput.value = `${expiryDate.getFullYear()}-${formattedMonth}-${formattedDay}`;
+        }
+
+        document.getElementById('editVehicleForm').addEventListener('submit', function () {
+            if (imageCleared) {
+                document.querySelector('input[name="ImagePath"]').value = '';
+            }
+        });
+
+        function updateFileFeedback(input) {
+            const uploadZone = document.getElementById('vehicle-image-upload-zone');
+            const previewState = document.getElementById('vehicle-image-preview-state');
+            const previewImg = document.getElementById('vehicle-preview-img');
+            const previewPlaceholder = document.getElementById('vehicle-preview-placeholder');
+            const editFilename = document.getElementById('vehicle-image-edit-filename');
+
+            if (input.files && input.files.length > 0) {
+                imageCleared = false;
+                const file = input.files[0];
+                editFilename.innerText = file.name;
+                uploadZone.classList.add('d-none');
+                previewState.classList.remove('d-none');
+
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        previewImg.src = e.target.result;
+                        previewImg.classList.remove('d-none');
+                        previewPlaceholder.classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewImg.classList.add('d-none');
+                    previewImg.src = '';
+                    previewPlaceholder.classList.remove('d-none');
+                }
             }
         }
 
-        function clearSelectedFile() {
-            document.getElementById('vehicleFileInput').value = '';
-            document.getElementById('fileNameDisplay').textContent = 'No file selected';
+        function clearFileSelection() {
+            document.getElementById('input-File').value = '';
+            document.getElementById('vehicle-image-upload-zone').classList.remove('d-none');
+            document.getElementById('vehicle-image-preview-state').classList.add('d-none');
+            document.getElementById('vehicle-preview-img').src = '';
+            document.getElementById('vehicle-preview-img').classList.add('d-none');
+            document.getElementById('vehicle-preview-placeholder').classList.remove('d-none');
+            document.getElementById('vehicle-image-edit-filename').innerText = '';
+            imageCleared = true;
         }
+
+        function setupImageDragDrop() {
+            const zone = document.getElementById('vehicle-image-upload-zone');
+            const input = document.getElementById('input-File');
+            if (!zone || !input) return;
+
+            ['dragenter', 'dragover'].forEach(function (eventName) {
+                zone.addEventListener(eventName, function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    zone.style.backgroundColor = '#e9e9e9';
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(function (eventName) {
+                zone.addEventListener(eventName, function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    zone.style.backgroundColor = '';
+                });
+            });
+
+            zone.addEventListener('drop', function (event) {
+                const files = event.dataTransfer.files;
+                if (files && files.length > 0) {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(files[0]);
+                    input.files = dataTransfer.files;
+                    updateFileFeedback(input);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('input-RegistrationDate').addEventListener('change', setExpiryOneYearAfterRegistration);
+            document.getElementById('input-RegistrationDate').addEventListener('input', setExpiryOneYearAfterRegistration);
+            setupImageDragDrop();
+        });
     </script>
 }

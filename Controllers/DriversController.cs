@@ -121,7 +121,7 @@ namespace EasyRent_Checking.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("DriverId,Name,Address,ContactNo,LicenseNo,ExpiryDate,ImagePath,ImageFile")] Driver driver)
+        public async Task<IActionResult> Create([Bind("DriverId,Name,Address,ContactNo,LicenseNo,ExpiryDate,ImagePath,ImageFile,FrontLicenseImagePath,FrontLicenseImageFile,BackLicenseImagePath,BackLicenseImageFile")] Driver driver)
         {
             if (ModelState.IsValid)
             {
@@ -144,6 +144,34 @@ namespace EasyRent_Checking.Controllers
 
 					// Save filename to database
 					driver.ImagePath = fileName;
+				}
+
+				if (driver.FrontLicenseImageFile != null)
+				{
+					string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+					string fileName = Guid.NewGuid().ToString() + "_" + driver.FrontLicenseImageFile.FileName;
+					string filePath = Path.Combine(folder, fileName);
+
+					using (var stream = new FileStream(filePath, FileMode.Create))
+					{
+						await driver.FrontLicenseImageFile.CopyToAsync(stream);
+					}
+
+					driver.FrontLicenseImagePath = fileName;
+				}
+
+				if (driver.BackLicenseImageFile != null)
+				{
+					string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+					string fileName = Guid.NewGuid().ToString() + "_" + driver.BackLicenseImageFile.FileName;
+					string filePath = Path.Combine(folder, fileName);
+
+					using (var stream = new FileStream(filePath, FileMode.Create))
+					{
+						await driver.BackLicenseImageFile.CopyToAsync(stream);
+					}
+
+					driver.BackLicenseImagePath = fileName;
 				}
 
 				_context.Add(driver);
@@ -173,8 +201,8 @@ namespace EasyRent_Checking.Controllers
                 ActivePage = "Drivers",
                 Heading = "Driver Profile Created",
                 MessageHtml = $"<strong>{driver.Name}</strong> has been successfully added to the system and is ready for assignment.",
-                PrimaryActionText = "View Driver's Profile",
-                PrimaryActionUrl = Url.Action(nameof(Details), new { id = driver.DriverId }) ?? "",
+                PrimaryActionText = "View Drivers",
+                PrimaryActionUrl = Url.Action(nameof(Index)) ?? "",
                 SecondaryActionText = "Add Another Driver",
                 SecondaryActionUrl = Url.Action(nameof(Create)) ?? ""
             };
@@ -183,7 +211,7 @@ namespace EasyRent_Checking.Controllers
         }
 
         // GET: Drivers/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int? id, string? returnUrl)
         {
             if (id == null)
             {
@@ -195,6 +223,12 @@ namespace EasyRent_Checking.Controllers
             {
                 return NotFound();
             }
+
+            if (Url.IsLocalUrl(returnUrl))
+            {
+                ViewData["ReturnUrl"] = returnUrl;
+            }
+
             return View(driver);
         }
 
@@ -203,9 +237,15 @@ namespace EasyRent_Checking.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("DriverId,Name,Address,ContactNo,LicenseNo,ExpiryDate,ImagePath,ImageFile")] Driver driver)
+        public async Task<IActionResult> Edit(int id, [Bind("DriverId,Name,Address,ContactNo,LicenseNo,ExpiryDate,ImagePath,ImageFile,FrontLicenseImagePath,FrontLicenseImageFile,BackLicenseImagePath,BackLicenseImageFile")] Driver driver, string? returnUrl)
         {
 			if (id != driver.DriverId)
+			{
+				return NotFound();
+			}
+
+			var existingDriver = await _context.Driver.FindAsync(driver.DriverId);
+			if (existingDriver == null)
 			{
 				return NotFound();
 			}
@@ -214,34 +254,70 @@ namespace EasyRent_Checking.Controllers
 			{
 				try
 				{
+					existingDriver.Name = driver.Name;
+					existingDriver.Address = driver.Address;
+					existingDriver.ContactNo = driver.ContactNo;
+					existingDriver.LicenseNo = driver.LicenseNo;
+					existingDriver.ExpiryDate = driver.ExpiryDate;
+
+					string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+					if (!Directory.Exists(folder))
+					{
+						Directory.CreateDirectory(folder);
+					}
+
 					if (driver.ImageFile != null)
 					{
-						// Folder path
-						string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-
-						// 2. FIXED: Safely ensure the directory exists before trying to save files into it
-						if (!Directory.Exists(folder))
-						{
-							Directory.CreateDirectory(folder);
-						}
-
-						// Create unique filename
 						string fileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(driver.ImageFile.FileName);
-
-						// Full save path
 						string filePath = Path.Combine(folder, fileName);
 
-						// Save image
 						using (var stream = new FileStream(filePath, FileMode.Create))
 						{
 							await driver.ImageFile.CopyToAsync(stream);
 						}
 
-						// Save filename to database
-						driver.ImagePath = fileName;
+						existingDriver.ImagePath = fileName;
+					}
+					else if (string.IsNullOrEmpty(driver.ImagePath))
+					{
+						existingDriver.ImagePath = null;
 					}
 
-					_context.Update(driver);
+					if (driver.FrontLicenseImageFile != null)
+					{
+						string fileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(driver.FrontLicenseImageFile.FileName);
+						string filePath = Path.Combine(folder, fileName);
+
+						using (var stream = new FileStream(filePath, FileMode.Create))
+						{
+							await driver.FrontLicenseImageFile.CopyToAsync(stream);
+						}
+
+						existingDriver.FrontLicenseImagePath = fileName;
+					}
+					else if (string.IsNullOrEmpty(driver.FrontLicenseImagePath))
+					{
+						existingDriver.FrontLicenseImagePath = null;
+					}
+
+					if (driver.BackLicenseImageFile != null)
+					{
+						string fileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(driver.BackLicenseImageFile.FileName);
+						string filePath = Path.Combine(folder, fileName);
+
+						using (var stream = new FileStream(filePath, FileMode.Create))
+						{
+							await driver.BackLicenseImageFile.CopyToAsync(stream);
+						}
+
+						existingDriver.BackLicenseImagePath = fileName;
+					}
+					else if (string.IsNullOrEmpty(driver.BackLicenseImagePath))
+					{
+						existingDriver.BackLicenseImagePath = null;
+					}
+
+					_context.Update(existingDriver);
 					await _context.SaveChangesAsync();
 				}
 				catch (DbUpdateConcurrencyException)
@@ -255,8 +331,14 @@ namespace EasyRent_Checking.Controllers
 						throw;
 					}
 				}
-				return RedirectToAction(nameof(Index));
+				return RedirectToAction(nameof(Details), new { id = existingDriver.DriverId });
 			}
+
+			if (Url.IsLocalUrl(returnUrl))
+			{
+				ViewData["ReturnUrl"] = returnUrl;
+			}
+
 			return View(driver);
 		}
 

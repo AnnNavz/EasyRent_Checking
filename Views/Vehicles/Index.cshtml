@@ -12,6 +12,14 @@
 
     string currentFilterName = ViewData["CurrentFilter"]?.ToString() == "Active" ? "Active" :
                                ViewData["CurrentFilter"]?.ToString() == "Maintenance" ? "Maintenance" : "Filters";
+
+    string indexReturnUrl = Url.Action("Index", new
+    {
+        searchString = ViewData["CurrentSearch"],
+        sortBy = ViewData["CurrentSort"],
+        currentFilter = ViewData["CurrentFilter"],
+        page = ViewData["PageIndex"]
+    }) ?? "";
 }
 
 <div class="row g-4 mb-4">
@@ -135,11 +143,11 @@
                             <td>@item.RegistrationExpiry.ToString("MM-dd-yyyy")</td>
                             <td class="text-center">
                                 <div class="dropdown">
-                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown">
+                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport">
                                         <i class="bi bi-three-dots fs-5"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                        <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.VehicleId"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.VehicleId" asp-route-returnUrl="@indexReturnUrl"><i class="bi bi-pencil me-2"></i> Edit</a></li>
                                         <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.VehicleId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
                                         <li><hr class="dropdown-menu-divider"></li>
                                         <li>
