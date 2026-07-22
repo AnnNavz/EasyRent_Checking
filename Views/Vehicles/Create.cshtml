@@ -80,6 +80,24 @@
                         <input asp-for="RegistrationExpiry" id="input-RegistrationExpiry" type="date" class="form-control form-control-thin shadow-sm" />
                         <span asp-validation-for="RegistrationExpiry" class="text-danger small mt-1 d-block"></span>
                     </div>
+                    <div class="col-md-6">
+                        <label asp-for="BasePrice" class="form-label fw-semibold small text-secondary mb-1">Base Price</label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text form-control-thin">₱</span>
+                            <input asp-for="BasePrice" id="input-BasePrice" class="form-control form-control-thin" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
+                        </div>
+                        <span asp-validation-for="BasePrice" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PassengersCount" class="form-label fw-semibold small text-secondary mb-1">Passengers Count</label>
+                        <input asp-for="PassengersCount" id="input-PassengersCount" class="form-control form-control-thin shadow-sm" type="number" min="1" max="50" placeholder="e.g. 6" />
+                        <span asp-validation-for="PassengersCount" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label fw-semibold small text-secondary mb-1">Description</label>
+                        <textarea asp-for="Description" id="input-Description" class="form-control form-control-thin shadow-sm" rows="4" placeholder="Describe the vehicle features, condition, or rental notes"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small mt-1 d-block"></span>
+                    </div>
                 </div>
             </div>
 
@@ -165,6 +183,18 @@
                             <span class="text-muted d-block small mb-0.5">Registration Expiry Date</span>
                             <span id="review-RegistrationExpiry" class="fw-bold text-dark">-</span>
                         </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Base Price</span>
+                            <span id="review-BasePrice" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Passengers Count</span>
+                            <span id="review-PassengersCount" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-12">
+                            <span class="text-muted d-block small mb-0.5">Description</span>
+                            <span id="review-Description" class="fw-bold text-dark">-</span>
+                        </div>
                     </div>
                 </div>
 
@@ -214,7 +244,7 @@
     let isEditMode = false;
     const totalSteps = 3;
 
-    const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Status', 'RegistrationDate', 'RegistrationExpiry'];
+    const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Status', 'RegistrationDate', 'RegistrationExpiry', 'BasePrice', 'PassengersCount'];
 
     function setExpiryOneYearAfterRegistration() {
         const regDateInput = document.getElementById('input-RegistrationDate');
@@ -501,6 +531,11 @@
         document.getElementById('review-Status').innerText = statusEl.options[statusEl.selectedIndex]?.text || 'N/A';
         document.getElementById('review-RegistrationDate').innerText = formatReviewDate(document.getElementById('input-RegistrationDate').value);
         document.getElementById('review-RegistrationExpiry').innerText = formatReviewDate(document.getElementById('input-RegistrationExpiry').value);
+        document.getElementById('review-BasePrice').innerText = document.getElementById('input-BasePrice').value
+            ? `₱${parseFloat(document.getElementById('input-BasePrice').value).toLocaleString('en-PH')}`
+            : 'N/A';
+        document.getElementById('review-PassengersCount').innerText = document.getElementById('input-PassengersCount').value.trim() || 'N/A';
+        document.getElementById('review-Description').innerText = document.getElementById('input-Description').value.trim() || 'N/A';
 
         const fileInput = document.getElementById('input-File');
         const reviewImg = document.getElementById('review-VehicleImg');

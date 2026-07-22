@@ -1,0 +1,31 @@
+﻿@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Home";
+    ViewData["ActiveNav"] = "Home";
+}
+
+<div class="client-page client-home">
+    <section class="client-hero">
+        <h1>Rent the perfect vehicle with EasyRent</h1>
+        <p>Browse our fleet, compare options, and reserve your ride in minutes.</p>
+        <a asp-controller="Vehicles" asp-action="Browse" class="client-btn-reserve client-hero-cta">
+            Browse Vehicles
+            <i class="bi bi-arrow-right"></i>
+        </a>
+    </section>
+
+    <section id="how-it-works" class="client-info-section">
+        <h2>How It Works</h2>
+        <p>Choose a vehicle, pick your dates, and complete your reservation online.</p>
+    </section>
+
+    <section id="about-us" class="client-info-section">
+        <h2>About Us</h2>
+        <p>EasyRent makes vehicle rental simple, transparent, and reliable for every trip.</p>
+    </section>
+
+    <section id="faqs" class="client-info-section">
+        <h2>FAQs</h2>
+        <p>Have questions about bookings, payments, or vehicle availability? Contact our support team anytime.</p>
+    </section>
+</div>

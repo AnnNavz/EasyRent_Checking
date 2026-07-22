@@ -124,7 +124,7 @@ namespace EasyRent_Checking.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,ImagePath,ImageFile")] Vehicle vehicle)
+        public async Task<IActionResult> Create([Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,BasePrice,PassengersCount,Description,ImagePath,ImageFile")] Vehicle vehicle)
         {
             if (ModelState.IsValid)
             {
@@ -215,7 +215,7 @@ namespace EasyRent_Checking.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,ImagePath,ImageFile")] Vehicle vehicle, string? returnUrl)
+        public async Task<IActionResult> Edit(int id, [Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,BasePrice,PassengersCount,Description,ImagePath,ImageFile")] Vehicle vehicle, string? returnUrl)
         {
             if (id != vehicle.VehicleId)
             {
@@ -240,6 +240,9 @@ namespace EasyRent_Checking.Controllers
                     existingVehicle.Status = vehicle.Status;
                     existingVehicle.RegistrationDate = vehicle.RegistrationDate;
                     existingVehicle.RegistrationExpiry = vehicle.RegistrationExpiry;
+                    existingVehicle.BasePrice = vehicle.BasePrice;
+                    existingVehicle.PassengersCount = vehicle.PassengersCount;
+                    existingVehicle.Description = vehicle.Description;
 
                     string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
                     if (!Directory.Exists(folder))
@@ -327,12 +330,56 @@ namespace EasyRent_Checking.Controllers
             return _context.Vehicle.Any(e => e.VehicleId == id);
         }
 
-		// GET: Vehicles/ClientView
-		public async Task<IActionResult> Homepage()
+		// GET: Vehicles/Homepage
+		public IActionResult Homepage()
 		{
-			var allVehicles = await _context.Vehicle.ToListAsync();
+			ViewData["ActiveNav"] = "Home";
+			return View("~/Views/ClientSide/Home.cshtml");
+		}
 
-			return View("~/Views/ClientSide/Homepage.cshtml", allVehicles);
+		// GET: Vehicles/Browse
+		public async Task<IActionResult> Browse(string? category, string? sortBy)
+		{
+			var vehiclesQuery = _context.Vehicle.AsQueryable();
+
+			if (!string.IsNullOrEmpty(category) && !string.Equals(category, "All", StringComparison.OrdinalIgnoreCase))
+			{
+				if (Enum.TryParse(category, true, out VehicleType filterType))
+				{
+					vehiclesQuery = vehiclesQuery.Where(v => v.Type == filterType);
+				}
+			}
+
+			vehiclesQuery = sortBy switch
+			{
+				"Model" => vehiclesQuery.OrderBy(v => v.Model),
+				"Brand" => vehiclesQuery.OrderBy(v => v.Brand),
+				_ => vehiclesQuery.OrderByDescending(v => v.VehicleId)
+			};
+
+			ViewData["CurrentCategory"] = string.IsNullOrEmpty(category) ? "All" : category;
+			ViewData["CurrentSort"] = string.IsNullOrEmpty(sortBy) ? "Default" : sortBy;
+			ViewData["ActiveNav"] = "Vehicles";
+
+			return View("~/Views/ClientSide/Vehicles.cshtml", await vehiclesQuery.ToListAsync());
+		}
+
+		// GET: Vehicles/VehicleDetails/5
+		public async Task<IActionResult> VehicleDetails(int? id)
+		{
+			if (id == null)
+			{
+				return NotFound();
+			}
+
+			var vehicle = await _context.Vehicle.FirstOrDefaultAsync(v => v.VehicleId == id);
+			if (vehicle == null)
+			{
+				return NotFound();
+			}
+
+			ViewData["ActiveNav"] = "Vehicles";
+			return View("~/Views/ClientSide/VehicleDetails.cshtml", vehicle);
 		}
 	}
 }

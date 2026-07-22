@@ -305,9 +305,12 @@
         </div>
     </div>
 
-    <ul class="nav nav-tabs custom-nav-tabs" id="driverDetailTabs" role="tablist">
+    <ul class="nav nav-tabs vehicle-details-tabs mb-4" id="driverDetailTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab" aria-selected="true">History</button>
+            <button class="nav-link active" id="information-tab" data-bs-toggle="tab" data-bs-target="#information-pane" type="button" role="tab" aria-selected="true">Information</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab" aria-selected="false">History</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-selected="false">Documents</button>
@@ -316,7 +319,46 @@
 
     <div class="tab-content" id="driverDetailTabsContent">
 
-        <div class="tab-pane fade show active" id="history-pane" role="tabpanel" aria-labelledby="history-tab">
+        <div class="tab-pane fade show active" id="information-pane" role="tabpanel" aria-labelledby="information-tab">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="vehicle-info-card shadow-sm">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-person fs-5 text-secondary"></i>
+                            <h6 class="fw-bold mb-0 text-dark">Personal Information</h6>
+                        </div>
+                        <hr class="wizard-section-divider" />
+                        <div class="vehicle-info-row">
+                            <span class="vehicle-info-label">Phone Number</span>
+                            <span class="vehicle-info-value">@contactNo</span>
+                        </div>
+                        <div class="vehicle-info-row">
+                            <span class="vehicle-info-label">Address</span>
+                            <span class="vehicle-info-value text-end" style="max-width: 60%;">@address</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="vehicle-info-card shadow-sm">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-card-text fs-5 text-secondary"></i>
+                            <h6 class="fw-bold mb-0 text-dark">License</h6>
+                        </div>
+                        <hr class="wizard-section-divider" />
+                        <div class="vehicle-info-row">
+                            <span class="vehicle-info-label">License Number</span>
+                            <span class="vehicle-info-value font-monospace">@licenseNo</span>
+                        </div>
+                        <div class="vehicle-info-row">
+                            <span class="vehicle-info-label">Expiration Date</span>
+                            <span class="vehicle-info-value">@expiryText</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="history-pane" role="tabpanel" aria-labelledby="history-tab">
             <div class="row g-4">
                 <div class="col-lg-8">
                     <div class="timeline-title-bar">ACTIVITY TIMELINE</div>

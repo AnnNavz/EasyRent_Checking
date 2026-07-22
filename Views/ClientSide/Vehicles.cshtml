@@ -1,0 +1,145 @@
+﻿@model IEnumerable<EasyRent_Checking.Models.Vehicle>
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Browse Vehicles";
+    ViewData["ActiveNav"] = "Vehicles";
+
+    var currentCategory = ViewData["CurrentCategory"]?.ToString() ?? "All";
+    var currentSort = ViewData["CurrentSort"]?.ToString() ?? "Default";
+
+    var categories = new[] { "All", "SUV", "Sedan", "Van" };
+    var categoryLabels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["All"] = "All Cars",
+        ["SUV"] = "SUVs",
+        ["Sedan"] = "Sedans",
+        ["Van"] = "VANs"
+    };
+}
+
+@functions {
+    string GetTypeLabel(VehicleType type) => type == VehicleType.Van ? "VAN" : type.ToString().ToUpper();
+}
+
+<div class="client-page">
+    <div class="client-page-header">
+        <div>
+            <h1>Browse Vehicles</h1>
+            <p>Find the perfect vehicle for your next adventure.</p>
+        </div>
+    </div>
+
+    <div class="client-toolbar">
+        <div class="client-category-filters">
+            @foreach (var category in categories)
+            {
+                var isActive = string.Equals(currentCategory, category, StringComparison.OrdinalIgnoreCase);
+                <a asp-action="Browse"
+                   asp-route-category="@category"
+                   asp-route-sortBy="@currentSort"
+                   class="client-filter-pill @(isActive ? "active" : "")">
+                    @categoryLabels[category]
+                </a>
+            }
+        </div>
+
+        <div class="client-toolbar-actions">
+            <div class="dropdown">
+                <button class="client-toolbar-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Filters
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li><a class="dropdown-item" asp-action="Browse" asp-route-category="All" asp-route-sortBy="@currentSort">Available only</a></li>
+                    <li><a class="dropdown-item" asp-action="Browse" asp-route-category="SUV" asp-route-sortBy="@currentSort">SUVs only</a></li>
+                    <li><a class="dropdown-item" asp-action="Browse" asp-route-category="Sedan" asp-route-sortBy="@currentSort">Sedans only</a></li>
+                    <li><a class="dropdown-item" asp-action="Browse" asp-route-category="Van" asp-route-sortBy="@currentSort">VANs only</a></li>
+                </ul>
+            </div>
+
+            <div class="dropdown">
+                <button class="client-toolbar-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Sorting by
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li><a class="dropdown-item @(currentSort == "Default" ? "active" : "")" asp-action="Browse" asp-route-category="@currentCategory" asp-route-sortBy="Default">Newest first</a></li>
+                    <li><a class="dropdown-item @(currentSort == "Model" ? "active" : "")" asp-action="Browse" asp-route-category="@currentCategory" asp-route-sortBy="Model">Model (A–Z)</a></li>
+                    <li><a class="dropdown-item @(currentSort == "Brand" ? "active" : "")" asp-action="Browse" asp-route-category="@currentCategory" asp-route-sortBy="Brand">Brand (A–Z)</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="client-vehicle-grid">
+            @foreach (var item in Model)
+            {
+                <article class="client-vehicle-card">
+                    <div class="client-vehicle-image">
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="/images/@item.ImagePath" alt="@item.Model" />
+                        }
+                        else
+                        {
+                            <div class="client-vehicle-placeholder">
+                                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                    <line x1="0" y1="0" x2="100" y2="100" />
+                                    <line x1="100" y1="0" x2="0" y2="100" />
+                                </svg>
+                            </div>
+                        }
+
+                        <span class="client-vehicle-type-tag">@GetTypeLabel(item.Type)</span>
+                        <button type="button" class="client-vehicle-favorite" aria-label="Save vehicle">
+                            <i class="bi bi-heart"></i>
+                        </button>
+                    </div>
+
+                    <div class="client-vehicle-body">
+                        <div class="client-vehicle-title-row">
+                            <h2 class="client-vehicle-model">@item.Model</h2>
+                            <div class="client-vehicle-rating">
+                                <i class="bi bi-star-fill"></i>
+                                <span>4.9</span>
+                            </div>
+                        </div>
+
+                        <p class="client-vehicle-brand">@item.Brand</p>
+
+                        <p class="client-vehicle-price">
+                            <strong>₱@item.BasePrice.ToString("N0")</strong>
+                            <span>starting 8 hours rate</span>
+                        </p>
+
+                        <div class="client-vehicle-specs">
+                            <div class="client-vehicle-spec">
+                                <i class="bi bi-people"></i>
+                                <span>@item.PassengersCount Seats</span>
+                            </div>
+                            <div class="client-vehicle-spec">
+                                <i class="bi bi-snow"></i>
+                                <span>Air-conditioned</span>
+                            </div>
+                        </div>
+
+                        <a asp-action="VehicleDetails" asp-route-id="@item.VehicleId" class="client-btn-reserve">
+                            Reserve Now
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="client-empty-state">
+            <i class="bi bi-car-front d-block"></i>
+            <p class="mb-0 fw-semibold">No vehicles are available right now.</p>
+            <p class="small text-muted mt-1">Try a different category or check back later.</p>
+        </div>
+    }
+</div>

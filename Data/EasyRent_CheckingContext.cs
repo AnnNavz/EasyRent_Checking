@@ -16,5 +16,6 @@ namespace EasyRent_Checking.Data
 
         public DbSet<EasyRent_Checking.Models.Driver> Driver { get; set; } = default!;
         public DbSet<EasyRent_Checking.Models.Vehicle> Vehicle { get; set; } = default!;
+        public DbSet<EasyRent_Checking.Models.Reservation> Reservation { get; set; } = default!;
     }
 }

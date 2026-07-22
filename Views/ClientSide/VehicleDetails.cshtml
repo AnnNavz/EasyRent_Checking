@@ -1,0 +1,156 @@
+﻿@model EasyRent_Checking.Models.Vehicle
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = $"{Model.Brand} {Model.Model}";
+    ViewData["ActiveNav"] = "Vehicles";
+
+    string typeLabel = Model.Type == VehicleType.Van ? "VAN" : Model.Type.ToString().ToUpper();
+    string vehicleTitle = $"{Model.Model} {Model.Brand}".ToUpper();
+    string breadcrumbLabel = $"{Model.Brand} {Model.Model}";
+    bool isAvailable = Model.Status == VehicleStatus.Available;
+    string statusLabel = Model.Status switch
+    {
+        VehicleStatus.Available => "Available Now",
+        VehicleStatus.Rented => "Currently Rented",
+        VehicleStatus.InMaintenance => "In Maintenance",
+        _ => "Unavailable"
+    };
+    string aboutText = string.IsNullOrWhiteSpace(Model.Description)
+        ? "This vehicle is part of the EasyRent fleet and is maintained to provide a comfortable, reliable ride for every trip. Enjoy spacious seating, air-conditioning, and a smooth driving experience suited for city travel and out-of-town adventures."
+        : Model.Description;
+}
+
+<div class="client-details-breadcrumb-bar">
+    <div class="client-details-breadcrumb-inner">
+        <nav class="client-details-breadcrumb" aria-label="Breadcrumb">
+            <a asp-action="Homepage"><i class="bi bi-house-door"></i></a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <a asp-action="Browse">Browse Vehicles</a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <span class="client-details-breadcrumb-current">@breadcrumbLabel</span>
+        </nav>
+        <a asp-action="Browse" class="client-btn-back-browse">
+            <i class="bi bi-arrow-left"></i>
+            Back to Browse Details
+        </a>
+    </div>
+</div>
+
+<div class="client-page client-details-page">
+    <div class="client-details-layout">
+        <div class="client-details-main">
+            <div class="client-details-header">
+                <div>
+                    <span class="client-details-type-pill">@typeLabel</span>
+                    <h1 class="client-details-title">@vehicleTitle</h1>
+                    <div class="client-details-meta">
+                        <span class="client-details-stars">
+                            @for (var i = 0; i < 5; i++)
+                            {
+                                <i class="bi bi-star-fill"></i>
+                            }
+                        </span>
+                        <span class="client-details-rating-text">5.0</span>
+                        <span class="client-details-meta-muted">(67 verified reviews)</span>
+                        <span class="client-details-meta-muted">143 trips completed</span>
+                    </div>
+                </div>
+                <div class="client-details-header-actions">
+                    <button type="button" class="client-details-icon-btn" aria-label="Share">
+                        <i class="bi bi-share"></i>
+                    </button>
+                    <button type="button" class="client-details-icon-btn" aria-label="Save to favorites">
+                        <i class="bi bi-heart"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="client-details-gallery">
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <img src="/images/@Model.ImagePath" alt="@vehicleTitle" />
+                }
+                else
+                {
+                    <div class="client-details-gallery-placeholder">
+                        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <line x1="0" y1="0" x2="100" y2="100" />
+                            <line x1="100" y1="0" x2="0" y2="100" />
+                        </svg>
+                    </div>
+                }
+                <div class="client-details-gallery-overlay client-details-gallery-overlay-left">
+                    Vehicle Type @typeLabel &bull; @Model.PassengersCount seats
+                </div>
+                <div class="client-details-gallery-overlay client-details-gallery-overlay-right @(isAvailable ? "is-available" : "")">
+                    @if (isAvailable)
+                    {
+                        <span class="client-details-status-dot"></span>
+                    }
+                    @statusLabel
+                </div>
+            </div>
+
+            <div class="client-details-tabs-wrap">
+            <ul class="nav client-details-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-panel" type="button" role="tab">Overview</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-panel" type="button" role="tab">Reviews &amp; Ratings</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="policy-tab" data-bs-toggle="tab" data-bs-target="#policy-panel" type="button" role="tab">Rental Policy</button>
+                </li>
+            </ul>
+
+            <div class="tab-content client-details-tab-content">
+                <div class="tab-pane fade show active" id="overview-panel" role="tabpanel">
+                    <div class="client-details-panel">
+                        <h2>About this Vehicle</h2>
+                        <p>@aboutText</p>
+
+                        <h2 class="client-details-subheading">Performance Ratings</h2>
+                        <div class="client-details-rating-bars">
+                            <div class="client-details-rating-row">
+                                <span>Comfort</span>
+                                <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: 100%;"></div></div>
+                                <span class="client-details-rating-score">10.0</span>
+                            </div>
+                            <div class="client-details-rating-row">
+                                <span>Performance</span>
+                                <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: 90%;"></div></div>
+                                <span class="client-details-rating-score">9.0</span>
+                            </div>
+                            <div class="client-details-rating-row">
+                                <span>Safety</span>
+                                <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: 90%;"></div></div>
+                                <span class="client-details-rating-score">9.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="reviews-panel" role="tabpanel">
+                    <div class="client-details-panel">
+                        <h2>Reviews &amp; Ratings</h2>
+                        <p>Customer reviews for this vehicle will appear here. This vehicle currently has a 5.0 rating based on 67 verified reviews.</p>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="policy-panel" role="tabpanel">
+                    <div class="client-details-panel">
+                        <h2>Rental Policy</h2>
+                        <p>Free cancellation is available before vehicle pull-out. A ₱2,000 fee applies for cancellations made less than 24 hours before the scheduled pull-out time. Staff approval is required after payment.</p>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <aside class="client-details-sidebar">
+            @{ ViewData["ShowReserveButton"] = true; }
+            <partial name="_RateSummarySidebar" model="Model" />
+        </aside>
+    </div>
+</div>

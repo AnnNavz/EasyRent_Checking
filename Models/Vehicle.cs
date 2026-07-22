@@ -52,6 +52,20 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Registration Expiry")]
 		public DateTime RegistrationExpiry { get; set; }
 
+		[Required(ErrorMessage = "Base price is required.")]
+		[Display(Name = "Base Price")]
+		[Column(TypeName = "decimal(18,2)")]
+		[Range(0.01, 999999.99, ErrorMessage = "Base price must be greater than zero.")]
+		public decimal BasePrice { get; set; }
+
+		[Required(ErrorMessage = "Passengers count is required.")]
+		[Display(Name = "Passengers Count")]
+		[Range(1, 50, ErrorMessage = "Passengers count must be between 1 and 50.")]
+		public int PassengersCount { get; set; }
+
+		[StringLength(1000)]
+		public string? Description { get; set; }
+
 		[StringLength(255)]
 		[Display(Name = "Vehicle Picture")]
 		public string? ImagePath { get; set; }

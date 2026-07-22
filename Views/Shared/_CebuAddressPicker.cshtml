@@ -1,0 +1,43 @@
+@{
+    var prefix = ViewData["Prefix"] as string ?? "address";
+    var label = ViewData["Label"] as string ?? "Address";
+    var hiddenTarget = ViewData["HiddenTarget"] as string ?? "";
+}
+
+<div class="ph-address-picker" data-ph-address-picker data-hidden-target="@hiddenTarget" data-prefix="@prefix">
+    <label class="client-reservation-label">@label</label>
+    <p class="ph-address-scope">Central Visayas (Region VII) · Cebu</p>
+
+    <button type="button" class="ph-address-trigger" aria-haspopup="listbox" aria-expanded="false" id="@(prefix)-trigger">
+        <span class="ph-address-trigger-text is-placeholder">City / Municipality, Barangay, Postal Code, Street Address</span>
+        <i class="bi bi-chevron-down ph-address-trigger-icon" aria-hidden="true"></i>
+    </button>
+
+    <div class="ph-address-panel" id="@(prefix)-panel" hidden>
+        <div class="ph-address-tabs" role="tablist">
+            <button type="button" class="ph-address-tab is-active" data-tab="city" role="tab" aria-selected="true">City / Municipality</button>
+            <button type="button" class="ph-address-tab" data-tab="barangay" role="tab" aria-selected="false" disabled>Barangay</button>
+            <button type="button" class="ph-address-tab" data-tab="postal" role="tab" aria-selected="false" disabled>Postal Code</button>
+            <button type="button" class="ph-address-tab" data-tab="street" role="tab" aria-selected="false" disabled>Street Address</button>
+        </div>
+
+        <div class="ph-address-body">
+            <div class="ph-address-pane is-active" data-pane="city" role="tabpanel">
+                <ul class="ph-address-list" data-list="city"></ul>
+            </div>
+            <div class="ph-address-pane" data-pane="barangay" role="tabpanel" hidden>
+                <ul class="ph-address-list" data-list="barangay"></ul>
+            </div>
+            <div class="ph-address-pane" data-pane="postal" role="tabpanel" hidden>
+                <label class="ph-address-field-label" for="@(prefix)-postal">Postal Code</label>
+                <input type="text" class="ph-address-input" id="@(prefix)-postal" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" placeholder="e.g. 6000" />
+                <button type="button" class="ph-address-next-btn" data-next="street">Continue</button>
+            </div>
+            <div class="ph-address-pane" data-pane="street" role="tabpanel" hidden>
+                <label class="ph-address-field-label" for="@(prefix)-street">Street Address</label>
+                <input type="text" class="ph-address-input" id="@(prefix)-street" placeholder="House no., street, building, landmark..." />
+                <button type="button" class="ph-address-confirm-btn">Confirm Address</button>
+            </div>
+        </div>
+    </div>
+</div>

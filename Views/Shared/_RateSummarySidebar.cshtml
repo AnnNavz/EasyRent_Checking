@@ -1,0 +1,104 @@
+@model EasyRent_Checking.Models.Vehicle
+
+@{
+    decimal succeedingRate = Math.Round(Model.BasePrice / 2m, 0);
+    decimal exampleTotal = Model.BasePrice + (2m * succeedingRate);
+    bool showReserveButton = ViewData["ShowReserveButton"] as bool? ?? false;
+}
+
+<div class="client-rate-summary">
+    <h2 class="client-rate-summary-title">Rate Summary</h2>
+    <p class="client-rate-summary-note">
+        <i class="bi bi-check-circle-fill"></i>
+        Taxes &amp; fees included &bull; No hidden charges
+    </p>
+    <hr class="client-rate-summary-divider" />
+
+    <div class="client-rate-card client-rate-card--base">
+        <div class="client-rate-card-header">
+            <div class="client-rate-card-icon"><i class="bi bi-clock"></i></div>
+            <div class="client-rate-card-info">
+                <span class="client-rate-card-label">BASE PACKAGE</span>
+                <span class="client-rate-card-subtitle">First 8 hours</span>
+            </div>
+            <span class="client-rate-card-price">₱@Model.BasePrice.ToString("N0")</span>
+        </div>
+        <hr class="client-rate-card-divider" />
+        <ul class="client-rate-includes">
+            <li><i class="bi bi-check-lg"></i> Driver's fee included</li>
+            <li><i class="bi bi-check-lg"></i> Fuel included</li>
+            <li><i class="bi bi-check-lg"></i> Full Air-condition for all passengers</li>
+            <li><i class="bi bi-check-lg"></i> All taxes &amp; fees included</li>
+        </ul>
+    </div>
+
+    <div class="client-rate-card client-rate-card--succeeding">
+        <div class="client-rate-card-header">
+            <div class="client-rate-card-icon client-rate-card-icon--circle"><i class="bi bi-plus-lg"></i></div>
+            <div class="client-rate-card-info">
+                <span class="client-rate-card-label">SUCCEEDING HOURS</span>
+                <span class="client-rate-card-subtitle">Per hour (after 8 hours)</span>
+            </div>
+            <span class="client-rate-card-price">₱@succeedingRate.ToString("N0")</span>
+        </div>
+        <p class="client-rate-footnote">
+            <i class="bi bi-info-circle"></i>
+            <span><strong>Note:</strong> Fuel cost for succeeding is charged separately and not included in @succeedingRate.ToString("N0")/per hour rate.</span>
+        </p>
+    </div>
+
+    <div class="client-rate-example">
+        <div class="client-rate-example-header">
+            <i class="bi bi-calculator"></i>
+            <span>EXAMPLE: 10-HOUR TRIP</span>
+        </div>
+        <div class="client-rate-example-row">
+            <span>Base package (8 hrs)</span>
+            <span>₱@Model.BasePrice.ToString("N0")</span>
+        </div>
+        <div class="client-rate-example-row">
+            <span>+2 succeeding hours (₱@succeedingRate.ToString("N0")×2)</span>
+            <span>₱@((2m * succeedingRate).ToString("N0"))</span>
+        </div>
+        <hr class="client-rate-card-divider" />
+        <div class="client-rate-example-total">
+            <span>ESTIMATED TOTAL (10 hours)</span>
+            <span>₱@exampleTotal.ToString("N0")</span>
+        </div>
+        <p class="client-rate-example-note">* Excludes fuel for succeeding hours. Exact details in your booking form.</p>
+    </div>
+
+    <div class="client-rate-info-box">
+        <i class="bi bi-tag"></i>
+        <p><strong>10% discount</strong> for Senior Citizen's &amp; PWD - present valid ID upon booking. Not combinable.</p>
+    </div>
+    <div class="client-rate-info-box">
+        <i class="bi bi-file-earmark-person"></i>
+        <p><strong>Staff approval Required.</strong> After payment, our team will review and confirm your reservation. You'll be notified once approved.</p>
+    </div>
+
+    @if (showReserveButton)
+    {
+        <a asp-controller="Reservations" asp-action="Create" asp-route-vehicleId="@Model.VehicleId" class="client-btn-reserve client-btn-reserve-lg">
+            <i class="bi bi-calendar-check"></i>
+            Reserve Now
+        </a>
+    }
+
+    <div class="client-rate-trust">
+        <div class="client-rate-trust-item">
+            <i class="bi bi-shield-lock"></i>
+            <span>Secure Checkout</span>
+        </div>
+        <div class="client-rate-trust-item">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>Free Cancel (before pull-out)</span>
+        </div>
+        <div class="client-rate-trust-item">
+            <i class="bi bi-emoji-smile"></i>
+            <span>24/7 Support</span>
+        </div>
+    </div>
+
+    <p class="client-rate-disclaimer">* Free cancellation only while vehicle is still in garage. A <strong>₱2000 fee</strong> applies if cancelled after pull-out.</p>
+</div>

@@ -65,6 +65,18 @@
                     <span class="vehicle-info-label">Status</span>
                     <span class="vehicle-info-value">@Model?.Status</span>
                 </div>
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Base Price</span>
+                    <span class="vehicle-info-value">₱@Model?.BasePrice.ToString("N0")</span>
+                </div>
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Passengers Count</span>
+                    <span class="vehicle-info-value">@Model?.PassengersCount</span>
+                </div>
+                <div class="vehicle-info-row">
+                    <span class="vehicle-info-label">Description</span>
+                    <span class="vehicle-info-value">@(string.IsNullOrWhiteSpace(Model?.Description) ? "—" : Model.Description)</span>
+                </div>
             </div>
         </div>
         <div class="col-md-6">
@@ -79,7 +91,7 @@
                     <span class="vehicle-info-value">@registrationFrom</span>
                 </div>
                 <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Valid to</span>
+                    <span class="vehicle-info-label">Valid until</span>
                     <span class="vehicle-info-value">@registrationTo</span>
                 </div>
             </div>

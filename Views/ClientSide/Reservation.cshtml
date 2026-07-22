@@ -1,0 +1,361 @@
+﻿@model EasyRent_Checking.Models.ReservationFormViewModel
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    var vehicle = Model.Vehicle;
+    var reservation = Model.Reservation;
+
+    ViewData["Title"] = "Reservation";
+    ViewData["ActiveNav"] = "Vehicles";
+
+    string typeLabel = vehicle.Type == VehicleType.Van ? "VAN" : vehicle.Type.ToString().ToUpper();
+    string vehicleTitle = $"{vehicle.Model} {vehicle.Brand}".ToUpper();
+    string breadcrumbVehicle = $"{vehicle.Brand} {vehicle.Model}";
+
+    var pickupAddressPicker = new ViewDataDictionary(ViewData);
+    pickupAddressPicker["Prefix"] = "pickup";
+    pickupAddressPicker["Label"] = "Pickup Location";
+    pickupAddressPicker["HiddenTarget"] = "Reservation_PickupLoc";
+
+    var dropoffAddressPicker = new ViewDataDictionary(ViewData);
+    dropoffAddressPicker["Prefix"] = "dropoff";
+    dropoffAddressPicker["Label"] = "Drop-off Location";
+    dropoffAddressPicker["HiddenTarget"] = "Reservation_DropoffLoc";
+}
+
+<div class="client-details-breadcrumb-bar">
+    <div class="client-details-breadcrumb-inner">
+        <nav class="client-details-breadcrumb" aria-label="Breadcrumb">
+            <a asp-controller="Vehicles" asp-action="Homepage"><i class="bi bi-house-door"></i></a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <a asp-controller="Vehicles" asp-action="Browse">Browse Vehicles</a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <a asp-controller="Vehicles" asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId">@breadcrumbVehicle</a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <span class="client-details-breadcrumb-current">Reservation</span>
+        </nav>
+        <a asp-controller="Vehicles" asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId" class="client-btn-back-browse">
+            <i class="bi bi-arrow-left"></i>
+            Back to Vehicle Details
+        </a>
+    </div>
+</div>
+
+<div class="client-page client-reservation-page">
+    <div class="client-reservation-stepper">
+        <div class="client-reservation-step active">
+            <span class="client-reservation-step-dot"></span>
+            <span>Reservation Details</span>
+        </div>
+        <div class="client-reservation-step-line"></div>
+        <div class="client-reservation-step">
+            <span class="client-reservation-step-dot"></span>
+            <span>Payment Details</span>
+        </div>
+        <div class="client-reservation-step-line"></div>
+        <div class="client-reservation-step">
+            <span class="client-reservation-step-dot"></span>
+            <span>Payment Confirmation</span>
+        </div>
+        <div class="client-reservation-step-line"></div>
+        <div class="client-reservation-step">
+            <span class="client-reservation-step-dot"></span>
+            <span>Booking Summary</span>
+        </div>
+    </div>
+
+    @if (TempData["ReservationSuccess"] as bool? == true)
+    {
+        <div class="alert alert-success client-reservation-alert" role="alert">
+            Reservation details saved. Payment step will be available in a future update.
+        </div>
+    }
+
+    <form asp-controller="Reservations" asp-action="Create" method="post" enctype="multipart/form-data" class="client-reservation-form" id="reservationForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+        <input type="hidden" asp-for="Reservation.VehicleId" />
+        <input type="hidden" asp-for="Reservation.ImagePath" />
+
+        <div class="client-details-layout client-reservation-layout">
+            <div class="client-reservation-main">
+                <section class="client-reservation-card client-reservation-vehicle-summary">
+                    <div class="client-reservation-vehicle-image">
+                        @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+                        {
+                            <img src="/images/@vehicle.ImagePath" alt="@vehicleTitle" />
+                        }
+                        else
+                        {
+                            <div class="client-reservation-vehicle-placeholder">
+                                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                    <line x1="0" y1="0" x2="100" y2="100" />
+                                    <line x1="100" y1="0" x2="0" y2="100" />
+                                </svg>
+                            </div>
+                        }
+                    </div>
+                    <div>
+                        <span class="client-details-type-pill">@typeLabel</span>
+                        <h2 class="client-reservation-vehicle-name">@vehicleTitle</h2>
+                        <p class="client-reservation-vehicle-specs">@vehicle.PassengersCount seats &bull; Full A/C &bull; With Driver &bull; Automatic</p>
+                    </div>
+                </section>
+
+                <section class="client-reservation-card">
+                    <h3 class="client-reservation-section-title">Reservation Information</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.CustomerName" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.CustomerName" class="client-reservation-input" placeholder="e.g. Jane Doe" />
+                            <span asp-validation-for="Reservation.CustomerName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.ContactInfo" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.ContactInfo" class="client-reservation-input" placeholder="Mobile number or Email" />
+                            <span asp-validation-for="Reservation.ContactInfo" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="hidden" asp-for="Reservation.PickupLoc" id="Reservation_PickupLoc" />
+                            <partial name="_CebuAddressPicker" view-data="pickupAddressPicker" />
+                            <span asp-validation-for="Reservation.PickupLoc" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="hidden" asp-for="Reservation.DropoffLoc" id="Reservation_DropoffLoc" />
+                            <partial name="_CebuAddressPicker" view-data="dropoffAddressPicker" />
+                            <span asp-validation-for="Reservation.DropoffLoc" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-reservation-card">
+                    <h3 class="client-reservation-section-title">Select Pick-up &amp; Return Date</h3>
+                    <div class="client-reservation-calendar" id="reservationCalendar" aria-hidden="true">
+                        <div class="client-reservation-calendar-header">
+                            <button type="button" class="client-reservation-calendar-nav" id="calPrev" aria-label="Previous month">&lsaquo;</button>
+                            <span id="calMonthLabel">July 2025</span>
+                            <button type="button" class="client-reservation-calendar-nav" id="calNext" aria-label="Next month">&rsaquo;</button>
+                        </div>
+                        <div class="client-reservation-calendar-weekdays">
+                            <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                        </div>
+                        <div class="client-reservation-calendar-grid" id="calGrid"></div>
+                        <div class="client-reservation-calendar-legend">
+                            <span><i class="legend-dot legend-available"></i> Available</span>
+                            <span><i class="legend-dot legend-range"></i> Your Range</span>
+                            <span><i class="legend-dot legend-selected"></i> Selected</span>
+                            <span><i class="legend-dot legend-unavailable"></i> Unavailable</span>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="client-reservation-label">Pick-up Date &amp; Time</label>
+                            <div class="client-reservation-datetime">
+                                <input asp-for="Reservation.PickupDate" type="date" class="client-reservation-input" id="pickupDate" />
+                                <input asp-for="Reservation.PickupTime" type="time" class="client-reservation-input" />
+                            </div>
+                            <span asp-validation-for="Reservation.PickupDate" class="text-danger small"></span>
+                            <span asp-validation-for="Reservation.PickupTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="client-reservation-label">Return Date &amp; Time</label>
+                            <div class="client-reservation-datetime">
+                                <input asp-for="Reservation.ReturnDate" type="date" class="client-reservation-input" id="returnDate" />
+                                <input asp-for="Reservation.ReturnTime" type="time" class="client-reservation-input" />
+                            </div>
+                            <span asp-validation-for="Reservation.ReturnDate" class="text-danger small"></span>
+                            <span asp-validation-for="Reservation.ReturnTime" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-reservation-card">
+                    <h3 class="client-reservation-section-title">Passenger Information</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.PassengerCount" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.PassengerCount" type="number" min="1" max="@vehicle.PassengersCount" class="client-reservation-input" placeholder="e.g. 8" />
+                            <p class="client-reservation-helper">Maximum capacity: @vehicle.PassengersCount passengers</p>
+                            <span asp-validation-for="Reservation.PassengerCount" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.Discount" class="client-reservation-label">Senior / PWD Discount (if applicable)</label>
+                            <select asp-for="Reservation.Discount" class="client-reservation-input" id="discountSelect">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                            <p class="client-reservation-helper">10% discount — present valid ID upon booking.</p>
+                            <span asp-validation-for="Reservation.Discount" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12" id="discountUploadSection">
+                            <label asp-for="Reservation.ImageFile" class="client-reservation-label"></label>
+                            <div class="client-reservation-upload" id="discountUploadZone">
+                                <input asp-for="Reservation.ImageFile" type="file" class="client-reservation-file-input" accept=".png,.jpg,.jpeg" id="discountFileInput" />
+                                <div class="client-reservation-upload-placeholder" id="discountUploadPlaceholder">
+                                    <i class="bi bi-cloud-upload"></i>
+                                    <span>Click to upload valid ID image</span>
+                                </div>
+                                <div class="client-reservation-upload-preview d-none" id="discountUploadPreview">
+                                    <img id="discountPreviewImg" alt="Discount ID preview" />
+                                    <button type="button" class="client-reservation-upload-remove" id="discountRemoveBtn" aria-label="Remove image">&times;</button>
+                                    <span class="client-reservation-upload-name" id="discountFileName"></span>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Reservation.ImageFile" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-reservation-card">
+                    <h3 class="client-reservation-section-title">Additional Information</h3>
+                    <label asp-for="Reservation.SpNotes" class="client-reservation-label">Special Requests / Notes (Optional)</label>
+                    <textarea asp-for="Reservation.SpNotes" class="client-reservation-textarea" rows="4" placeholder="e.g. Please prepare child seats, need early morning pick-up, allergic to cigarette smoke..."></textarea>
+                    <span asp-validation-for="Reservation.SpNotes" class="text-danger small"></span>
+                </section>
+
+                <div class="client-reservation-actions">
+                    <a asp-controller="Vehicles" asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId" class="client-reservation-btn-back">Back</a>
+                    <button type="submit" class="client-reservation-btn-continue">Continue to Payment</button>
+                </div>
+            </div>
+
+            <aside class="client-details-sidebar">
+                <partial name="_RateSummarySidebar" model="vehicle" />
+            </aside>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const pickupInput = document.getElementById('pickupDate');
+            const returnInput = document.getElementById('returnDate');
+            const calGrid = document.getElementById('calGrid');
+            const calMonthLabel = document.getElementById('calMonthLabel');
+            const discountSelect = document.getElementById('discountSelect');
+            const discountUploadSection = document.getElementById('discountUploadSection');
+            const discountFileInput = document.getElementById('discountFileInput');
+            const discountUploadPlaceholder = document.getElementById('discountUploadPlaceholder');
+            const discountUploadPreview = document.getElementById('discountUploadPreview');
+            const discountPreviewImg = document.getElementById('discountPreviewImg');
+            const discountFileName = document.getElementById('discountFileName');
+            const discountRemoveBtn = document.getElementById('discountRemoveBtn');
+
+            let viewDate = pickupInput.value ? new Date(pickupInput.value + 'T00:00:00') : new Date();
+
+            function parseDate(value) {
+                return value ? new Date(value + 'T00:00:00') : null;
+            }
+
+            function formatIso(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            function renderCalendar() {
+                const year = viewDate.getFullYear();
+                const month = viewDate.getMonth();
+                calMonthLabel.textContent = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const pickup = parseDate(pickupInput.value);
+                const ret = parseDate(returnInput.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                calGrid.innerHTML = '';
+                for (let i = 0; i < firstDay; i++) {
+                    calGrid.appendChild(document.createElement('span'));
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const cellDate = new Date(year, month, day);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = day;
+                    btn.className = 'client-reservation-cal-day';
+
+                    if (cellDate < today) {
+                        btn.classList.add('is-unavailable');
+                        btn.disabled = true;
+                    } else {
+                        btn.classList.add('is-available');
+                    }
+
+                    if (pickup && formatIso(cellDate) === formatIso(pickup)) btn.classList.add('is-selected');
+                    if (ret && formatIso(cellDate) === formatIso(ret)) btn.classList.add('is-selected');
+                    if (pickup && ret && cellDate > pickup && cellDate < ret) btn.classList.add('in-range');
+
+                    btn.addEventListener('click', function () {
+                        if (!pickup || (pickup && ret)) {
+                            pickupInput.value = formatIso(cellDate);
+                            returnInput.value = '';
+                        } else if (cellDate < pickup) {
+                            pickupInput.value = formatIso(cellDate);
+                        } else {
+                            returnInput.value = formatIso(cellDate);
+                        }
+                        renderCalendar();
+                    });
+
+                    calGrid.appendChild(btn);
+                }
+            }
+
+            document.getElementById('calPrev').addEventListener('click', function () {
+                viewDate.setMonth(viewDate.getMonth() - 1);
+                renderCalendar();
+            });
+            document.getElementById('calNext').addEventListener('click', function () {
+                viewDate.setMonth(viewDate.getMonth() + 1);
+                renderCalendar();
+            });
+
+            pickupInput.addEventListener('change', renderCalendar);
+            returnInput.addEventListener('change', renderCalendar);
+
+            function toggleDiscountUpload() {
+                const show = discountSelect.value === '1';
+                discountUploadSection.style.display = show ? 'block' : 'none';
+                if (!show) {
+                    discountFileInput.value = '';
+                    discountUploadPreview.classList.add('d-none');
+                    discountUploadPlaceholder.classList.remove('d-none');
+                }
+            }
+
+            discountSelect.addEventListener('change', toggleDiscountUpload);
+            toggleDiscountUpload();
+
+            discountFileInput.addEventListener('change', function () {
+                if (!this.files || !this.files[0]) return;
+                const file = this.files[0];
+                discountFileName.textContent = file.name;
+                discountUploadPlaceholder.classList.add('d-none');
+                discountUploadPreview.classList.remove('d-none');
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        discountPreviewImg.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            discountRemoveBtn.addEventListener('click', function () {
+                discountFileInput.value = '';
+                discountPreviewImg.src = '';
+                discountUploadPreview.classList.add('d-none');
+                discountUploadPlaceholder.classList.remove('d-none');
+            });
+
+            renderCalendar();
+        })();
+    </script>
+    <script src="~/js/philippine-address-picker.js" asp-append-version="true"></script>
+}
