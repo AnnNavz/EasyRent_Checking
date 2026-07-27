@@ -1,0 +1,127 @@
+@model EasyRent_Checking.Models.ReservationPaymentDetailsViewModel
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["ActivePage"] = "Bookings";
+    ViewData["Title"] = "Make a Reservation";
+    ViewData["ReservationStep"] = 2;
+
+    var vehicle = Model.Vehicle;
+    var pricing = Model.Pricing;
+}
+
+@section Styles {
+    <partial name="_AdminBookingWizardStyles" />
+}
+
+<div class="admin-booking-create client-page client-reservation-page client-payment-page px-1">
+    <partial name="_ReservationStepper" />
+
+    <div class="client-details-layout client-reservation-layout">
+        <div class="client-payment-main">
+            <section class="client-payment-card">
+                <h3 class="client-payment-section-title">
+                    <i class="bi bi-calculator"></i>
+                    Cost Breakdown
+                </h3>
+
+                <div class="client-payment-line">
+                    <div>
+                        <strong>Base Rental Fee</strong>
+                        <p>First 8 hours — Driver, Fuel, &amp; A/C included</p>
+                    </div>
+                    <span>₱@pricing.BaseFee.ToString("N2")</span>
+                </div>
+
+                @if (pricing.SucceedingHours > 0)
+                {
+                    <div class="client-payment-line">
+                        <div>
+                            <strong>Succeeding Hours</strong>
+                            <p>@pricing.SucceedingHours hour@(pricing.SucceedingHours == 1 ? "" : "s") x ₱@pricing.SucceedingHourlyRate.ToString("N0")/hr</p>
+                        </div>
+                        <span>₱@pricing.SucceedingFee.ToString("N2")</span>
+                    </div>
+                }
+
+                @if (pricing.HasDiscount)
+                {
+                    <div class="client-payment-line is-discount">
+                        <div>
+                            <strong>Senior / PWD Discount</strong>
+                            <p>10% off applied</p>
+                        </div>
+                        <span>-₱@pricing.DiscountAmount.ToString("N2")</span>
+                    </div>
+                }
+
+                <div class="client-payment-total-bar">
+                    <div>
+                        <strong>Total Reservation Cost</strong>
+                        <p>Total taxes &amp; fees included</p>
+                    </div>
+                    <span>₱@pricing.Total.ToString("N2")</span>
+                </div>
+            </section>
+
+            <section class="client-payment-card">
+                <h3 class="client-payment-section-title">
+                    <i class="bi bi-credit-card"></i>
+                    Payment Information
+                </h3>
+                <p class="client-payment-info-note">Accepted payment options (for reference only):</p>
+
+                <div class="client-payment-methods">
+                    <div class="client-payment-method is-display">
+                        <span class="client-payment-method-icon-wrap">
+                            <span class="client-payment-method-logo client-payment-method-logo--gcash">G</span>
+                        </span>
+                        <span class="client-payment-method-body">
+                            <strong>GCash</strong>
+                            <small>Mobile Wallet / QR</small>
+                            <span class="client-payment-method-desc">Scan GCash QR code and send the exact amount.</span>
+                            <em><i class="bi bi-qr-code"></i> QR Code provided on confirmation</em>
+                        </span>
+                    </div>
+
+                    <div class="client-payment-method is-display">
+                        <span class="client-payment-method-icon-wrap">
+                            <span class="client-payment-method-logo client-payment-method-logo--bdo">BDO</span>
+                        </span>
+                        <span class="client-payment-method-body">
+                            <strong>BDO</strong>
+                            <small>Bank Transfer / QR</small>
+                            <span class="client-payment-method-desc">Scan QR code or bank transfer via BDO online banking.</span>
+                            <em><i class="bi bi-qr-code"></i> QR Code provided on confirmation</em>
+                        </span>
+                    </div>
+
+                    <div class="client-payment-method is-display">
+                        <span class="client-payment-method-icon-wrap">
+                            <span class="client-payment-method-logo client-payment-method-logo--walkin">
+                                <i class="bi bi-shop"></i>
+                            </span>
+                        </span>
+                        <span class="client-payment-method-body">
+                            <strong>Walk-in</strong>
+                            <small>Pay at Office</small>
+                            <span class="client-payment-method-desc">Visit our office and pay in person. Cash or card accepted.</span>
+                            <em><i class="bi bi-geo-alt"></i> Address shown on confirmation</em>
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="client-reservation-actions client-payment-actions">
+                <a asp-controller="Bookings"
+                   asp-action="Create"
+                   asp-route-vehicleId="@vehicle.VehicleId"
+                   class="client-reservation-btn-back">Back</a>
+                <a asp-controller="Bookings"
+                   asp-action="PaymentConfirmation"
+                   class="client-reservation-btn-continue">Proceed to Payment Confirmation</a>
+            </div>
+        </div>
+    </div>
+</div>

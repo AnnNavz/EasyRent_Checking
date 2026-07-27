@@ -4,6 +4,7 @@ using EasyRent_Checking.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EasyRent_Checking.Migrations
 {
     [DbContext(typeof(EasyRent_CheckingContext))]
-    partial class EasyRent_CheckingContextModelSnapshot : ModelSnapshot
+    [Migration("20260724071910_remove_reservation_payment_method")]
+    partial class remove_reservation_payment_method
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -78,16 +81,10 @@ namespace EasyRent_Checking.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReservationID"));
 
-                    b.Property<decimal?>("AmountSent")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("ContactInfo")
                         .IsRequired()
                         .HasMaxLength(11)
                         .HasColumnType("nvarchar(11)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
@@ -106,36 +103,8 @@ namespace EasyRent_Checking.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<bool>("IsDraft")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LockedUntilUtc")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("PassengerCount")
                         .HasColumnType("int");
-
-                    b.Property<string>("PayerAccountName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int?>("PaymentChannel")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("PaymentDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PaymentNotes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<string>("PaymentProofPath")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("PaymentReference")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateOnly>("PickupDate")
                         .HasColumnType("date");
@@ -157,9 +126,6 @@ namespace EasyRent_Checking.Migrations
                     b.Property<string>("SpNotes")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.Property<int>("VehicleId")
                         .HasColumnType("int");

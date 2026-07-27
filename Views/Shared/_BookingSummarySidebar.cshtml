@@ -1,0 +1,137 @@
+@model EasyRent_Checking.Models.ReservationPaymentDetailsViewModel
+@using EasyRent_Checking.Models
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+
+@{
+    var vehicle = Model.Vehicle;
+    var reservation = Model.Reservation;
+    var pricing = Model.Pricing;
+    string typeLabel = vehicle.Type == VehicleType.Van ? "VAN" : vehicle.Type.ToString().ToUpper();
+    string vehicleTitle = $"{vehicle.Model} {vehicle.Brand}".ToUpper();
+    string discountLabel = reservation.Discount == 1 ? "Senior (10%)" : "None";
+    var currentStep = ViewData["ReservationStep"] as int? ?? 2;
+
+    string FormatDateTime(DateOnly date, TimeOnly time)
+    {
+        var dt = date.ToDateTime(time);
+        return dt.ToString("MMM. d, yyyy") + " • " + dt.ToString("h:mmtt").ToUpper();
+    }
+
+    string StatusLabel(ReservationStatus status)
+    {
+        var member = typeof(ReservationStatus).GetMember(status.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>();
+        return display?.Name ?? status.ToString();
+    }
+
+    string PaymentLabel()
+    {
+        var channel = Model.PaymentChannel ?? reservation.PaymentChannel;
+        if (channel == null)
+        {
+            return "—";
+        }
+
+        return channel switch
+        {
+            PaymentChannel.GCash => "GCash",
+            PaymentChannel.BDO => "BDO",
+            PaymentChannel.WalkIn => "Walk-in",
+            _ => channel.ToString()
+        };
+    }
+}
+
+<div class="client-booking-summary">
+    <h2 class="client-booking-summary-title">Booking Summary</h2>
+
+    <div class="client-booking-summary-vehicle">
+        <div class="client-booking-summary-image">
+            @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+            {
+                <img src="/images/@vehicle.ImagePath" alt="@vehicleTitle" />
+            }
+            else
+            {
+                <div class="client-booking-summary-image-placeholder">
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <line x1="0" y1="0" x2="100" y2="100" />
+                        <line x1="100" y1="0" x2="0" y2="100" />
+                    </svg>
+                </div>
+            }
+        </div>
+        <div>
+            <span class="client-details-type-pill">@typeLabel</span>
+            <h3 class="client-booking-summary-vehicle-name">@vehicleTitle</h3>
+        </div>
+    </div>
+
+    <dl class="client-booking-summary-list">
+        <div class="client-booking-summary-row">
+            <dt>Customer</dt>
+            <dd>@reservation.CustomerName</dd>
+        </div>
+        <div class="client-booking-summary-row">
+            <dt>Pickup Date</dt>
+            <dd>@FormatDateTime(reservation.PickupDate, reservation.PickupTime)</dd>
+        </div>
+        <div class="client-booking-summary-row">
+            <dt>Return Date</dt>
+            <dd>@FormatDateTime(reservation.ReturnDate, reservation.ReturnTime)</dd>
+        </div>
+        <div class="client-booking-summary-row">
+            <dt>Duration</dt>
+            <dd>@pricing.DurationLabel</dd>
+        </div>
+        <div class="client-booking-summary-row">
+            <dt>Passengers</dt>
+            <dd>@reservation.PassengerCount</dd>
+        </div>
+        <div class="client-booking-summary-row">
+            <dt>Discount</dt>
+            <dd>@discountLabel</dd>
+        </div>
+        @if (currentStep >= 3)
+        {
+            <div class="client-booking-summary-row">
+                <dt>Payment</dt>
+                <dd id="summaryPaymentLabel">@PaymentLabel()</dd>
+            </div>
+            <div class="client-booking-summary-row">
+                <dt>Status</dt>
+                <dd class="client-booking-summary-status">@StatusLabel(reservation.Status)</dd>
+            </div>
+        }
+    </dl>
+
+    <div class="client-booking-summary-total">
+        <span>Total Amount</span>
+        <strong>₱@pricing.Total.ToString("N2")</strong>
+    </div>
+
+    <div class="client-booking-summary-secure">
+        <i class="bi bi-shield-lock"></i>
+        <p>Your payment is secure and encrypted. Staff will verify before confirming your booking.</p>
+    </div>
+
+    <div class="client-booking-summary-actions">
+        <a asp-controller="Reservations"
+           asp-action="Create"
+           asp-route-vehicleId="@vehicle.VehicleId"
+           class="client-booking-summary-edit">
+            <i class="bi bi-pencil"></i>
+            Edit Reservation Details
+        </a>
+        @if (currentStep >= 3)
+        {
+            <a asp-controller="Reservations"
+               asp-action="PaymentConfirmation"
+               class="client-booking-summary-edit">
+                <i class="bi bi-pencil"></i>
+                Edit Payment Details
+            </a>
+        }
+    </div>
+</div>

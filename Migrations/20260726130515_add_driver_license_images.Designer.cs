@@ -4,6 +4,7 @@ using EasyRent_Checking.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EasyRent_Checking.Migrations
 {
     [DbContext(typeof(EasyRent_CheckingContext))]
-    partial class EasyRent_CheckingContextModelSnapshot : ModelSnapshot
+    [Migration("20260726130515_add_driver_license_images")]
+    partial class add_driver_license_images
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -105,9 +108,6 @@ namespace EasyRent_Checking.Migrations
                     b.Property<string>("ImagePath")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<bool>("IsDraft")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("LockedUntilUtc")
                         .HasColumnType("datetime2");

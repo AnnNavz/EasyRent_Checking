@@ -72,6 +72,10 @@
                     <div class="mock-icon-square"></div>
                     Vehicle Management
                 </a>
+                <a asp-controller="Bookings" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Bookings" ? "active" : "")">
+                    <div class="mock-icon-square"></div>
+                    Booking Management
+                </a>
             </div>
 
             <div>

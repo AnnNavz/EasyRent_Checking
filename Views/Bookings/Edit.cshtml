@@ -1,0 +1,630 @@
+@model EasyRent_Checking.Models.ReservationEditViewModel
+@using EasyRent_Checking.Models
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+@using System.IO
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Edit Details";
+    ViewData["ActivePage"] = "Bookings";
+
+    var vehicle = Model.Vehicle;
+    var reservation = Model.Reservation;
+    var pricing = Model.Pricing;
+    bool hasVehicle = vehicle != null && vehicle.VehicleId > 0;
+    string typeLabel = hasVehicle
+        ? (vehicle!.Type == VehicleType.Van ? "VAN" : vehicle.Type.ToString().ToUpper())
+        : "";
+    string vehicleTitle = hasVehicle ? $"{vehicle!.Model} {vehicle.Brand}".ToUpper() : "";
+    var selectedChannel = Model.PaymentChannel ?? PaymentChannel.GCash;
+    bool isOnlinePayment = selectedChannel != PaymentChannel.WalkIn;
+    string? backUrl = ViewData["ReturnUrl"]?.ToString();
+    string detailsReturnUrl = Url.Action("Details", new { id = reservation.ReservationID }) ?? "";
+
+    string ChannelLabel(PaymentChannel channel)
+    {
+        var member = typeof(PaymentChannel).GetMember(channel.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>();
+        return display?.Name ?? channel.ToString();
+    }
+
+    string DisplayFileName(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+        var name = System.IO.Path.GetFileName(path);
+        var underscore = name.IndexOf('_');
+        if (underscore > 0 && underscore < name.Length - 1 && name.Length > 20)
+        {
+            return name[(underscore + 1)..];
+        }
+        return name;
+    }
+}
+
+@section Styles {
+    <partial name="_AdminBookingWizardStyles" />
+}
+
+<div class="admin-booking-create client-page client-reservation-page client-payment-page px-1">
+    <form asp-controller="Bookings"
+          asp-action="Edit"
+          asp-route-id="@reservation.ReservationID"
+          method="post"
+          enctype="multipart/form-data"
+          class="client-reservation-form"
+          id="reservationEditForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+        <input type="hidden" asp-for="Reservation.ReservationID" />
+        <input type="hidden" asp-for="Reservation.VehicleId" />
+        <input type="hidden" asp-for="Reservation.ImagePath" id="discountImagePath" />
+        <input type="hidden" asp-for="PaymentProofPath" />
+        @if (!string.IsNullOrEmpty(backUrl))
+        {
+            <input type="hidden" name="returnUrl" value="@backUrl" />
+        }
+
+        <div class="client-details-layout client-reservation-layout">
+            <div class="client-reservation-main client-payment-main">
+                @if (hasVehicle)
+                {
+                    <section class="client-reservation-card client-reservation-vehicle-summary">
+                        <div class="d-flex align-items-center gap-3 w-100">
+                            <div class="client-reservation-vehicle-image">
+                                @if (!string.IsNullOrEmpty(vehicle!.ImagePath))
+                                {
+                                    <img src="/images/@vehicle.ImagePath" alt="@vehicleTitle" />
+                                }
+                                else
+                                {
+                                    <div class="client-reservation-vehicle-placeholder">
+                                        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                            <line x1="0" y1="0" x2="100" y2="100" />
+                                            <line x1="100" y1="0" x2="0" y2="100" />
+                                        </svg>
+                                    </div>
+                                }
+                            </div>
+                            <div>
+                                <span class="client-details-type-pill">@typeLabel</span>
+                                <h2 class="client-reservation-vehicle-name">@vehicleTitle</h2>
+                                <p class="client-reservation-vehicle-specs">@vehicle.PassengersCount seats &bull; Full A/C &bull; With Driver &bull; Automatic</p>
+                            </div>
+                        </div>
+                    </section>
+                }
+
+                <section class="client-reservation-card">
+                    <h3 class="client-reservation-section-title">
+                        <i class="bi bi-file-text"></i>
+                        Reservation Information
+                    </h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.CustomerName" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.CustomerName" class="client-reservation-input" placeholder="e.g. Jane Doe" />
+                            <span asp-validation-for="Reservation.CustomerName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.ContactInfo" class="client-reservation-label">Contact Information</label>
+                            <input asp-for="Reservation.ContactInfo" class="client-reservation-input" type="tel" inputmode="numeric" maxlength="11" placeholder="e.g. 09123456789" />
+                            <span asp-validation-for="Reservation.ContactInfo" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.PickupLoc" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.PickupLoc" class="client-reservation-input" placeholder="e.g. Street, Barangay, City" />
+                            <span asp-validation-for="Reservation.PickupLoc" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.DropoffLoc" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.DropoffLoc" class="client-reservation-input" placeholder="e.g. Street, Barangay, City" />
+                            <span asp-validation-for="Reservation.DropoffLoc" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-reservation-card">
+                    <h3 class="client-reservation-section-title">
+                        <i class="bi bi-calendar3"></i>
+                        Select Pick-up &amp; Return Date
+                    </h3>
+                    <p class="client-payment-info-note">Click an available date to set your pick-up date, then select your return date. Darker = Available; Red = Unavailable.</p>
+                    <div class="client-reservation-calendar" id="reservationCalendar" aria-hidden="true">
+                        <div class="client-reservation-calendar-header">
+                            <button type="button" class="client-reservation-calendar-nav" id="calPrev" aria-label="Previous month">&lsaquo;</button>
+                            <span id="calMonthLabel">July 2025</span>
+                            <button type="button" class="client-reservation-calendar-nav" id="calNext" aria-label="Next month">&rsaquo;</button>
+                        </div>
+                        <div class="client-reservation-calendar-weekdays">
+                            <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                        </div>
+                        <div class="client-reservation-calendar-grid" id="calGrid"></div>
+                        <div class="client-reservation-calendar-legend">
+                            <span><i class="legend-dot legend-available"></i> Available</span>
+                            <span><i class="legend-dot legend-pickup"></i> Pickup</span>
+                            <span><i class="legend-dot legend-return"></i> Return</span>
+                            <span><i class="legend-dot legend-range"></i> Your Range</span>
+                            <span><i class="legend-dot legend-unavailable"></i> Unavailable</span>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="client-reservation-label">Pick-up Date &amp; Time</label>
+                            <div class="client-reservation-datetime">
+                                <input asp-for="Reservation.PickupDate" type="date" class="client-reservation-input" id="pickupDate" />
+                                <input asp-for="Reservation.PickupTime" type="time" class="client-reservation-input" />
+                            </div>
+                            <span asp-validation-for="Reservation.PickupDate" class="text-danger small"></span>
+                            <span asp-validation-for="Reservation.PickupTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="client-reservation-label">Return Date &amp; Time</label>
+                            <div class="client-reservation-datetime">
+                                <input asp-for="Reservation.ReturnDate" type="date" class="client-reservation-input" id="returnDate" />
+                                <input asp-for="Reservation.ReturnTime" type="time" class="client-reservation-input" />
+                            </div>
+                            <span asp-validation-for="Reservation.ReturnDate" class="text-danger small"></span>
+                            <span asp-validation-for="Reservation.ReturnTime" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-reservation-card">
+                    <h3 class="client-reservation-section-title">
+                        <i class="bi bi-people"></i>
+                        Passenger Information
+                    </h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.PassengerCount" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.PassengerCount" type="number" min="1" max="@(hasVehicle ? vehicle!.PassengersCount : 99)" class="client-reservation-input" placeholder="e.g. 8" />
+                            @if (hasVehicle)
+                            {
+                                <p class="client-reservation-helper">Maximum capacity: @vehicle!.PassengersCount passengers</p>
+                            }
+                            <span asp-validation-for="Reservation.PassengerCount" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Reservation.Discount" class="client-reservation-label">Senior / PWD Discount (if applicable)</label>
+                            <select asp-for="Reservation.Discount" class="client-reservation-input" id="discountSelect">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                            <p class="client-reservation-helper">10% discount — present valid ID upon booking.</p>
+                            <span asp-validation-for="Reservation.Discount" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12" id="discountUploadSection">
+                            <label asp-for="Reservation.ImageFile" class="client-reservation-label"></label>
+                            <div class="client-reservation-upload" id="discountUploadZone">
+                                <input asp-for="Reservation.ImageFile" type="file" class="client-reservation-file-input" accept=".png,.jpg,.jpeg" id="discountFileInput" />
+                                <div class="client-reservation-upload-placeholder @(string.IsNullOrEmpty(reservation.ImagePath) ? "" : "d-none")" id="discountUploadPlaceholder">
+                                    <i class="bi bi-cloud-upload"></i>
+                                    <span>Click to upload valid ID image</span>
+                                </div>
+                                <div class="client-reservation-upload-preview @(string.IsNullOrEmpty(reservation.ImagePath) ? "d-none" : "")" id="discountUploadPreview">
+                                    <img id="discountPreviewImg"
+                                         alt="Discount ID preview"
+                                         src="@(string.IsNullOrEmpty(reservation.ImagePath) ? "" : $"/images/{reservation.ImagePath}")" />
+                                    <button type="button" class="client-reservation-upload-remove" id="discountRemoveBtn" aria-label="Remove image">&times;</button>
+                                    <span class="client-reservation-upload-name" id="discountFileName">@DisplayFileName(reservation.ImagePath)</span>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Reservation.ImageFile" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-reservation-card">
+                    <h3 class="client-reservation-section-title">
+                        <i class="bi bi-journal-text"></i>
+                        Additional Information
+                    </h3>
+                    <label asp-for="Reservation.SpNotes" class="client-reservation-label">Special Requests / Notes (Optional)</label>
+                    <textarea asp-for="Reservation.SpNotes" class="client-reservation-textarea" rows="4" placeholder="e.g. Please prepare child seats, need early morning pick-up, allergic to cigarette smoke..."></textarea>
+                    <span asp-validation-for="Reservation.SpNotes" class="text-danger small"></span>
+                </section>
+
+                <section class="client-payment-card">
+                    <h3 class="client-payment-section-title">
+                        <i class="bi bi-credit-card"></i>
+                        Select Payment Channel
+                    </h3>
+                    <p class="client-payment-info-note">Choose how you'd like to send your payment.</p>
+
+                    <div class="client-payment-channel-tabs" role="radiogroup" aria-label="Payment channel">
+                        @foreach (PaymentChannel channel in Enum.GetValues<PaymentChannel>())
+                        {
+                            var isSelected = selectedChannel == channel;
+                            <label class="client-payment-channel-tab @(isSelected ? "is-selected" : "")">
+                                <input type="radio"
+                                       asp-for="PaymentChannel"
+                                       value="@channel"
+                                       class="client-payment-channel-input"
+                                       data-channel="@channel" />
+                                <span>@ChannelLabel(channel)</span>
+                            </label>
+                        }
+                    </div>
+                    <span asp-validation-for="PaymentChannel" class="text-danger small"></span>
+
+                    <div class="client-payment-qr-panel" id="paymentQrPanel" data-visible="@(isOnlinePayment ? "true" : "false")">
+                        <div class="client-payment-qr-box">
+                            <div class="client-payment-qr-placeholder" aria-hidden="true">
+                                <i class="bi bi-qr-code"></i>
+                                <span>QR Code</span>
+                            </div>
+                        </div>
+                        <div class="client-payment-qr-details">
+                            <h4 class="client-payment-qr-title" id="paymentQrTitle">GCash QR Code</h4>
+                            <dl class="client-payment-qr-list">
+                                <div class="client-payment-qr-row">
+                                    <dt id="paymentAccountLabel">GCash Name:</dt>
+                                    <dd>TRUST RENT A CAR</dd>
+                                </div>
+                                <div class="client-payment-qr-row">
+                                    <dt id="paymentNumberLabel">GCash Number:</dt>
+                                    <dd>09XX-XXX-XXXX</dd>
+                                </div>
+                                <div class="client-payment-qr-row">
+                                    <dt>Amount:</dt>
+                                    <dd class="client-payment-qr-amount">₱@pricing.Total.ToString("N2")</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="client-payment-walkin-panel" id="paymentWalkInPanel" data-visible="@(!isOnlinePayment ? "true" : "false")">
+                        <div class="client-payment-walkin-card">
+                            <i class="bi bi-geo-alt"></i>
+                            <div>
+                                <strong>Pay at our office</strong>
+                                <p>Visit Trust Rent A Car during office hours. Cash or card accepted. Bring a valid ID matching your reservation name.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-payment-card" id="paymentSubmitSection" data-visible="@(isOnlinePayment ? "true" : "false")">
+                    <h3 class="client-payment-section-title">
+                        <i class="bi bi-check2-square"></i>
+                        Submit Payment Details
+                    </h3>
+                    <p class="client-payment-info-note">After sending the payment, fill in the details below and submit for verification. Our team will confirm within 24 hours.</p>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="PayerAccountName" class="client-reservation-label"></label>
+                            <input asp-for="PayerAccountName" class="client-reservation-input" placeholder="Your name on GCash / BDO" />
+                            <p class="client-reservation-helper">Name associated with the account you used to send money.</p>
+                            <span asp-validation-for="PayerAccountName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PaymentReference" class="client-reservation-label"></label>
+                            <input asp-for="PaymentReference" class="client-reservation-input" placeholder="e.g. 123456789123" />
+                            <p class="client-reservation-helper">Refer to your GCash receipt or BDO transaction history.</p>
+                            <span asp-validation-for="PaymentReference" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="AmountSent" class="client-reservation-label"></label>
+                            <input asp-for="AmountSent" type="number" step="0.01" min="0" class="client-reservation-input" placeholder="@pricing.Total.ToString("0.00")" />
+                            <p class="client-reservation-helper">Make sure this is correct: ₱@pricing.Total.ToString("N2")</p>
+                            <span asp-validation-for="AmountSent" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PaymentDateTime" class="client-reservation-label"></label>
+                            <input asp-for="PaymentDateTime" type="datetime-local" class="client-reservation-input" />
+                            <span asp-validation-for="PaymentDateTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="PaymentProofFile" class="client-reservation-label"></label>
+                            <div class="client-reservation-upload" id="paymentUploadZone">
+                                <input asp-for="PaymentProofFile" type="file" class="client-reservation-file-input" accept=".png,.jpg,.jpeg" id="paymentProofInput" />
+                                <div class="client-reservation-upload-placeholder @(string.IsNullOrEmpty(Model.PaymentProofPath) ? "" : "d-none")" id="paymentUploadPlaceholder">
+                                    <i class="bi bi-cloud-upload"></i>
+                                    <span>Click to upload payment screenshot / receipt</span>
+                                </div>
+                                <div class="client-reservation-upload-preview @(string.IsNullOrEmpty(Model.PaymentProofPath) ? "d-none" : "")" id="paymentUploadPreview">
+                                    <img id="paymentPreviewImg"
+                                         alt="Payment proof preview"
+                                         src="@(string.IsNullOrEmpty(Model.PaymentProofPath) ? "" : $"/images/{Model.PaymentProofPath}")" />
+                                    <button type="button" class="client-reservation-upload-remove" id="paymentRemoveBtn" aria-label="Remove image">&times;</button>
+                                    <span class="client-reservation-upload-name" id="paymentFileName">@DisplayFileName(Model.PaymentProofPath)</span>
+                                </div>
+                            </div>
+                            <span asp-validation-for="PaymentProofFile" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="PaymentNotes" class="client-reservation-label"></label>
+                            <textarea asp-for="PaymentNotes" class="client-reservation-textarea" rows="3" placeholder="Any extra details about your payment..."></textarea>
+                            <span asp-validation-for="PaymentNotes" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="client-reservation-actions client-payment-actions">
+                    @if (!string.IsNullOrEmpty(backUrl))
+                    {
+                        <a href="@backUrl" class="client-reservation-btn-back">Back</a>
+                    }
+                    else
+                    {
+                        <a href="@detailsReturnUrl" class="client-reservation-btn-back">Back</a>
+                    }
+                    <button type="submit" class="client-reservation-btn-continue">Update Reservation</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const form = document.getElementById('reservationEditForm');
+            if (!form) return;
+
+            const pickupInput = document.getElementById('pickupDate');
+            const returnInput = document.getElementById('returnDate');
+            const calGrid = document.getElementById('calGrid');
+            const calMonthLabel = document.getElementById('calMonthLabel');
+            const discountSelect = document.getElementById('discountSelect');
+            const discountUploadSection = document.getElementById('discountUploadSection');
+            const discountFileInput = document.getElementById('discountFileInput');
+            const discountUploadPlaceholder = document.getElementById('discountUploadPlaceholder');
+            const discountUploadPreview = document.getElementById('discountUploadPreview');
+            const discountPreviewImg = document.getElementById('discountPreviewImg');
+            const discountFileName = document.getElementById('discountFileName');
+            const discountRemoveBtn = document.getElementById('discountRemoveBtn');
+            const discountImagePath = document.getElementById('discountImagePath');
+            const vehicleId = @(hasVehicle ? vehicle!.VehicleId.ToString() : "null");
+            const excludeReservationId = @(reservation.ReservationID > 0 ? reservation.ReservationID.ToString() : "null");
+
+            let viewDate = pickupInput && pickupInput.value ? new Date(pickupInput.value + 'T00:00:00') : new Date();
+            let blockedRanges = [];
+
+            function parseDate(value) {
+                return value ? new Date(value + 'T00:00:00') : null;
+            }
+
+            function formatIso(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            function isDateBlocked(cellDate) {
+                return blockedRanges.some(function (range) {
+                    const start = parseDate(range.pickupDate);
+                    const end = parseDate(range.returnDate);
+                    return start && end && cellDate >= start && cellDate <= end;
+                });
+            }
+
+            function renderCalendar() {
+                if (!calGrid || !calMonthLabel) return;
+                const year = viewDate.getFullYear();
+                const month = viewDate.getMonth();
+                calMonthLabel.textContent = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const pickup = parseDate(pickupInput.value);
+                const ret = parseDate(returnInput.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                calGrid.innerHTML = '';
+                for (let i = 0; i < firstDay; i++) {
+                    calGrid.appendChild(document.createElement('span'));
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const cellDate = new Date(year, month, day);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = day;
+                    btn.className = 'client-reservation-cal-day';
+
+                    const blocked = cellDate < today || isDateBlocked(cellDate);
+                    if (blocked) {
+                        btn.classList.add('is-unavailable');
+                        btn.disabled = true;
+                    } else {
+                        btn.classList.add('is-available');
+                    }
+
+                    if (pickup && formatIso(cellDate) === formatIso(pickup)) btn.classList.add('is-pickup');
+                    if (ret && formatIso(cellDate) === formatIso(ret)) btn.classList.add('is-return');
+                    if (pickup && ret && cellDate > pickup && cellDate < ret) btn.classList.add('in-range');
+
+                    btn.addEventListener('click', function () {
+                        if (btn.disabled) return;
+                        if (!pickup || (pickup && ret)) {
+                            pickupInput.value = formatIso(cellDate);
+                            returnInput.value = '';
+                        } else if (cellDate < pickup) {
+                            pickupInput.value = formatIso(cellDate);
+                        } else {
+                            returnInput.value = formatIso(cellDate);
+                        }
+                        renderCalendar();
+                    });
+
+                    calGrid.appendChild(btn);
+                }
+            }
+
+            function loadBlockedRanges() {
+                if (!vehicleId) {
+                    renderCalendar();
+                    return;
+                }
+
+                let url = '/Reservations/Availability?vehicleId=' + encodeURIComponent(vehicleId);
+                if (excludeReservationId) {
+                    url += '&excludeReservationId=' + encodeURIComponent(excludeReservationId);
+                }
+                return fetch(url, { headers: { 'Accept': 'application/json' } })
+                    .then(function (response) { return response.ok ? response.json() : []; })
+                    .then(function (data) {
+                        blockedRanges = Array.isArray(data) ? data : [];
+                        renderCalendar();
+                    })
+                    .catch(function () {
+                        blockedRanges = [];
+                        renderCalendar();
+                    });
+            }
+
+            if (document.getElementById('calPrev')) {
+                document.getElementById('calPrev').addEventListener('click', function () {
+                    viewDate.setMonth(viewDate.getMonth() - 1);
+                    renderCalendar();
+                });
+            }
+            if (document.getElementById('calNext')) {
+                document.getElementById('calNext').addEventListener('click', function () {
+                    viewDate.setMonth(viewDate.getMonth() + 1);
+                    renderCalendar();
+                });
+            }
+
+            if (pickupInput) pickupInput.addEventListener('change', renderCalendar);
+            if (returnInput) returnInput.addEventListener('change', renderCalendar);
+
+            function toggleDiscountUpload() {
+                const show = discountSelect && discountSelect.value === '1';
+                if (!discountUploadSection) return;
+                discountUploadSection.style.display = show ? 'block' : 'none';
+                if (!show && discountFileInput) {
+                    discountFileInput.value = '';
+                    if (discountImagePath) discountImagePath.value = '';
+                    if (discountUploadPreview) discountUploadPreview.classList.add('d-none');
+                    if (discountUploadPlaceholder) discountUploadPlaceholder.classList.remove('d-none');
+                }
+            }
+
+            if (discountSelect) {
+                discountSelect.addEventListener('change', toggleDiscountUpload);
+                toggleDiscountUpload();
+            }
+
+            if (discountFileInput) {
+                discountFileInput.addEventListener('change', function () {
+                    if (!this.files || !this.files[0]) return;
+                    const file = this.files[0];
+                    discountFileName.textContent = file.name;
+                    discountUploadPlaceholder.classList.add('d-none');
+                    discountUploadPreview.classList.remove('d-none');
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            discountPreviewImg.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            if (discountRemoveBtn) {
+                discountRemoveBtn.addEventListener('click', function () {
+                    discountFileInput.value = '';
+                    discountPreviewImg.src = '';
+                    discountFileName.textContent = '';
+                    if (discountImagePath) discountImagePath.value = '';
+                    discountUploadPreview.classList.add('d-none');
+                    discountUploadPlaceholder.classList.remove('d-none');
+                });
+            }
+
+            const channelInputs = form.querySelectorAll('.client-payment-channel-input');
+            const tabs = form.querySelectorAll('.client-payment-channel-tab');
+            const qrPanel = document.getElementById('paymentQrPanel');
+            const walkInPanel = document.getElementById('paymentWalkInPanel');
+            const submitSection = document.getElementById('paymentSubmitSection');
+            const qrTitle = document.getElementById('paymentQrTitle');
+            const accountLabel = document.getElementById('paymentAccountLabel');
+            const numberLabel = document.getElementById('paymentNumberLabel');
+
+            function setVisible(el, visible) {
+                if (!el) return;
+                el.dataset.visible = visible ? 'true' : 'false';
+            }
+
+            function updateChannelUI(channel) {
+                tabs.forEach(function (tab) {
+                    const input = tab.querySelector('.client-payment-channel-input');
+                    tab.classList.toggle('is-selected', input && input.value === channel);
+                });
+
+                const isOnline = channel !== 'WalkIn';
+                setVisible(qrPanel, isOnline);
+                setVisible(walkInPanel, !isOnline);
+                setVisible(submitSection, isOnline);
+
+                if (channel === 'GCash') {
+                    qrTitle.textContent = 'GCash QR Code';
+                    accountLabel.textContent = 'GCash Name:';
+                    numberLabel.textContent = 'GCash Number:';
+                } else if (channel === 'BDO') {
+                    qrTitle.textContent = 'BDO QR Code';
+                    accountLabel.textContent = 'Account Name:';
+                    numberLabel.textContent = 'Account Number:';
+                }
+            }
+
+            channelInputs.forEach(function (input) {
+                input.addEventListener('change', function () {
+                    updateChannelUI(input.value);
+                });
+            });
+
+            const checked = form.querySelector('.client-payment-channel-input:checked');
+            updateChannelUI(checked ? checked.value : 'GCash');
+
+            const fileInput = document.getElementById('paymentProofInput');
+            const placeholder = document.getElementById('paymentUploadPlaceholder');
+            const preview = document.getElementById('paymentUploadPreview');
+            const previewImg = document.getElementById('paymentPreviewImg');
+            const fileName = document.getElementById('paymentFileName');
+            const removeBtn = document.getElementById('paymentRemoveBtn');
+            const proofPathInput = form.querySelector('input[name="PaymentProofPath"]');
+
+            function showPreview(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    fileName.textContent = file.name;
+                    placeholder.classList.add('d-none');
+                    preview.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            if (fileInput) {
+                fileInput.addEventListener('change', function () {
+                    if (fileInput.files && fileInput.files[0]) {
+                        showPreview(fileInput.files[0]);
+                    }
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function () {
+                    fileInput.value = '';
+                    previewImg.src = '';
+                    fileName.textContent = '';
+                    if (proofPathInput) proofPathInput.value = '';
+                    preview.classList.add('d-none');
+                    placeholder.classList.remove('d-none');
+                });
+            }
+
+            loadBlockedRanges();
+        })();
+    </script>
+}

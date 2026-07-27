@@ -1235,16 +1235,35 @@
 }
 
 .client-reservation-step-dot {
-    width: 14px;
-    height: 14px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    border: 2px solid #999;
+    border: 2px solid #bbbbbb;
     background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #888888;
+    line-height: 1;
 }
 
 .client-reservation-step.active .client-reservation-step-dot {
     background: #4d4d4d;
     border-color: #4d4d4d;
+    color: #ffffff;
+}
+
+.client-reservation-step.completed .client-reservation-step-dot {
+    background: #4d4d4d;
+    border-color: #4d4d4d;
+    color: #ffffff;
+}
+
+.client-reservation-step.completed {
+    color: #333333;
+    font-weight: 600;
 }
 
 .client-reservation-step-line {
@@ -1252,6 +1271,10 @@
     height: 2px;
     background: #bbb;
     margin: 0 0.25rem 1rem;
+}
+
+.client-reservation-step-line.is-complete {
+    background: #4d4d4d;
 }
 
 .client-reservation-layout {
@@ -1305,7 +1328,16 @@
     margin: 0.3rem 0 0;
 }
 
-/* Philippine address picker (Shopee-style, Cebu) */
+.client-reservation-input.ph-address-output[readonly] {
+    background: #ffffff;
+    color: #333333;
+    margin-bottom: 0.35rem;
+}
+
+.client-reservation-input.ph-address-output:focus {
+    border-color: #2b3e8c;
+}
+
 .ph-address-picker {
     position: relative;
 }
@@ -1635,18 +1667,29 @@
 }
 
 .client-reservation-cal-day.is-unavailable {
-    color: #aaa;
+    background: #f8d7da;
+    color: #b42318;
     cursor: not-allowed;
 }
 
-.client-reservation-cal-day.is-selected {
-    background: #4d4d4d;
+.client-reservation-cal-day.is-pickup {
+    background: #2b3e8c;
+    color: #fff;
+}
+
+.client-reservation-cal-day.is-return {
+    background: #1f7a4d;
+    color: #fff;
+}
+
+.client-reservation-cal-day.is-pickup.is-return {
+    background: linear-gradient(135deg, #2b3e8c 50%, #1f7a4d 50%);
     color: #fff;
 }
 
 .client-reservation-cal-day.in-range {
-    background: #bbbbbb;
-    color: #333;
+    background: #c5d4f5;
+    color: #243572;
 }
 
 .client-reservation-calendar-legend {
@@ -1668,9 +1711,10 @@
 }
 
 .legend-available { background: #f2f2f2; border: 1px solid #999; }
-.legend-range { background: #bbbbbb; }
-.legend-selected { background: #4d4d4d; }
-.legend-unavailable { background: #ddd; }
+.legend-pickup { background: #2b3e8c; }
+.legend-return { background: #1f7a4d; }
+.legend-range { background: #c5d4f5; }
+.legend-unavailable { background: #f8d7da; border: 1px solid #f1aeb5; }
 
 .client-reservation-datetime {
     display: grid;
@@ -1784,10 +1828,13 @@
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
+    text-decoration: none;
 }
 
 .client-reservation-btn-continue:hover {
     background: #243572;
+    color: #fff;
+    text-decoration: none;
 }
 
 .client-reservation-alert {
@@ -1814,3 +1861,1030 @@
         width: 100%;
     }
 }
+
+/* --- Payment Details (Step 2) --- */
+.client-payment-page .client-payment-card {
+    background: #d9d9d9;
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+    margin-bottom: 0.85rem;
+}
+
+.client-payment-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-title);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0 0 0.85rem;
+}
+
+.client-payment-section-title i {
+    font-size: 1rem;
+}
+
+.client-payment-line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid #c4c4c4;
+    font-size: 0.78rem;
+    color: #333333;
+}
+
+.client-payment-line:last-of-type {
+    border-bottom: none;
+}
+
+.client-payment-line strong {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+
+.client-payment-line p {
+    margin: 0;
+    font-size: 0.68rem;
+    color: #666666;
+}
+
+.client-payment-line > span {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.client-payment-line.is-discount > span {
+    color: #2b3e8c;
+}
+
+.client-payment-total-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.85rem;
+    padding: 0.75rem 0.85rem;
+    background: #4d4d4d;
+    border-radius: 8px;
+    color: #ffffff;
+}
+
+.client-payment-total-bar strong {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.client-payment-total-bar p {
+    margin: 0.15rem 0 0;
+    font-size: 0.62rem;
+    color: #dddddd;
+}
+
+.client-payment-total-bar > span {
+    font-size: 1.15rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.client-payment-methods {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.client-payment-method {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0.85rem 0.8rem 0.75rem;
+    background: #bbbbbb;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    min-height: 168px;
+}
+
+.client-payment-method.is-display {
+    cursor: default;
+    user-select: none;
+    pointer-events: none;
+}
+
+.client-payment-method:hover {
+    border-color: #999999;
+    transform: translateY(-1px);
+}
+
+.client-payment-method.is-display:hover {
+    border-color: transparent;
+    transform: none;
+}
+
+.client-payment-info-note {
+    margin: 0 0 0.85rem;
+    font-size: 0.85rem;
+    color: #666666;
+}
+
+.client-payment-method.is-selected {
+    border-color: #2b3e8c;
+    box-shadow: 0 4px 10px rgba(43, 62, 140, 0.18);
+    background: #c4c4c4;
+}
+
+.client-payment-method input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.client-payment-method-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-bottom: 0.55rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.client-payment-method-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.client-payment-method-logo--gcash {
+    color: #007cff;
+    font-size: 1rem;
+}
+
+.client-payment-method-logo--bdo {
+    color: #003d79;
+    font-size: 0.52rem;
+    letter-spacing: -0.02em;
+}
+
+.client-payment-method-logo--walkin {
+    color: #4d4d4d;
+    font-size: 1rem;
+}
+
+.client-payment-method-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.client-payment-method-body strong {
+    font-size: 0.82rem;
+    color: #222222;
+    font-weight: 700;
+}
+
+.client-payment-method-body small {
+    font-size: 0.68rem;
+    color: #444444;
+    font-weight: 600;
+}
+
+.client-payment-method-desc {
+    display: block;
+    font-size: 0.64rem;
+    color: #333333;
+    line-height: 1.45;
+    margin-top: 0.35rem;
+}
+
+.client-payment-method-body em {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-style: normal;
+    font-size: 0.6rem;
+    color: #555555;
+    margin-top: auto;
+    padding-top: 0.65rem;
+}
+
+.client-payment-method-body em i {
+    font-size: 0.72rem;
+}
+
+@media (max-width: 991.98px) {
+    .client-payment-methods {
+        grid-template-columns: 1fr;
+    }
+
+    .client-payment-method {
+        min-height: 0;
+    }
+}
+
+.client-payment-actions {
+    margin-top: 0.25rem;
+}
+
+.client-payment-placeholder-text {
+    font-size: 0.78rem;
+    color: #555555;
+    margin: 0;
+}
+
+/* Booking summary sidebar (payment step) */
+.client-booking-summary {
+    background: #d9d9d9;
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.client-booking-summary-title {
+    font-family: var(--font-title);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0 0 0.85rem;
+}
+
+.client-booking-summary-vehicle {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #c4c4c4;
+}
+
+.client-booking-summary-image {
+    width: 72px;
+    aspect-ratio: 4 / 3;
+    border: 1.5px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f2f2f2;
+}
+
+.client-booking-summary-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.client-booking-summary-image-placeholder svg {
+    width: 100%;
+    height: 100%;
+    stroke: #333;
+    stroke-width: 0.8;
+}
+
+.client-booking-summary-vehicle-name {
+    font-family: var(--font-title);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0.15rem 0 0;
+}
+
+.client-booking-summary-list {
+    margin: 0 0 0.85rem;
+}
+
+.client-booking-summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    font-size: 0.72rem;
+}
+
+.client-booking-summary-row dt {
+    color: #666666;
+    font-weight: 600;
+    margin: 0;
+}
+
+.client-booking-summary-row dd {
+    color: #333333;
+    font-weight: 600;
+    text-align: right;
+    margin: 0;
+}
+
+.client-booking-summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 0;
+    border-top: 1px solid #c4c4c4;
+    border-bottom: 1px solid #c4c4c4;
+    font-size: 0.78rem;
+    color: #333333;
+}
+
+.client-booking-summary-total strong {
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.client-booking-summary-secure {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin: 0.85rem 0;
+    padding: 0.65rem 0.75rem;
+    background: #f2f2f2;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    color: #666666;
+}
+
+.client-booking-summary-secure i {
+    color: #2b3e8c;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+
+.client-booking-summary-secure p {
+    margin: 0;
+    line-height: 1.45;
+}
+
+.client-booking-summary-edit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: #ffffff;
+    border: 1px solid #4a4a4a;
+    border-radius: 8px;
+    color: #333333;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.client-booking-summary-edit:hover {
+    background: #f5f5f5;
+    color: #333333;
+}
+
+.client-booking-summary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.client-booking-summary-status {
+    color: #2b3e8c !important;
+    font-weight: 700 !important;
+}
+
+/* --- Payment Confirmation (Step 3) --- */
+.client-payment-channel-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+}
+
+.client-payment-channel-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 48px;
+    padding: 0.55rem 0.65rem;
+    background: #bbbbbb;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.client-payment-channel-tab span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #222222;
+    line-height: 1.3;
+}
+
+.client-payment-channel-tab:hover {
+    border-color: #999999;
+}
+
+.client-payment-channel-tab.is-selected {
+    border-color: #2b3e8c;
+    background: #c8c8c8;
+    box-shadow: 0 3px 8px rgba(43, 62, 140, 0.16);
+}
+
+.client-payment-channel-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.client-payment-qr-panel,
+.client-payment-walkin-panel,
+#paymentSubmitSection {
+    display: none;
+}
+
+.client-payment-qr-panel[data-visible="true"],
+.client-payment-walkin-panel[data-visible="true"],
+#paymentSubmitSection[data-visible="true"] {
+    display: block;
+}
+
+.client-payment-qr-panel {
+    display: none;
+    margin-top: 0.35rem;
+    padding: 0.9rem;
+    background: #cfcfcf;
+    border-radius: 10px;
+}
+
+.client-payment-qr-panel[data-visible="true"] {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+}
+
+.client-payment-qr-box {
+    width: 140px;
+    height: 140px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #b0b0b0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-payment-qr-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    color: #666666;
+}
+
+.client-payment-qr-placeholder i {
+    font-size: 2.4rem;
+}
+
+.client-payment-qr-placeholder span {
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.client-payment-qr-title {
+    margin: 0 0 0.55rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #222222;
+}
+
+.client-payment-qr-list {
+    margin: 0;
+}
+
+.client-payment-qr-row {
+    display: flex;
+    gap: 0.45rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.74rem;
+}
+
+.client-payment-qr-row dt {
+    margin: 0;
+    color: #555555;
+    font-weight: 600;
+    min-width: 7.5rem;
+}
+
+.client-payment-qr-row dd {
+    margin: 0;
+    color: #222222;
+    font-weight: 700;
+}
+
+.client-payment-qr-amount {
+    color: #2b3e8c !important;
+}
+
+.client-payment-walkin-panel {
+    margin-top: 0.35rem;
+}
+
+.client-payment-walkin-card {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.9rem;
+    background: #cfcfcf;
+    border-radius: 10px;
+}
+
+.client-payment-walkin-card i {
+    font-size: 1.15rem;
+    color: #2b3e8c;
+    margin-top: 0.1rem;
+}
+
+.client-payment-walkin-card strong {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+    color: #222222;
+}
+
+.client-payment-walkin-card p {
+    margin: 0;
+    font-size: 0.72rem;
+    color: #444444;
+    line-height: 1.45;
+}
+
+.client-payment-reminders {
+    margin-top: 1rem;
+    padding: 0.75rem 0.85rem;
+    background: #cfcfcf;
+    border-radius: 8px;
+}
+
+.client-payment-reminders strong {
+    display: block;
+    font-size: 0.75rem;
+    margin-bottom: 0.4rem;
+    color: #222222;
+}
+
+.client-payment-reminders ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.68rem;
+    color: #444444;
+    line-height: 1.5;
+}
+
+.client-booking-complete-card {
+    text-align: left;
+}
+
+.client-booking-complete-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #cfcfcf;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.65rem;
+}
+
+.client-booking-complete-icon i {
+    font-size: 1.35rem;
+    color: #2b3e8c;
+}
+
+.client-booking-complete-list {
+    margin: 1rem 0 0.25rem;
+    padding: 0.75rem 0.85rem;
+    background: #cfcfcf;
+    border-radius: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .client-payment-channel-tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .client-payment-qr-panel[data-visible="true"] {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+}
+
+/* --- Booking Summary (Step 4) --- */
+.client-booking-summary-page .client-summary-card {
+    margin-bottom: 0.85rem;
+}
+
+.client-summary-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.client-summary-card-header .client-payment-section-title {
+    margin-bottom: 0;
+}
+
+.client-summary-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #333333;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.client-summary-edit-btn:hover {
+    color: #1f2d66;
+    border-color: #1f2d66;
+    text-decoration: none;
+}
+
+.client-summary-res-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+}
+
+.client-summary-res-col {
+    margin: 0;
+}
+
+.client-summary-res-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.42rem 0;
+}
+
+.client-summary-res-row dt {
+    flex: 0 0 auto;
+    max-width: 48%;
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #555555;
+    line-height: 1.4;
+}
+
+.client-summary-res-row dd {
+    flex: 1 1 auto;
+    margin: 0;
+    text-align: right;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #222222;
+    line-height: 1.4;
+}
+
+.client-summary-res-divider {
+    height: 1px;
+    background: #c4c4c4;
+    margin: 0.85rem 0;
+}
+
+.client-summary-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: fit-content;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: #b8b8b8;
+    color: #333333;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.client-summary-badge i {
+    font-size: 0.62rem;
+}
+
+.client-summary-passenger-section {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.client-summary-passenger-details {
+    flex: 1 1 auto;
+    margin: 0;
+    min-width: 0;
+}
+
+.client-summary-id-upload {
+    flex: 0 0 auto;
+    margin: 0;
+    text-align: center;
+    max-width: 120px;
+}
+
+.client-summary-id-upload-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #555555;
+}
+
+.client-summary-id-upload-box {
+    width: 100px;
+    height: 72px;
+    margin: 0 auto;
+    border: 1px solid #999999;
+    border-radius: 6px;
+    background: #ececec;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-summary-id-upload-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.client-summary-id-upload figcaption {
+    margin-top: 0.25rem;
+    font-size: 0.62rem;
+    color: #666666;
+    word-break: break-all;
+}
+
+.client-summary-notes-section {
+    margin-top: 0;
+}
+
+.client-summary-notes-label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #333333;
+}
+
+.client-summary-special-notes {
+    padding: 0.65rem 0.75rem;
+    background: #ececec;
+    border: 1px solid #888888;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    color: #333333;
+    line-height: 1.5;
+    min-height: 2.5rem;
+}
+
+.client-summary-status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+}
+
+.client-summary-status-row--payment {
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid #c4c4c4;
+}
+
+.client-summary-status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.client-summary-status-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #666666;
+}
+
+.client-summary-badge--method {
+    background: #e8e8e8;
+}
+
+.client-summary-id-thumb {
+    margin: 0;
+    max-width: 140px;
+}
+
+.client-summary-id-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid #b0b0b0;
+    background: #ffffff;
+}
+
+.client-summary-id-thumb figcaption {
+    margin-top: 0.25rem;
+    font-size: 0.62rem;
+    color: #666666;
+    word-break: break-all;
+}
+
+@media (max-width: 767.98px) {
+    .client-summary-res-grid,
+    .client-summary-payment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .client-summary-passenger-section {
+        flex-direction: column;
+    }
+
+    .client-summary-id-upload {
+        align-self: flex-start;
+    }
+}
+
+/* Payment Details card */
+.client-summary-payment-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+    margin-bottom: 0.85rem;
+}
+
+.client-summary-payment-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.client-summary-payment-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.72rem;
+    color: #444444;
+}
+
+.client-summary-payment-row strong {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #222222;
+    white-space: nowrap;
+}
+
+.client-summary-payment-row.is-discount strong {
+    color: #2b3e8c;
+}
+
+.client-summary-payment-meta {
+    margin: 0;
+}
+
+.client-summary-payment-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid #c4c4c4;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #333333;
+}
+
+.client-summary-payment-total strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #111111;
+}
+
+.client-summary-receipt-row dd {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.client-summary-receipt-upload {
+    margin: 0;
+    text-align: right;
+    max-width: 120px;
+}
+
+.client-summary-receipt-upload figcaption {
+    margin-top: 0.25rem;
+    font-size: 0.62rem;
+    font-weight: 400;
+    color: #666666;
+    word-break: break-all;
+}
+
+/* What Happens Next sidebar */
+.client-summary-next-steps {
+    background: #e8e8e8;
+    border: 1px solid #666666;
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.client-summary-next-steps-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-title);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0 0 0.85rem;
+}
+
+.client-summary-next-steps-title i {
+    font-size: 1rem;
+    color: #444444;
+}
+
+.client-summary-next-steps-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.client-summary-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
+}
+
+.client-summary-step:last-child {
+    margin-bottom: 0;
+}
+
+.client-summary-step-num {
+    flex: 0 0 1.35rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    border: 2px solid #4d4d4d;
+    background: transparent;
+    color: #4d4d4d;
+    font-size: 0.68rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.client-summary-step.is-current .client-summary-step-num {
+    border-color: #4d4d4d;
+    background: #4d4d4d;
+    color: #ffffff;
+}
+
+.client-summary-step-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.client-summary-step-body strong {
+    display: block;
+    font-size: 0.74rem;
+    color: #333333;
+    margin-bottom: 0.15rem;
+}
+
+.client-summary-step-body p {
+    margin: 0;
+    font-size: 0.68rem;
+    color: #555555;
+    line-height: 1.45;
+}
+

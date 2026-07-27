@@ -2,6 +2,7 @@
     'use strict';
 
     var addressData = null;
+    var pickerInstances = [];
 
     function $(selector, root) {
         return (root || document).querySelector(selector);
@@ -41,10 +42,22 @@
         return parts.join(', ');
     }
 
+    function findOutputInput(root) {
+        var targetId = root.dataset.hiddenTarget;
+        if (targetId) {
+            var byId = document.getElementById(targetId);
+            if (byId) {
+                return byId;
+            }
+        }
+
+        return root.parentElement ? root.parentElement.querySelector('.ph-address-output') : null;
+    }
+
     function initPicker(root) {
-        var hiddenInput = document.getElementById(root.dataset.hiddenTarget);
-        if (!hiddenInput || !addressData) {
-            return;
+        var outputInput = findOutputInput(root);
+        if (!outputInput || !addressData) {
+            return null;
         }
 
         var trigger = $('.ph-address-trigger', root);
@@ -134,15 +147,30 @@
             });
         }
 
-        function syncHiddenInput() {
-            hiddenInput.value = formatAddress(state, addressData);
-            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        function readInputsIntoState() {
+            state.postalCode = postalInput.value.replace(/\D/g, '').slice(0, 4);
+            postalInput.value = state.postalCode;
+            state.street = streetInput.value.trim();
+        }
+
+        function syncOutput() {
+            readInputsIntoState();
+            var formatted = formatAddress(state, addressData);
+            if (formatted) {
+                outputInput.value = formatted;
+            }
+            outputInput.dispatchEvent(new Event('change', { bubbles: true }));
+            outputInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
 
         function updateTrigger() {
+            readInputsIntoState();
             var summary = formatSummary(state);
             if (summary) {
                 triggerText.textContent = summary;
+                triggerText.classList.remove('is-placeholder');
+            } else if (outputInput.value.trim()) {
+                triggerText.textContent = outputInput.value.trim();
                 triggerText.classList.remove('is-placeholder');
             } else {
                 triggerText.textContent = 'City / Municipality, Barangay, Postal Code, Street Address';
@@ -150,19 +178,28 @@
             }
         }
 
+        function hasValidOutput() {
+            return outputInput.value.trim().length > 0;
+        }
+
+        function isPickerComplete() {
+            readInputsIntoState();
+            return !!(state.city && state.barangay && state.postalCode.length === 4 && state.street);
+        }
+
         function selectCity(city) {
             state.city = city;
             state.barangay = null;
-            state.postalCode = city.postalCode || '';
+            state.postalCode = '';
             state.street = '';
-            postalInput.value = state.postalCode;
+            postalInput.value = '';
             streetInput.value = '';
             renderCityList();
             renderBarangayList();
             updateTabAvailability();
             setTab('barangay');
             updateTrigger();
-            syncHiddenInput();
+            syncOutput();
         }
 
         function selectBarangay(name) {
@@ -170,8 +207,9 @@
             renderBarangayList();
             updateTabAvailability();
             setTab('postal');
+            postalInput.focus();
             updateTrigger();
-            syncHiddenInput();
+            syncOutput();
         }
 
         function openPanel() {
@@ -200,14 +238,28 @@
         }
 
         function confirmAddress() {
-            state.street = streetInput.value.trim();
-            state.postalCode = postalInput.value.trim();
-            if (!state.city || !state.barangay || !state.postalCode || !state.street) {
-                return;
+            readInputsIntoState();
+            if (!isPickerComplete()) {
+                if (!state.city) setTab('city');
+                else if (!state.barangay) setTab('barangay');
+                else if (state.postalCode.length !== 4) setTab('postal');
+                else setTab('street');
+                return false;
+            }
+
+            syncOutput();
+            updateTrigger();
+            closePanel();
+            return true;
+        }
+
+        function finalize() {
+            readInputsIntoState();
+            if (isPickerComplete()) {
+                syncOutput();
             }
             updateTrigger();
-            syncHiddenInput();
-            closePanel();
+            return hasValidOutput();
         }
 
         trigger.addEventListener('click', function () {
@@ -228,14 +280,13 @@
         });
 
         postalInput.addEventListener('input', function () {
-            state.postalCode = postalInput.value.replace(/\D/g, '').slice(0, 4);
-            postalInput.value = state.postalCode;
             updateTabAvailability();
             updateTrigger();
-            syncHiddenInput();
+            syncOutput();
         });
 
         postalNextBtn.addEventListener('click', function () {
+            readInputsIntoState();
             if (state.postalCode.length !== 4) {
                 postalInput.focus();
                 return;
@@ -248,6 +299,14 @@
         streetInput.addEventListener('input', function () {
             state.street = streetInput.value;
             updateTrigger();
+            syncOutput();
+        });
+
+        streetInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                confirmAddress();
+            }
         });
 
         confirmBtn.addEventListener('click', confirmAddress);
@@ -257,6 +316,8 @@
                 return;
             }
             if (!root.contains(event.target)) {
+                readInputsIntoState();
+                syncOutput();
                 closePanel();
             }
         });
@@ -270,15 +331,14 @@
         renderCityList();
         updateTabAvailability();
 
-        if (hiddenInput.value) {
-            restoreFromValue(hiddenInput.value);
+        if (outputInput.value) {
+            restoreFromValue(outputInput.value);
+            updateTrigger();
         }
 
         function restoreFromValue(value) {
             var match = value.match(/^(.+),\s*([^,]+),\s*([^,]+),\s*Cebu\s*(\d{4}),\s*(.+)$/i);
             if (!match) {
-                triggerText.textContent = value;
-                triggerText.classList.remove('is-placeholder');
                 return;
             }
 
@@ -290,9 +350,63 @@
 
             streetInput.value = state.street;
             postalInput.value = state.postalCode;
+            renderBarangayList();
             updateTabAvailability();
-            updateTrigger();
         }
+
+        return {
+            root: root,
+            outputInput: outputInput,
+            finalize: finalize,
+            openPanel: openPanel
+        };
+    }
+
+    function finalizeAllPickers() {
+        pickerInstances.forEach(function (picker) {
+            picker.finalize();
+        });
+    }
+
+    function bindFormSubmit() {
+        var form = document.getElementById('reservationForm');
+        if (!form) {
+            return;
+        }
+
+        var submitBtn = form.querySelector('.client-reservation-btn-continue');
+        if (submitBtn) {
+            submitBtn.addEventListener('mousedown', finalizeAllPickers, true);
+            submitBtn.addEventListener('click', finalizeAllPickers, true);
+        }
+
+        form.addEventListener('submit', function (event) {
+            finalizeAllPickers();
+
+            var firstEmpty = pickerInstances.find(function (picker) {
+                return !picker.outputInput.value.trim();
+            });
+
+            if (firstEmpty) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                firstEmpty.openPanel();
+            }
+        }, true);
+    }
+
+    function enableManualFallback() {
+        $all('.ph-address-output').forEach(function (input) {
+            input.readOnly = false;
+            input.placeholder = 'Enter full pickup/drop-off address manually';
+        });
+
+        $all('[data-ph-address-picker]').forEach(function (picker) {
+            var note = document.createElement('p');
+            note.className = 'text-danger small mt-1';
+            note.textContent = 'Address list unavailable â€” please type the address in the field above.';
+            picker.appendChild(note);
+        });
     }
 
     async function boot() {
@@ -301,21 +415,23 @@
             return;
         }
 
+        bindFormSubmit();
+
         try {
             var response = await fetch('/data/cebu-addresses.json');
             if (!response.ok) {
                 throw new Error('Could not load address data');
             }
             addressData = await response.json();
-            pickers.forEach(initPicker);
+            pickers.forEach(function (pickerEl) {
+                var instance = initPicker(pickerEl);
+                if (instance) {
+                    pickerInstances.push(instance);
+                }
+            });
         } catch (error) {
             console.error(error);
-            pickers.forEach(function (picker) {
-                var note = document.createElement('p');
-                note.className = 'text-danger small mt-1';
-                note.textContent = 'Address options could not be loaded. Please refresh the page.';
-                picker.appendChild(note);
-            });
+            enableManualFallback();
         }
     }
 

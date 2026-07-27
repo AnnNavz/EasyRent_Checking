@@ -1,0 +1,258 @@
+@model EasyRent_Checking.Models.ReservationPaymentDetailsViewModel
+@using EasyRent_Checking.Models
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["ActivePage"] = "Bookings";
+    ViewData["Title"] = "Make a Reservation";
+    ViewData["ReservationStep"] = 3;
+
+    var pricing = Model.Pricing;
+    var selectedChannel = Model.PaymentChannel ?? PaymentChannel.GCash;
+    bool isOnlinePayment = selectedChannel != PaymentChannel.WalkIn;
+
+    string ChannelLabel(PaymentChannel channel)
+    {
+        var member = typeof(PaymentChannel).GetMember(channel.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>();
+        return display?.Name ?? channel.ToString();
+    }
+}
+
+@section Styles {
+    <partial name="_AdminBookingWizardStyles" />
+}
+
+<div class="admin-booking-create client-page client-reservation-page client-payment-page px-1">
+    <partial name="_ReservationStepper" />
+
+    <form asp-controller="Bookings"
+          asp-action="PaymentConfirmation"
+          method="post"
+          enctype="multipart/form-data"
+          class="client-details-layout client-reservation-layout"
+          id="paymentConfirmationForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="PaymentProofPath" />
+
+        <div class="client-payment-main">
+            <section class="client-payment-card">
+                <h3 class="client-payment-section-title">Select Payment Channel</h3>
+                <p class="client-payment-info-note">Choose how you'd like to send your payment.</p>
+
+                <div class="client-payment-channel-tabs" role="radiogroup" aria-label="Payment channel">
+                    @foreach (PaymentChannel channel in Enum.GetValues<PaymentChannel>())
+                    {
+                        var isSelected = selectedChannel == channel;
+                        <label class="client-payment-channel-tab @(isSelected ? "is-selected" : "")">
+                            <input type="radio"
+                                   asp-for="PaymentChannel"
+                                   value="@channel"
+                                   class="client-payment-channel-input"
+                                   data-channel="@channel" />
+                            <span>@ChannelLabel(channel)</span>
+                        </label>
+                    }
+                </div>
+                <span asp-validation-for="PaymentChannel" class="text-danger small"></span>
+
+                <div class="client-payment-qr-panel" id="paymentQrPanel" data-visible="@(isOnlinePayment ? "true" : "false")">
+                    <div class="client-payment-qr-box">
+                        <div class="client-payment-qr-placeholder" aria-hidden="true">
+                            <i class="bi bi-qr-code"></i>
+                            <span>QR Code</span>
+                        </div>
+                    </div>
+                    <div class="client-payment-qr-details">
+                        <h4 class="client-payment-qr-title" id="paymentQrTitle">GCash QR Code</h4>
+                        <dl class="client-payment-qr-list">
+                            <div class="client-payment-qr-row">
+                                <dt id="paymentAccountLabel">GCash Name:</dt>
+                                <dd>TRUST RENT A CAR</dd>
+                            </div>
+                            <div class="client-payment-qr-row">
+                                <dt id="paymentNumberLabel">GCash Number:</dt>
+                                <dd>09XX-XXX-XXXX</dd>
+                            </div>
+                            <div class="client-payment-qr-row">
+                                <dt>Amount:</dt>
+                                <dd class="client-payment-qr-amount">₱@pricing.Total.ToString("N2")</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="client-payment-walkin-panel" id="paymentWalkInPanel" data-visible="@(!isOnlinePayment ? "true" : "false")">
+                    <div class="client-payment-walkin-card">
+                        <i class="bi bi-geo-alt"></i>
+                        <div>
+                            <strong>Pay at our office</strong>
+                            <p>Visit Trust Rent A Car during office hours. Cash or card accepted. Bring a valid ID matching your reservation name.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="client-payment-card" id="paymentSubmitSection" data-visible="@(isOnlinePayment ? "true" : "false")">
+                <h3 class="client-payment-section-title">Submit Payment Details</h3>
+                <p class="client-payment-info-note">After sending payment, fill in the details below. Our team will confirm within 24 hours.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="PayerAccountName" class="client-reservation-label"></label>
+                        <input asp-for="PayerAccountName" class="client-reservation-input" placeholder="Your name on GCash / BDO" />
+                        <span asp-validation-for="PayerAccountName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PaymentReference" class="client-reservation-label"></label>
+                        <input asp-for="PaymentReference" class="client-reservation-input" placeholder="e.g. 123456789123" />
+                        <span asp-validation-for="PaymentReference" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="AmountSent" class="client-reservation-label"></label>
+                        <input asp-for="AmountSent" type="number" step="0.01" min="0" class="client-reservation-input" placeholder="@pricing.Total.ToString("0.00")" />
+                        <p class="client-reservation-helper">Must match the total: ₱@pricing.Total.ToString("N2")</p>
+                        <span asp-validation-for="AmountSent" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PaymentDateTime" class="client-reservation-label"></label>
+                        <input asp-for="PaymentDateTime" type="datetime-local" class="client-reservation-input" />
+                        <span asp-validation-for="PaymentDateTime" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="PaymentProofFile" class="client-reservation-label"></label>
+                        <div class="client-reservation-upload" id="paymentUploadZone">
+                            <input asp-for="PaymentProofFile" type="file" class="client-reservation-file-input" accept=".png,.jpg,.jpeg" id="paymentProofInput" />
+                            <div class="client-reservation-upload-placeholder @(string.IsNullOrEmpty(Model.PaymentProofPath) ? "" : "d-none")" id="paymentUploadPlaceholder">
+                                <i class="bi bi-cloud-upload"></i>
+                                <span>Click to upload payment screenshot / receipt</span>
+                            </div>
+                            <div class="client-reservation-upload-preview @(string.IsNullOrEmpty(Model.PaymentProofPath) ? "d-none" : "")" id="paymentUploadPreview">
+                                <img id="paymentPreviewImg"
+                                     alt="Payment proof preview"
+                                     src="@(string.IsNullOrEmpty(Model.PaymentProofPath) ? "" : $"/images/{Model.PaymentProofPath}")" />
+                                <button type="button" class="client-reservation-upload-remove" id="paymentRemoveBtn" aria-label="Remove image">&times;</button>
+                                <span class="client-reservation-upload-name" id="paymentFileName">@Model.PaymentProofPath</span>
+                            </div>
+                        </div>
+                        <span asp-validation-for="PaymentProofFile" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="PaymentNotes" class="client-reservation-label"></label>
+                        <textarea asp-for="PaymentNotes" class="client-reservation-textarea" rows="3" placeholder="Any extra details about your payment..."></textarea>
+                        <span asp-validation-for="PaymentNotes" class="text-danger small"></span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="client-reservation-actions client-payment-actions">
+                <a asp-controller="Bookings"
+                   asp-action="PaymentDetails"
+                   class="client-reservation-btn-back">Back</a>
+                <button type="submit" class="client-reservation-btn-continue">Proceed to Booking Summary</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const form = document.getElementById('paymentConfirmationForm');
+            if (!form) return;
+
+            const channelInputs = form.querySelectorAll('.client-payment-channel-input');
+            const tabs = form.querySelectorAll('.client-payment-channel-tab');
+            const qrPanel = document.getElementById('paymentQrPanel');
+            const walkInPanel = document.getElementById('paymentWalkInPanel');
+            const submitSection = document.getElementById('paymentSubmitSection');
+            const qrTitle = document.getElementById('paymentQrTitle');
+            const accountLabel = document.getElementById('paymentAccountLabel');
+            const numberLabel = document.getElementById('paymentNumberLabel');
+            const totalAmount = @pricing.Total.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            function setVisible(el, visible) {
+                if (!el) return;
+                el.dataset.visible = visible ? 'true' : 'false';
+            }
+
+            function updateChannelUI(channel) {
+                tabs.forEach(function (tab) {
+                    const input = tab.querySelector('.client-payment-channel-input');
+                    tab.classList.toggle('is-selected', input && input.value === channel);
+                });
+
+                const isOnline = channel !== 'WalkIn';
+                setVisible(qrPanel, isOnline);
+                setVisible(walkInPanel, !isOnline);
+                setVisible(submitSection, isOnline);
+
+                if (channel === 'GCash') {
+                    qrTitle.textContent = 'GCash QR Code';
+                    accountLabel.textContent = 'GCash Name:';
+                    numberLabel.textContent = 'GCash Number:';
+                } else if (channel === 'BDO') {
+                    qrTitle.textContent = 'BDO QR Code';
+                    accountLabel.textContent = 'Account Name:';
+                    numberLabel.textContent = 'Account Number:';
+                }
+            }
+
+            channelInputs.forEach(function (input) {
+                input.addEventListener('change', function () {
+                    updateChannelUI(input.value);
+                });
+            });
+
+            const checked = form.querySelector('.client-payment-channel-input:checked');
+            updateChannelUI(checked ? checked.value : 'GCash');
+
+            const fileInput = document.getElementById('paymentProofInput');
+            const placeholder = document.getElementById('paymentUploadPlaceholder');
+            const preview = document.getElementById('paymentUploadPreview');
+            const previewImg = document.getElementById('paymentPreviewImg');
+            const fileName = document.getElementById('paymentFileName');
+            const removeBtn = document.getElementById('paymentRemoveBtn');
+            const proofPathInput = form.querySelector('input[name="PaymentProofPath"]');
+
+            function showPreview(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    fileName.textContent = file.name;
+                    placeholder.classList.add('d-none');
+                    preview.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            if (fileInput) {
+                fileInput.addEventListener('change', function () {
+                    if (fileInput.files && fileInput.files[0]) {
+                        showPreview(fileInput.files[0]);
+                    }
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function () {
+                    fileInput.value = '';
+                    previewImg.src = '';
+                    fileName.textContent = '';
+                    if (proofPathInput) proofPathInput.value = '';
+                    preview.classList.add('d-none');
+                    placeholder.classList.remove('d-none');
+                });
+            }
+
+            const amountInput = form.querySelector('input[name="AmountSent"]');
+            if (amountInput && !amountInput.value) {
+                amountInput.value = totalAmount.toFixed(2);
+            }
+        })();
+    </script>
+}

@@ -8,20 +8,11 @@
 
     ViewData["Title"] = "Reservation";
     ViewData["ActiveNav"] = "Vehicles";
+    ViewData["ReservationStep"] = 1;
 
     string typeLabel = vehicle.Type == VehicleType.Van ? "VAN" : vehicle.Type.ToString().ToUpper();
     string vehicleTitle = $"{vehicle.Model} {vehicle.Brand}".ToUpper();
     string breadcrumbVehicle = $"{vehicle.Brand} {vehicle.Model}";
-
-    var pickupAddressPicker = new ViewDataDictionary(ViewData);
-    pickupAddressPicker["Prefix"] = "pickup";
-    pickupAddressPicker["Label"] = "Pickup Location";
-    pickupAddressPicker["HiddenTarget"] = "Reservation_PickupLoc";
-
-    var dropoffAddressPicker = new ViewDataDictionary(ViewData);
-    dropoffAddressPicker["Prefix"] = "dropoff";
-    dropoffAddressPicker["Label"] = "Drop-off Location";
-    dropoffAddressPicker["HiddenTarget"] = "Reservation_DropoffLoc";
 }
 
 <div class="client-details-breadcrumb-bar">
@@ -43,38 +34,12 @@
 </div>
 
 <div class="client-page client-reservation-page">
-    <div class="client-reservation-stepper">
-        <div class="client-reservation-step active">
-            <span class="client-reservation-step-dot"></span>
-            <span>Reservation Details</span>
-        </div>
-        <div class="client-reservation-step-line"></div>
-        <div class="client-reservation-step">
-            <span class="client-reservation-step-dot"></span>
-            <span>Payment Details</span>
-        </div>
-        <div class="client-reservation-step-line"></div>
-        <div class="client-reservation-step">
-            <span class="client-reservation-step-dot"></span>
-            <span>Payment Confirmation</span>
-        </div>
-        <div class="client-reservation-step-line"></div>
-        <div class="client-reservation-step">
-            <span class="client-reservation-step-dot"></span>
-            <span>Booking Summary</span>
-        </div>
-    </div>
-
-    @if (TempData["ReservationSuccess"] as bool? == true)
-    {
-        <div class="alert alert-success client-reservation-alert" role="alert">
-            Reservation details saved. Payment step will be available in a future update.
-        </div>
-    }
+    <partial name="_ReservationStepper" />
 
     <form asp-controller="Reservations" asp-action="Create" method="post" enctype="multipart/form-data" class="client-reservation-form" id="reservationForm">
-        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-        <input type="hidden" asp-for="Reservation.VehicleId" />
+        <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+        <input type="hidden" asp-for="Reservation.ReservationID" />
+        <input type="hidden" asp-for="Reservation.VehicleId" value="@vehicle.VehicleId" />
         <input type="hidden" asp-for="Reservation.ImagePath" />
 
         <div class="client-details-layout client-reservation-layout">
@@ -112,17 +77,17 @@
                         </div>
                         <div class="col-md-6">
                             <label asp-for="Reservation.ContactInfo" class="client-reservation-label"></label>
-                            <input asp-for="Reservation.ContactInfo" class="client-reservation-input" placeholder="Mobile number or Email" />
+                            <input asp-for="Reservation.ContactInfo" class="client-reservation-input" type="tel" inputmode="numeric" maxlength="11" placeholder="e.g. 09123456789" />
                             <span asp-validation-for="Reservation.ContactInfo" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <input type="hidden" asp-for="Reservation.PickupLoc" id="Reservation_PickupLoc" />
-                            <partial name="_CebuAddressPicker" view-data="pickupAddressPicker" />
+                            <label asp-for="Reservation.PickupLoc" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.PickupLoc" class="client-reservation-input" placeholder="e.g. Street, Barangay, City" />
                             <span asp-validation-for="Reservation.PickupLoc" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <input type="hidden" asp-for="Reservation.DropoffLoc" id="Reservation_DropoffLoc" />
-                            <partial name="_CebuAddressPicker" view-data="dropoffAddressPicker" />
+                            <label asp-for="Reservation.DropoffLoc" class="client-reservation-label"></label>
+                            <input asp-for="Reservation.DropoffLoc" class="client-reservation-input" placeholder="e.g. Street, Barangay, City" />
                             <span asp-validation-for="Reservation.DropoffLoc" class="text-danger small"></span>
                         </div>
                     </div>
@@ -140,12 +105,13 @@
                             <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
                         </div>
                         <div class="client-reservation-calendar-grid" id="calGrid"></div>
-                        <div class="client-reservation-calendar-legend">
-                            <span><i class="legend-dot legend-available"></i> Available</span>
-                            <span><i class="legend-dot legend-range"></i> Your Range</span>
-                            <span><i class="legend-dot legend-selected"></i> Selected</span>
-                            <span><i class="legend-dot legend-unavailable"></i> Unavailable</span>
-                        </div>
+                            <div class="client-reservation-calendar-legend">
+                                <span><i class="legend-dot legend-available"></i> Available</span>
+                                <span><i class="legend-dot legend-pickup"></i> Pickup</span>
+                                <span><i class="legend-dot legend-return"></i> Return</span>
+                                <span><i class="legend-dot legend-range"></i> Your Range</span>
+                                <span><i class="legend-dot legend-unavailable"></i> Unavailable</span>
+                            </div>
                     </div>
                     <div class="row g-3 mt-1">
                         <div class="col-md-6">
@@ -242,8 +208,11 @@
             const discountPreviewImg = document.getElementById('discountPreviewImg');
             const discountFileName = document.getElementById('discountFileName');
             const discountRemoveBtn = document.getElementById('discountRemoveBtn');
+            const vehicleId = @vehicle.VehicleId;
+            const excludeReservationId = @(reservation.ReservationID > 0 ? reservation.ReservationID.ToString() : "null");
 
             let viewDate = pickupInput.value ? new Date(pickupInput.value + 'T00:00:00') : new Date();
+            let blockedRanges = [];
 
             function parseDate(value) {
                 return value ? new Date(value + 'T00:00:00') : null;
@@ -254,6 +223,14 @@
                 const m = String(date.getMonth() + 1).padStart(2, '0');
                 const d = String(date.getDate()).padStart(2, '0');
                 return `${y}-${m}-${d}`;
+            }
+
+            function isDateBlocked(cellDate) {
+                return blockedRanges.some(function (range) {
+                    const start = parseDate(range.pickupDate);
+                    const end = parseDate(range.returnDate);
+                    return start && end && cellDate >= start && cellDate <= end;
+                });
             }
 
             function renderCalendar() {
@@ -280,18 +257,20 @@
                     btn.textContent = day;
                     btn.className = 'client-reservation-cal-day';
 
-                    if (cellDate < today) {
+                    const blocked = cellDate < today || isDateBlocked(cellDate);
+                    if (blocked) {
                         btn.classList.add('is-unavailable');
                         btn.disabled = true;
                     } else {
                         btn.classList.add('is-available');
                     }
 
-                    if (pickup && formatIso(cellDate) === formatIso(pickup)) btn.classList.add('is-selected');
-                    if (ret && formatIso(cellDate) === formatIso(ret)) btn.classList.add('is-selected');
+                    if (pickup && formatIso(cellDate) === formatIso(pickup)) btn.classList.add('is-pickup');
+                    if (ret && formatIso(cellDate) === formatIso(ret)) btn.classList.add('is-return');
                     if (pickup && ret && cellDate > pickup && cellDate < ret) btn.classList.add('in-range');
 
                     btn.addEventListener('click', function () {
+                        if (btn.disabled) return;
                         if (!pickup || (pickup && ret)) {
                             pickupInput.value = formatIso(cellDate);
                             returnInput.value = '';
@@ -305,6 +284,24 @@
 
                     calGrid.appendChild(btn);
                 }
+            }
+
+            function loadBlockedRanges() {
+                let url = '/Reservations/Availability?vehicleId=' + encodeURIComponent(vehicleId);
+                if (excludeReservationId) {
+                    url += '&excludeReservationId=' + encodeURIComponent(excludeReservationId);
+                }
+
+                return fetch(url, { headers: { 'Accept': 'application/json' } })
+                    .then(function (response) { return response.ok ? response.json() : []; })
+                    .then(function (data) {
+                        blockedRanges = Array.isArray(data) ? data : [];
+                        renderCalendar();
+                    })
+                    .catch(function () {
+                        blockedRanges = [];
+                        renderCalendar();
+                    });
             }
 
             document.getElementById('calPrev').addEventListener('click', function () {
@@ -354,8 +351,7 @@
                 discountUploadPlaceholder.classList.remove('d-none');
             });
 
-            renderCalendar();
+            loadBlockedRanges();
         })();
     </script>
-    <script src="~/js/philippine-address-picker.js" asp-append-version="true"></script>
 }

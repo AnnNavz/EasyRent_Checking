@@ -1,0 +1,48 @@
+@{
+    var currentStep = ViewData["ReservationStep"] as int? ?? 1;
+    var steps = new[]
+    {
+        "Reservation Details",
+        "Payment Details",
+        "Payment Confirmation",
+        "Booking Summary"
+    };
+}
+
+<div class="client-reservation-stepper">
+    @for (var i = 0; i < steps.Length; i++)
+    {
+        var stepNumber = i + 1;
+        var cssClass = "client-reservation-step";
+        if (stepNumber < currentStep)
+        {
+            cssClass += " completed";
+        }
+        else if (stepNumber == currentStep)
+        {
+            cssClass += " active";
+        }
+
+        <div class="@cssClass">
+            <span class="client-reservation-step-dot" aria-hidden="true">
+                @if (stepNumber < currentStep)
+                {
+                    <i class="bi bi-check-lg"></i>
+                }
+                else
+                {
+                    @stepNumber
+                }
+            </span>
+            <span>@steps[i]</span>
+        </div>
+
+        if (i < steps.Length - 1)
+        {
+            var lineClass = stepNumber < currentStep
+                ? "client-reservation-step-line is-complete"
+                : "client-reservation-step-line";
+            <div class="@lineClass"></div>
+        }
+    }
+</div>
