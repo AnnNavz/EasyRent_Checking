@@ -1,0 +1,635 @@
+﻿@model EasyRent_Checking.Models.Reservation
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Make a Reservation";
+    ViewData["ActivePage"] = "Reservations";
+    var vehicles = ViewBag.Vehicles as IEnumerable<Vehicle> ?? Enumerable.Empty<Vehicle>();
+}
+
+@section Styles {
+    <style>
+        /* Past = grey (never red). Rented = red. */
+        .admin-booking-create .airbnb-cal-cell.is-past .airbnb-cal-day {
+            color: #bdbdbd !important;
+            background: transparent !important;
+            text-decoration: none !important;
+        }
+        .admin-booking-create .airbnb-cal-cell.is-rented .airbnb-cal-day {
+            color: #d32f2f !important;
+            background: transparent !important;
+            text-decoration: line-through;
+        }
+    </style>
+}
+
+<div class="wizard-max-wrapper admin-booking-create py-3">
+    <div class="step-timeline admin-booking-stepper">
+        <div class="step-node active">
+            <div class="step-circle">1</div>
+            <div class="step-label">Reservation Details</div>
+        </div>
+        <div class="step-node">
+            <div class="step-circle">2</div>
+            <div class="step-label">Payment Method</div>
+        </div>
+        <div class="step-node">
+            <div class="step-circle">3</div>
+            <div class="step-label">Payment Confirmation</div>
+        </div>
+        <div class="step-node">
+            <div class="step-circle">4</div>
+            <div class="step-label">Booking Summary</div>
+        </div>
+    </div>
+
+    <form asp-action="Create" enctype="multipart/form-data" id="reservationWizardForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+        <input type="hidden" asp-for="ReservationStatus" value="Pending" />
+
+        <div class="wizard-step-panel active">
+            <div class="text-start mb-4">
+                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Make a walk-in reservation</h5>
+                <p class="text-muted small mb-0">Enter customer details, trip dates, and passenger information to continue to payment.</p>
+            </div>
+
+            <!-- Reservation Information -->
+            <div class="form-container-card p-4 mb-4 shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Reservation Information</h6>
+                </div>
+                <hr class="wizard-section-divider" />
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="VehicleId" class="form-label fw-semibold small text-secondary mb-1">Vehicle</label>
+                        <select asp-for="VehicleId" id="input-VehicleId" class="form-select form-control-thin shadow-sm">
+                            <option value="">Select vehicle</option>
+                            @foreach (var vehicle in vehicles)
+                            {
+                                if (Model?.VehicleId == vehicle.VehicleId)
+                                {
+                                    <option value="@vehicle.VehicleId" data-capacity="@vehicle.PassengersCount" selected>
+                                        @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@vehicle.VehicleId" data-capacity="@vehicle.PassengersCount">
+                                        @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
+                                    </option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="VehicleId" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CustomerName" class="form-label fw-semibold small text-secondary mb-1">Customer Name</label>
+                        <input asp-for="CustomerName" class="form-control form-control-thin shadow-sm" placeholder="e.g. Jane Doe" />
+                        <span asp-validation-for="CustomerName" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ContactNumber" class="form-label fw-semibold small text-secondary mb-1">Contact Information</label>
+                        <input asp-for="ContactNumber" class="form-control form-control-thin shadow-sm" placeholder="Mobile number or Email" />
+                        <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PickupLocation" class="form-label fw-semibold small text-secondary mb-1">Pick-up Location</label>
+                        <input asp-for="PickupLocation" class="form-control form-control-thin shadow-sm" placeholder="e.g. Mactan International Airport" />
+                        <span asp-validation-for="PickupLocation" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DropoffLocation" class="form-label fw-semibold small text-secondary mb-1">Drop-off Location</label>
+                        <input asp-for="DropoffLocation" class="form-control form-control-thin shadow-sm" placeholder="e.g. Talisay, Cebu City" />
+                        <span asp-validation-for="DropoffLocation" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pick-up & Return Date -->
+            <div class="form-container-card p-4 mb-4 shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-calendar3 fs-5 text-dark"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Select Pick-up &amp; Return Date</h6>
+                </div>
+                <p class="small text-secondary mb-3">
+                    Click an available date to set your pick-up date, then select your return date.
+                </p>
+
+                <div class="airbnb-cal-card mb-4">
+                    <div class="airbnb-cal-header">
+                        <button type="button" class="airbnb-cal-nav" id="calPrev" aria-label="Previous month">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <span class="airbnb-cal-month" id="calMonthLabel">July 2026</span>
+                        <button type="button" class="airbnb-cal-nav" id="calNext" aria-label="Next month">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="airbnb-cal-weekdays">
+                        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                    </div>
+                    <div class="airbnb-cal-grid" id="calGrid"></div>
+                    <div class="airbnb-cal-legend">
+                        <span><i class="airbnb-legend-dot is-available"></i>Available</span>
+                        <span><i class="airbnb-legend-dot is-range"></i>Your Range</span>
+                        <span><i class="airbnb-legend-dot is-selected"></i>Selected</span>
+                        <span><i class="airbnb-legend-dot is-rented"></i>Unavailable</span>
+                    </div>
+                </div>
+
+                <input type="hidden" asp-for="PickupDate" id="input-PickupDate" />
+                <input type="hidden" asp-for="ReturnDate" id="input-ReturnDate" />
+
+                <div class="row g-3 airbnb-date-fields">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-dark mb-1">Pick-up Date &amp; Time</label>
+                        <div class="airbnb-datetime-stack">
+                            <div class="airbnb-date-field">
+                                <input type="text" id="pickupDisplay" class="airbnb-date-input" placeholder="mm/dd/yyyy" readonly />
+                                <i class="bi bi-calendar3 airbnb-date-icon"></i>
+                            </div>
+                            <input asp-for="PickupTime" id="input-PickupTime" type="time" class="airbnb-time-input" value="09:00" />
+                        </div>
+                        <span asp-validation-for="PickupDate" class="text-danger small mt-1 d-block"></span>
+                        <span asp-validation-for="PickupTime" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-dark mb-1">Return Date &amp; Time</label>
+                        <div class="airbnb-datetime-stack">
+                            <div class="airbnb-date-field">
+                                <input type="text" id="returnDisplay" class="airbnb-date-input" placeholder="mm/dd/yyyy" readonly />
+                                <i class="bi bi-calendar3 airbnb-date-icon"></i>
+                            </div>
+                            <input asp-for="ReturnTime" id="input-ReturnTime" type="time" class="airbnb-time-input" value="17:00" />
+                        </div>
+                        <span asp-validation-for="ReturnDate" class="text-danger small mt-1 d-block"></span>
+                        <span asp-validation-for="ReturnTime" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Passenger & Discount -->
+            <div class="form-container-card p-4 mb-4 shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-people fs-5 text-secondary"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Passenger &amp; Discount</h6>
+                </div>
+                <hr class="wizard-section-divider" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="PassengerCount" class="form-label fw-semibold small text-secondary mb-1">Passenger Count</label>
+                        <input asp-for="PassengerCount" id="input-PassengerCount" type="number" min="1" max="60" class="form-control form-control-thin shadow-sm" placeholder="e.g. 8" />
+                        <span class="small text-muted mt-1 d-block" id="capacityHint">Maximum capacity: select a vehicle</span>
+                        <span asp-validation-for="PassengerCount" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Discount" class="form-label fw-semibold small text-secondary mb-1">Senior/PWD Discount (if applicable)</label>
+                        <select asp-for="Discount" id="input-Discount" class="form-select form-control-thin shadow-sm">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                        <span class="small text-muted mt-1 d-block">10% discount — present valid ID upon booking.</span>
+                        <span asp-validation-for="Discount" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-12 @(Model?.Discount == Discount.Yes ? "" : "d-none")" id="discountUploadSection">
+                        <div id="discount-upload-zone" class="license-upload-zone">
+                            <div>
+                                <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
+                                <span class="d-block small fw-bold text-dark mb-1">Upload Senior/PWD ID or <span class="text-decoration-underline">click to browse</span></span>
+                                <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG (MAX 5MB)</span>
+                            </div>
+                            <input asp-for="DiscountImageFile" id="input-DiscountFile" type="file" class="license-file-input" accept=".png,.jpg,.jpeg" />
+                        </div>
+                        <div id="discount-preview-state" class="d-none mt-2">
+                            <div class="admin-discount-preview">
+                                <div class="license-preview-box">
+                                    <img id="discount-preview-img" class="d-none" alt="Discount ID preview" />
+                                    <div id="discount-preview-placeholder" class="license-preview-placeholder"></div>
+                                </div>
+                                <button type="button" class="edit-license-remove-btn" id="discount-remove-btn" aria-label="Remove discount image">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                <span id="discount-filename" class="small text-muted font-monospace text-center d-block mt-2"></span>
+                            </div>
+                        </div>
+                        <span asp-validation-for="DiscountImageFile" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="form-container-card p-4 mb-4 shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-file-earmark-plus fs-5 text-secondary"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Additional Information</h6>
+                </div>
+                <hr class="wizard-section-divider" />
+
+                <label asp-for="Notes" class="form-label fw-semibold small text-secondary mb-1">Special Requests / Notes (Optional)</label>
+                <textarea asp-for="Notes" class="form-control form-control-thin shadow-sm" rows="4" placeholder="e.g. Please prepare child seats, need early morning pick-up, allergic to cigarette smoke..."></textarea>
+                <span asp-validation-for="Notes" class="text-danger small mt-1 d-block"></span>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 align-items-center">
+            <a asp-action="Index" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3" style="font-size: 0.9rem;">Back</a>
+            <button type="submit" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #1E3A8A; border-color: #1E3A8A;">
+                Continue to Payment
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const pickupDateInput = document.getElementById('input-PickupDate');
+            const returnDateInput = document.getElementById('input-ReturnDate');
+            const vehicleSelect = document.getElementById('input-VehicleId');
+            const passengerInput = document.getElementById('input-PassengerCount');
+            const capacityHint = document.getElementById('capacityHint');
+            const discountSelect = document.getElementById('input-Discount');
+            const discountSection = document.getElementById('discountUploadSection');
+            const fileInput = document.getElementById('input-DiscountFile');
+            const uploadZone = document.getElementById('discount-upload-zone');
+            const previewState = document.getElementById('discount-preview-state');
+            const previewImg = document.getElementById('discount-preview-img');
+            const previewPlaceholder = document.getElementById('discount-preview-placeholder');
+            const filenameLabel = document.getElementById('discount-filename');
+            const removeBtn = document.getElementById('discount-remove-btn');
+            const calGrid = document.getElementById('calGrid');
+            const calMonthLabel = document.getElementById('calMonthLabel');
+            const calPrev = document.getElementById('calPrev');
+            const calNext = document.getElementById('calNext');
+            const pickupDisplay = document.getElementById('pickupDisplay');
+            const returnDisplay = document.getElementById('returnDisplay');
+
+            let viewYear;
+            let viewMonth;
+            let hoverDate = null;
+            let selectionPhase = 'start';
+            let unavailableDates = new Set();
+
+            function parseDateValue(value) {
+                if (!value) return null;
+                const parts = value.split('-');
+                if (parts.length !== 3) return null;
+                return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            }
+
+            function formatDateValue(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return y + '-' + m + '-' + d;
+            }
+
+            function formatDisplayDate(date) {
+                if (!date) return '';
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return m + '/' + d + '/' + date.getFullYear();
+            }
+
+            function startOfDay(date) {
+                return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            }
+
+            function sameDay(a, b) {
+                return a && b && startOfDay(a).getTime() === startOfDay(b).getTime();
+            }
+
+            function todayKey() {
+                return formatDateValue(new Date());
+            }
+
+            function isPast(date) {
+                return formatDateValue(startOfDay(date)) < todayKey();
+            }
+
+            function isRented(date) {
+                // Past dates are never treated as "rented" for coloring
+                if (isPast(date)) return false;
+                return unavailableDates.has(formatDateValue(startOfDay(date)));
+            }
+
+            function isBlocked(date) {
+                return isPast(date) || unavailableDates.has(formatDateValue(startOfDay(date)));
+            }
+
+            function rangeHasRented(start, end) {
+                if (!start || !end) return false;
+                let cursor = startOfDay(start);
+                let last = startOfDay(end);
+                if (cursor > last) {
+                    const tmp = cursor;
+                    cursor = last;
+                    last = tmp;
+                }
+                while (cursor <= last) {
+                    if (isRented(cursor)) return true;
+                    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1);
+                }
+                return false;
+            }
+
+            function isUnsetDate(date) {
+                return !date || date.getFullYear() < 2000;
+            }
+
+            async function loadAvailability() {
+                unavailableDates = new Set();
+                const vehicleId = vehicleSelect.value;
+                if (!vehicleId) {
+                    renderCalendar();
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/Reservations/Availability?vehicleId=' + encodeURIComponent(vehicleId), {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!response.ok) throw new Error('Failed to load availability');
+                    const data = await response.json();
+                    const dates = data.unavailableDates || data.UnavailableDates || [];
+                    dates.forEach(function (d) {
+                        unavailableDates.add(String(d).substring(0, 10));
+                    });
+                } catch (err) {
+                    console.warn(err);
+                }
+
+                renderCalendar();
+            }
+
+            function syncDisplays() {
+                pickupDisplay.value = formatDisplayDate(parseDateValue(pickupDateInput.value));
+                returnDisplay.value = formatDisplayDate(parseDateValue(returnDateInput.value));
+            }
+
+            function updateCapacityHint() {
+                const option = vehicleSelect.options[vehicleSelect.selectedIndex];
+                const capacity = option && option.dataset.capacity ? option.dataset.capacity : null;
+                if (capacity) {
+                    capacityHint.textContent = 'Maximum capacity: ' + capacity + ' passengers';
+                    passengerInput.max = capacity;
+                } else {
+                    capacityHint.textContent = 'Maximum capacity: select a vehicle';
+                    passengerInput.max = 60;
+                }
+            }
+
+            function clearDiscountFile() {
+                fileInput.value = '';
+                previewImg.src = '';
+                previewImg.classList.add('d-none');
+                previewPlaceholder.classList.remove('d-none');
+                filenameLabel.textContent = '';
+                uploadZone.classList.remove('d-none');
+                previewState.classList.add('d-none');
+            }
+
+            function toggleDiscountUpload() {
+                const isYes = discountSelect.value === 'Yes';
+                discountSection.classList.toggle('d-none', !isYes);
+                if (!isYes) clearDiscountFile();
+            }
+
+            function showDiscountPreview(file) {
+                if (!file) return;
+                filenameLabel.textContent = file.name;
+                uploadZone.classList.add('d-none');
+                previewState.classList.remove('d-none');
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        previewImg.src = e.target.result;
+                        previewImg.classList.remove('d-none');
+                        previewPlaceholder.classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewImg.classList.add('d-none');
+                    previewPlaceholder.classList.remove('d-none');
+                }
+            }
+
+            function getPreviewRange() {
+                const pickup = parseDateValue(pickupDateInput.value);
+                const ret = parseDateValue(returnDateInput.value);
+
+                if (selectionPhase === 'end' && pickup && hoverDate && !isBlocked(hoverDate)) {
+                    const start = hoverDate < pickup ? hoverDate : pickup;
+                    const end = hoverDate < pickup ? pickup : hoverDate;
+                    if (rangeHasRented(start, end)) return { start: pickup, end: pickup };
+                    return { start: start, end: end };
+                }
+                if (pickup && ret) return { start: pickup, end: ret };
+                if (pickup) return { start: pickup, end: pickup };
+                return { start: null, end: null };
+            }
+
+            function renderCalendar() {
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+                calMonthLabel.textContent = monthNames[viewMonth] + ' ' + viewYear;
+                calGrid.innerHTML = '';
+
+                const firstDay = new Date(viewYear, viewMonth, 1);
+                const startWeekday = firstDay.getDay();
+                const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+                const range = getPreviewRange();
+
+                for (let i = 0; i < startWeekday; i++) {
+                    const empty = document.createElement('div');
+                    empty.className = 'airbnb-cal-cell is-empty';
+                    calGrid.appendChild(empty);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(viewYear, viewMonth, day);
+                    const cell = document.createElement('button');
+                    cell.type = 'button';
+                    cell.className = 'airbnb-cal-cell';
+                    cell.innerHTML = '<span class="airbnb-cal-day">' + day + '</span>';
+
+                    if (isPast(date)) {
+                        cell.classList.add('is-past');
+                        cell.disabled = true;
+                        cell.setAttribute('aria-disabled', 'true');
+                    } else if (isRented(date)) {
+                        cell.classList.add('is-rented');
+                        cell.disabled = true;
+                        cell.title = 'Vehicle already rented';
+                        cell.setAttribute('aria-disabled', 'true');
+                    } else {
+                        cell.classList.add('is-available');
+                    }
+
+                    if (!cell.disabled && range.start && range.end) {
+                        const t = startOfDay(date).getTime();
+                        const startT = startOfDay(range.start).getTime();
+                        const endT = startOfDay(range.end).getTime();
+                        if (t >= startT && t <= endT) {
+                            cell.classList.add('in-range');
+                            if (t === startT) cell.classList.add('is-selected');
+                            if (t === endT) cell.classList.add('is-selected');
+                            if (t === startT && t === endT) cell.classList.add('is-single');
+                        }
+                    }
+
+                    cell.addEventListener('click', function () {
+                        if (!cell.disabled) onDayClick(date);
+                    });
+                    cell.addEventListener('mouseenter', function () {
+                        if (cell.disabled || selectionPhase !== 'end') return;
+                        if (hoverDate && sameDay(hoverDate, date)) return;
+                        hoverDate = date;
+                        renderCalendar();
+                    });
+
+                    calGrid.appendChild(cell);
+                }
+            }
+
+            function onDayClick(date) {
+                const clicked = startOfDay(date);
+                if (isBlocked(clicked)) return;
+
+                const pickup = parseDateValue(pickupDateInput.value);
+
+                if (selectionPhase === 'start' || !pickup) {
+                    pickupDateInput.value = formatDateValue(clicked);
+                    returnDateInput.value = '';
+                    selectionPhase = 'end';
+                    hoverDate = null;
+                } else {
+                    const start = clicked < startOfDay(pickup) ? clicked : startOfDay(pickup);
+                    const end = clicked < startOfDay(pickup) ? startOfDay(pickup) : clicked;
+                    if (rangeHasRented(start, end)) {
+                        alert('Selected range includes dates when this vehicle is already rented.');
+                        return;
+                    }
+                    pickupDateInput.value = formatDateValue(start);
+                    returnDateInput.value = formatDateValue(end);
+                    selectionPhase = 'start';
+                    hoverDate = null;
+                }
+
+                syncDisplays();
+                renderCalendar();
+            }
+
+            function initCalendar() {
+                const pickup = parseDateValue(pickupDateInput.value);
+                const ret = parseDateValue(returnDateInput.value);
+
+                if (isUnsetDate(pickup)) {
+                    pickupDateInput.value = '';
+                    returnDateInput.value = '';
+                    selectionPhase = 'start';
+                } else if (isUnsetDate(ret)) {
+                    returnDateInput.value = '';
+                    selectionPhase = 'end';
+                } else {
+                    selectionPhase = 'start';
+                }
+
+                const base = parseDateValue(pickupDateInput.value) || new Date();
+                viewYear = base.getFullYear();
+                viewMonth = base.getMonth();
+                syncDisplays();
+                renderCalendar();
+            }
+
+            calGrid.addEventListener('mouseleave', function () {
+                if (selectionPhase === 'end' && hoverDate) {
+                    hoverDate = null;
+                    renderCalendar();
+                }
+            });
+
+            document.getElementById('reservationWizardForm').addEventListener('submit', function (e) {
+                const pickup = parseDateValue(pickupDateInput.value);
+                const ret = parseDateValue(returnDateInput.value);
+                if (!pickup || !ret) {
+                    e.preventDefault();
+                    alert('Please select pick-up and return dates on the calendar.');
+                    return;
+                }
+                if (ret < pickup) {
+                    e.preventDefault();
+                    alert('Return date cannot be earlier than pick-up date.');
+                    return;
+                }
+                if (rangeHasRented(pickup, ret)) {
+                    e.preventDefault();
+                    alert('Selected range includes dates when this vehicle is already rented.');
+                }
+            });
+
+            vehicleSelect.addEventListener('change', function () {
+                updateCapacityHint();
+                pickupDateInput.value = '';
+                returnDateInput.value = '';
+                selectionPhase = 'start';
+                hoverDate = null;
+                syncDisplays();
+                loadAvailability();
+            });
+            discountSelect.addEventListener('change', toggleDiscountUpload);
+            fileInput.addEventListener('change', function () {
+                if (fileInput.files && fileInput.files[0]) showDiscountPreview(fileInput.files[0]);
+            });
+            removeBtn.addEventListener('click', clearDiscountFile);
+            calPrev.addEventListener('click', function () {
+                viewMonth -= 1;
+                if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
+                renderCalendar();
+            });
+            calNext.addEventListener('click', function () {
+                viewMonth += 1;
+                if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
+                renderCalendar();
+            });
+            pickupDisplay.addEventListener('click', function () { selectionPhase = 'start'; });
+            returnDisplay.addEventListener('click', function () {
+                if (pickupDateInput.value) selectionPhase = 'end';
+            });
+
+            ['dragenter', 'dragover'].forEach(function (evt) {
+                uploadZone.addEventListener(evt, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadZone.style.backgroundColor = '#e9e9e9';
+                });
+            });
+            ['dragleave', 'drop'].forEach(function (evt) {
+                uploadZone.addEventListener(evt, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadZone.style.backgroundColor = '';
+                });
+            });
+            uploadZone.addEventListener('drop', function (e) {
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) {
+                    const dt = new DataTransfer();
+                    dt.items.add(files[0]);
+                    fileInput.files = dt.files;
+                    showDiscountPreview(files[0]);
+                }
+            });
+
+            updateCapacityHint();
+            toggleDiscountUpload();
+            initCalendar();
+            loadAvailability();
+        })();
+    </script>
+}

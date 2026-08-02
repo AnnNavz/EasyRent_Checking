@@ -33,9 +33,12 @@
                 <a href="#faqs" class="client-nav-link @(activeNav == "FAQs" ? "active" : "")">FAQs</a>
             </nav>
 
-            <div class="client-nav-actions d-none d-lg-flex">
-                <a asp-controller="Account" asp-action="Registration" class="client-btn-signin">Sign In</a>
-            </div>
+            @if (ViewData["HideSignIn"] as bool? != true)
+            {
+                <div class="client-nav-actions d-none d-lg-flex">
+                    <a asp-controller="Account" asp-action="Login" class="client-btn-signin">Sign In</a>
+                </div>
+            }
 
             <button class="client-nav-toggle d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#clientNavMenu" aria-controls="clientNavMenu" aria-expanded="false" aria-label="Toggle navigation">
                 <i class="bi bi-list"></i>
@@ -51,7 +54,10 @@
                     <a href="#about-us" class="client-nav-link @(activeNav == "AboutUs" ? "active" : "")">About Us</a>
                     <a href="#faqs" class="client-nav-link @(activeNav == "FAQs" ? "active" : "")">FAQs</a>
                 </nav>
-                <a asp-controller="Account" asp-action="Registration" class="client-btn-signin">Sign In</a>
+                @if (ViewData["HideSignIn"] as bool? != true)
+                {
+                    <a asp-controller="Account" asp-action="Login" class="client-btn-signin">Sign In</a>
+                }
             </div>
         </div>
     </header>

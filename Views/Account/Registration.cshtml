@@ -1,18 +1,227 @@
-﻿@{
+﻿@model EasyRent_Checking.Models.Customer
+@using EasyRent_Checking.Models
+
+@{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
-    ViewData["Title"] = "Sign In";
-    ViewData["ActiveNav"] = "Home";
+    ViewData["Title"] = "Create Account";
+    ViewData["HideSignIn"] = true;
 }
 
-<div class="client-page">
-    <div class="client-page-header">
-        <div>
-            <h1>Sign In</h1>
-            <p>Access your EasyRent account to manage bookings and reservations.</p>
+<div class="auth-page">
+    <div class="auth-register-header">
+        <div class="auth-card-brand">
+            <span class="client-brand-logo">L</span>
+            <span class="client-brand-name">EasyRent</span>
         </div>
+        <h1 class="auth-title">Create Your Account</h1>
+        <p class="auth-subtitle">Join us today and start your journey.</p>
     </div>
 
-    <div class="client-info-section" style="max-width: 480px;">
-        <p class="mb-0 text-muted">Sign-in functionality will be available in a future update.</p>
+    <div class="auth-card auth-card-register">
+        <form asp-controller="Account" asp-action="Registration" method="post" enctype="multipart/form-data" class="auth-form" novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="auth-field">
+                <label asp-for="FullName" class="auth-label">Full Name</label>
+                <div class="auth-input-wrap">
+                    <i class="bi bi-person auth-input-icon"></i>
+                    <input asp-for="FullName" class="auth-input" placeholder="John Doe" autocomplete="name" />
+                </div>
+                <span asp-validation-for="FullName" class="text-danger small"></span>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-field">
+                    <label asp-for="ContactNumber" class="auth-label">Contact Number</label>
+                    <div class="auth-input-wrap">
+                        <i class="bi bi-telephone auth-input-icon"></i>
+                        <input asp-for="ContactNumber" class="auth-input" placeholder="+63 9xx xxx xxxx" autocomplete="tel" />
+                    </div>
+                    <span asp-validation-for="ContactNumber" class="text-danger small"></span>
+                </div>
+                <div class="auth-field">
+                    <label asp-for="Email" class="auth-label">Email Address</label>
+                    <div class="auth-input-wrap">
+                        <i class="bi bi-envelope auth-input-icon"></i>
+                        <input asp-for="Email" class="auth-input" placeholder="name@example.com" autocomplete="email" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-field">
+                    <label asp-for="Password" class="auth-label">Password</label>
+                    <div class="auth-input-wrap">
+                        <i class="bi bi-lock auth-input-icon"></i>
+                        <input asp-for="Password" class="auth-input auth-password-input" type="password" placeholder="**********" autocomplete="new-password" />
+                        <button type="button" class="auth-password-toggle" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <div class="auth-field">
+                    <label asp-for="ConfirmPassword" class="auth-label">Confirm Password</label>
+                    <div class="auth-input-wrap">
+                        <i class="bi bi-lock auth-input-icon"></i>
+                        <input asp-for="ConfirmPassword" class="auth-input auth-password-input" type="password" placeholder="**********" autocomplete="new-password" />
+                        <button type="button" class="auth-password-toggle" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="auth-field">
+                <label asp-for="ValidIDtype" class="auth-label">Choose what type of valid IDs</label>
+                <div class="auth-select-wrap">
+                    <select asp-for="ValidIDtype" id="input-ValidIDtype" class="auth-select">
+                        <option value="">Select ID type</option>
+                        <option value="@nameof(ValidIDtype.NationalID)">National ID</option>
+                        <option value="@nameof(ValidIDtype.Passport)">Passport</option>
+                        <option value="@nameof(ValidIDtype.UMID)">UMID</option>
+                        <option value="@nameof(ValidIDtype.DriverLicense)">Driver License</option>
+                        <option value="@nameof(ValidIDtype.VotersID)">Voters ID</option>
+                    </select>
+                    <i class="bi bi-chevron-down auth-select-chevron"></i>
+                </div>
+                <span asp-validation-for="ValidIDtype" class="text-danger small"></span>
+            </div>
+
+            <div id="validIdUploadSection" class="auth-upload-section d-none">
+                <label class="auth-label" for="input-ValidIDFile">Upload Valid ID Picture</label>
+                <div id="valid-id-upload-zone" class="auth-upload-zone">
+                    <div>
+                        <i class="bi bi-cloud-upload auth-upload-icon"></i>
+                        <span class="auth-upload-title">Upload your valid ID or <span class="text-decoration-underline">click to browse</span></span>
+                        <span class="auth-upload-hint">PNG, JPG (MAX 5MB)</span>
+                    </div>
+                    <input asp-for="ValidIDImageFile" id="input-ValidIDFile" type="file" class="auth-file-input" accept=".png,.jpg,.jpeg" />
+                </div>
+                <div id="valid-id-preview-state" class="d-none auth-upload-preview">
+                    <div class="auth-preview-box">
+                        <img id="valid-id-preview-img" class="d-none" alt="Valid ID preview" />
+                        <div id="valid-id-preview-placeholder" class="auth-preview-placeholder"></div>
+                        <button type="button" class="auth-preview-remove" id="valid-id-remove-btn" aria-label="Remove ID image">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <span id="valid-id-filename" class="auth-upload-filename"></span>
+                </div>
+                <span asp-validation-for="ValidIDImageFile" class="text-danger small"></span>
+            </div>
+
+            <label class="auth-check">
+                <input type="checkbox" name="AgreeTerms" value="true" required />
+                <span>I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy.</strong></span>
+            </label>
+
+            <button type="submit" class="auth-submit">Create Account</button>
+        </form>
+
+        <div class="auth-divider"></div>
+        <p class="auth-footer-text">
+            Already have an account?
+            <a asp-controller="Account" asp-action="Login" class="auth-footer-link">Login here</a>
+        </p>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.auth-password-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = btn.parentElement.querySelector('.auth-password-input');
+                var icon = btn.querySelector('i');
+                if (!input) return;
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !show);
+                icon.classList.toggle('bi-eye-slash', show);
+            });
+        });
+
+        (function () {
+            var idTypeSelect = document.getElementById('input-ValidIDtype');
+            var uploadSection = document.getElementById('validIdUploadSection');
+            var uploadZone = document.getElementById('valid-id-upload-zone');
+            var fileInput = document.getElementById('input-ValidIDFile');
+            var previewState = document.getElementById('valid-id-preview-state');
+            var previewImg = document.getElementById('valid-id-preview-img');
+            var previewPlaceholder = document.getElementById('valid-id-preview-placeholder');
+            var filenameLabel = document.getElementById('valid-id-filename');
+            var removeBtn = document.getElementById('valid-id-remove-btn');
+
+            function clearFile() {
+                fileInput.value = '';
+                previewImg.src = '';
+                previewImg.classList.add('d-none');
+                previewPlaceholder.classList.remove('d-none');
+                filenameLabel.textContent = '';
+                previewState.classList.add('d-none');
+                uploadZone.classList.remove('d-none');
+            }
+
+            function toggleUploadSection() {
+                var hasType = !!idTypeSelect.value;
+                uploadSection.classList.toggle('d-none', !hasType);
+                if (!hasType) {
+                    clearFile();
+                }
+            }
+
+            function showPreview(file) {
+                if (!file) {
+                    clearFile();
+                    return;
+                }
+
+                filenameLabel.textContent = file.name;
+                uploadZone.classList.add('d-none');
+                previewState.classList.remove('d-none');
+
+                if (file.type && file.type.startsWith('image/')) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        previewImg.src = e.target.result;
+                        previewImg.classList.remove('d-none');
+                        previewPlaceholder.classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewImg.classList.add('d-none');
+                    previewPlaceholder.classList.remove('d-none');
+                }
+            }
+
+            idTypeSelect.addEventListener('change', toggleUploadSection);
+            fileInput.addEventListener('change', function () {
+                showPreview(fileInput.files && fileInput.files[0]);
+            });
+            removeBtn.addEventListener('click', clearFile);
+
+            uploadZone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                uploadZone.classList.add('is-dragover');
+            });
+            uploadZone.addEventListener('dragleave', function () {
+                uploadZone.classList.remove('is-dragover');
+            });
+            uploadZone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                uploadZone.classList.remove('is-dragover');
+                var files = e.dataTransfer && e.dataTransfer.files;
+                if (!files || !files.length) return;
+                var dt = new DataTransfer();
+                dt.items.add(files[0]);
+                fileInput.files = dt.files;
+                showPreview(files[0]);
+            });
+
+            toggleUploadSection();
+        })();
+    </script>
+}

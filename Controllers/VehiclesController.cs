@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EasyRent_Checking.Data;
 using EasyRent_Checking.Models;
+using EasyRent_Checking.Services;
 using Microsoft.AspNetCore.Hosting;
 
 namespace EasyRent_Checking.Controllers
@@ -124,31 +125,13 @@ namespace EasyRent_Checking.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,BasePrice,PassengersCount,Description,ImagePath,ImageFile")] Vehicle vehicle)
+        public async Task<IActionResult> Create([Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,BasePrice,SucceedingFee,PassengersCount,Description,ImagePath,ImageFile")] Vehicle vehicle)
         {
             if (ModelState.IsValid)
             {
                 if (vehicle.ImageFile != null)
                 {
-                    string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-                    if (!Directory.Exists(folder))
-                    {
-                        Directory.CreateDirectory(folder);
-                    }
-
-                    string fileName = Guid.NewGuid().ToString() + "_" + vehicle.ImageFile.FileName;
-
-                    // Full save path
-                    string filePath = Path.Combine(folder, fileName);
-
-                    // Save image
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await vehicle.ImageFile.CopyToAsync(stream);
-                    }
-
-                    // Save filename to database
-                    vehicle.ImagePath = fileName;
+                    vehicle.ImagePath = await ImageStorage.SaveAsync(_webHostEnvironment, vehicle.ImageFile, ImageStorage.VehiclesFolder);
                 }
 
                 _context.Add(vehicle);
@@ -215,7 +198,7 @@ namespace EasyRent_Checking.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,BasePrice,PassengersCount,Description,ImagePath,ImageFile")] Vehicle vehicle, string? returnUrl)
+        public async Task<IActionResult> Edit(int id, [Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,Status,RegistrationDate,RegistrationExpiry,BasePrice,SucceedingFee,PassengersCount,Description,ImagePath,ImageFile")] Vehicle vehicle, string? returnUrl)
         {
             if (id != vehicle.VehicleId)
             {
@@ -241,26 +224,13 @@ namespace EasyRent_Checking.Controllers
                     existingVehicle.RegistrationDate = vehicle.RegistrationDate;
                     existingVehicle.RegistrationExpiry = vehicle.RegistrationExpiry;
                     existingVehicle.BasePrice = vehicle.BasePrice;
+                    existingVehicle.SucceedingFee = vehicle.SucceedingFee;
                     existingVehicle.PassengersCount = vehicle.PassengersCount;
                     existingVehicle.Description = vehicle.Description;
 
-                    string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-                    if (!Directory.Exists(folder))
-                    {
-                        Directory.CreateDirectory(folder);
-                    }
-
                     if (vehicle.ImageFile != null)
                     {
-                        string fileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(vehicle.ImageFile.FileName);
-                        string filePath = Path.Combine(folder, fileName);
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await vehicle.ImageFile.CopyToAsync(stream);
-                        }
-
-                        existingVehicle.ImagePath = fileName;
+                        existingVehicle.ImagePath = await ImageStorage.SaveAsync(_webHostEnvironment, vehicle.ImageFile, ImageStorage.VehiclesFolder);
                     }
                     else if (string.IsNullOrEmpty(vehicle.ImagePath))
                     {
@@ -380,6 +350,119 @@ namespace EasyRent_Checking.Controllers
 
 			ViewData["ActiveNav"] = "Vehicles";
 			return View("~/Views/ClientSide/VehicleDetails.cshtml", vehicle);
+		}
+
+		// GET: Vehicles/Reservation/5
+		public async Task<IActionResult> Reservation(int? id)
+		{
+			if (id == null)
+			{
+				return NotFound();
+			}
+
+			var vehicle = await _context.Vehicle.FirstOrDefaultAsync(v => v.VehicleId == id);
+			if (vehicle == null)
+			{
+				return NotFound();
+			}
+
+			if (vehicle.Status != VehicleStatus.Available)
+			{
+				TempData["ReservationError"] = "This vehicle is not available for reservation right now.";
+				return RedirectToAction(nameof(VehicleDetails), new { id });
+			}
+
+			ViewData["ActiveNav"] = "Vehicles";
+			ViewData["Vehicle"] = vehicle;
+			ViewData["HideReserveButton"] = true;
+
+			var model = new Reservation
+			{
+				VehicleId = vehicle.VehicleId,
+				PickupTime = new TimeOnly(9, 0),
+				ReturnTime = new TimeOnly(17, 0),
+				PassengerCount = 1,
+				Discount = Discount.No,
+				ReservationStatus = ReservationStatus.Pending
+			};
+
+			return View("~/Views/ClientSide/Reservation.cshtml", model);
+		}
+
+		// POST: Vehicles/Reservation/5
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Reservation(int id, [Bind("VehicleId,CustomerName,ContactNumber,PickupLocation,DropoffLocation,PickupDate,ReturnDate,PickupTime,ReturnTime,PassengerCount,Notes,Discount,DiscountImageFile")] Reservation reservation)
+		{
+			var vehicle = await _context.Vehicle.FirstOrDefaultAsync(v => v.VehicleId == id);
+			if (vehicle == null)
+			{
+				return NotFound();
+			}
+
+			reservation.VehicleId = id;
+			reservation.ReservationStatus = ReservationStatus.Pending;
+
+			var today = DateOnly.FromDateTime(DateTime.Today);
+			if (reservation.PickupDate < today)
+			{
+				ModelState.AddModelError(nameof(reservation.PickupDate), "Please select a pick-up date on the calendar.");
+			}
+
+			if (reservation.ReturnDate < reservation.PickupDate)
+			{
+				ModelState.AddModelError(nameof(reservation.ReturnDate), "Return date cannot be earlier than pick-up date.");
+			}
+
+			if (reservation.PassengerCount < 1 || reservation.PassengerCount > vehicle.PassengersCount)
+			{
+				ModelState.AddModelError(nameof(reservation.PassengerCount), $"Passenger count must be between 1 and {vehicle.PassengersCount}.");
+			}
+
+			if (reservation.PickupDate >= today && reservation.ReturnDate >= reservation.PickupDate)
+			{
+				var hasConflict = await _context.Reservation.AnyAsync(r =>
+					r.VehicleId == id
+					&& r.ReservationStatus != ReservationStatus.Cancelled
+					&& r.PickupDate <= reservation.ReturnDate
+					&& r.ReturnDate >= reservation.PickupDate);
+
+				if (hasConflict)
+				{
+					ModelState.AddModelError(nameof(reservation.PickupDate), "Selected dates overlap an existing rental for this vehicle.");
+				}
+			}
+
+			if (reservation.Discount == Discount.Yes && reservation.DiscountImageFile == null)
+			{
+				ModelState.AddModelError(nameof(reservation.DiscountImageFile), "Please upload a Senior/PWD ID image.");
+			}
+
+			if (ModelState.IsValid)
+			{
+				if (reservation.DiscountImageFile != null)
+				{
+					reservation.DiscountImagePath = await ImageStorage.SaveAsync(
+						_webHostEnvironment,
+						reservation.DiscountImageFile,
+						ImageStorage.ReservationsFolder);
+				}
+
+				if (reservation.Discount == Discount.No)
+				{
+					reservation.DiscountImagePath = null;
+				}
+
+				_context.Add(reservation);
+				await _context.SaveChangesAsync();
+				TempData["ReservationSuccess"] = "Your reservation request was submitted and is pending staff approval.";
+				return RedirectToAction(nameof(VehicleDetails), new { id });
+			}
+
+			ViewData["ActiveNav"] = "Vehicles";
+			ViewData["Vehicle"] = vehicle;
+			ViewData["HideReserveButton"] = true;
+			return View("~/Views/ClientSide/Reservation.cshtml", reservation);
 		}
 	}
 }

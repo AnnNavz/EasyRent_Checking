@@ -39,6 +39,14 @@
 </div>
 
 <div class="client-page client-details-page">
+    @if (TempData["ReservationSuccess"] != null)
+    {
+        <div class="alert alert-success mx-3 mt-3 mb-0" role="alert">@TempData["ReservationSuccess"]</div>
+    }
+    @if (TempData["ReservationError"] != null)
+    {
+        <div class="alert alert-danger mx-3 mt-3 mb-0" role="alert">@TempData["ReservationError"]</div>
+    }
     <div class="client-details-layout">
         <div class="client-details-main">
             <div class="client-details-header">
@@ -149,7 +157,6 @@
         </div>
 
         <aside class="client-details-sidebar">
-            @{ ViewData["ShowReserveButton"] = true; }
             <partial name="_RateSummarySidebar" model="Model" />
         </aside>
     </div>

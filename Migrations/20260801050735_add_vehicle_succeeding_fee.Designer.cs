@@ -4,6 +4,7 @@ using EasyRent_Checking.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,56 +12,18 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EasyRent_Checking.Migrations
 {
     [DbContext(typeof(EasyRent_CheckingContext))]
-    partial class EasyRent_CheckingContextModelSnapshot : ModelSnapshot
+    [Migration("20260801050735_add_vehicle_succeeding_fee")]
+    partial class add_vehicle_succeeding_fee
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.29")
+                .HasAnnotation("ProductVersion", "8.0.23")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("EasyRent_Checking.Models.Customer", b =>
-                {
-                    b.Property<int>("CustomerId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerId"));
-
-                    b.Property<string>("ContactNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("ValidIDImagePath")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("ValidIDtype")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("CustomerId");
-
-                    b.ToTable("Customer");
-                });
 
             modelBuilder.Entity("EasyRent_Checking.Models.Driver", b =>
                 {
@@ -108,72 +71,6 @@ namespace EasyRent_Checking.Migrations
                     b.HasKey("DriverId");
 
                     b.ToTable("Driver");
-                });
-
-            modelBuilder.Entity("EasyRent_Checking.Models.Reservation", b =>
-                {
-                    b.Property<int>("ReservationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReservationId"));
-
-                    b.Property<string>("ContactNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Discount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DiscountImagePath")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("DropoffLocation")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("PassengerCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("PickupDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("PickupLocation")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<TimeOnly>("PickupTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("ReservationStatus")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("ReturnDate")
-                        .HasColumnType("date");
-
-                    b.Property<TimeOnly>("ReturnTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("VehicleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ReservationId");
-
-                    b.HasIndex("VehicleId");
-
-                    b.ToTable("Reservation");
                 });
 
             modelBuilder.Entity("EasyRent_Checking.Models.Vehicle", b =>
@@ -236,17 +133,6 @@ namespace EasyRent_Checking.Migrations
                     b.HasKey("VehicleId");
 
                     b.ToTable("Vehicle");
-                });
-
-            modelBuilder.Entity("EasyRent_Checking.Models.Reservation", b =>
-                {
-                    b.HasOne("EasyRent_Checking.Models.Vehicle", "Vehicle")
-                        .WithMany()
-                        .HasForeignKey("VehicleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Vehicle");
                 });
 #pragma warning restore 612, 618
         }

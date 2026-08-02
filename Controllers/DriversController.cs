@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EasyRent_Checking.Data;
 using EasyRent_Checking.Models;
+using EasyRent_Checking.Services;
 using Microsoft.AspNetCore.Hosting;
 
 namespace EasyRent_Checking.Controllers
@@ -127,51 +128,17 @@ namespace EasyRent_Checking.Controllers
             {
 				if (driver.ImageFile != null)
 				{
-					// Folder path
-					string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-
-					// Create unique filename
-					string fileName = Guid.NewGuid().ToString() + "_" + driver.ImageFile.FileName;
-
-					// Full save path
-					string filePath = Path.Combine(folder, fileName);
-
-					// Save image
-					using (var stream = new FileStream(filePath, FileMode.Create))
-					{
-						await driver.ImageFile.CopyToAsync(stream);
-					}
-
-					// Save filename to database
-					driver.ImagePath = fileName;
+					driver.ImagePath = await ImageStorage.SaveAsync(_webHostEnvironment, driver.ImageFile, ImageStorage.DriversFolder);
 				}
 
 				if (driver.FrontLicenseImageFile != null)
 				{
-					string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-					string fileName = Guid.NewGuid().ToString() + "_" + driver.FrontLicenseImageFile.FileName;
-					string filePath = Path.Combine(folder, fileName);
-
-					using (var stream = new FileStream(filePath, FileMode.Create))
-					{
-						await driver.FrontLicenseImageFile.CopyToAsync(stream);
-					}
-
-					driver.FrontLicenseImagePath = fileName;
+					driver.FrontLicenseImagePath = await ImageStorage.SaveAsync(_webHostEnvironment, driver.FrontLicenseImageFile, ImageStorage.DriversFolder);
 				}
 
 				if (driver.BackLicenseImageFile != null)
 				{
-					string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-					string fileName = Guid.NewGuid().ToString() + "_" + driver.BackLicenseImageFile.FileName;
-					string filePath = Path.Combine(folder, fileName);
-
-					using (var stream = new FileStream(filePath, FileMode.Create))
-					{
-						await driver.BackLicenseImageFile.CopyToAsync(stream);
-					}
-
-					driver.BackLicenseImagePath = fileName;
+					driver.BackLicenseImagePath = await ImageStorage.SaveAsync(_webHostEnvironment, driver.BackLicenseImageFile, ImageStorage.DriversFolder);
 				}
 
 				_context.Add(driver);
@@ -260,23 +227,9 @@ namespace EasyRent_Checking.Controllers
 					existingDriver.LicenseNo = driver.LicenseNo;
 					existingDriver.ExpiryDate = driver.ExpiryDate;
 
-					string folder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-					if (!Directory.Exists(folder))
-					{
-						Directory.CreateDirectory(folder);
-					}
-
 					if (driver.ImageFile != null)
 					{
-						string fileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(driver.ImageFile.FileName);
-						string filePath = Path.Combine(folder, fileName);
-
-						using (var stream = new FileStream(filePath, FileMode.Create))
-						{
-							await driver.ImageFile.CopyToAsync(stream);
-						}
-
-						existingDriver.ImagePath = fileName;
+						existingDriver.ImagePath = await ImageStorage.SaveAsync(_webHostEnvironment, driver.ImageFile, ImageStorage.DriversFolder);
 					}
 					else if (string.IsNullOrEmpty(driver.ImagePath))
 					{
@@ -285,15 +238,7 @@ namespace EasyRent_Checking.Controllers
 
 					if (driver.FrontLicenseImageFile != null)
 					{
-						string fileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(driver.FrontLicenseImageFile.FileName);
-						string filePath = Path.Combine(folder, fileName);
-
-						using (var stream = new FileStream(filePath, FileMode.Create))
-						{
-							await driver.FrontLicenseImageFile.CopyToAsync(stream);
-						}
-
-						existingDriver.FrontLicenseImagePath = fileName;
+						existingDriver.FrontLicenseImagePath = await ImageStorage.SaveAsync(_webHostEnvironment, driver.FrontLicenseImageFile, ImageStorage.DriversFolder);
 					}
 					else if (string.IsNullOrEmpty(driver.FrontLicenseImagePath))
 					{
@@ -302,15 +247,7 @@ namespace EasyRent_Checking.Controllers
 
 					if (driver.BackLicenseImageFile != null)
 					{
-						string fileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(driver.BackLicenseImageFile.FileName);
-						string filePath = Path.Combine(folder, fileName);
-
-						using (var stream = new FileStream(filePath, FileMode.Create))
-						{
-							await driver.BackLicenseImageFile.CopyToAsync(stream);
-						}
-
-						existingDriver.BackLicenseImagePath = fileName;
+						existingDriver.BackLicenseImagePath = await ImageStorage.SaveAsync(_webHostEnvironment, driver.BackLicenseImageFile, ImageStorage.DriversFolder);
 					}
 					else if (string.IsNullOrEmpty(driver.BackLicenseImagePath))
 					{

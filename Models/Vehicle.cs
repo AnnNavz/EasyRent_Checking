@@ -5,7 +5,6 @@ namespace EasyRent_Checking.Models
 {
 	public enum VehicleType
 	{
-		Sedan,
 		SUV,
 		Van
 	}
@@ -15,7 +14,7 @@ namespace EasyRent_Checking.Models
 		Available,
 		Rented,
 		[Display(Name = "In Maintenance")]
-		InMaintenance,
+		InMaintenance, 
 		Unavailable
 	}
 	public class Vehicle
@@ -24,7 +23,7 @@ namespace EasyRent_Checking.Models
 		public int VehicleId { get; set; }
 
 		[Required, StringLength(100)]
-		public string Model { get; set; }
+		public string Model { get; set; } 
 
 		[Required, StringLength(20)]
 		[Display(Name = "Plate Number")]
@@ -57,6 +56,12 @@ namespace EasyRent_Checking.Models
 		[Column(TypeName = "decimal(18,2)")]
 		[Range(0.01, 999999.99, ErrorMessage = "Base price must be greater than zero.")]
 		public decimal BasePrice { get; set; }
+
+		[Required(ErrorMessage = "Succeeding fee is required.")]
+		[Display(Name = "Succeeding Fee")]
+		[Column(TypeName = "decimal(18,2)")]
+		[Range(0.01, 999999.99, ErrorMessage = "Succeeding fee must be greater than zero.")]
+		public decimal SucceedingFee { get; set; }
 
 		[Required(ErrorMessage = "Passengers count is required.")]
 		[Display(Name = "Passengers Count")]

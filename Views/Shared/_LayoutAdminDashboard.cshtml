@@ -66,15 +66,15 @@
                 </a>
                 <a asp-controller="Drivers" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Drivers" ? "active" : "")">
                     <div class="mock-icon-square"></div>
-                    Driver Management
+                    Driver
                 </a>
                 <a asp-controller="Vehicles" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Vehicles" ? "active" : "")">
                     <div class="mock-icon-square"></div>
-                    Vehicle Management
+                    Vehicle
                 </a>
-                <a asp-controller="Bookings" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Bookings" ? "active" : "")">
+                <a asp-controller="Reservations" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Reservations" ? "active" : "")">
                     <div class="mock-icon-square"></div>
-                    Booking Management
+                    Booking
                 </a>
             </div>
 

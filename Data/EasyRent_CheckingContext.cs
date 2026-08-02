@@ -9,6 +9,8 @@ namespace EasyRent_Checking.Data
 {
     public class EasyRent_CheckingContext : DbContext
     {
+        public DbSet<EasyRent_Checking.Models.Customer> Customer { get; set; } = default!;
+        public DbSet<EasyRent_Checking.Models.Reservation> Reservation { get; set; } = default!;
         public EasyRent_CheckingContext (DbContextOptions<EasyRent_CheckingContext> options)
             : base(options)
         {
@@ -16,6 +18,5 @@ namespace EasyRent_Checking.Data
 
         public DbSet<EasyRent_Checking.Models.Driver> Driver { get; set; } = default!;
         public DbSet<EasyRent_Checking.Models.Vehicle> Vehicle { get; set; } = default!;
-        public DbSet<EasyRent_Checking.Models.Reservation> Reservation { get; set; } = default!;
     }
 }

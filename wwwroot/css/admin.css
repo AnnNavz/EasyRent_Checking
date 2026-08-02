@@ -534,6 +534,56 @@ body.admin-delete-modal-open .modal-backdrop.show {
     flex-shrink: 0;
 }
 
+.booking-customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.booking-customer-meta,
+.booking-vehicle-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.booking-customer-name,
+.booking-vehicle-name {
+    font-weight: 700;
+    color: #111;
+}
+
+.booking-customer-phone,
+.booking-vehicle-type {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.booking-status-badge {
+    display: inline-block;
+    min-width: 88px;
+    text-align: center;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.booking-status-pending {
+    background: #ececec;
+    color: #555;
+}
+
+.booking-status-approved {
+    background: #d9efe6;
+    color: #1f6b4f;
+}
+
+.booking-status-cancelled {
+    background: #f0dede;
+    color: #8a3d3d;
+}
+
 .pagination-wrapper {
     font-size: 0.85rem;
 }
@@ -1260,4 +1310,340 @@ body.admin-delete-modal-open .modal-backdrop.show {
 .btn-admin-outline:hover {
     background-color: #f5f5f5 !important;
     color: #111;
+}
+
+/* --- Admin booking create (walk-in reservation) --- */
+.admin-booking-create.wizard-max-wrapper,
+.wizard-max-wrapper.admin-booking-create {
+    max-width: 980px;
+}
+
+.admin-booking-create {
+    max-width: 980px;
+}
+
+.admin-booking-stepper {
+    max-width: 720px;
+    margin-bottom: 2.25rem;
+}
+
+.admin-booking-stepper .step-label {
+    max-width: 110px;
+    line-height: 1.2;
+}
+
+.admin-booking-stepper .step-node.active .step-circle {
+    border-color: #111;
+    background-color: #111;
+    color: #fff;
+}
+
+.admin-booking-create .admin-discount-preview {
+    position: relative;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 1.25rem 1rem 0.85rem;
+    max-width: 100%;
+}
+
+.admin-booking-create .admin-discount-preview .license-preview-box {
+    background: transparent;
+    border: none;
+    min-height: 160px;
+    height: 180px;
+    margin-bottom: 0;
+}
+
+.admin-booking-create .admin-discount-preview .edit-license-remove-btn {
+    top: 10px;
+    right: 10px;
+}
+
+/* Walk-in reservation calendar — match design mock (wide, not tall) */
+.admin-booking-create .airbnb-cal-card {
+    width: 100%;
+    max-width: none;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+    border: none;
+    padding: 1.35rem 1.75rem 1.15rem;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.admin-booking-create .airbnb-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0 0.15rem;
+}
+
+.admin-booking-create .airbnb-cal-month {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #222;
+    letter-spacing: -0.2px;
+}
+
+.admin-booking-create .airbnb-cal-nav {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid #cfcfcf;
+    background: #fff;
+    color: #333;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-booking-create .airbnb-cal-nav:hover {
+    background: #f5f5f5;
+    border-color: #bbb;
+}
+
+.admin-booking-create .airbnb-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.45rem;
+}
+
+.admin-booking-create .airbnb-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    column-gap: 6px;
+    row-gap: 8px;
+    margin-bottom: 1rem;
+}
+
+.admin-booking-create .airbnb-cal-cell {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: 100%;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.admin-booking-create .airbnb-cal-cell.is-empty {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Fill column width so range reads as a wide continuous bar */
+.admin-booking-create .airbnb-cal-day {
+    width: 100%;
+    max-width: none;
+    height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+    background: transparent;
+}
+
+.admin-booking-create .airbnb-cal-cell.is-available:hover .airbnb-cal-day {
+    background: #f0f0f0;
+}
+
+/* Soft blue bar for days between pick-up and return */
+.admin-booking-create .airbnb-cal-cell.in-range .airbnb-cal-day {
+    background: #90caf9;
+    color: #0d47a1;
+    box-shadow: none;
+}
+
+/* Stronger blue for pick-up / return endpoints */
+.admin-booking-create .airbnb-cal-cell.is-selected .airbnb-cal-day,
+.admin-booking-create .airbnb-cal-cell.is-single .airbnb-cal-day {
+    background: #1976d2;
+    color: #fff;
+    box-shadow: 0 1px 3px rgba(25, 118, 210, 0.35);
+}
+
+/* Past days: grey text only, not selectable */
+.admin-booking-create .airbnb-cal-cell.is-past,
+.admin-booking-create .airbnb-cal-cell.is-past:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.admin-booking-create .airbnb-cal-cell.is-past .airbnb-cal-day {
+    color: #bdbdbd !important;
+    background: transparent !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+}
+
+/* Rented days only: red, not selectable */
+.admin-booking-create .airbnb-cal-cell.is-rented,
+.admin-booking-create .airbnb-cal-cell.is-unavailable {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.admin-booking-create .airbnb-cal-cell.is-rented .airbnb-cal-day,
+.admin-booking-create .airbnb-cal-cell.is-unavailable .airbnb-cal-day {
+    color: #d32f2f !important;
+    background: transparent !important;
+    text-decoration: line-through;
+    box-shadow: none !important;
+}
+
+.admin-booking-create .airbnb-cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem 1.35rem;
+    font-size: 0.82rem;
+    color: #666;
+    padding-top: 0.1rem;
+}
+
+.admin-booking-create .airbnb-legend-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 0.35rem;
+    vertical-align: -1px;
+    background: #c8c8c8;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-available {
+    background: #fff;
+    border: 1.5px solid #c8c8c8;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-range {
+    background: #90caf9;
+    border: none;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-selected {
+    background: #1976d2;
+    border: none;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-past {
+    background: #bdbdbd;
+    border: none;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-rented,
+.admin-booking-create .airbnb-legend-dot.is-unavailable {
+    background: #d32f2f;
+    border: none;
+}
+
+.admin-booking-create .airbnb-date-fields {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.admin-booking-create .airbnb-date-field {
+    position: relative;
+    width: 100%;
+}
+
+.admin-booking-create .airbnb-datetime-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.admin-booking-create .airbnb-date-input,
+.admin-booking-create .airbnb-time-input {
+    width: 100%;
+    border: 1px solid #d5d5d5;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.75rem 2.6rem 0.75rem 1rem;
+    font-size: 0.9rem;
+    color: #333;
+    box-shadow: none;
+}
+
+.admin-booking-create .airbnb-date-input {
+    cursor: pointer;
+}
+
+.admin-booking-create .airbnb-time-input {
+    padding-right: 1rem;
+    cursor: text;
+}
+
+.admin-booking-create .airbnb-date-input::placeholder {
+    color: #a0a0a0;
+}
+
+.admin-booking-create .airbnb-date-input:focus,
+.admin-booking-create .airbnb-time-input:focus {
+    outline: none;
+    border-color: #bbb;
+    background: #fff;
+}
+
+.admin-booking-create .airbnb-date-icon {
+    position: absolute;
+    right: 0.95rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #555;
+    pointer-events: none;
+    font-size: 1rem;
+}
+
+@media (max-width: 575.98px) {
+    .admin-booking-create .airbnb-cal-card {
+        padding: 1.1rem 0.9rem 1rem;
+        border-radius: 16px;
+    }
+
+    .admin-booking-create .airbnb-cal-cell {
+        height: 38px;
+    }
+
+    .admin-booking-create .airbnb-cal-day {
+        height: 34px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+}
+
+.admin-booking-create .license-preview-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.admin-booking-create .license-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }

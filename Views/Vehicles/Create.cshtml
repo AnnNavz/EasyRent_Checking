@@ -89,6 +89,15 @@
                         <span asp-validation-for="BasePrice" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
+                        <label asp-for="SucceedingFee" class="form-label fw-semibold small text-secondary mb-1">Succeeding Fee</label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text form-control-thin">₱</span>
+                            <input asp-for="SucceedingFee" id="input-SucceedingFee" class="form-control form-control-thin" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
+                        </div>
+                        <span class="small text-muted mt-1 d-block">Per hour after the first 8 hours</span>
+                        <span asp-validation-for="SucceedingFee" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
                         <label asp-for="PassengersCount" class="form-label fw-semibold small text-secondary mb-1">Passengers Count</label>
                         <input asp-for="PassengersCount" id="input-PassengersCount" class="form-control form-control-thin shadow-sm" type="number" min="1" max="50" placeholder="e.g. 6" />
                         <span asp-validation-for="PassengersCount" class="text-danger small mt-1 d-block"></span>
@@ -188,6 +197,10 @@
                             <span id="review-BasePrice" class="fw-bold text-dark">-</span>
                         </div>
                         <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Succeeding Fee</span>
+                            <span id="review-SucceedingFee" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-md-6">
                             <span class="text-muted d-block small mb-0.5">Passengers Count</span>
                             <span id="review-PassengersCount" class="fw-bold text-dark">-</span>
                         </div>
@@ -244,7 +257,7 @@
     let isEditMode = false;
     const totalSteps = 3;
 
-    const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Status', 'RegistrationDate', 'RegistrationExpiry', 'BasePrice', 'PassengersCount'];
+    const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Status', 'RegistrationDate', 'RegistrationExpiry', 'BasePrice', 'SucceedingFee', 'PassengersCount'];
 
     function setExpiryOneYearAfterRegistration() {
         const regDateInput = document.getElementById('input-RegistrationDate');
@@ -533,6 +546,9 @@
         document.getElementById('review-RegistrationExpiry').innerText = formatReviewDate(document.getElementById('input-RegistrationExpiry').value);
         document.getElementById('review-BasePrice').innerText = document.getElementById('input-BasePrice').value
             ? `₱${parseFloat(document.getElementById('input-BasePrice').value).toLocaleString('en-PH')}`
+            : 'N/A';
+        document.getElementById('review-SucceedingFee').innerText = document.getElementById('input-SucceedingFee').value
+            ? `₱${parseFloat(document.getElementById('input-SucceedingFee').value).toLocaleString('en-PH')}/hr`
             : 'N/A';
         document.getElementById('review-PassengersCount').innerText = document.getElementById('input-PassengersCount').value.trim() || 'N/A';
         document.getElementById('review-Description').innerText = document.getElementById('input-Description').value.trim() || 'N/A';
