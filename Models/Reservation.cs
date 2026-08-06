@@ -8,7 +8,6 @@ namespace EasyRent_Checking.Models
 		Yes,
 		No
 	}
-
 	public enum ReservationStatus
 	{
 		Pending,
@@ -21,13 +20,6 @@ namespace EasyRent_Checking.Models
 		[Key]
 		public int ReservationId { get; set; }
 
-		[Required(ErrorMessage = "Vehicle is required.")]
-		[Display(Name = "Vehicle")]
-		public int VehicleId { get; set; }
-
-		[ForeignKey(nameof(VehicleId))]
-		public Vehicle? Vehicle { get; set; }
-
 		[Required(ErrorMessage = "Customer name is required.")]
 		[StringLength(100, ErrorMessage = "Customer name cannot exceed 100 characters.")]
 		[Display(Name = "Customer Name")]
@@ -38,6 +30,35 @@ namespace EasyRent_Checking.Models
 		[RegularExpression(@"^(09|\+639)\d{9}$", ErrorMessage = "Please enter a valid mobile number.")]
 		[Display(Name = "Contact Number")]
 		public string ContactNumber { get; set; } = string.Empty;
+
+		[StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
+		[Display(Name = "Notes")]
+		public string? Notes { get; set; }
+
+		[Display(Name = "Status")]
+		public ReservationStatus ReservationStatus { get; set; } = ReservationStatus.Pending;
+
+		public ReservationDetails? Details { get; set; }
+	}
+
+	public class ReservationDetails
+	{
+		[Key]
+		public int ReservationDetailsID { get; set; }
+
+		[Required(ErrorMessage = "Reservation is required.")]
+		[Display(Name = "Reservation")]
+		public int ReservationID { get; set; }
+
+		[ForeignKey(nameof(ReservationID))]
+		public Reservation? Reservation { get; set; }
+
+		[Required(ErrorMessage = "Vehicle is required.")]
+		[Display(Name = "Vehicle")]
+		public int VehicleId { get; set; }
+
+		[ForeignKey(nameof(VehicleId))]
+		public Vehicle? Vehicle { get; set; }
 
 		[Required(ErrorMessage = "Pickup location is required.")]
 		[StringLength(200, ErrorMessage = "Pickup location cannot exceed 200 characters.")]
@@ -74,10 +95,6 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Passenger Count")]
 		public int PassengerCount { get; set; }
 
-		[StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
-		[Display(Name = "Notes")]
-		public string? Notes { get; set; }
-
 		[Display(Name = "Senior/PWD Discount (if applicable)")]
 		public Discount Discount { get; set; } = Discount.No;
 
@@ -89,8 +106,5 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Upload Discount Picture")]
 		[DataType(DataType.Upload)]
 		public IFormFile? DiscountImageFile { get; set; }
-
-		[Display(Name = "Status")]
-		public ReservationStatus ReservationStatus { get; set; } = ReservationStatus.Pending;
 	}
 }

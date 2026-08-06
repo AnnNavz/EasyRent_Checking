@@ -1,0 +1,298 @@
+@model EasyRent_Checking.Models.Transit
+@using EasyRent_Checking.Models
+@using System.Globalization
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Transit > View Details";
+    ViewData["ActivePage"] = "Transit";
+    ViewData["SectionTitle"] = "Transit Management";
+    ViewData["SectionUrl"] = Url.Action("Index", "Transits");
+
+    var details = Model?.Reservation?.Details;
+    var vehicle = Model?.Vehicle ?? details?.Vehicle;
+    var payment = ViewBag.LatestPayment as Payment;
+    var driverList = ViewBag.DriverList as SelectList;
+    var canAssignDriver = ViewBag.CanAssignDriver as bool? == true;
+    var canStartTrip = ViewBag.CanStartTrip as bool? == true;
+    var canCompleteTrip = ViewBag.CanCompleteTrip as bool? == true;
+
+    string FormatDateTime(DateOnly? date, TimeOnly? time)
+    {
+        if (date == null || time == null) return "—";
+        return $"{date.Value.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)} | {time.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+    }
+
+    string TripStatusLabel(TripStatus status) => status switch
+    {
+        TripStatus.InTransit => "In Transit",
+        TripStatus.Completed => "Completed",
+        TripStatus.Scheduled => "Scheduled",
+        TripStatus.Cancelled => "Cancelled",
+        TripStatus.Delayed => "Delayed",
+        _ => status.ToString()
+    };
+
+    string TripStatusBadgeClass(TripStatus status) => status switch
+    {
+        TripStatus.InTransit => "trip-status-in-transit",
+        TripStatus.Completed => "trip-status-completed",
+        TripStatus.Cancelled => "trip-status-cancelled",
+        TripStatus.Delayed => "trip-status-delayed",
+        _ => "trip-status-scheduled"
+    };
+
+    string FuelLabel(FuelLevel? level) => level switch
+    {
+        FuelLevel.Empty => "Empty",
+        FuelLevel.Quarter => "1/4",
+        FuelLevel.Half => "1/2",
+        FuelLevel.ThreeQuarters => "3/4",
+        FuelLevel.Full => "Full",
+        _ => "—"
+    };
+
+    var bookingId = $"BK-{Model?.ReservationID.ToString("D5") ?? "00000"}";
+}
+
+<div class="container-fluid px-4 py-3 reservation-details-page">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger py-2 px-3 mb-3" role="alert">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="details-page-actions mb-3">
+        <a asp-action="Index" class="btn btn-page-back">Back</a>
+        @if (canStartTrip)
+        {
+            <a asp-action="StartTrip" asp-route-transitid="@Model?.TransitID" class="btn reservation-btn-approve">Start Trip</a>
+        }
+        @if (canCompleteTrip)
+        {
+            <a asp-action="CompleteTrip" asp-route-transitid="@Model?.TransitID" class="btn reservation-btn-approve">Complete Trip</a>
+        }
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-idbar">
+                    <div>
+                        <span class="reservation-view-id-label">Booking ID</span>
+                        <h1 class="reservation-view-id">@bookingId</h1>
+                    </div>
+                    <span class="booking-status-badge @TripStatusBadgeClass(Model!.TripStatus)">
+                        @TripStatusLabel(Model.TripStatus)
+                    </span>
+                </div>
+
+                <div class="reservation-view-people">
+                    <div class="reservation-view-person">
+                        <div class="reservation-view-avatar" aria-hidden="true">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <div>
+                            <div class="reservation-view-person-name">@(Model.Reservation?.CustomerName ?? "—")</div>
+                            <div class="reservation-view-person-meta">@(Model.Reservation?.ContactNumber ?? "—")</div>
+                        </div>
+                    </div>
+                    <div class="reservation-view-vehicle">
+                        <div class="reservation-view-vehicle-thumb" aria-hidden="true">
+                            @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
+                            {
+                                <img src="~/images/@vehicle.ImagePath" alt="@vehicle.Model" />
+                            }
+                            else
+                            {
+                                <div class="reservation-view-placeholder">
+                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                        <line x1="0" y1="0" x2="100" y2="100" />
+                                        <line x1="100" y1="0" x2="0" y2="100" />
+                                    </svg>
+                                </div>
+                            }
+                        </div>
+                        <div>
+                            <div class="reservation-view-vehicle-label">Assigned Vehicle</div>
+                            <div class="reservation-view-vehicle-name">
+                                @(vehicle != null ? $"{vehicle.Model} {vehicle.Brand}" : "Unassigned")
+                            </div>
+                            <div class="reservation-view-vehicle-type">@(vehicle?.PlateNumber ?? "—")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reservation-view-grid">
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Pick-up</span>
+                        <span class="reservation-view-value">@FormatDateTime(details?.PickupDate, details?.PickupTime)</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Return</span>
+                        <span class="reservation-view-value">@FormatDateTime(details?.ReturnDate, details?.ReturnTime)</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Pickup Location</span>
+                        <span class="reservation-view-value">@(details?.PickupLocation ?? "—")</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Drop-off Location</span>
+                        <span class="reservation-view-value">@(details?.DropoffLocation ?? "—")</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-section-title">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Trip Details</span>
+                </div>
+
+                <div class="reservation-view-grid reservation-view-grid-two mb-3">
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Actual Departure</span>
+                        <span class="reservation-view-value">@(Model.DepartureTime?.ToString("h:mm tt") ?? "Not started")</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Actual Return</span>
+                        <span class="reservation-view-value">@(Model.ReturnTime?.ToString("h:mm tt") ?? "—")</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Fuel (Start)</span>
+                        <span class="reservation-view-value">@FuelLabel(Model.FuelLevelStart)</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Fuel (End)</span>
+                        <span class="reservation-view-value">@FuelLabel(Model.FuelLevelEnd)</span>
+                    </div>
+                </div>
+
+                <div class="reservation-view-grid reservation-view-grid-two mb-3">
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Condition (Start)</span>
+                        <span class="reservation-view-value">@(string.IsNullOrWhiteSpace(Model.VehicleConditionStart) ? "—" : Model.VehicleConditionStart)</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Condition (End)</span>
+                        <span class="reservation-view-value">@(string.IsNullOrWhiteSpace(Model.VehicleConditionEnd) ? "—" : Model.VehicleConditionEnd)</span>
+                    </div>
+                </div>
+
+                <div class="reservation-view-grid reservation-view-grid-two mb-3">
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Pre-Trip Image</span>
+                        @if (!string.IsNullOrEmpty(Model.PreTripImagePath))
+                        {
+                            <a href="~/images/@Model.PreTripImagePath" target="_blank" rel="noopener">View image</a>
+                        }
+                        else
+                        {
+                            <span class="reservation-view-value">—</span>
+                        }
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Post-Trip Image</span>
+                        @if (!string.IsNullOrEmpty(Model.PostTripImagePath))
+                        {
+                            <a href="~/images/@Model.PostTripImagePath" target="_blank" rel="noopener">View image</a>
+                        }
+                        else
+                        {
+                            <span class="reservation-view-value">—</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="reservation-view-field mb-0">
+                    <span class="reservation-view-label">Remarks</span>
+                    <div class="reservation-view-notes">@(string.IsNullOrWhiteSpace(Model.Remarks) ? "None" : Model.Remarks)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="reservation-view-side-card mb-4">
+                <h6 class="reservation-view-side-title">Designated Driver</h6>
+
+                @if (Model.Driver != null)
+                {
+                    <div class="reservation-view-person mb-3">
+                        <div class="reservation-view-avatar" aria-hidden="true">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <div>
+                            <div class="reservation-view-person-name">@Model.Driver.Name</div>
+                            <div class="reservation-view-person-meta">@Model.Driver.ContactNo</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted small mb-3">Not assigned yet.</p>
+                }
+
+                @if (canAssignDriver)
+                {
+                    <form asp-action="AssignDriver" asp-route-transitid="@Model.TransitID" method="post">
+                        @Html.AntiForgeryToken()
+                        <label class="form-label small fw-semibold" for="driverId">@(Model.DriverID == null ? "Assign Driver" : "Change Driver")</label>
+                        <select name="driverId" id="driverId" class="form-select mb-3" asp-items="driverList">
+                            <option value="">Select driver...</option>
+                        </select>
+                        <button type="submit" class="btn reservation-btn-approve w-100">
+                            @(Model.DriverID == null ? "Assign Driver" : "Update Driver")
+                        </button>
+                    </form>
+                }
+            </div>
+
+            <div class="reservation-view-side-card mb-4">
+                <h6 class="reservation-view-side-title">Trip Actions</h6>
+                @if (canStartTrip)
+                {
+                    <a asp-action="StartTrip" asp-route-transitid="@Model.TransitID" class="btn reservation-btn-payment w-100 mb-2">
+                        Start Trip
+                    </a>
+                    <p class="small text-muted mb-0">Enter departure fuel, condition, and pre-trip photo.</p>
+                }
+                else if (canCompleteTrip)
+                {
+                    <a asp-action="CompleteTrip" asp-route-transitid="@Model.TransitID" class="btn reservation-btn-payment w-100 mb-2">
+                        Complete Trip
+                    </a>
+                    <p class="small text-muted mb-0">Enter return fuel, condition, and post-trip photo.</p>
+                }
+                else if (Model.TripStatus == TripStatus.Completed)
+                {
+                    <p class="small text-muted mb-0">This trip is already completed.</p>
+                }
+                else if (Model.DriverID == null)
+                {
+                    <p class="small text-muted mb-0">Assign a driver first to enable Start Trip.</p>
+                }
+                else
+                {
+                    <p class="small text-muted mb-0">No actions available for this status.</p>
+                }
+            </div>
+
+            @if (payment != null)
+            {
+                <div class="reservation-view-side-card">
+                    <div class="reservation-payment-header">
+                        <h6 class="reservation-view-side-title mb-0">Payment</h6>
+                        <strong class="reservation-payment-status-text">@payment.PaymentStatus</strong>
+                    </div>
+                    <a asp-controller="Payments" asp-action="Details" asp-route-paymentid="@payment.PaymentId" class="btn reservation-btn-payment w-100">
+                        View Payment
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

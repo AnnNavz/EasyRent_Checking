@@ -6,6 +6,8 @@ namespace EasyRent_Checking.Services
 		public const string VehiclesFolder = "Vehicles";
 		public const string CustomersFolder = "Customers";
 		public const string ReservationsFolder = "Reservations";
+		public const string PaymentReceiptsFolder = "Reservations/Cashless Receipts";
+		public const string TransitsFolder = "Transits";
 		public const string SystemImagesFolder = "System Images";
 
 		public static string SystemImageUrl(string fileName)

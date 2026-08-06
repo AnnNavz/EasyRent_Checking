@@ -1,0 +1,131 @@
+@model IEnumerable<EasyRent_Checking.Models.MyBookingListItem>
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "My Bookings";
+    var currentFilter = ViewData["CurrentFilter"]?.ToString() ?? "all";
+
+    string StatusLabel(ReservationStatus status) => status switch
+    {
+        ReservationStatus.Approved => "Approved",
+        ReservationStatus.Cancelled => "Cancelled",
+        _ => "Pending"
+    };
+
+    string StatusClass(ReservationStatus status) => status switch
+    {
+        ReservationStatus.Approved => "is-approved",
+        ReservationStatus.Cancelled => "is-cancelled",
+        _ => "is-pending"
+    };
+
+    string FormatPeso(decimal amount) =>
+        "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
+
+    string FormatTime(TimeOnly time) => time.ToString("h:mmtt", CultureInfo.InvariantCulture);
+}
+
+<div class="client-page my-bookings-page">
+    <div class="my-bookings-header">
+        <div>
+            <h1 class="my-bookings-title">My Bookings</h1>
+            <p class="my-bookings-subtitle">Manage your active reservations and view your rental history.</p>
+        </div>
+        <div class="my-bookings-filters" role="tablist" aria-label="Booking filters">
+            <a asp-action="MyBookings" asp-route-filter="all"
+               class="my-bookings-filter @(currentFilter == "all" ? "active" : "")">All Bookings</a>
+            <a asp-action="MyBookings" asp-route-filter="upcoming"
+               class="my-bookings-filter @(currentFilter == "upcoming" ? "active" : "")">Upcoming</a>
+            <a asp-action="MyBookings" asp-route-filter="completed"
+               class="my-bookings-filter @(currentFilter == "completed" ? "active" : "")">Completed</a>
+        </div>
+    </div>
+
+    <div class="my-bookings-list">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                <article class="my-booking-row">
+                    <div class="my-booking-thumb" aria-hidden="true">
+                        @if (!string.IsNullOrEmpty(item.VehicleImagePath))
+                        {
+                            <img src="~/images/@item.VehicleImagePath" alt="@item.VehicleTitle" />
+                        }
+                    </div>
+
+                    <div class="my-booking-main">
+                        <span class="my-booking-status @StatusClass(item.ReservationStatus)">@StatusLabel(item.ReservationStatus)</span>
+                        <h2 class="my-booking-vehicle">@item.VehicleTitle</h2>
+                        <p class="my-booking-id">Booking ID: @item.BookingLabel</p>
+                    </div>
+
+                    <div class="my-booking-meta">
+                        <span class="my-booking-meta-label">Schedule</span>
+                        <span class="my-booking-meta-value">@item.PickupDate.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)</span>
+                        <span class="my-booking-meta-sub">@FormatTime(item.PickupTime) - @FormatTime(item.ReturnTime)</span>
+                    </div>
+
+                    <div class="my-booking-meta">
+                        <span class="my-booking-meta-label">Total Paid</span>
+                        @if (item.ReservationStatus == ReservationStatus.Cancelled)
+                        {
+                            <span class="my-booking-meta-value">Cancelled</span>
+                        }
+                        else
+                        {
+                            <span class="my-booking-meta-value">@FormatPeso(item.AmountPaid)</span>
+                            <span class="my-booking-meta-sub">@(string.IsNullOrWhiteSpace(item.PaymentMethod) ? "Unpaid" : item.PaymentMethod)</span>
+                        }
+                    </div>
+
+                    <div class="my-booking-meta my-booking-driver">
+                        <span class="my-booking-meta-label">Driver Assigned</span>
+                        @if (!string.IsNullOrWhiteSpace(item.DriverName))
+                        {
+                            <span class="my-booking-driver-pill">
+                                <span class="my-booking-driver-avatar" aria-hidden="true"><i class="bi bi-person"></i></span>
+                                @item.DriverName
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="my-booking-meta-value my-booking-driver-empty">Not Assigned Yet</span>
+                        }
+                    </div>
+
+                    <div class="my-booking-actions">
+                        <a asp-action="MyBookingDetails" asp-route-id="@item.ReservationId" class="my-booking-btn-primary">View Details</a>
+                        @if (item.IsPast && item.ReservationStatus != ReservationStatus.Cancelled)
+                        {
+                            <a href="#support" class="my-booking-btn-secondary">Rate &amp; Review</a>
+                        }
+                        else
+                        {
+                            <a href="#support" class="my-booking-btn-secondary">Need help?</a>
+                        }
+                    </div>
+                </article>
+            }
+        }
+        else
+        {
+            <div class="my-bookings-empty">
+                <i class="bi bi-calendar2-x" aria-hidden="true"></i>
+                <p>No bookings found.</p>
+                <a asp-action="Browse" class="my-booking-btn-primary">Book a Vehicle</a>
+            </div>
+        }
+    </div>
+
+    <section id="support" class="my-bookings-support">
+        <div class="my-bookings-support-icon" aria-hidden="true">?</div>
+        <div class="my-bookings-support-copy">
+            <h2>Need assistance with your booking?</h2>
+            <p>Our support team is available 24/7 to help with changes, cancellations, or any questions.</p>
+        </div>
+        <a href="tel:+6292545593567" class="my-booking-btn-primary my-bookings-support-btn">Call (+629 254 559 3567)</a>
+    </section>
+</div>

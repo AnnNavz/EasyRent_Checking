@@ -21,7 +21,11 @@
             @Model.PrimaryActionText <i class="bi bi-arrow-right ms-1"></i>
         </a>
         <a href="@Model.SecondaryActionUrl" class="btn btn-admin-outline">
-            <i class="bi bi-plus-lg me-1"></i> @Model.SecondaryActionText
+            @if (Model.ShowSecondaryPlusIcon)
+            {
+                <i class="bi bi-plus-lg me-1"></i>
+            }
+            @Model.SecondaryActionText
         </a>
     </div>
 </div>

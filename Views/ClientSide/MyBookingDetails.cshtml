@@ -1,0 +1,303 @@
+@model EasyRent_Checking.Models.Reservation
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Booking Details";
+
+    var details = Model.Details;
+    var vehicle = details?.Vehicle;
+    var payment = ViewData["LatestPayment"] as Payment;
+    var transit = ViewData["Transit"] as Transit;
+    var bookingLabel = $"BK-{Model.ReservationId:D5}";
+    var vehicleTitle = vehicle != null ? $"{vehicle.Model} {vehicle.Brand}".Trim() : "your vehicle";
+
+    var isCancelled = Model.ReservationStatus == ReservationStatus.Cancelled;
+    var isApproved = Model.ReservationStatus == ReservationStatus.Approved;
+    var isPending = Model.ReservationStatus == ReservationStatus.Pending;
+    var paymentApproved = payment != null && payment.PaymentStatus == PaymentStatus.Approved;
+    var hasDriver = transit?.DriverID != null && transit.Driver != null;
+    var tripStarted = transit != null && transit.TripStatus is TripStatus.InTransit or TripStatus.Completed;
+
+    // Step states: pending | active | completed | locked | cancelled
+    string step1 = "completed";
+    string step2 = isCancelled ? "cancelled" : (isApproved ? "completed" : "active");
+    string step3 = isCancelled || isPending
+        ? "locked"
+        : (paymentApproved ? "completed" : "active");
+    string step4 = !paymentApproved || isCancelled
+        ? "locked"
+        : (hasDriver ? "completed" : "active");
+
+    string heroTitle;
+    string heroText;
+    string heroIconClass;
+    string heroTone;
+
+    if (isCancelled)
+    {
+        heroTitle = "Booking Cancelled";
+        heroText = $"Your booking request for the {vehicleTitle} was cancelled.";
+        heroIconClass = "bi-x-circle";
+        heroTone = "is-cancelled";
+    }
+    else if (tripStarted && transit!.TripStatus == TripStatus.Completed)
+    {
+        heroTitle = "Trip Completed";
+        heroText = $"Your trip with the {vehicleTitle} has been completed. Thank you for choosing EasyRent.";
+        heroIconClass = "bi-check-circle";
+        heroTone = "is-success";
+    }
+    else if (tripStarted)
+    {
+        heroTitle = "Trip In Progress";
+        heroText = $"Your {vehicleTitle} trip is currently in transit.";
+        heroIconClass = "bi-truck";
+        heroTone = "is-active";
+    }
+    else if (hasDriver)
+    {
+        heroTitle = "Driver Assigned";
+        heroText = $"{transit!.Driver!.Name} has been assigned to your {vehicleTitle} booking.";
+        heroIconClass = "bi-person-check";
+        heroTone = "is-success";
+    }
+    else if (paymentApproved)
+    {
+        heroTitle = "Payment Confirmed";
+        heroText = "Your payment is confirmed. We are preparing your driver assignment and dispatch.";
+        heroIconClass = "bi-credit-card";
+        heroTone = "is-active";
+    }
+    else if (isApproved)
+    {
+        heroTitle = "Booking Approved";
+        heroText = "Your booking is approved. Select a payment method to continue.";
+        heroIconClass = "bi-credit-card";
+        heroTone = "is-active";
+    }
+    else
+    {
+        heroTitle = "Booking Request Sent";
+        heroText = $"Your request for the {vehicleTitle} is now being reviewed by our staff.";
+        heroIconClass = "bi-arrow-repeat";
+        heroTone = "is-active";
+    }
+
+    string StatusLabel = Model.ReservationStatus switch
+    {
+        ReservationStatus.Approved => "Approved",
+        ReservationStatus.Cancelled => "Cancelled",
+        _ => "Pending"
+    };
+
+    string StatusIcon = Model.ReservationStatus switch
+    {
+        ReservationStatus.Approved => "bi-check-circle",
+        ReservationStatus.Cancelled => "bi-x-circle",
+        _ => "bi-clock"
+    };
+
+    string FormatDateTime(DateOnly? date, TimeOnly? time)
+    {
+        if (date == null || time == null) return "—";
+        return $"{date.Value.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)} • {time.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+    }
+
+    string FormatDuration()
+    {
+        if (details == null) return "—";
+        var start = details.PickupDate.ToDateTime(details.PickupTime);
+        var end = details.ReturnDate.ToDateTime(details.ReturnTime);
+        var hours = Math.Max(0, (int)Math.Round((end - start).TotalHours));
+        return hours == 1 ? "1 hour" : $"{hours} hours";
+    }
+}
+
+<div class="client-page booking-details-page">
+    <a asp-action="MyBookings" class="booking-details-back">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+        Back to My Bookings
+    </a>
+
+    <div class="booking-details-layout">
+        <section class="booking-progress-card">
+            <div class="booking-progress-hero @heroTone">
+                <div class="booking-progress-hero-icon" aria-hidden="true">
+                    <i class="bi @heroIconClass"></i>
+                </div>
+                <h1 class="booking-progress-hero-title">@heroTitle</h1>
+                <p class="booking-progress-hero-text">@heroText</p>
+            </div>
+
+            <ol class="booking-progress-steps">
+                <li class="booking-progress-step is-@step1">
+                    <div class="booking-progress-marker" aria-hidden="true">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div class="booking-progress-body">
+                        <h2>Customer Booking Request</h2>
+                        <p>You submitted a reservation request for this vehicle with your preferred schedule and locations.</p>
+                        <span class="booking-progress-state">Completed</span>
+                    </div>
+                </li>
+
+                <li class="booking-progress-step is-@step2">
+                    <div class="booking-progress-marker" aria-hidden="true">
+                        @if (step2 == "completed")
+                        {
+                            <i class="bi bi-check-lg"></i>
+                        }
+                        else if (step2 == "cancelled")
+                        {
+                            <i class="bi bi-x-lg"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-hourglass-split"></i>
+                        }
+                    </div>
+                    <div class="booking-progress-body">
+                        <h2>Staff Review &amp; Confirmation</h2>
+                        <p>Our staff reviews your booking details and confirms vehicle availability for your selected dates.</p>
+                        @if (step2 == "completed")
+                        {
+                            <span class="booking-progress-state">Completed</span>
+                        }
+                        else if (step2 == "cancelled")
+                        {
+                            <span class="booking-progress-state is-danger">Cancelled</span>
+                        }
+                        else
+                        {
+                            <span class="booking-progress-state is-warning">In review</span>
+                        }
+                    </div>
+                </li>
+
+                <li class="booking-progress-step is-@step3">
+                    <div class="booking-progress-marker" aria-hidden="true">
+                        @if (step3 == "completed")
+                        {
+                            <i class="bi bi-check-lg"></i>
+                        }
+                        else if (step3 == "active")
+                        {
+                            <i class="bi bi-credit-card"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-credit-card"></i>
+                        }
+                    </div>
+                    <div class="booking-progress-body">
+                        <h2>Payment Management</h2>
+                        <p>Once approved, you will select between Partial (Downpayment), or Full Payment options.</p>
+                        @if (step3 == "completed")
+                        {
+                            <span class="booking-progress-state">
+                                Paid @(payment != null ? payment.AmountPaid.ToString("N2", CultureInfo.GetCultureInfo("en-PH")) : "") via @(payment?.PaymentMethod ?? "—")
+                            </span>
+                        }
+                        else if (step3 == "active")
+                        {
+                            <span class="booking-progress-state is-warning">Awaiting payment</span>
+                            <button type="button" class="booking-progress-cta" disabled title="Client payment flow coming soon">
+                                Select Payment Method
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="booking-progress-state is-muted">Available after approval</span>
+                        }
+                    </div>
+                </li>
+
+                <li class="booking-progress-step is-@step4">
+                    <div class="booking-progress-marker" aria-hidden="true">
+                        @if (step4 == "completed")
+                        {
+                            <i class="bi bi-check-lg"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-person"></i>
+                        }
+                    </div>
+                    <div class="booking-progress-body">
+                        <h2>Driver Assignment &amp; Dispatch</h2>
+                        <p>There will be an assigned driver and your trip log starts here.</p>
+                        @if (step4 == "completed")
+                        {
+                            <span class="booking-progress-state">Driver: @transit!.Driver!.Name</span>
+                        }
+                        else if (step4 == "active")
+                        {
+                            <span class="booking-progress-state is-warning">Waiting for driver assignment</span>
+                        }
+                        else
+                        {
+                            <span class="booking-progress-state is-muted">Available after payment</span>
+                        }
+                    </div>
+                </li>
+            </ol>
+        </section>
+
+        <aside class="booking-summary-card">
+            <div class="booking-summary-top">
+                <span class="booking-summary-id">Booking ID: @bookingLabel</span>
+                <span class="booking-summary-status is-@Model.ReservationStatus.ToString().ToLowerInvariant()">
+                    <i class="bi @StatusIcon" aria-hidden="true"></i>
+                    @StatusLabel
+                </span>
+            </div>
+
+            <div class="booking-summary-vehicle">
+                <div class="booking-summary-thumb" aria-hidden="true">
+                    @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
+                    {
+                        <img src="~/images/@vehicle.ImagePath" alt="@vehicleTitle" />
+                    }
+                </div>
+                @if (vehicle != null)
+                {
+                    <span class="booking-summary-type">@vehicle.Type</span>
+                    <h2 class="booking-summary-name">@vehicleTitle</h2>
+                }
+                else
+                {
+                    <h2 class="booking-summary-name">Vehicle unavailable</h2>
+                }
+            </div>
+
+            <dl class="booking-summary-list">
+                <div class="booking-summary-row">
+                    <dt>Passengers</dt>
+                    <dd>@(details?.PassengerCount.ToString() ?? "—") Persons</dd>
+                </div>
+                <div class="booking-summary-row">
+                    <dt>Pick-up Date</dt>
+                    <dd>@FormatDateTime(details?.PickupDate, details?.PickupTime)</dd>
+                </div>
+                <div class="booking-summary-row">
+                    <dt>Return Date</dt>
+                    <dd>@FormatDateTime(details?.ReturnDate, details?.ReturnTime)</dd>
+                </div>
+                <div class="booking-summary-row">
+                    <dt>Total Duration</dt>
+                    <dd>@FormatDuration()</dd>
+                </div>
+                <div class="booking-summary-row">
+                    <dt>Pick-up Location</dt>
+                    <dd>@(details?.PickupLocation ?? "—")</dd>
+                </div>
+                <div class="booking-summary-row">
+                    <dt>Drop-off Location</dt>
+                    <dd>@(details?.DropoffLocation ?? "—")</dd>
+                </div>
+            </dl>
+        </aside>
+    </div>
+</div>

@@ -10,5 +10,6 @@ namespace EasyRent_Checking.Models
         public string PrimaryActionUrl { get; set; } = "";
         public string SecondaryActionText { get; set; } = "";
         public string SecondaryActionUrl { get; set; } = "";
+        public bool ShowSecondaryPlusIcon { get; set; } = true;
     }
 }

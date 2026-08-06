@@ -1,0 +1,67 @@
+@model EasyRent_Checking.Models.Transit
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Complete Trip";
+    ViewData["ActivePage"] = "Transit";
+    ViewData["SectionTitle"] = "Transit Management";
+    ViewData["SectionUrl"] = Url.Action("Index", "Transits");
+}
+
+<div class="container-fluid px-4 py-3">
+    <div class="details-page-actions mb-3">
+        <a asp-action="Details" asp-route-transitid="@Model.TransitID" class="btn btn-page-back">Back</a>
+    </div>
+
+    <div class="reservation-view-card" style="max-width: 720px;">
+        <div class="reservation-view-section-title mb-3">
+            <i class="bi bi-flag"></i>
+            <span>Complete Trip — BK-@Model.ReservationID.ToString("D5")</span>
+        </div>
+
+        <form asp-action="CompleteTrip" asp-route-transitid="@Model.TransitID" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="TransitID" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="ReturnTime" class="form-label"></label>
+                <input asp-for="ReturnTime" type="time" class="form-control" />
+                <span asp-validation-for="ReturnTime" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FuelLevelEnd" class="form-label"></label>
+                <select asp-for="FuelLevelEnd" class="form-select" asp-items="Html.GetEnumSelectList<FuelLevel>()">
+                    <option value="">Select fuel level...</option>
+                </select>
+                <span asp-validation-for="FuelLevelEnd" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="VehicleConditionEnd" class="form-label"></label>
+                <textarea asp-for="VehicleConditionEnd" class="form-control" rows="3" placeholder="Note any new damage or issues..."></textarea>
+                <span asp-validation-for="VehicleConditionEnd" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PostTripImageFile" class="form-label"></label>
+                <input asp-for="PostTripImageFile" type="file" class="form-control" accept=".png,.jpg,.jpeg,image/*" />
+                <span asp-validation-for="PostTripImageFile" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Remarks" class="form-label"></label>
+                <textarea asp-for="Remarks" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Remarks" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn reservation-btn-approve">Confirm Complete Trip</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

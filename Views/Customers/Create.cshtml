@@ -1,7 +1,10 @@
-@model EasyRent_Checking.Models.Customer
+@model EasyRent_Checking.Models.CustomerAccountInputModel
+@using EasyRent_Checking.Models
 
 @{
+    Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "Create";
+    ViewData["ActivePage"] = "Customers";
 }
 
 <h1>Create</h1>
@@ -10,7 +13,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="form-group">
@@ -45,21 +48,29 @@
 
             <div class="form-group">
                 <label asp-for="ValidIDtype" class="control-label"></label>
-                <input asp-for="ValidIDtype" class="form-control" />
+                <select asp-for="ValidIDtype" class="form-select">
+                    <option value="">Select ID type</option>
+                    <option value="@nameof(ValidIDtype.NationalID)">National ID</option>
+                    <option value="@nameof(ValidIDtype.Passport)">Passport</option>
+                    <option value="@nameof(ValidIDtype.UMID)">UMID</option>
+                    <option value="@nameof(ValidIDtype.DriverLicense)">Driver License</option>
+                    <option value="@nameof(ValidIDtype.VotersID)">Voters ID</option>
+                </select>
                 <span asp-validation-for="ValidIDtype" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="ValidIDImagePath" class="control-label"></label>
-                <input asp-for="ValidIDImagePath" class="form-control" />
-                <span asp-validation-for="ValidIDImagePath" class="text-danger"></span>
+                <label asp-for="ValidIDImageFile" class="control-label"></label>
+                <input asp-for="ValidIDImageFile" class="form-control" type="file" accept=".png,.jpg,.jpeg" />
+                <span asp-validation-for="ValidIDImageFile" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="ValidIDImageFile" class="control-label"></label>
-                <input asp-for="ValidIDImageFile" class="form-control" />
-                <span asp-validation-for="ValidIDImageFile" class="text-danger"></span>
+                <label asp-for="Status" class="control-label"></label>
+                <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<Status>()"></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
@@ -70,3 +81,7 @@
 <div>
     <a asp-action="Index">Back to List</a>
 </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,229 @@
+@model IEnumerable<EasyRent_Checking.Models.Transit>
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Booking Management";
+    ViewData["ActivePage"] = "Transit";
+    ViewData["SectionTitle"] = "Booking Management";
+
+    var paymentsByReservation = ViewBag.PaymentsByReservationId as Dictionary<int, Payment>
+        ?? new Dictionary<int, Payment>();
+
+    string currentSortName = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "CustomerName" => "Customer",
+        "TripStatus" => "Trip Status",
+        "BookingId" => "Booking ID",
+        _ => "Sorting by"
+    };
+
+    string currentFilterName = ViewData["CurrentFilter"]?.ToString() switch
+    {
+        "InTransit" => "In Transit",
+        "Completed" => "Completed",
+        "Scheduled" => "Scheduled",
+        "Cancelled" => "Cancelled",
+        "Delayed" => "Delayed",
+        _ => "Filters"
+    };
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "??";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0][..2].ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
+        }
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    string FormatPeso(decimal amount) =>
+        "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
+
+    string TripStatusLabel(TripStatus status) => status switch
+    {
+        TripStatus.InTransit => "In Transit",
+        TripStatus.Completed => "Completed",
+        TripStatus.Scheduled => "Scheduled",
+        TripStatus.Cancelled => "Cancelled",
+        TripStatus.Delayed => "Delayed",
+        _ => status.ToString()
+    };
+
+    string TripStatusBadgeClass(TripStatus status) => status switch
+    {
+        TripStatus.InTransit => "trip-status-in-transit",
+        TripStatus.Completed => "trip-status-completed",
+        TripStatus.Cancelled => "trip-status-cancelled",
+        TripStatus.Delayed => "trip-status-delayed",
+        _ => "trip-status-scheduled"
+    };
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="metric-label">Total Bookings</span>
+                <div class="metric-value">@(ViewData["TotalBookingsCount"] ?? "0")</div>
+            </div>
+            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="metric-label">Approved</span>
+                <div class="metric-value">@(ViewData["ApprovedCount"] ?? "0")</div>
+            </div>
+            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="metric-label">Completed</span>
+                <div class="metric-value">@(ViewData["CompletedCount"] ?? "0")</div>
+            </div>
+            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="metric-label">On-going</span>
+                <div class="metric-value">@(ViewData["OngoingCount"] ?? "0")</div>
+            </div>
+            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+    </div>
+</div>
+
+<form asp-action="Index" method="get" class="w-100">
+    <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+    <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
+
+    <div class="card index-toolbar-card mb-4">
+        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentSortName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?sortBy=BookingId&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Booking ID</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=CustomerName&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Customer</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=TripStatus&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Trip Status</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentFilterName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?currentFilter=InTransit&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">In Transit</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Completed&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Completed</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Scheduled&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Scheduled</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Delayed&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Delayed</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Cancelled&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Cancelled</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 flex-grow-1 flex-sm-grow-0">
+                <div class="position-relative flex-grow-1">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                    <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="form-control ps-5 pe-5 rounded-3 border bg-light text-secondary search-bar-input" placeholder="Search" />
+                    <i class="bi bi-mic position-absolute top-50 end-0 translate-middle-y me-3 text-muted" aria-hidden="true"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="index-table-panel mb-4">
+    <div class="table-responsive">
+        <table class="table admin-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Customer</th>
+                    <th>Payment Options</th>
+                    <th>Amount Paid</th>
+                    <th>Payment Status</th>
+                    <th>Trip Status</th>
+                    <th class="text-center" style="width: 60px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        var bookingLabel = $"BK-{item.ReservationID:D4}";
+                        var customerName = item.Reservation?.CustomerName ?? "—";
+                        var contact = item.Reservation?.ContactNumber ?? "—";
+                        paymentsByReservation.TryGetValue(item.ReservationID, out Payment? payment);
+                        var paymentOption = string.IsNullOrWhiteSpace(payment?.PaymentType) ? "—" : payment.PaymentType;
+                        var amountPaid = payment?.AmountPaid ?? 0m;
+                        var isPaid = payment != null
+                            && payment.PaymentStatus == PaymentStatus.Approved
+                            && payment.AmountPaid >= payment.TotalAmount;
+                        <tr>
+                            <td class="fw-semibold text-dark font-monospace">@bookingLabel</td>
+                            <td>
+                                <div class="booking-customer-cell">
+                                    <span class="booking-customer-avatar">@GetInitials(customerName)</span>
+                                    <div class="booking-customer-meta">
+                                        <span class="booking-customer-name">@customerName</span>
+                                        <span class="booking-customer-phone">@contact</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@paymentOption</td>
+                            <td class="fw-semibold text-dark">@FormatPeso(amountPaid)</td>
+                            <td>
+                                <span class="payment-paid-label @(isPaid ? "is-paid" : "is-unpaid")">@(isPaid ? "Paid" : "Unpaid")</span>
+                            </td>
+                            <td>
+                                <span class="booking-status-badge @TripStatusBadgeClass(item.TripStatus)">@TripStatusLabel(item.TripStatus)</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport">
+                                        <i class="bi bi-three-dots fs-5"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                        <li><a class="dropdown-item" asp-action="Details" asp-route-transitid="@item.TransitID"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Reservations" asp-action="Details" asp-route-id="@item.ReservationID"><i class="bi bi-bookmark me-2"></i> Reservation</a></li>
+                                        <li><hr class="dropdown-menu-divider"></li>
+                                        <li><a class="dropdown-item text-danger" asp-action="Delete" asp-route-transitid="@item.TransitID"><i class="bi bi-trash me-2"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted fw-medium">
+                            <i class="bi bi-truck fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                            No matching transit records located.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <partial name="_AdminPagination" />
+</div>

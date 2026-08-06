@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -307,6 +309,128 @@ namespace EasyRent_Checking.Controllers
 			return View("~/Views/ClientSide/Home.cshtml");
 		}
 
+		// GET: Vehicles/MyBookings
+		[Authorize]
+		public async Task<IActionResult> MyBookings(string? filter)
+		{
+			var profile = await GetLoggedInCustomerProfileAsync();
+			if (profile == null)
+			{
+				return RedirectToAction("Login", "Account");
+			}
+
+			var today = DateOnly.FromDateTime(DateTime.Today);
+			var currentFilter = string.IsNullOrWhiteSpace(filter) ? "all" : filter.Trim().ToLowerInvariant();
+
+			var reservations = await _context.Reservation
+				.AsNoTracking()
+				.Include(r => r.Details)!
+					.ThenInclude(d => d!.Vehicle)
+				.Where(r => r.ContactNumber == profile.ContactNumber)
+				.OrderByDescending(r => r.ReservationId)
+				.ToListAsync();
+
+			var reservationIds = reservations.Select(r => r.ReservationId).ToList();
+			var payments = await _context.Payment
+				.AsNoTracking()
+				.Where(p => reservationIds.Contains(p.ReservationId))
+				.OrderByDescending(p => p.PaymentId)
+				.ToListAsync();
+			var paymentByReservation = payments
+				.GroupBy(p => p.ReservationId)
+				.ToDictionary(g => g.Key, g => g.First());
+
+			var transits = await _context.Transit
+				.AsNoTracking()
+				.Include(t => t.Driver)
+				.Where(t => reservationIds.Contains(t.ReservationID))
+				.ToListAsync();
+			var transitByReservation = transits.ToDictionary(t => t.ReservationID);
+
+			var items = reservations
+				.Where(r => r.Details != null)
+				.Select(r =>
+				{
+					var details = r.Details!;
+					paymentByReservation.TryGetValue(r.ReservationId, out var payment);
+					transitByReservation.TryGetValue(r.ReservationId, out var transit);
+					var vehicle = details.Vehicle;
+					var isPast = details.ReturnDate < today || r.ReservationStatus == ReservationStatus.Cancelled;
+
+					return new MyBookingListItem
+					{
+						ReservationId = r.ReservationId,
+						BookingLabel = $"BK-{r.ReservationId:D6}",
+						ReservationStatus = r.ReservationStatus,
+						VehicleTitle = vehicle != null ? $"{vehicle.Model} {vehicle.Brand}".Trim() : "Vehicle",
+						VehicleImagePath = vehicle?.ImagePath,
+						PickupDate = details.PickupDate,
+						PickupTime = details.PickupTime,
+						ReturnTime = details.ReturnTime,
+						AmountPaid = payment?.AmountPaid ?? 0m,
+						PaymentMethod = payment?.PaymentMethod,
+						PaymentStatus = payment?.PaymentStatus,
+						DriverName = transit?.Driver?.Name,
+						IsPast = isPast
+					};
+				})
+				.ToList();
+
+			items = currentFilter switch
+			{
+				"upcoming" => items.Where(i => !i.IsPast).ToList(),
+				"completed" => items.Where(i => i.IsPast).ToList(),
+				_ => items
+			};
+
+			ViewData["ActiveNav"] = "";
+			ViewData["CurrentFilter"] = currentFilter is "upcoming" or "completed" ? currentFilter : "all";
+			return View("~/Views/ClientSide/MyBookings.cshtml", items);
+		}
+
+		// GET: Vehicles/MyBookingDetails/5
+		[Authorize]
+		public async Task<IActionResult> MyBookingDetails(int? id)
+		{
+			if (id == null)
+			{
+				return NotFound();
+			}
+
+			var profile = await GetLoggedInCustomerProfileAsync();
+			if (profile == null)
+			{
+				return RedirectToAction("Login", "Account");
+			}
+
+			var reservation = await _context.Reservation
+				.AsNoTracking()
+				.Include(r => r.Details)!
+					.ThenInclude(d => d!.Vehicle)
+				.FirstOrDefaultAsync(r => r.ReservationId == id && r.ContactNumber == profile.ContactNumber);
+
+			if (reservation == null)
+			{
+				return NotFound();
+			}
+
+			var payment = await _context.Payment
+				.AsNoTracking()
+				.Where(p => p.ReservationId == reservation.ReservationId)
+				.OrderByDescending(p => p.PaymentId)
+				.FirstOrDefaultAsync();
+
+			var transit = await _context.Transit
+				.AsNoTracking()
+				.Include(t => t.Driver)
+				.FirstOrDefaultAsync(t => t.ReservationID == reservation.ReservationId);
+
+			ViewData["LatestPayment"] = payment;
+			ViewData["Transit"] = transit;
+			ViewData["ActiveNav"] = "";
+			return View("~/Views/ClientSide/MyBookingDetails.cshtml", reservation);
+		}
+
 		// GET: Vehicles/Browse
 		public async Task<IActionResult> Browse(string? category, string? sortBy)
 		{
@@ -375,8 +499,9 @@ namespace EasyRent_Checking.Controllers
 			ViewData["ActiveNav"] = "Vehicles";
 			ViewData["Vehicle"] = vehicle;
 			ViewData["HideReserveButton"] = true;
+			ViewData["LiveRateSummary"] = true;
 
-			var model = new Reservation
+			var model = new ReservationInputModel
 			{
 				VehicleId = vehicle.VehicleId,
 				PickupTime = new TimeOnly(9, 0),
@@ -386,13 +511,15 @@ namespace EasyRent_Checking.Controllers
 				ReservationStatus = ReservationStatus.Pending
 			};
 
+			await ApplyLoggedInCustomerAsync(model);
+
 			return View("~/Views/ClientSide/Reservation.cshtml", model);
 		}
 
 		// POST: Vehicles/Reservation/5
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Reservation(int id, [Bind("VehicleId,CustomerName,ContactNumber,PickupLocation,DropoffLocation,PickupDate,ReturnDate,PickupTime,ReturnTime,PassengerCount,Notes,Discount,DiscountImageFile")] Reservation reservation)
+		public async Task<IActionResult> Reservation(int id, [Bind("VehicleId,CustomerName,ContactNumber,PickupLocation,DropoffLocation,PickupDate,ReturnDate,PickupTime,ReturnTime,PassengerCount,Notes,Discount,DiscountImageFile")] ReservationInputModel model)
 		{
 			var vehicle = await _context.Vehicle.FirstOrDefaultAsync(v => v.VehicleId == id);
 			if (vehicle == null)
@@ -400,61 +527,74 @@ namespace EasyRent_Checking.Controllers
 				return NotFound();
 			}
 
-			reservation.VehicleId = id;
-			reservation.ReservationStatus = ReservationStatus.Pending;
+			model.VehicleId = id;
+			model.ReservationStatus = ReservationStatus.Pending;
+
+			// Keep reservation contact details tied to the signed-in customer account.
+			await ApplyLoggedInCustomerAsync(model);
 
 			var today = DateOnly.FromDateTime(DateTime.Today);
-			if (reservation.PickupDate < today)
+			if (model.PickupDate < today)
 			{
-				ModelState.AddModelError(nameof(reservation.PickupDate), "Please select a pick-up date on the calendar.");
+				ModelState.AddModelError(nameof(model.PickupDate), "Please select a pick-up date on the calendar.");
 			}
 
-			if (reservation.ReturnDate < reservation.PickupDate)
+			if (model.ReturnDate < model.PickupDate)
 			{
-				ModelState.AddModelError(nameof(reservation.ReturnDate), "Return date cannot be earlier than pick-up date.");
+				ModelState.AddModelError(nameof(model.ReturnDate), "Return date cannot be earlier than pick-up date.");
 			}
 
-			if (reservation.PassengerCount < 1 || reservation.PassengerCount > vehicle.PassengersCount)
+			if (model.PassengerCount < 1 || model.PassengerCount > vehicle.PassengersCount)
 			{
-				ModelState.AddModelError(nameof(reservation.PassengerCount), $"Passenger count must be between 1 and {vehicle.PassengersCount}.");
+				ModelState.AddModelError(nameof(model.PassengerCount), $"Passenger count must be between 1 and {vehicle.PassengersCount}.");
 			}
 
-			if (reservation.PickupDate >= today && reservation.ReturnDate >= reservation.PickupDate)
+			if (model.PickupDate >= today && model.ReturnDate >= model.PickupDate)
 			{
-				var hasConflict = await _context.Reservation.AnyAsync(r =>
-					r.VehicleId == id
-					&& r.ReservationStatus != ReservationStatus.Cancelled
-					&& r.PickupDate <= reservation.ReturnDate
-					&& r.ReturnDate >= reservation.PickupDate);
+				var hasConflict = await _context.ReservationDetails.AnyAsync(d =>
+					d.VehicleId == id
+					&& d.Reservation != null
+					&& d.Reservation.ReservationStatus != ReservationStatus.Cancelled
+					&& d.PickupDate <= model.ReturnDate
+					&& d.ReturnDate >= model.PickupDate);
 
 				if (hasConflict)
 				{
-					ModelState.AddModelError(nameof(reservation.PickupDate), "Selected dates overlap an existing rental for this vehicle.");
+					ModelState.AddModelError(nameof(model.PickupDate), "Selected dates overlap an existing rental for this vehicle.");
 				}
 			}
 
-			if (reservation.Discount == Discount.Yes && reservation.DiscountImageFile == null)
+			if (model.Discount == Discount.Yes && model.DiscountImageFile == null)
 			{
-				ModelState.AddModelError(nameof(reservation.DiscountImageFile), "Please upload a Senior/PWD ID image.");
+				ModelState.AddModelError(nameof(model.DiscountImageFile), "Please upload a Senior/PWD ID image.");
 			}
 
 			if (ModelState.IsValid)
 			{
-				if (reservation.DiscountImageFile != null)
+				if (model.DiscountImageFile != null)
 				{
-					reservation.DiscountImagePath = await ImageStorage.SaveAsync(
+					model.DiscountImagePath = await ImageStorage.SaveAsync(
 						_webHostEnvironment,
-						reservation.DiscountImageFile,
+						model.DiscountImageFile,
 						ImageStorage.ReservationsFolder);
 				}
 
-				if (reservation.Discount == Discount.No)
+				if (model.Discount == Discount.No)
 				{
-					reservation.DiscountImagePath = null;
+					model.DiscountImagePath = null;
 				}
 
-				_context.Add(reservation);
+				var reservation = new Reservation();
+				var details = new ReservationDetails();
+				model.ApplyTo(reservation, details);
+
+				_context.Reservation.Add(reservation);
 				await _context.SaveChangesAsync();
+
+				details.ReservationID = reservation.ReservationId;
+				_context.ReservationDetails.Add(details);
+				await _context.SaveChangesAsync();
+
 				TempData["ReservationSuccess"] = "Your reservation request was submitted and is pending staff approval.";
 				return RedirectToAction(nameof(VehicleDetails), new { id });
 			}
@@ -462,7 +602,40 @@ namespace EasyRent_Checking.Controllers
 			ViewData["ActiveNav"] = "Vehicles";
 			ViewData["Vehicle"] = vehicle;
 			ViewData["HideReserveButton"] = true;
-			return View("~/Views/ClientSide/Reservation.cshtml", reservation);
+			ViewData["LiveRateSummary"] = true;
+			return View("~/Views/ClientSide/Reservation.cshtml", model);
+		}
+
+		private async Task ApplyLoggedInCustomerAsync(ReservationInputModel model)
+		{
+			var profile = await GetLoggedInCustomerProfileAsync();
+			if (profile == null)
+			{
+				ViewData["CustomerFieldsLocked"] = false;
+				return;
+			}
+
+			model.CustomerName = profile.FullName;
+			model.ContactNumber = profile.ContactNumber;
+			ViewData["CustomerFieldsLocked"] = true;
+		}
+
+		private async Task<CustomerProfile?> GetLoggedInCustomerProfileAsync()
+		{
+			if (User.Identity?.IsAuthenticated != true)
+			{
+				return null;
+			}
+
+			var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (!int.TryParse(userIdValue, out var userId))
+			{
+				return null;
+			}
+
+			return await _context.CustomerProfiles
+				.AsNoTracking()
+				.FirstOrDefaultAsync(c => c.CustomerId == userId);
 		}
 	}
 }

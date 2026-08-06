@@ -1,0 +1,28 @@
+@model EasyRent_Checking.Models.Transit
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Delete Transit";
+    ViewData["ActivePage"] = "Transit";
+    ViewData["SectionTitle"] = "Transit Management";
+    ViewData["SectionUrl"] = Url.Action("Index", "Transits");
+}
+
+<div class="container-fluid px-4 py-3">
+    <div class="reservation-view-card" style="max-width: 640px;">
+        <h4 class="mb-3">Delete Transit</h4>
+        <p class="mb-3">Are you sure you want to delete transit for <strong>BK-@Model.ReservationID.ToString("D5")</strong>?</p>
+        <dl class="row mb-4">
+            <dt class="col-sm-4">Trip Status</dt>
+            <dd class="col-sm-8">@Model.TripStatus</dd>
+            <dt class="col-sm-4">Driver</dt>
+            <dd class="col-sm-8">@(Model.Driver?.Name ?? "Not assigned")</dd>
+        </dl>
+        <form asp-action="Delete" asp-route-transitid="@Model.TransitID">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="TransitID" />
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <a asp-action="Index" class="btn btn-page-back ms-2">Cancel</a>
+        </form>
+    </div>
+</div>

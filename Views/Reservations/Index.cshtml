@@ -67,8 +67,11 @@
 
     string FormatDuration(Reservation item)
     {
-        var start = item.PickupDate.ToDateTime(item.PickupTime);
-        var end = item.ReturnDate.ToDateTime(item.ReturnTime);
+        var details = item.Details;
+        if (details == null) return "—";
+
+        var start = details.PickupDate.ToDateTime(details.PickupTime);
+        var end = details.ReturnDate.ToDateTime(details.ReturnTime);
         var totalHours = (end - start).TotalHours;
         if (totalHours < 0) totalHours = 0;
 
@@ -195,11 +198,11 @@
                                 </div>
                             </td>
                             <td>
-                                @if (item.Vehicle != null)
+                                @if (item.Details?.Vehicle != null)
                                 {
                                     <div class="booking-vehicle-meta">
-                                        <span class="booking-vehicle-name">@item.Vehicle.Brand @item.Vehicle.Model</span>
-                                        <span class="booking-vehicle-type">@item.Vehicle.Type</span>
+                                        <span class="booking-vehicle-name">@item.Details.Vehicle.Brand @item.Details.Vehicle.Model</span>
+                                        <span class="booking-vehicle-type">@item.Details.Vehicle.Type</span>
                                     </div>
                                 }
                                 else
@@ -207,7 +210,11 @@
                                     <span class="text-muted">Unassigned</span>
                                 }
                             </td>
-                            <td>@FormatDateRange(item.PickupDate, item.ReturnDate)</td>
+                            <td>
+                                @(item.Details != null
+                                    ? FormatDateRange(item.Details.PickupDate, item.Details.ReturnDate)
+                                    : "—")
+                            </td>
                             <td>@FormatDuration(item)</td>
                             <td>
                                 <span class="booking-status-badge @StatusBadgeClass(item.ReservationStatus)">@item.ReservationStatus</span>

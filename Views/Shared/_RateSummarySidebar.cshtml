@@ -1,14 +1,24 @@
 @model EasyRent_Checking.Models.Vehicle
 @using EasyRent_Checking.Models
+@using System.Globalization
 
 @{
     decimal succeedingRate = Model.SucceedingFee;
     decimal exampleTotal = Model.BasePrice + (2m * succeedingRate);
     bool canReserve = Model.Status == VehicleStatus.Available;
     bool hideReserveButton = ViewData["HideReserveButton"] as bool? == true;
+    bool liveRate = ViewData["LiveRateSummary"] as bool? == true;
+    string basePriceAttr = Model.BasePrice.ToString(CultureInfo.InvariantCulture);
+    string succeedingFeeAttr = succeedingRate.ToString(CultureInfo.InvariantCulture);
 }
 
-<div class="client-rate-summary">
+<div class="client-rate-summary"
+     id="rateSummaryRoot"
+     data-live="@(liveRate ? "true" : "false")"
+     data-base-price="@basePriceAttr"
+     data-succeeding-fee="@succeedingFeeAttr"
+     data-base-hours="8"
+     data-discount-percent="10">
     <h2 class="client-rate-summary-title">Rate Summary</h2>
     <p class="client-rate-summary-note">
         <i class="bi bi-check-circle-fill"></i>
@@ -49,25 +59,36 @@
         </p>
     </div>
 
-    <div class="client-rate-example">
+    <div class="client-rate-example" id="rateSummaryEstimate">
         <div class="client-rate-example-header">
             <i class="bi bi-calculator"></i>
-            <span>EXAMPLE: 10-HOUR TRIP</span>
+            <span id="rateEstimateTitle">@(liveRate ? "YOUR TRIP ESTIMATE" : "EXAMPLE: 10-HOUR TRIP")</span>
         </div>
-        <div class="client-rate-example-row">
-            <span>Base package (8 hrs)</span>
-            <span>₱@Model.BasePrice.ToString("N0")</span>
+
+        <p id="rateEstimateEmpty" class="client-rate-example-empty @(liveRate ? "" : "d-none")">
+            Select pick-up and return dates to calculate your total.
+        </p>
+
+        <div id="rateEstimateDetails" class="@(liveRate ? "d-none" : "")">
+            <div class="client-rate-example-row">
+                <span id="rateBaseLabel">Base package (8 hrs)</span>
+                <span id="rateBaseAmount">₱@Model.BasePrice.ToString("N0")</span>
+            </div>
+            <div class="client-rate-example-row" id="rateSucceedingRow">
+                <span id="rateSucceedingLabel">+2 succeeding hours (₱@succeedingRate.ToString("N0")×2)</span>
+                <span id="rateSucceedingAmount">₱@((2m * succeedingRate).ToString("N0"))</span>
+            </div>
+            <div class="client-rate-example-row is-discount d-none" id="rateDiscountRow">
+                <span>Senior/PWD discount (10%)</span>
+                <span id="rateDiscountAmount">-₱0</span>
+            </div>
+            <hr class="client-rate-card-divider" />
+            <div class="client-rate-example-total">
+                <span id="rateTotalLabel">ESTIMATED TOTAL (10 hours)</span>
+                <span id="rateTotalAmount">₱@exampleTotal.ToString("N0")</span>
+            </div>
+            <p class="client-rate-example-note">* Excludes fuel for succeeding hours.</p>
         </div>
-        <div class="client-rate-example-row">
-            <span>+2 succeeding hours (₱@succeedingRate.ToString("N0")×2)</span>
-            <span>₱@((2m * succeedingRate).ToString("N0"))</span>
-        </div>
-        <hr class="client-rate-card-divider" />
-        <div class="client-rate-example-total">
-            <span>ESTIMATED TOTAL (10 hours)</span>
-            <span>₱@exampleTotal.ToString("N0")</span>
-        </div>
-        <p class="client-rate-example-note">* Excludes fuel for succeeding hours.</p>
     </div>
 
     <div class="client-rate-info-box">

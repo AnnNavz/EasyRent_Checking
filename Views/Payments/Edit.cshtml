@@ -1,0 +1,110 @@
+@model EasyRent_Checking.Models.Payment
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Edit";
+    ViewData["ActivePage"] = "Payments";
+}
+
+<h1>Edit</h1>
+
+<h4>Payment</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" asp-route-paymentid="@Model.PaymentId" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="PaymentId" />
+            <input type="hidden" asp-for="ReceiptImagePath" />
+
+            <div class="form-group mb-3">
+                <label asp-for="ReservationId" class="control-label"></label>
+                <input asp-for="ReservationId" class="form-control" />
+                <span asp-validation-for="ReservationId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="PaymentMethod" class="control-label"></label>
+                <select asp-for="PaymentMethod" class="form-select">
+                    <option value="">Select method</option>
+                    <option value="Cash">Cash</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+                <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="PaymentType" class="control-label"></label>
+                <select asp-for="PaymentType" class="form-select">
+                    <option value="">Select type</option>
+                    <option value="Full Payment">Full Payment</option>
+                    <option value="Partial Payment">Partial Payment</option>
+                </select>
+                <span asp-validation-for="PaymentType" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="TotalAmount" class="control-label"></label>
+                <input asp-for="TotalAmount" class="form-control" />
+                <span asp-validation-for="TotalAmount" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="AmountPaid" class="control-label"></label>
+                <input asp-for="AmountPaid" class="form-control" />
+                <span asp-validation-for="AmountPaid" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="AccountName" class="control-label"></label>
+                <input asp-for="AccountName" class="form-control" />
+                <span asp-validation-for="AccountName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="TransactionReference" class="control-label"></label>
+                <input asp-for="TransactionReference" class="form-control" />
+                <span asp-validation-for="TransactionReference" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="PaymentDate" class="control-label"></label>
+                <input asp-for="PaymentDate" class="form-control" />
+                <span asp-validation-for="PaymentDate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ReceiptImageFile" class="control-label"></label>
+                <input asp-for="ReceiptImageFile" type="file" class="form-control" accept=".png,.jpg,.jpeg" />
+                @if (!string.IsNullOrEmpty(Model.ReceiptImagePath))
+                {
+                    <p class="small text-muted mt-1">Current: @Model.ReceiptImagePath</p>
+                }
+                <span asp-validation-for="ReceiptImageFile" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="PaymentStatus" class="control-label"></label>
+                <select asp-for="PaymentStatus" class="form-select" asp-items="Html.GetEnumSelectList<PaymentStatus>()"></select>
+                <span asp-validation-for="PaymentStatus" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="PaymentNotes" class="control-label"></label>
+                <textarea asp-for="PaymentNotes" class="form-control"></textarea>
+                <span asp-validation-for="PaymentNotes" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-link">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

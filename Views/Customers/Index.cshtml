@@ -1,0 +1,61 @@
+@model IEnumerable<EasyRent_Checking.Models.CustomerProfile>
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Customers";
+    ViewData["ActivePage"] = "Customers";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.FullName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ContactNumber)
+            </th>
+            <th>
+                Email
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ValidIDtype)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FullName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ContactNumber)
+            </td>
+            <td>
+                @(item.User?.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ValidIDtype)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Status)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-customerid="@item.CustomerId">Edit</a> |
+                <a asp-action="Details" asp-route-customerid="@item.CustomerId">Details</a> |
+                <a asp-action="Delete" asp-route-customerid="@item.CustomerId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

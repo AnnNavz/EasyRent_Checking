@@ -32,17 +32,10 @@
         </div>
 
         <div class="topbar-actions d-flex align-items-center">
-            <div class="dropdown">
-                <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 border-0 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold">AD</div>
-                    <span class="profile-name">Admin</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li><a class="dropdown-item" href="#">Profile Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="#">Logout</a></li>
-                </ul>
-            </div>
+            <a asp-controller="Admins" asp-action="Index" class="topbar-profile-link d-flex align-items-center gap-2 text-decoration-none text-dark" title="Admin profile">
+                <div class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold">AD</div>
+                <span class="profile-name">Admin</span>
+            </a>
         </div>
     </header>
 
@@ -59,31 +52,77 @@
         </div>
 
         <div class="offcanvas-body d-flex flex-column justify-content-between px-0 py-3">
+            @{
+                var activePage = ViewData["ActivePage"]?.ToString();
+                var isBookingSection = activePage is "Reservations" or "Payments" or "Transit";
+                var isUserSection = activePage is "Customers" or "Admins";
+            }
             <div class="pe-0">
-                <a asp-controller="Admin" asp-action="Dashboard" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
+                <a asp-controller="Admin" asp-action="Dashboard" class="nav-link-admin @(activePage == "Dashboard" ? "active" : "")">
                     <div class="mock-icon-square"></div>
                     Dashboard
                 </a>
-                <a asp-controller="Drivers" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Drivers" ? "active" : "")">
+                <a asp-controller="Drivers" asp-action="Index" class="nav-link-admin @(activePage == "Drivers" ? "active" : "")">
                     <div class="mock-icon-square"></div>
                     Driver
                 </a>
-                <a asp-controller="Vehicles" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Vehicles" ? "active" : "")">
+                <a asp-controller="Vehicles" asp-action="Index" class="nav-link-admin @(activePage == "Vehicles" ? "active" : "")">
                     <div class="mock-icon-square"></div>
                     Vehicle
                 </a>
-                <a asp-controller="Reservations" asp-action="Index" class="nav-link-admin @(ViewData["ActivePage"]?.ToString() == "Reservations" ? "active" : "")">
-                    <div class="mock-icon-square"></div>
-                    Booking
-                </a>
+
+                <div class="admin-nav-group">
+                    <button type="button"
+                            class="nav-link-admin nav-link-admin-parent @(isBookingSection ? "active" : "")"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#bookingNavGroup"
+                            aria-expanded="@(isBookingSection ? "true" : "false")"
+                            aria-controls="bookingNavGroup">
+                        <div class="mock-icon-square"></div>
+                        <span>Booking</span>
+                        <i class="bi bi-chevron-down admin-nav-chevron" aria-hidden="true"></i>
+                    </button>
+                    <div class="collapse @(isBookingSection ? "show" : "")" id="bookingNavGroup">
+                        <a asp-controller="Reservations" asp-action="Index" class="nav-link-admin nav-link-admin-sub @(activePage == "Reservations" ? "active" : "")">
+                            Bookings
+                        </a>
+                        <a asp-controller="Payments" asp-action="Index" class="nav-link-admin nav-link-admin-sub @(activePage == "Payments" ? "active" : "")">
+                            Payment
+                        </a>
+                        <a asp-controller="Transits" asp-action="Index" class="nav-link-admin nav-link-admin-sub @(activePage == "Transit" ? "active" : "")">
+                            Transit
+                        </a>
+                    </div>
+                </div>
+
+                <div class="admin-nav-group">
+                    <button type="button"
+                            class="nav-link-admin nav-link-admin-parent @(isUserSection ? "active" : "")"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#userNavGroup"
+                            aria-expanded="@(isUserSection ? "true" : "false")"
+                            aria-controls="userNavGroup">
+                        <div class="mock-icon-square"></div>
+                        <span>User</span>
+                        <i class="bi bi-chevron-down admin-nav-chevron" aria-hidden="true"></i>
+                    </button>
+                    <div class="collapse @(isUserSection ? "show" : "")" id="userNavGroup">
+                        <a asp-controller="Customers" asp-action="Index" class="nav-link-admin nav-link-admin-sub @(activePage == "Customers" ? "active" : "")">
+                            Customer
+                        </a>
+                        <a asp-controller="Admins" asp-action="Index" class="nav-link-admin nav-link-admin-sub @(activePage == "Admins" ? "active" : "")">
+                            Admin
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <div>
                 <hr class="mx-3 my-3 text-muted opacity-25" />
                 <div class="pe-0">
-                    <a asp-controller="Vehicles" asp-action="Homepage" class="nav-link-admin client-side-link">
+                    <a asp-controller="Account" asp-action="Logout" class="nav-link-admin client-side-link">
                         <div class="mock-icon-square"></div>
-                        Client Side
+                        Log out
                     </a>
                 </div>
             </div>

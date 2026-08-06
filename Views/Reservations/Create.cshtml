@@ -1,4 +1,4 @@
-﻿@model EasyRent_Checking.Models.Reservation
+﻿@model EasyRent_Checking.Models.ReservationInputModel
 @using EasyRent_Checking.Models
 
 @{
@@ -6,20 +6,30 @@
     ViewData["Title"] = "Make a Reservation";
     ViewData["ActivePage"] = "Reservations";
     var vehicles = ViewBag.Vehicles as IEnumerable<Vehicle> ?? Enumerable.Empty<Vehicle>();
+    var initialUnavailableDates = ViewData["InitialUnavailableDates"] as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var initialUnavailableJson = System.Text.Json.JsonSerializer.Serialize(initialUnavailableDates);
 }
 
 @section Styles {
     <style>
-        /* Past = grey (never red). Rented = red. */
+        /* Past = grey (never red). Rented = solid red highlight. */
         .admin-booking-create .airbnb-cal-cell.is-past .airbnb-cal-day {
             color: #bdbdbd !important;
             background: transparent !important;
             text-decoration: none !important;
         }
-        .admin-booking-create .airbnb-cal-cell.is-rented .airbnb-cal-day {
-            color: #d32f2f !important;
-            background: transparent !important;
-            text-decoration: line-through;
+        .admin-booking-create .airbnb-cal-cell.is-rented,
+        .admin-booking-create .airbnb-cal-cell.is-rented:disabled {
+            opacity: 1 !important;
+            cursor: not-allowed !important;
+        }
+        .admin-booking-create .airbnb-cal-cell.is-rented .airbnb-cal-day,
+        .admin-booking-create .airbnb-cal-cell.is-rented:disabled .airbnb-cal-day {
+            color: #fff !important;
+            background: #e53935 !important;
+            text-decoration: none !important;
+            box-shadow: 0 1px 3px rgba(229, 57, 53, 0.35) !important;
+            opacity: 1 !important;
         }
     </style>
 }
@@ -32,26 +42,22 @@
         </div>
         <div class="step-node">
             <div class="step-circle">2</div>
-            <div class="step-label">Payment Method</div>
+            <div class="step-label">Booking Summary</div>
         </div>
         <div class="step-node">
             <div class="step-circle">3</div>
-            <div class="step-label">Payment Confirmation</div>
-        </div>
-        <div class="step-node">
-            <div class="step-circle">4</div>
-            <div class="step-label">Booking Summary</div>
+            <div class="step-label">Complete</div>
         </div>
     </div>
 
     <form asp-action="Create" enctype="multipart/form-data" id="reservationWizardForm">
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-        <input type="hidden" asp-for="ReservationStatus" value="Pending" />
+        <input type="hidden" asp-for="ReservationStatus" value="Approved" />
 
-        <div class="wizard-step-panel active">
+        <div class="wizard-step-panel active" id="reservationStep1">
             <div class="text-start mb-4">
                 <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Make a walk-in reservation</h5>
-                <p class="text-muted small mb-0">Enter customer details, trip dates, and passenger information to continue to payment.</p>
+                <p class="text-muted small mb-0">Enter customer details, trip dates, and passenger information to continue.</p>
             </div>
 
             <!-- Reservation Information -->
@@ -71,13 +77,26 @@
                             {
                                 if (Model?.VehicleId == vehicle.VehicleId)
                                 {
-                                    <option value="@vehicle.VehicleId" data-capacity="@vehicle.PassengersCount" selected>
+                                    <option value="@vehicle.VehicleId"
+                                            data-capacity="@vehicle.PassengersCount"
+                                            data-base-price="@vehicle.BasePrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-succeeding-fee="@vehicle.SucceedingFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-brand="@vehicle.Brand"
+                                            data-model="@vehicle.Model"
+                                            data-type="@vehicle.Type"
+                                            selected>
                                         @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
                                     </option>
                                 }
                                 else
                                 {
-                                    <option value="@vehicle.VehicleId" data-capacity="@vehicle.PassengersCount">
+                                    <option value="@vehicle.VehicleId"
+                                            data-capacity="@vehicle.PassengersCount"
+                                            data-base-price="@vehicle.BasePrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-succeeding-fee="@vehicle.SucceedingFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-brand="@vehicle.Brand"
+                                            data-model="@vehicle.Model"
+                                            data-type="@vehicle.Type">
                                         @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
                                     </option>
                                 }
@@ -87,22 +106,22 @@
                     </div>
                     <div class="col-md-6">
                         <label asp-for="CustomerName" class="form-label fw-semibold small text-secondary mb-1">Customer Name</label>
-                        <input asp-for="CustomerName" class="form-control form-control-thin shadow-sm" placeholder="e.g. Jane Doe" />
+                        <input asp-for="CustomerName" id="CustomerName" class="form-control form-control-thin shadow-sm" placeholder="e.g. Jane Doe" />
                         <span asp-validation-for="CustomerName" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
                         <label asp-for="ContactNumber" class="form-label fw-semibold small text-secondary mb-1">Contact Information</label>
-                        <input asp-for="ContactNumber" class="form-control form-control-thin shadow-sm" placeholder="Mobile number or Email" />
+                        <input asp-for="ContactNumber" id="ContactNumber" class="form-control form-control-thin shadow-sm" placeholder="Mobile number or Email" />
                         <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
                         <label asp-for="PickupLocation" class="form-label fw-semibold small text-secondary mb-1">Pick-up Location</label>
-                        <input asp-for="PickupLocation" class="form-control form-control-thin shadow-sm" placeholder="e.g. Mactan International Airport" />
+                        <input asp-for="PickupLocation" id="PickupLocation" class="form-control form-control-thin shadow-sm" placeholder="e.g. Mactan International Airport" />
                         <span asp-validation-for="PickupLocation" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
                         <label asp-for="DropoffLocation" class="form-label fw-semibold small text-secondary mb-1">Drop-off Location</label>
-                        <input asp-for="DropoffLocation" class="form-control form-control-thin shadow-sm" placeholder="e.g. Talisay, Cebu City" />
+                        <input asp-for="DropoffLocation" id="DropoffLocation" class="form-control form-control-thin shadow-sm" placeholder="e.g. Talisay, Cebu City" />
                         <span asp-validation-for="DropoffLocation" class="text-danger small mt-1 d-block"></span>
                     </div>
                 </div>
@@ -135,8 +154,9 @@
                     <div class="airbnb-cal-legend">
                         <span><i class="airbnb-legend-dot is-available"></i>Available</span>
                         <span><i class="airbnb-legend-dot is-range"></i>Your Range</span>
-                        <span><i class="airbnb-legend-dot is-selected"></i>Selected</span>
-                        <span><i class="airbnb-legend-dot is-rented"></i>Unavailable</span>
+                        <span><i class="airbnb-legend-dot is-pickup"></i>Pick-up</span>
+                        <span><i class="airbnb-legend-dot is-return"></i>Return</span>
+                        <span><i class="airbnb-legend-dot is-rented"></i>Rented</span>
                     </div>
                 </div>
 
@@ -230,22 +250,27 @@
                 <hr class="wizard-section-divider" />
 
                 <label asp-for="Notes" class="form-label fw-semibold small text-secondary mb-1">Special Requests / Notes (Optional)</label>
-                <textarea asp-for="Notes" class="form-control form-control-thin shadow-sm" rows="4" placeholder="e.g. Please prepare child seats, need early morning pick-up, allergic to cigarette smoke..."></textarea>
+                <textarea asp-for="Notes" id="input-Notes" class="form-control form-control-thin shadow-sm" rows="4" placeholder="e.g. Please prepare child seats, need early morning pick-up, allergic to cigarette smoke..."></textarea>
                 <span asp-validation-for="Notes" class="text-danger small mt-1 d-block"></span>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 align-items-center">
+                <a asp-action="Index" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3" style="font-size: 0.9rem;">Back</a>
+                <button type="button" id="continueToSummaryBtn" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #1E3A8A; border-color: #1E3A8A;">
+                    Continue
+                </button>
             </div>
         </div>
 
-        <div class="d-flex justify-content-end gap-2 align-items-center">
-            <a asp-action="Index" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3" style="font-size: 0.9rem;">Back</a>
-            <button type="submit" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #1E3A8A; border-color: #1E3A8A;">
-                Continue to Payment
-            </button>
+        <div class="wizard-step-panel" id="reservationStep2">
+            <partial name="_BookingSummaryStep" />
         </div>
     </form>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/booking-summary.js" asp-append-version="true"></script>
     <script>
         (function () {
             const pickupDateInput = document.getElementById('input-PickupDate');
@@ -262,6 +287,13 @@
             const previewPlaceholder = document.getElementById('discount-preview-placeholder');
             const filenameLabel = document.getElementById('discount-filename');
             const removeBtn = document.getElementById('discount-remove-btn');
+            const notesInput = document.getElementById('input-Notes');
+            const customerNameInput = document.getElementById('CustomerName');
+            const contactInput = document.getElementById('ContactNumber');
+            const pickupLocationInput = document.getElementById('PickupLocation');
+            const dropoffLocationInput = document.getElementById('DropoffLocation');
+            const pickupTimeInput = document.getElementById('input-PickupTime');
+            const returnTimeInput = document.getElementById('input-ReturnTime');
             const calGrid = document.getElementById('calGrid');
             const calMonthLabel = document.getElementById('calMonthLabel');
             const calPrev = document.getElementById('calPrev');
@@ -273,7 +305,7 @@
             let viewMonth;
             let hoverDate = null;
             let selectionPhase = 'start';
-            let unavailableDates = new Set();
+            let unavailableDates = new Set(@Html.Raw(initialUnavailableJson));
 
             function parseDateValue(value) {
                 if (!value) return null;
@@ -342,26 +374,35 @@
                 return !date || date.getFullYear() < 2000;
             }
 
-            async function loadAvailability() {
+            function applyUnavailableDates(dates) {
                 unavailableDates = new Set();
-                const vehicleId = vehicleSelect.value;
-                if (!vehicleId) {
+                (dates || []).forEach(function (d) {
+                    const key = String(d).substring(0, 10);
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+                        unavailableDates.add(key);
+                    }
+                });
+            }
+
+            async function loadAvailability() {
+                const vehicleId = vehicleSelect ? String(vehicleSelect.value || '').trim() : '';
+                if (!vehicleId || vehicleId === '0') {
+                    unavailableDates = new Set();
                     renderCalendar();
                     return;
                 }
 
                 try {
-                    const response = await fetch('/Reservations/Availability?vehicleId=' + encodeURIComponent(vehicleId), {
-                        headers: { 'Accept': 'application/json' }
+                    const url = '/Reservations/Availability?vehicleId=' + encodeURIComponent(vehicleId);
+                    const response = await fetch(url, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
                     });
                     if (!response.ok) throw new Error('Failed to load availability');
                     const data = await response.json();
-                    const dates = data.unavailableDates || data.UnavailableDates || [];
-                    dates.forEach(function (d) {
-                        unavailableDates.add(String(d).substring(0, 10));
-                    });
+                    applyUnavailableDates(data.unavailableDates || data.UnavailableDates || []);
                 } catch (err) {
-                    console.warn(err);
+                    console.warn('Availability load failed:', err);
                 }
 
                 renderCalendar();
@@ -458,36 +499,49 @@
                     cell.className = 'airbnb-cal-cell';
                     cell.innerHTML = '<span class="airbnb-cal-day">' + day + '</span>';
 
+                    const dayEl = cell.querySelector('.airbnb-cal-day');
+
                     if (isPast(date)) {
                         cell.classList.add('is-past');
                         cell.disabled = true;
                         cell.setAttribute('aria-disabled', 'true');
                     } else if (isRented(date)) {
                         cell.classList.add('is-rented');
-                        cell.disabled = true;
-                        cell.title = 'Vehicle already rented';
+                        // Avoid native disabled greying; block via class + handler instead.
                         cell.setAttribute('aria-disabled', 'true');
+                        cell.title = 'Vehicle already rented';
+                        cell.tabIndex = -1;
+                        if (dayEl) {
+                            dayEl.style.background = '#e53935';
+                            dayEl.style.color = '#fff';
+                            dayEl.style.opacity = '1';
+                        }
                     } else {
                         cell.classList.add('is-available');
                     }
 
-                    if (!cell.disabled && range.start && range.end) {
+                    const isSelectable = !cell.classList.contains('is-past') && !cell.classList.contains('is-rented');
+                    if (isSelectable && range.start && range.end) {
                         const t = startOfDay(date).getTime();
                         const startT = startOfDay(range.start).getTime();
                         const endT = startOfDay(range.end).getTime();
                         if (t >= startT && t <= endT) {
                             cell.classList.add('in-range');
-                            if (t === startT) cell.classList.add('is-selected');
-                            if (t === endT) cell.classList.add('is-selected');
+                            if (t === startT) cell.classList.add('is-selected', 'is-pickup');
+                            if (t === endT) cell.classList.add('is-selected', 'is-return');
                             if (t === startT && t === endT) cell.classList.add('is-single');
                         }
                     }
 
-                    cell.addEventListener('click', function () {
-                        if (!cell.disabled) onDayClick(date);
+                    cell.addEventListener('click', function (e) {
+                        if (!isSelectable) {
+                            e.preventDefault();
+                            return;
+                        }
+                        onDayClick(date);
                     });
                     cell.addEventListener('mouseenter', function () {
-                        if (cell.disabled || selectionPhase !== 'end') return;
+                        if (!isSelectable || selectionPhase !== 'end') return;
                         if (hoverDate && sameDay(hoverDate, date)) return;
                         hoverDate = date;
                         renderCalendar();
@@ -554,23 +608,76 @@
                 }
             });
 
-            document.getElementById('reservationWizardForm').addEventListener('submit', function (e) {
+            function validateStep1() {
+                if (!vehicleSelect.value) {
+                    alert('Please select a vehicle.');
+                    return false;
+                }
+                if (!customerNameInput.value.trim()) {
+                    alert('Please enter the customer name.');
+                    return false;
+                }
+                if (!contactInput.value.trim()) {
+                    alert('Please enter contact information.');
+                    return false;
+                }
+                if (!pickupLocationInput.value.trim() || !dropoffLocationInput.value.trim()) {
+                    alert('Please enter pick-up and drop-off locations.');
+                    return false;
+                }
                 const pickup = parseDateValue(pickupDateInput.value);
                 const ret = parseDateValue(returnDateInput.value);
                 if (!pickup || !ret) {
-                    e.preventDefault();
                     alert('Please select pick-up and return dates on the calendar.');
-                    return;
+                    return false;
                 }
                 if (ret < pickup) {
-                    e.preventDefault();
                     alert('Return date cannot be earlier than pick-up date.');
-                    return;
+                    return false;
                 }
                 if (rangeHasRented(pickup, ret)) {
-                    e.preventDefault();
                     alert('Selected range includes dates when this vehicle is already rented.');
+                    return false;
                 }
+                const count = parseInt(passengerInput.value, 10);
+                const maxCap = parseInt((vehicleSelect.selectedOptions[0] && vehicleSelect.selectedOptions[0].dataset.capacity) || '60', 10);
+                if (!count || count < 1 || count > maxCap) {
+                    alert('Passenger count must be between 1 and ' + maxCap + '.');
+                    return false;
+                }
+                if (discountSelect.value === 'Yes' && !(fileInput.files && fileInput.files[0])) {
+                    alert('Please upload a Senior/PWD ID image.');
+                    return false;
+                }
+                return true;
+            }
+
+            function collectSummaryData() {
+                const opt = vehicleSelect.selectedOptions[0];
+                return {
+                    customerName: customerNameInput.value.trim(),
+                    contactNumber: contactInput.value.trim(),
+                    pickupLocation: pickupLocationInput.value.trim(),
+                    dropoffLocation: dropoffLocationInput.value.trim(),
+                    pickupDate: pickupDateInput.value,
+                    returnDate: returnDateInput.value,
+                    pickupTime: pickupTimeInput.value,
+                    returnTime: returnTimeInput.value,
+                    passengerCount: passengerInput.value,
+                    discount: discountSelect.value,
+                    discountFileName: (fileInput.files && fileInput.files[0]) ? fileInput.files[0].name : '',
+                    notes: notesInput ? notesInput.value.trim() : '',
+                    vehicleName: opt ? ((opt.dataset.brand || '') + ' ' + (opt.dataset.model || '')).trim() : '',
+                    vehicleType: opt ? (opt.dataset.type || '') : '',
+                    basePrice: opt ? parseFloat(opt.dataset.basePrice || '0') : 0,
+                    succeedingFee: opt ? parseFloat(opt.dataset.succeedingFee || '0') : 0,
+                    baseHours: 8
+                };
+            }
+
+            BookingSummary.initWizard({
+                validateStep1: validateStep1,
+                collectSummaryData: collectSummaryData
             });
 
             vehicleSelect.addEventListener('change', function () {

@@ -1,0 +1,120 @@
+@model EasyRent_Checking.Models.Transit
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Transit</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="ReservationID" class="control-label"></label>
+                <input asp-for="ReservationID" class="form-control" />
+                <span asp-validation-for="ReservationID" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Reservation" class="control-label"></label>
+                <input asp-for="Reservation" class="form-control" />
+                <span asp-validation-for="Reservation" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="DriverID" class="control-label"></label>
+                <input asp-for="DriverID" class="form-control" />
+                <span asp-validation-for="DriverID" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Driver" class="control-label"></label>
+                <input asp-for="Driver" class="form-control" />
+                <span asp-validation-for="Driver" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="VehicleID" class="control-label"></label>
+                <input asp-for="VehicleID" class="form-control" />
+                <span asp-validation-for="VehicleID" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Vehicle" class="control-label"></label>
+                <input asp-for="Vehicle" class="form-control" />
+                <span asp-validation-for="Vehicle" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="DepartureTime" class="control-label"></label>
+                <input asp-for="DepartureTime" class="form-control" />
+                <span asp-validation-for="DepartureTime" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ReturnTime" class="control-label"></label>
+                <input asp-for="ReturnTime" class="form-control" />
+                <span asp-validation-for="ReturnTime" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="FuelLevelStart" class="control-label"></label>
+                <input asp-for="FuelLevelStart" class="form-control" />
+                <span asp-validation-for="FuelLevelStart" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="FuelLevelEnd" class="control-label"></label>
+                <input asp-for="FuelLevelEnd" class="form-control" />
+                <span asp-validation-for="FuelLevelEnd" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="VehicleConditionStart" class="control-label"></label>
+                <input asp-for="VehicleConditionStart" class="form-control" />
+                <span asp-validation-for="VehicleConditionStart" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="PreTripImageFile" class="control-label"></label>
+                <input asp-for="PreTripImageFile" class="form-control" />
+                <span asp-validation-for="PreTripImageFile" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="PostTripImagePath" class="control-label"></label>
+                <input asp-for="PostTripImagePath" class="form-control" />
+                <span asp-validation-for="PostTripImagePath" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="PostTripImageFile" class="control-label"></label>
+                <input asp-for="PostTripImageFile" class="form-control" />
+                <span asp-validation-for="PostTripImageFile" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Remarks" class="control-label"></label>
+                <input asp-for="Remarks" class="form-control" />
+                <span asp-validation-for="Remarks" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="TripStatus" class="control-label"></label>
+                <input asp-for="TripStatus" class="form-control" />
+                <span asp-validation-for="TripStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

@@ -1,0 +1,153 @@
+@{
+    var confirmLabel = ViewData["SummaryConfirmLabel"]?.ToString() ?? "Confirm Booking and Submit";
+}
+
+<div class="text-start mb-4">
+    <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Booking Summary</h5>
+    <p class="text-muted small mb-0">Review the reservation details below before confirming and submitting this booking.</p>
+</div>
+
+<!-- Reservation Details -->
+<div class="form-container-card booking-summary-card booking-details-panel p-4 mb-4 shadow-sm">
+    <div class="booking-details-header">
+        <div class="booking-details-title">
+            <i class="bi bi-clipboard2-check"></i>
+            <span>Reservation Details</span>
+        </div>
+        <button type="button" class="btn booking-summary-edit-btn" data-summary-edit="details">
+            <i class="bi bi-pencil"></i> Edit
+        </button>
+    </div>
+
+    <div class="booking-details-section">
+        <div class="booking-details-columns">
+            <div class="booking-details-col">
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Reservation Status</span>
+                    <span class="booking-status-badge booking-status-pending"><i class="bi bi-clock"></i> Pending</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Booking Date &amp; Time</span>
+                    <span class="booking-details-value" id="summaryBookingDateTime">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Customer Name</span>
+                    <span class="booking-details-value" id="summaryCustomerName">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Contact Information</span>
+                    <span class="booking-details-value" id="summaryContact">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Pick-up Location</span>
+                    <span class="booking-details-value" id="summaryPickupLocation">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Drop-off Location</span>
+                    <span class="booking-details-value" id="summaryDropoffLocation">—</span>
+                </div>
+            </div>
+            <div class="booking-details-col">
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Designated Driver</span>
+                    <span class="booking-status-badge booking-status-pending"><i class="bi bi-clock"></i> Pending</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Vehicle Brand &amp; Model</span>
+                    <span class="booking-details-value" id="summaryVehicleName">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Vehicle Type</span>
+                    <span class="booking-details-value" id="summaryVehicleType">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Pick-up Date &amp; Time</span>
+                    <span class="booking-details-value" id="summaryPickupDateTime">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Return Date &amp; Time</span>
+                    <span class="booking-details-value" id="summaryReturnDateTime">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Total Duration</span>
+                    <span class="booking-details-value" id="summaryDuration">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="booking-details-section">
+        <div class="booking-details-columns">
+            <div class="booking-details-col">
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Passenger Count</span>
+                    <span class="booking-details-value" id="summaryPassengers">—</span>
+                </div>
+                <div class="booking-details-row">
+                    <span class="booking-details-label">Senior/PWD Discount</span>
+                    <span class="booking-details-value" id="summaryDiscount">—</span>
+                </div>
+            </div>
+            <div class="booking-details-col">
+                <div class="booking-details-row booking-details-row-stack">
+                    <span class="booking-details-label">Valid ID Uploaded</span>
+                    <span class="booking-details-value booking-details-file" id="summaryValidId">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="booking-details-section booking-details-section-notes">
+        <span class="booking-details-label">Special Requests / Notes</span>
+        <div class="booking-summary-notes" id="summaryNotes">—</div>
+    </div>
+</div>
+
+<!-- Payment Details -->
+<div class="form-container-card booking-summary-card booking-payment-panel p-4 mb-4 shadow-sm">
+    <div class="booking-details-header">
+        <div class="booking-details-title">
+            <i class="bi bi-credit-card-2-front"></i>
+            <span>Payment Details</span>
+        </div>
+        <button type="button" class="btn booking-summary-edit-btn" data-summary-edit="payment">
+            <i class="bi bi-pencil"></i> Edit
+        </button>
+    </div>
+
+    <div class="booking-payment-grid">
+        <div class="booking-payment-line">
+            <span class="booking-payment-label">Base Rental Fee</span>
+            <strong class="booking-payment-amount" id="summaryBaseFee">₱0.00</strong>
+        </div>
+        <div class="booking-payment-status">
+            <span class="booking-payment-status-label">Payment Status</span>
+            <span class="booking-status-badge booking-status-pending"><i class="bi bi-clock"></i> Pending</span>
+        </div>
+
+        <div class="booking-payment-line">
+            <span class="booking-payment-label" id="summarySucceedingLabel">Succeeding Hours</span>
+            <strong class="booking-payment-amount" id="summarySucceedingFee">₱0.00</strong>
+        </div>
+        <div class="booking-payment-status-spacer" aria-hidden="true"></div>
+
+        <div class="booking-payment-line" id="summaryDiscountRow">
+            <span class="booking-payment-label">Senior Discount (10%)</span>
+            <strong class="booking-payment-amount" id="summaryDiscountAmount">-₱0.00</strong>
+        </div>
+        <div class="booking-payment-status-spacer" aria-hidden="true"></div>
+    </div>
+
+    <div class="booking-payment-total">
+        <span class="booking-payment-total-label">Total Reservation Costs</span>
+        <strong class="booking-payment-total-amount" id="summaryTotalCost">₱0.00</strong>
+        <span class="booking-payment-status-spacer" aria-hidden="true"></span>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end gap-2 align-items-center">
+    <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3" style="font-size: 0.9rem;" id="summaryBackBtn">Back</button>
+    <button type="submit" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #1E3A8A; border-color: #1E3A8A;" id="summaryConfirmBtn">
+        @confirmLabel
+    </button>
+</div>
