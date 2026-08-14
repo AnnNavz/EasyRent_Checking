@@ -25,6 +25,7 @@
     <Folder Include="wwwroot\images\Customers\" />
     <Folder Include="wwwroot\images\Drivers\" />
     <Folder Include="wwwroot\images\Vehicles\" />
+    <Folder Include="wwwroot\images\Rentals\" />
   </ItemGroup>
 
 </Project>

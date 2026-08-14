@@ -57,6 +57,12 @@ namespace EasyRent_Checking.Models
 
 		public DateTime? EmailVerificationTokenExpires { get; set; }
 
+		[Display(Name = "Failed Login Attempts")]
+		public int AccessFailedCount { get; set; }
+
+		[Display(Name = "Lockout End")]
+		public DateTime? LockoutEndUtc { get; set; }
+
 		public CustomerProfile? CustomerProfile { get; set; }
 
 		public AdminProfile? AdminProfile { get; set; }
@@ -79,5 +85,53 @@ namespace EasyRent_Checking.Models
 
 			return BCrypt.Net.BCrypt.Verify(plainPassword, PasswordHash);
 		}
+
+		public bool IsLockedOut(DateTime utcNow)
+		{
+			return LockoutEndUtc.HasValue && LockoutEndUtc.Value > utcNow;
+		}
+
+		public int RemainingLockoutMinutes(DateTime utcNow)
+		{
+			if (!IsLockedOut(utcNow))
+			{
+				return 0;
+			}
+
+			var remaining = LockoutEndUtc!.Value - utcNow;
+			return Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
+		}
+
+		public void ResetLockout()
+		{
+			AccessFailedCount = 0;
+			LockoutEndUtc = null;
+		}
+
+		/// <summary>
+		/// Records a failed password attempt. Returns true when this attempt triggers a lockout.
+		/// </summary>
+		public bool RegisterFailedAttempt(DateTime utcNow)
+		{
+			if (LockoutEndUtc.HasValue && LockoutEndUtc.Value <= utcNow)
+			{
+				ResetLockout();
+			}
+
+			AccessFailedCount++;
+			if (AccessFailedCount < LoginLockoutRules.MaxFailedAttempts)
+			{
+				return false;
+			}
+
+			LockoutEndUtc = utcNow.AddMinutes(LoginLockoutRules.LockoutMinutes);
+			return true;
+		}
+	}
+
+	public static class LoginLockoutRules
+	{
+		public const int MaxFailedAttempts = 5;
+		public const int LockoutMinutes = 15;
 	}
 }

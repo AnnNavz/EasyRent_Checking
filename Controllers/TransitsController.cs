@@ -9,11 +9,16 @@ public class TransitsController : Controller
 {
 	private readonly EasyRent_CheckingContext _context;
 	private readonly IWebHostEnvironment _webHostEnvironment;
+	private readonly BookingEmailService _bookingEmailService;
 
-	public TransitsController(EasyRent_CheckingContext context, IWebHostEnvironment webHostEnvironment)
+	public TransitsController(
+		EasyRent_CheckingContext context,
+		IWebHostEnvironment webHostEnvironment,
+		BookingEmailService bookingEmailService)
 	{
 		_context = context;
 		_webHostEnvironment = webHostEnvironment;
+		_bookingEmailService = bookingEmailService;
 	}
 
 	// GET: TRANSITS
@@ -32,14 +37,14 @@ public class TransitsController : Controller
 		ViewData["CurrentSort"] = sortBy;
 		ViewData["CurrentFilter"] = currentFilter;
 
-		var transitsQuery = _context.Transit
+		var transitsQuery = _context.Transits
 			.AsNoTracking()
-			.Include(t => t.Reservation)
+			.Include(t => t.Rental)
 			.AsQueryable();
 
 		ViewData["TotalBookingsCount"] = await transitsQuery.CountAsync();
 		ViewData["ApprovedCount"] = await transitsQuery.CountAsync(t =>
-			t.Reservation != null && t.Reservation.ReservationStatus == ReservationStatus.Approved);
+			t.Rental != null && t.Rental.RentalStatus == RentalStatus.Approved);
 		ViewData["CompletedCount"] = await transitsQuery.CountAsync(t => t.TripStatus == TripStatus.Completed);
 		ViewData["OngoingCount"] = await transitsQuery.CountAsync(t => t.TripStatus == TripStatus.InTransit);
 
@@ -52,10 +57,10 @@ public class TransitsController : Controller
 			var hasBookingId = int.TryParse(idToken, out var bookingId);
 
 			transitsQuery = transitsQuery.Where(t =>
-				(t.Reservation != null && (
-					t.Reservation.CustomerName.Contains(term)
-					|| t.Reservation.ContactNumber.Contains(term)))
-				|| (hasBookingId && t.ReservationID == bookingId)
+				(t.Rental != null && (
+					t.Rental.CustomerName.Contains(term)
+					|| t.Rental.ContactNumber.Contains(term)))
+				|| (hasBookingId && t.RentalID == bookingId)
 				|| t.TransitID == bookingId);
 		}
 
@@ -66,9 +71,9 @@ public class TransitsController : Controller
 
 		transitsQuery = sortBy switch
 		{
-			"CustomerName" => transitsQuery.OrderBy(t => t.Reservation!.CustomerName),
+			"CustomerName" => transitsQuery.OrderBy(t => t.Rental!.CustomerName),
 			"TripStatus" => transitsQuery.OrderBy(t => t.TripStatus),
-			"BookingId" => transitsQuery.OrderBy(t => t.ReservationID),
+			"BookingId" => transitsQuery.OrderBy(t => t.RentalID),
 			_ => transitsQuery.OrderByDescending(t => t.TransitID)
 		};
 
@@ -89,15 +94,15 @@ public class TransitsController : Controller
 			.Take(pageSize)
 			.ToListAsync();
 
-		var reservationIds = transits.Select(t => t.ReservationID).Distinct().ToList();
-		var payments = await _context.Payment
+		var reservationIds = transits.Select(t => t.RentalID).Distinct().ToList();
+		var payments = await _context.Payments
 			.AsNoTracking()
-			.Where(p => reservationIds.Contains(p.ReservationId))
+			.Where(p => reservationIds.Contains(p.RentalId))
 			.OrderByDescending(p => p.PaymentId)
 			.ToListAsync();
 
-		ViewBag.PaymentsByReservationId = payments
-			.GroupBy(p => p.ReservationId)
+		ViewBag.PaymentsByRentalId = payments
+			.GroupBy(p => p.RentalId)
 			.ToDictionary(g => g.Key, g => g.First());
 
 		return View(transits);
@@ -126,7 +131,7 @@ public class TransitsController : Controller
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> AssignDriver(int transitid, int driverId)
 	{
-		var transit = await _context.Transit.FirstOrDefaultAsync(t => t.TransitID == transitid);
+		var transit = await _context.Transits.FirstOrDefaultAsync(t => t.TransitID == transitid);
 		if (transit == null)
 		{
 			return NotFound();
@@ -138,7 +143,7 @@ public class TransitsController : Controller
 			return RedirectToAction(nameof(Details), new { transitid });
 		}
 
-		if (driverId <= 0 || !await _context.Driver.AnyAsync(d => d.DriverId == driverId))
+		if (driverId <= 0 || !await _context.Drivers.AnyAsync(d => d.DriverId == driverId))
 		{
 			TempData["ErrorMessage"] = "Please select a valid driver.";
 			return RedirectToAction(nameof(Details), new { transitid });
@@ -172,9 +177,9 @@ public class TransitsController : Controller
 			return RedirectToAction(nameof(Details), new { transitid });
 		}
 
-		if (transit.DepartureTime == null && transit.Reservation?.Details != null)
+		if (transit.DepartureTime == null && transit.Rental?.Details != null)
 		{
-			transit.DepartureTime = transit.Reservation.Details.PickupTime;
+			transit.DepartureTime = transit.Rental.Details.PickupTime;
 		}
 
 		ViewData["Title"] = "Start Trip";
@@ -236,6 +241,12 @@ public class TransitsController : Controller
 		}
 
 		await _context.SaveChangesAsync();
+
+		if (transit.Rental != null)
+		{
+			await _bookingEmailService.SendTripStartedAsync(transit.Rental, transit.Rental.Details);
+		}
+
 		TempData["SuccessMessage"] = "Trip started.";
 		return RedirectToAction(nameof(Details), new { transitid });
 	}
@@ -260,9 +271,9 @@ public class TransitsController : Controller
 			return RedirectToAction(nameof(Details), new { transitid });
 		}
 
-		if (transit.ReturnTime == null && transit.Reservation?.Details != null)
+		if (transit.ReturnTime == null && transit.Rental?.Details != null)
 		{
-			transit.ReturnTime = transit.Reservation.Details.ReturnTime;
+			transit.ReturnTime = transit.Rental.Details.ReturnTime;
 		}
 
 		ViewData["Title"] = "Complete Trip";
@@ -354,10 +365,10 @@ public class TransitsController : Controller
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> DeleteConfirmed(int? transitid)
 	{
-		var transit = await _context.Transit.FindAsync(transitid);
+		var transit = await _context.Transits.FindAsync(transitid);
 		if (transit != null)
 		{
-			_context.Transit.Remove(transit);
+			_context.Transits.Remove(transit);
 			await _context.SaveChangesAsync();
 		}
 
@@ -366,8 +377,8 @@ public class TransitsController : Controller
 
 	private async Task<Transit?> LoadTransitAsync(int transitId)
 	{
-		return await _context.Transit
-			.Include(t => t.Reservation)!
+		return await _context.Transits
+			.Include(t => t.Rental)!
 				.ThenInclude(r => r!.Details)!
 					.ThenInclude(d => d!.Vehicle)
 			.Include(t => t.Driver)
@@ -378,14 +389,14 @@ public class TransitsController : Controller
 	private async Task PopulateDetailsContextAsync(Transit transit)
 	{
 		ViewBag.DriverList = new SelectList(
-			await _context.Driver.AsNoTracking().OrderBy(d => d.Name).ToListAsync(),
+			await _context.Drivers.AsNoTracking().OrderBy(d => d.Name).ToListAsync(),
 			nameof(Driver.DriverId),
 			nameof(Driver.Name),
 			transit.DriverID);
 
-		var payment = await _context.Payment
+		var payment = await _context.Payments
 			.AsNoTracking()
-			.Where(p => p.ReservationId == transit.ReservationID)
+			.Where(p => p.RentalId == transit.RentalID)
 			.OrderByDescending(p => p.PaymentId)
 			.FirstOrDefaultAsync();
 
@@ -404,40 +415,40 @@ public class TransitsController : Controller
 	/// </summary>
 	private async Task SyncMissingTransitsAsync()
 	{
-		var approvedReservationIds = await _context.Payment
+		var approvedRentalIds = await _context.Rentals
 			.AsNoTracking()
-			.Where(p => p.PaymentStatus == PaymentStatus.Approved)
-			.Select(p => p.ReservationId)
-			.Distinct()
+			.Where(r => r.RentalStatus == RentalStatus.Approved
+				&& _context.Payments.Any(p => p.RentalId == r.RentalId))
+			.Select(r => r.RentalId)
 			.ToListAsync();
 
-		if (approvedReservationIds.Count == 0)
+		if (approvedRentalIds.Count == 0)
 		{
 			return;
 		}
 
-		var existingReservationIds = await _context.Transit
+		var existingRentalIds = await _context.Transits
 			.AsNoTracking()
-			.Where(t => approvedReservationIds.Contains(t.ReservationID))
-			.Select(t => t.ReservationID)
+			.Where(t => approvedRentalIds.Contains(t.RentalID))
+			.Select(t => t.RentalID)
 			.ToListAsync();
 
-		var missingIds = approvedReservationIds.Except(existingReservationIds).ToList();
+		var missingIds = approvedRentalIds.Except(existingRentalIds).ToList();
 		if (missingIds.Count == 0)
 		{
 			return;
 		}
 
-		var detailsList = await _context.ReservationDetails
+		var detailsList = await _context.RentalDetails
 			.AsNoTracking()
-			.Where(d => missingIds.Contains(d.ReservationID))
+			.Where(d => missingIds.Contains(d.RentalID))
 			.ToListAsync();
 
 		foreach (var details in detailsList)
 		{
-			_context.Transit.Add(new Transit
+			_context.Transits.Add(new Transit
 			{
-				ReservationID = details.ReservationID,
+				RentalID = details.RentalID,
 				VehicleID = details.VehicleId,
 				TripStatus = TripStatus.Scheduled
 			});

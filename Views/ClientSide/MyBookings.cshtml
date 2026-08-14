@@ -1,23 +1,25 @@
-@model IEnumerable<EasyRent_Checking.Models.MyBookingListItem>
+@model IEnumerable<EasyRent_Checking.ViewModels.MyBookingListItem>
 @using EasyRent_Checking.Models
 @using System.Globalization
 
 @{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
-    ViewData["Title"] = "My Bookings";
+    ViewData["Title"] = "Transactions & Rentals";
     var currentFilter = ViewData["CurrentFilter"]?.ToString() ?? "all";
 
-    string StatusLabel(ReservationStatus status) => status switch
+    string StatusLabel(RentalStatus status) => status switch
     {
-        ReservationStatus.Approved => "Approved",
-        ReservationStatus.Cancelled => "Cancelled",
+        RentalStatus.Approved => "Approved",
+        RentalStatus.Cancelled => "Cancelled",
+        RentalStatus.Expired => "Expired",
         _ => "Pending"
     };
 
-    string StatusClass(ReservationStatus status) => status switch
+    string StatusClass(RentalStatus status) => status switch
     {
-        ReservationStatus.Approved => "is-approved",
-        ReservationStatus.Cancelled => "is-cancelled",
+        RentalStatus.Approved => "is-approved",
+        RentalStatus.Cancelled => "is-cancelled",
+        RentalStatus.Expired => "is-cancelled",
         _ => "is-pending"
     };
 
@@ -30,8 +32,8 @@
 <div class="client-page my-bookings-page">
     <div class="my-bookings-header">
         <div>
-            <h1 class="my-bookings-title">My Bookings</h1>
-            <p class="my-bookings-subtitle">Manage your active reservations and view your rental history.</p>
+            <h1 class="my-bookings-title">Transactions &amp; Rentals</h1>
+            <p class="my-bookings-subtitle">Manage your active rentals and view your rental history.</p>
         </div>
         <div class="my-bookings-filters" role="tablist" aria-label="Booking filters">
             <a asp-action="MyBookings" asp-route-filter="all"
@@ -57,7 +59,7 @@
                     </div>
 
                     <div class="my-booking-main">
-                        <span class="my-booking-status @StatusClass(item.ReservationStatus)">@StatusLabel(item.ReservationStatus)</span>
+                        <span class="my-booking-status @StatusClass(item.RentalStatus)">@StatusLabel(item.RentalStatus)</span>
                         <h2 class="my-booking-vehicle">@item.VehicleTitle</h2>
                         <p class="my-booking-id">Booking ID: @item.BookingLabel</p>
                     </div>
@@ -70,9 +72,9 @@
 
                     <div class="my-booking-meta">
                         <span class="my-booking-meta-label">Total Paid</span>
-                        @if (item.ReservationStatus == ReservationStatus.Cancelled)
+                        @if (item.RentalStatus is RentalStatus.Cancelled or RentalStatus.Expired)
                         {
-                            <span class="my-booking-meta-value">Cancelled</span>
+                            <span class="my-booking-meta-value">@StatusLabel(item.RentalStatus)</span>
                         }
                         else
                         {
@@ -97,10 +99,14 @@
                     </div>
 
                     <div class="my-booking-actions">
-                        <a asp-action="MyBookingDetails" asp-route-id="@item.ReservationId" class="my-booking-btn-primary">View Details</a>
-                        @if (item.IsPast && item.ReservationStatus != ReservationStatus.Cancelled)
+                        <a asp-action="MyBookingDetails" asp-route-id="@item.RentalId" class="my-booking-btn-primary">View Details</a>
+                        @if (item.CanRate)
                         {
-                            <a href="#support" class="my-booking-btn-secondary">Rate &amp; Review</a>
+                            <a asp-action="RateTrip" asp-route-id="@item.RentalId" class="my-booking-btn-secondary">Rate &amp; Review</a>
+                        }
+                        else if (item.HasFeedback)
+                        {
+                            <a asp-action="MyBookingDetails" asp-route-id="@item.RentalId" class="my-booking-btn-secondary">View review</a>
                         }
                         else
                         {

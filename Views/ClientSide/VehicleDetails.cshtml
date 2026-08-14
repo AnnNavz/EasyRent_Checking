@@ -1,5 +1,6 @@
 ﻿@model EasyRent_Checking.Models.Vehicle
 @using EasyRent_Checking.Models
+@using System.Globalization
 
 @{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
@@ -20,6 +21,25 @@
     string aboutText = string.IsNullOrWhiteSpace(Model.Description)
         ? "This vehicle is part of the EasyRent fleet and is maintained to provide a comfortable, reliable ride for every trip. Enjoy spacious seating, air-conditioning, and a smooth driving experience suited for city travel and out-of-town adventures."
         : Model.Description;
+
+    var reviews = ViewData["VehicleReviews"] as IList<Feedback> ?? new List<Feedback>();
+    var reviewCount = ViewData["ReviewCount"] as int? ?? reviews.Count;
+    var averageRating = ViewData["AverageRating"] as double? ?? 0d;
+    var completedTrips = ViewData["CompletedTripsCount"] as int? ?? 0;
+    var filledStars = reviewCount == 0 ? 0 : (int)Math.Round(averageRating, MidpointRounding.AwayFromZero);
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "??";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0][..2].ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
+        }
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
 }
 
 <div class="client-details-breadcrumb-bar">
@@ -39,13 +59,13 @@
 </div>
 
 <div class="client-page client-details-page">
-    @if (TempData["ReservationSuccess"] != null)
+    @if (TempData["RentalSuccess"] != null)
     {
-        <div class="alert alert-success mx-3 mt-3 mb-0" role="alert">@TempData["ReservationSuccess"]</div>
+        <div class="alert alert-success mx-3 mt-3 mb-0" role="alert">@TempData["RentalSuccess"]</div>
     }
-    @if (TempData["ReservationError"] != null)
+    @if (TempData["RentalError"] != null)
     {
-        <div class="alert alert-danger mx-3 mt-3 mb-0" role="alert">@TempData["ReservationError"]</div>
+        <div class="alert alert-danger mx-3 mt-3 mb-0" role="alert">@TempData["RentalError"]</div>
     }
     <div class="client-details-layout">
         <div class="client-details-main">
@@ -54,15 +74,23 @@
                     <span class="client-details-type-pill">@typeLabel</span>
                     <h1 class="client-details-title">@vehicleTitle</h1>
                     <div class="client-details-meta">
-                        <span class="client-details-stars">
-                            @for (var i = 0; i < 5; i++)
+                        <span class="client-details-stars" aria-hidden="true">
+                            @for (var i = 1; i <= 5; i++)
                             {
-                                <i class="bi bi-star-fill"></i>
+                                <i class="bi @(i <= filledStars ? "bi-star-fill" : "bi-star")"></i>
                             }
                         </span>
-                        <span class="client-details-rating-text">5.0</span>
-                        <span class="client-details-meta-muted">(67 verified reviews)</span>
-                        <span class="client-details-meta-muted">143 trips completed</span>
+                        @if (reviewCount > 0)
+                        {
+                            <span class="client-details-rating-text">@averageRating.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                            <span class="client-details-meta-muted">(@reviewCount verified @(reviewCount == 1 ? "review" : "reviews"))</span>
+                        }
+                        else
+                        {
+                            <span class="client-details-rating-text">—</span>
+                            <span class="client-details-meta-muted">(No reviews yet)</span>
+                        }
+                        <span class="client-details-meta-muted">@completedTrips @(completedTrips == 1 ? "trip" : "trips") completed</span>
                     </div>
                 </div>
                 <div class="client-details-header-actions">
@@ -143,7 +171,55 @@
                 <div class="tab-pane fade" id="reviews-panel" role="tabpanel">
                     <div class="client-details-panel">
                         <h2>Reviews &amp; Ratings</h2>
-                        <p>Customer reviews for this vehicle will appear here. This vehicle currently has a 5.0 rating based on 67 verified reviews.</p>
+                        @if (reviewCount > 0)
+                        {
+                            <div class="vehicle-reviews-summary">
+                                <div class="vehicle-reviews-summary-score">
+                                    <span class="vehicle-reviews-avg">@averageRating.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                    <div class="vehicle-reviews-summary-stars" aria-hidden="true">
+                                        @for (var i = 1; i <= 5; i++)
+                                        {
+                                            <i class="bi @(i <= filledStars ? "bi-star-fill" : "bi-star")"></i>
+                                        }
+                                    </div>
+                                    <span class="vehicle-reviews-summary-count">Based on @reviewCount verified @(reviewCount == 1 ? "review" : "reviews")</span>
+                                </div>
+                            </div>
+
+                            <div class="vehicle-reviews-list">
+                                @foreach (var review in reviews)
+                                {
+                                    var reviewerName = review.Customer?.FullName ?? "Customer";
+                                    <article class="vehicle-review-card">
+                                        <div class="vehicle-review-head">
+                                            <span class="vehicle-review-avatar" aria-hidden="true">@GetInitials(reviewerName)</span>
+                                            <div class="vehicle-review-meta">
+                                                <span class="vehicle-review-name">@reviewerName</span>
+                                                <span class="vehicle-review-date">@review.CreatedAt.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)</span>
+                                            </div>
+                                            <div class="vehicle-review-stars" aria-label="@review.Rating out of 5 stars">
+                                                @for (var i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                                }
+                                            </div>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                        {
+                                            <p class="vehicle-review-comment">@review.Comment</p>
+                                        }
+                                        else
+                                        {
+                                            <p class="vehicle-review-comment is-muted">No written comment.</p>
+                                        }
+                                    </article>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="vehicle-reviews-empty">No customer reviews for this vehicle yet. Ratings appear here after completed trips are reviewed.</p>
+                        }
                     </div>
                 </div>
                 <div class="tab-pane fade" id="policy-panel" role="tabpanel">

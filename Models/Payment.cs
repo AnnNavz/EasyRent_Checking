@@ -3,24 +3,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EasyRent_Checking.Models
 {
-	public enum PaymentStatus
-	{
-		Pending,
-		Approved,
-		Rejected
-	}
-
 	public class Payment
 	{
 		[Key]
 		public int PaymentId { get; set; }
 
-		[Required(ErrorMessage = "Reservation is required.")]
-		[Display(Name = "Reservation")]
-		[ForeignKey(nameof(Reservation))]
-		public int ReservationId { get; set; }
+		[Required(ErrorMessage = "Rental is required.")]
+		[Display(Name = "Rental")]
+		[ForeignKey(nameof(Rental))]
+		public int RentalId { get; set; }
 
-		public Reservation? Reservation { get; set; }
+		public Rental? Rental { get; set; }
 
 		[Required(ErrorMessage = "Payment method is required.")]
 		[StringLength(30)]
@@ -69,10 +62,6 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Upload Receipt Picture")]
 		[DataType(DataType.Upload)]
 		public IFormFile? ReceiptImageFile { get; set; }
-
-		[Required]
-		[Display(Name = "Payment Status")]
-		public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
 
 		[StringLength(1000)]
 		[Display(Name = "Payment Notes")]

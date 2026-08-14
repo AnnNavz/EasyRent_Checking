@@ -1,0 +1,424 @@
+@model EasyRent_Checking.Models.Rental
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "View Details";
+    ViewData["ActivePage"] = "Rentals";
+
+    var details = Model?.Details;
+    var vehicle = details?.Vehicle;
+    var latestPayment = ViewData["LatestPayment"] as Payment;
+    var transit = ViewData["Transit"] as Transit;
+    var isPending = Model?.RentalStatus == RentalStatus.Pending;
+    var isApproved = Model?.RentalStatus == RentalStatus.Approved;
+    var isCancelled = Model?.RentalStatus == RentalStatus.Cancelled;
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+
+    string FormatDateTime(DateOnly? date, TimeOnly? time)
+    {
+        if (date == null || time == null) return "—";
+        return $"{date.Value.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)}, {time.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+    }
+
+    string FormatTimestamp(DateTime value) =>
+        value.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)
+        + " · "
+        + value.ToString("h:mm tt", CultureInfo.InvariantCulture);
+
+    string FormatPeso(decimal amount) => "₱" + amount.ToString("N2", ph);
+
+    int GetDurationHours()
+    {
+        if (details == null) return 0;
+        var start = details.PickupDate.ToDateTime(details.PickupTime);
+        var end = details.ReturnDate.ToDateTime(details.ReturnTime);
+        return Math.Max(0, (int)Math.Round((end - start).TotalHours));
+    }
+
+    var hours = GetDurationHours();
+    var succeedingHours = Math.Max(0, hours - 8);
+    var basePrice = vehicle?.BasePrice ?? 0m;
+    var succeedingFee = vehicle?.SucceedingFee ?? 0m;
+    var succeedingAmount = succeedingHours * succeedingFee;
+    var subtotal = basePrice + succeedingAmount;
+    var hasSeniorDiscount = details?.Discount == Discount.Yes;
+    var discountAmount = hasSeniorDiscount ? Math.Round(subtotal * 0.10m, 2) : 0m;
+    var fareTotal = latestPayment?.TotalAmount > 0
+        ? latestPayment.TotalAmount
+        : Math.Round(subtotal - discountAmount, 2);
+
+    string MethodLabel(string? method) => method switch
+    {
+        "GCash" => "GCash QR Payment",
+        "BDO" => "BDO Bank Transfer / QR",
+        "Walk-in" => "Walk-in (Pay at Office)",
+        _ => string.IsNullOrWhiteSpace(method) ? "—" : method
+    };
+
+    string? MethodLogo(string? method) => method switch
+    {
+        "GCash" => Url.Content("~/images/System Images/GcashImage.jpg"),
+        "BDO" => Url.Content("~/images/System Images/BDOimage.png"),
+        _ => null
+    };
+
+    var paymentStatusLabel = isApproved ? "Paid" : "Unpaid";
+
+    string StatusBadgeClass(RentalStatus status) => status switch
+    {
+        RentalStatus.Approved => "booking-status-approved",
+        RentalStatus.Cancelled => "booking-status-cancelled",
+        RentalStatus.Expired => "booking-status-cancelled",
+        _ => "booking-status-pending"
+    };
+
+    string StatusIcon(RentalStatus status) => status switch
+    {
+        RentalStatus.Approved => "bi-check-circle",
+        RentalStatus.Cancelled => "bi-x-circle",
+        RentalStatus.Expired => "bi-hourglass-bottom",
+        _ => "bi-clock"
+    };
+
+    var bookingId = $"BK-{Model?.RentalId.ToString("D5") ?? "00000"}";
+    var discountLabel = hasSeniorDiscount ? "Senior Citizen (10% off)" : "None";
+    var driverName = transit?.Driver?.Name;
+    var auditTime = latestPayment?.PaymentDate;
+}
+
+<div class="container-fluid px-4 py-3 reservation-details-page">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+    }
+
+    <div class="reservation-details-topbar mb-3">
+        <div class="reservation-details-topbar-id">
+            <span class="reservation-view-id-label">Booking ID</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h1 class="reservation-view-id mb-0">@bookingId</h1>
+                <span class="booking-status-badge @StatusBadgeClass(Model!.RentalStatus)">
+                    <i class="bi @StatusIcon(Model.RentalStatus) me-1"></i>@Model.RentalStatus
+                </span>
+                <span class="booking-status-badge booking-status-pending">
+                    <i class="bi bi-bookmark me-1"></i>@Model.RentalOption
+                </span>
+                @if (Model.RentalOption == RentalOption.Reserve && Model.PaymentDueAt != null && latestPayment == null && isPending)
+                {
+                    <span class="booking-status-badge booking-status-pending">
+                        <i class="bi bi-hourglass-split me-1"></i>Pay by @Model.PaymentDueAt.Value.ToString("MMM d, h:mm tt")
+                    </span>
+                }
+            </div>
+        </div>
+        <div class="details-page-actions mb-0">
+            <a asp-action="Index" class="btn btn-page-back">Back</a>
+            <a asp-action="Edit" asp-route-id="@Model?.RentalId" class="btn btn-reservation-edit">Edit Rental</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-people">
+                    <div class="reservation-view-person">
+                        <div class="reservation-view-avatar" aria-hidden="true">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <div>
+                            <div class="reservation-view-person-name">@Model.CustomerName</div>
+                            <div class="reservation-view-person-meta">@Model.ContactNumber</div>
+                        </div>
+                    </div>
+                    <div class="reservation-view-vehicle">
+                        <div class="reservation-view-vehicle-thumb" aria-hidden="true">
+                            @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
+                            {
+                                <img src="~/images/@vehicle.ImagePath" alt="@vehicle.Model" />
+                            }
+                            else
+                            {
+                                <div class="reservation-view-placeholder">
+                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                        <line x1="0" y1="0" x2="100" y2="100" />
+                                        <line x1="100" y1="0" x2="0" y2="100" />
+                                    </svg>
+                                </div>
+                            }
+                        </div>
+                        <div>
+                            <div class="reservation-view-vehicle-label">Selected Vehicle</div>
+                            <div class="reservation-view-vehicle-name">
+                                @(vehicle != null ? $"{vehicle.Model} {vehicle.Brand}" : "Unassigned")
+                            </div>
+                            <div class="reservation-view-vehicle-type">@(vehicle?.Type.ToString() ?? "—")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reservation-view-grid reservation-view-grid-four">
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Pick-up Date</span>
+                        <span class="reservation-view-value">@FormatDateTime(details?.PickupDate, details?.PickupTime)</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Return Date</span>
+                        <span class="reservation-view-value">@FormatDateTime(details?.ReturnDate, details?.ReturnTime)</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Total Duration</span>
+                        <span class="reservation-view-value">@(hours == 1 ? "1 hour" : $"{hours} hours")</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Passengers</span>
+                        <span class="reservation-view-value">@(details != null ? $"{details.PassengerCount} Persons" : "—")</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Pick-up Location</span>
+                        <span class="reservation-view-value">@(details?.PickupLocation ?? "—")</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Drop-off Location</span>
+                        <span class="reservation-view-value">@(details?.DropoffLocation ?? "—")</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-section-title">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Additional Rental Information</span>
+                </div>
+
+                <div class="reservation-view-grid reservation-view-grid-two mb-3">
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Designated Driver</span>
+                        <span class="reservation-view-value">
+                            @if (!string.IsNullOrWhiteSpace(driverName))
+                            {
+                                @driverName
+                                @if (transit != null)
+                                {
+                                    <a asp-controller="Transits" asp-action="Details" asp-route-transitid="@transit.TransitID" class="ms-1 small">View Transit</a>
+                                }
+                            }
+                            else if (transit != null)
+                            {
+                                <text>Not Assigned Yet</text>
+                                <a asp-controller="Transits" asp-action="Details" asp-route-transitid="@transit.TransitID" class="ms-1 small">Assign Driver</a>
+                            }
+                            else
+                            {
+                                <text>Not Assigned Yet</text>
+                                <i class="bi bi-info-circle reservation-view-info-icon" title="Available after booking is approved"></i>
+                            }
+                        </span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Discount Applied</span>
+                        <span class="reservation-view-value">@discountLabel</span>
+                    </div>
+                </div>
+
+                <div class="reservation-view-field mb-0">
+                    <span class="reservation-view-label">Special Requests/Notes</span>
+                    <div class="reservation-view-notes">@(string.IsNullOrWhiteSpace(Model.Notes) ? "None" : Model.Notes)</div>
+                </div>
+            </div>
+
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-section-title">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Financial Review</span>
+                </div>
+
+                <div class="reservation-finance-lines">
+                    <div class="reservation-finance-line">
+                        <span>Payment Options</span>
+                        <strong>@(latestPayment?.PaymentType ?? "—")</strong>
+                    </div>
+                    <div class="reservation-finance-line">
+                        <span>Base Rental Rate</span>
+                        <strong>@FormatPeso(basePrice)</strong>
+                    </div>
+                    @if (succeedingHours > 0)
+                    {
+                        <div class="reservation-finance-line">
+                            <span>Extra Hours (@succeedingHours @(succeedingHours == 1 ? "hr" : "hrs"))</span>
+                            <strong>@FormatPeso(succeedingAmount)</strong>
+                        </div>
+                    }
+                    @if (hasSeniorDiscount)
+                    {
+                        <div class="reservation-finance-line is-discount">
+                            <span>Senior Discount (10%)</span>
+                            <strong>-@FormatPeso(discountAmount)</strong>
+                        </div>
+                    }
+                </div>
+
+                <div class="reservation-finance-total">
+                    <span>Total to Verify</span>
+                    <strong>@FormatPeso(fareTotal)</strong>
+                </div>
+
+                @if (latestPayment != null)
+                {
+                    <div class="reservation-payment-submitted">
+                        <div class="reservation-payment-method-row">
+                            @{
+                                var logo = MethodLogo(latestPayment.PaymentMethod);
+                            }
+                            @if (!string.IsNullOrEmpty(logo))
+                            {
+                                <img src="@logo" alt="@latestPayment.PaymentMethod" class="reservation-payment-method-logo" />
+                            }
+                            <div>
+                                <div class="reservation-payment-method-label">Payment Method</div>
+                                <div class="reservation-payment-method-value">@MethodLabel(latestPayment.PaymentMethod)</div>
+                            </div>
+                        </div>
+                        <div class="reservation-payment-submitted-meta">
+                            <div><span>Account Name:</span> <strong>@(string.IsNullOrWhiteSpace(latestPayment.AccountName) ? "—" : latestPayment.AccountName)</strong></div>
+                            <div><span>Reference Number:</span> <strong>@(string.IsNullOrWhiteSpace(latestPayment.TransactionReference) ? "—" : latestPayment.TransactionReference)</strong></div>
+                            <div><span>Timestamp:</span> <strong>@FormatTimestamp(latestPayment.PaymentDate)</strong></div>
+                            <div><span>Amount Paid:</span> <strong>@FormatPeso(latestPayment.AmountPaid)</strong></div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="reservation-payment-submitted">
+                        <p class="small text-muted mb-0">No payment submitted with this booking yet.</p>
+                    </div>
+                }
+            </div>
+
+            @if (latestPayment != null)
+            {
+                <div class="reservation-view-card mb-4">
+                    <div class="reservation-view-section-title">
+                        <i class="bi bi-receipt"></i>
+                        <span>Receipt Verification</span>
+                    </div>
+                    <div class="reservation-receipt-frame">
+                        @if (!string.IsNullOrWhiteSpace(latestPayment.ReceiptImagePath))
+                        {
+                            <a href="~/images/@latestPayment.ReceiptImagePath" target="_blank">
+                                <img src="~/images/@latestPayment.ReceiptImagePath" alt="Payment receipt" />
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="reservation-view-placeholder" aria-hidden="true">
+                                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                    <line x1="0" y1="0" x2="100" y2="100" />
+                                    <line x1="100" y1="0" x2="0" y2="100" />
+                                </svg>
+                            </div>
+                            <p class="small text-muted text-center mt-2 mb-0">No receipt image uploaded (e.g. Walk-in payment).</p>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(latestPayment.ReceiptImagePath))
+                    {
+                        <div class="reservation-verify-hint">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Verify that the Reference Number matches the screenshot and the amount sent is exact.</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (hasSeniorDiscount)
+            {
+                <div class="reservation-view-card mb-4">
+                    <div class="reservation-view-section-title">
+                        <i class="bi bi-person-vcard"></i>
+                        <span>Verification Documents</span>
+                    </div>
+                    <div class="mb-2 fw-semibold small text-secondary">Customer Valid ID (Senior Proof)</div>
+                    <div class="reservation-id-frame">
+                        @if (!string.IsNullOrWhiteSpace(details?.DiscountImagePath))
+                        {
+                            <a href="~/images/@details.DiscountImagePath" target="_blank">
+                                <img src="~/images/@details.DiscountImagePath" alt="Customer valid ID" />
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="reservation-view-placeholder" aria-hidden="true">
+                                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                    <line x1="0" y1="0" x2="100" y2="100" />
+                                    <line x1="100" y1="0" x2="0" y2="100" />
+                                </svg>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="reservation-view-side-card mb-4">
+                <h6 class="reservation-view-side-title">Internal Audit Log</h6>
+                <div class="reservation-view-audit-list">
+                    <div class="reservation-view-audit-item">
+                        Booking Created
+                        @if (auditTime.HasValue)
+                        {
+                            <span>@FormatTimestamp(auditTime.Value)</span>
+                        }
+                    </div>
+                    <div class="reservation-view-audit-item">
+                        Booking Submitted
+                        @if (auditTime.HasValue)
+                        {
+                            <span>@FormatTimestamp(auditTime.Value)</span>
+                        }
+                    </div>
+                    @if (isApproved)
+                    {
+                        <div class="reservation-view-audit-item">
+                            <span>Booking Approved</span>
+                        </div>
+                    }
+                    @if (isCancelled)
+                    {
+                        <div class="reservation-view-audit-item">
+                            <span>Booking Rejected</span>
+                        </div>
+                    }
+                </div>
+
+                @if (isPending)
+                {
+                    <form asp-action="Approve" asp-route-id="@Model.RentalId" method="post" class="mb-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn reservation-btn-approve w-100">Approve Rental</button>
+                    </form>
+                    <form asp-action="Reject" asp-route-id="@Model.RentalId" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn reservation-btn-reject w-100" onclick="return confirm('Reject this booking?');">Reject Rental</button>
+                    </form>
+                }
+            </div>
+
+            <div class="reservation-view-side-card reservation-payment-card">
+                <div class="reservation-payment-header">
+                    <h6 class="reservation-view-side-title mb-0">Payment Status</h6>
+                    <strong class="reservation-payment-status-text">@paymentStatusLabel</strong>
+                </div>
+                @if (latestPayment == null)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.RentalId" class="btn reservation-btn-payment w-100">Add Payment</a>
+                }
+                else
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.RentalId" class="btn reservation-btn-payment w-100">Edit Payment</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

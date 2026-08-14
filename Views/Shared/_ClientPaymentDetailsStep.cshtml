@@ -1,0 +1,202 @@
+@model EasyRent_Checking.ViewModels.RentalInputModel
+@using System.Globalization
+@{
+    var totalFare = ViewData["TotalFare"] as decimal? ?? 0m;
+    var paymentDetailsFromStep = ViewData["PaymentDetailsFromStep"] as int? ?? 3;
+    var paymentDetailsBackStep = ViewData["PaymentDetailsBackStep"] as int? ?? 2;
+
+    string FormatPeso(decimal amount) =>
+        "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
+}
+
+<input type="hidden" asp-for="PaymentMethod" id="input-PaymentMethod" />
+
+<div class="payment-step2-card">
+    <div class="payment-step2-heading">
+        <i class="bi bi-credit-card-2-front"></i>
+        <span>Select Payment Method</span>
+    </div>
+    <p class="payment-step2-subtext">Choose how you’d like to send your payment.</p>
+
+    <div class="payment-select-grid">
+        <button type="button" class="payment-select-card" data-payment-method="GCash">
+            <img src="~/images/System Images/GcashImage.jpg" alt="GCash" class="payment-select-logo" />
+            <div class="payment-select-meta">
+                <span class="payment-select-name">GCash</span>
+                <span class="payment-select-channel">Mobile Wallet / QR</span>
+            </div>
+        </button>
+        <button type="button" class="payment-select-card" data-payment-method="BDO">
+            <img src="~/images/System Images/BDOimage.png" alt="BDO" class="payment-select-logo" />
+            <div class="payment-select-meta">
+                <span class="payment-select-name">BDO</span>
+                <span class="payment-select-channel">Bank Transfer / QR</span>
+            </div>
+        </button>
+        <button type="button" class="payment-select-card" data-payment-method="Walk-in">
+            <div class="payment-select-logo-fallback"><i class="bi bi-shop"></i></div>
+            <div class="payment-select-meta">
+                <span class="payment-select-name">Walk-In</span>
+                <span class="payment-select-channel">Pay at Office</span>
+            </div>
+        </button>
+    </div>
+
+    <div class="payment-channel-panel d-none" id="channelPanelGCash">
+        <div class="payment-channel-panel-title">
+            <img src="~/images/System Images/GcashImage.jpg" alt="GCash" class="payment-channel-title-logo" />
+            <span>GCash QR Code</span>
+        </div>
+        <div class="payment-qr-box">
+            <i class="bi bi-qr-code"></i>
+            <span>Scan with GCash app</span>
+        </div>
+        <div class="payment-channel-details">
+            <div class="payment-channel-detail-row">
+                <span>Gcash Name:</span>
+                <strong>TRUST RENT A CAR</strong>
+            </div>
+            <div class="payment-channel-detail-row">
+                <span>Gcash Number:</span>
+                <strong>09XX-XXX-XXXX</strong>
+            </div>
+            <div class="payment-channel-detail-row">
+                <span>Amount:</span>
+                <strong class="js-pay-now-amount">@FormatPeso(totalFare)</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="payment-channel-panel d-none" id="channelPanelBDO">
+        <div class="payment-channel-panel-title">
+            <img src="~/images/System Images/BDOimage.png" alt="BDO" class="payment-channel-title-logo" />
+            <span>BDO QR Code</span>
+        </div>
+        <div class="payment-qr-box">
+            <i class="bi bi-qr-code"></i>
+            <span>Scan with banking app</span>
+        </div>
+        <div class="payment-channel-details">
+            <div class="payment-channel-detail-row">
+                <span>Account Name:</span>
+                <strong>TRUST RENT A CAR</strong>
+            </div>
+            <div class="payment-channel-detail-row">
+                <span>Account Number:</span>
+                <strong>XXXX-XXXX-XXXX</strong>
+            </div>
+            <div class="payment-channel-detail-row">
+                <span>Amount:</span>
+                <strong class="js-pay-now-amount">@FormatPeso(totalFare)</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="payment-channel-panel d-none" id="channelPanelWalkin">
+        <div class="payment-channel-panel-title">
+            <span class="payment-channel-title-icon"><i class="bi bi-shop"></i></span>
+            <span>Pay at EasyRent Office</span>
+        </div>
+        <div class="payment-qr-box">
+            <i class="bi bi-geo-alt"></i>
+            <span>Bring exact amount if possible</span>
+        </div>
+        <div class="payment-channel-details">
+            <div class="payment-channel-detail-row">
+                <span>Office:</span>
+                <strong>EasyRent Vehicle Rental</strong>
+            </div>
+            <div class="payment-channel-detail-row">
+                <span>Address:</span>
+                <strong>Cebu City, Philippines</strong>
+            </div>
+            <div class="payment-channel-detail-row">
+                <span>Amount Due:</span>
+                <strong class="js-pay-now-amount">@FormatPeso(totalFare)</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="payment-step2-card mt-3">
+    <div class="payment-step2-heading">
+        <i class="bi bi-ui-checks"></i>
+        <span>Submit Payment Details</span>
+    </div>
+    <p class="payment-step2-subtext">
+        After sending the payment, fill in the details below and submit for verification. Our team will confirm within 24 hours.
+    </p>
+
+    <div class="row g-3">
+        <div class="col-md-6 js-cashless-only">
+            <label asp-for="AccountName" class="form-label payment-field-label">Account Name (Sender)</label>
+            <input asp-for="AccountName" id="AccountName" class="form-control form-control-thin payment-field-input" placeholder="Your name on GCash / BDO" />
+            <span class="payment-field-help">Name associated with the account you used to send money.</span>
+        </div>
+        <div class="col-md-6 js-cashless-only">
+            <label asp-for="TransactionReference" class="form-label payment-field-label">Reference / Transaction Number</label>
+            <input asp-for="TransactionReference" id="TransactionReference" class="form-control form-control-thin payment-field-input" placeholder="e.g 123456789123" />
+            <span class="payment-field-help">Found in your GCash receipt or BDO transaction history.</span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label payment-field-label">Amount Sent (₱)</label>
+            <input asp-for="AmountPaid" id="input-AmountPaid" class="form-control form-control-thin payment-field-input" type="number" step="0.01" min="0" placeholder="0.00" />
+            <span class="payment-field-help">Must match the total: <strong id="amountMatchLabel">@FormatPeso(totalFare)</strong></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="PaymentDate" class="form-label payment-field-label">Date &amp; Time of Payment</label>
+            <input asp-for="PaymentDate" id="input-PaymentDate" class="form-control form-control-thin payment-field-input" type="datetime-local" />
+        </div>
+        <div class="col-12 js-cashless-only">
+            <label class="form-label payment-field-label">Upload Payment Screenshot / Receipt</label>
+            <div class="payment-upload-zone" id="receiptUploadZone">
+                <div class="payment-upload-empty" id="receiptUploadEmpty">
+                    <i class="bi bi-cloud-upload fs-3 d-block mb-1"></i>
+                    <span>Click to upload receipt image</span>
+                    <span class="d-block text-muted" style="font-size:0.72rem;font-weight:600;">PNG, JPG (MAX 5MB)</span>
+                </div>
+                <div class="payment-upload-preview" id="receiptUploadPreview">
+                    <div class="payment-upload-preview-inner">
+                        <img id="receiptPreviewImg" class="d-none" alt="Receipt preview" />
+                        <div id="receiptPreviewPlaceholder" class="payment-upload-placeholder-x" aria-hidden="true">
+                            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <line x1="0" y1="0" x2="100" y2="100" />
+                                <line x1="100" y1="0" x2="0" y2="100" />
+                            </svg>
+                        </div>
+                        <span class="payment-upload-filename" id="receiptFilename"></span>
+                    </div>
+                    <button type="button" class="payment-upload-remove" id="receiptRemoveBtn" aria-label="Remove receipt">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <input asp-for="ReceiptImageFile" id="input-ReceiptFile" type="file" class="payment-upload-input" accept=".png,.jpg,.jpeg,image/*" />
+            </div>
+        </div>
+        <div class="col-12">
+            <label asp-for="PaymentNotes" class="form-label payment-field-label">Additional Notes (Optional)</label>
+            <input asp-for="PaymentNotes" id="PaymentNotes" class="form-control form-control-thin payment-field-input" placeholder="Additional notes about your payment" />
+        </div>
+    </div>
+
+    <div class="payment-reminders">
+        <div class="payment-reminders-title">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span>Important Reminders</span>
+        </div>
+        <ul>
+            <li>Send the exact amount of <strong id="reminderExactAmount">@FormatPeso(totalFare)</strong> to avoid delays.</li>
+            <li>Use the correct QR code or account details for your selected channel.</li>
+            <li>Keep your transaction receipt for reference.</li>
+            <li>Our staff will verify payment within <strong>24 hours</strong>. You’ll receive confirmation via SMS/Email.</li>
+            <li>Rental is only confirmed after payment is verified by staff.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center gap-2 mt-4 mb-2">
+    <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3" data-wizard-back="@paymentDetailsBackStep">Back</button>
+    <button type="button" class="btn btn-request-reservation px-4 py-2 fw-bold rounded-3 shadow-sm" data-wizard-next="@paymentDetailsFromStep">
+        Continue to Summary
+    </button>
+</div>

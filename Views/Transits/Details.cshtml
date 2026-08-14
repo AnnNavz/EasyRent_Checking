@@ -10,7 +10,7 @@
     ViewData["SectionTitle"] = "Transit Management";
     ViewData["SectionUrl"] = Url.Action("Index", "Transits");
 
-    var details = Model?.Reservation?.Details;
+    var details = Model?.Rental?.Details;
     var vehicle = Model?.Vehicle ?? details?.Vehicle;
     var payment = ViewBag.LatestPayment as Payment;
     var driverList = ViewBag.DriverList as SelectList;
@@ -53,7 +53,7 @@
         _ => "—"
     };
 
-    var bookingId = $"BK-{Model?.ReservationID.ToString("D5") ?? "00000"}";
+    var bookingId = $"BK-{Model?.RentalID.ToString("D5") ?? "00000"}";
 }
 
 <div class="container-fluid px-4 py-3 reservation-details-page">
@@ -68,10 +68,6 @@
 
     <div class="details-page-actions mb-3">
         <a asp-action="Index" class="btn btn-page-back">Back</a>
-        @if (canStartTrip)
-        {
-            <a asp-action="StartTrip" asp-route-transitid="@Model?.TransitID" class="btn reservation-btn-approve">Start Trip</a>
-        }
         @if (canCompleteTrip)
         {
             <a asp-action="CompleteTrip" asp-route-transitid="@Model?.TransitID" class="btn reservation-btn-approve">Complete Trip</a>
@@ -97,8 +93,8 @@
                             <i class="bi bi-person"></i>
                         </div>
                         <div>
-                            <div class="reservation-view-person-name">@(Model.Reservation?.CustomerName ?? "—")</div>
-                            <div class="reservation-view-person-meta">@(Model.Reservation?.ContactNumber ?? "—")</div>
+                            <div class="reservation-view-person-name">@(Model.Rental?.CustomerName ?? "—")</div>
+                            <div class="reservation-view-person-meta">@(Model.Rental?.ContactNumber ?? "—")</div>
                         </div>
                     </div>
                     <div class="reservation-view-vehicle">
@@ -286,10 +282,10 @@
                 <div class="reservation-view-side-card">
                     <div class="reservation-payment-header">
                         <h6 class="reservation-view-side-title mb-0">Payment</h6>
-                        <strong class="reservation-payment-status-text">@payment.PaymentStatus</strong>
+                        <strong class="reservation-payment-status-text">@(Model.Rental?.RentalStatus.ToString() ?? "—")</strong>
                     </div>
-                    <a asp-controller="Payments" asp-action="Details" asp-route-paymentid="@payment.PaymentId" class="btn reservation-btn-payment w-100">
-                        View Payment
+                    <a asp-controller="Rentals" asp-action="Details" asp-route-id="@payment.RentalId" class="btn reservation-btn-payment w-100">
+                        View Booking &amp; Payment
                     </a>
                 </div>
             }

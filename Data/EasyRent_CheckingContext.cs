@@ -5,7 +5,6 @@ namespace EasyRent_Checking.Data
 {
 	public class EasyRent_CheckingContext : DbContext
 	{
-		public DbSet<EasyRent_Checking.Models.Transit> Transit { get; set; } = default!;
 		public EasyRent_CheckingContext(DbContextOptions<EasyRent_CheckingContext> options)
 			: base(options)
 		{
@@ -14,11 +13,13 @@ namespace EasyRent_Checking.Data
 		public DbSet<User> Users { get; set; } = default!;
 		public DbSet<CustomerProfile> CustomerProfiles { get; set; } = default!;
 		public DbSet<AdminProfile> AdminProfiles { get; set; } = default!;
-		public DbSet<Reservation> Reservation { get; set; } = default!;
-		public DbSet<ReservationDetails> ReservationDetails { get; set; } = default!;
-		public DbSet<Payment> Payment { get; set; } = default!;
-		public DbSet<Driver> Driver { get; set; } = default!;
-		public DbSet<Vehicle> Vehicle { get; set; } = default!;
+		public DbSet<Rental> Rentals { get; set; } = default!;
+		public DbSet<RentalDetails> RentalDetails { get; set; } = default!;
+		public DbSet<Payment> Payments { get; set; } = default!;
+		public DbSet<Driver> Drivers { get; set; } = default!;
+		public DbSet<Vehicle> Vehicles { get; set; } = default!;
+		public DbSet<Transit> Transits { get; set; } = default!;
+		public DbSet<Feedback> Feedbacks { get; set; } = default!;
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -54,19 +55,32 @@ namespace EasyRent_Checking.Data
 
 			modelBuilder.Entity<Payment>(entity =>
 			{
-				entity.HasOne(e => e.Reservation)
+				entity.ToTable("Payment");
+				entity.HasOne(e => e.Rental)
 					.WithMany()
-					.HasForeignKey(e => e.ReservationId)
+					.HasForeignKey(e => e.RentalId)
 					.OnDelete(DeleteBehavior.Restrict);
 			});
 
-			modelBuilder.Entity<ReservationDetails>(entity =>
+			modelBuilder.Entity<Rental>(entity =>
 			{
-				entity.HasKey(e => e.ReservationDetailsID);
+				entity.ToTable("Rental");
+				entity.HasOne(e => e.Customer)
+					.WithMany()
+					.HasForeignKey(e => e.CustomerId)
+					.OnDelete(DeleteBehavior.SetNull);
 
-				entity.HasOne(e => e.Reservation)
+				entity.HasIndex(e => e.CustomerId);
+			});
+
+			modelBuilder.Entity<RentalDetails>(entity =>
+			{
+				entity.ToTable("RentalDetails");
+				entity.HasKey(e => e.RentalDetailsID);
+
+				entity.HasOne(e => e.Rental)
 					.WithOne(r => r.Details)
-					.HasForeignKey<ReservationDetails>(e => e.ReservationID)
+					.HasForeignKey<RentalDetails>(e => e.RentalID)
 					.OnDelete(DeleteBehavior.Cascade);
 
 				entity.HasOne(e => e.Vehicle)
@@ -74,16 +88,17 @@ namespace EasyRent_Checking.Data
 					.HasForeignKey(e => e.VehicleId)
 					.OnDelete(DeleteBehavior.Restrict);
 
-				entity.HasIndex(e => e.ReservationID).IsUnique();
+				entity.HasIndex(e => e.RentalID).IsUnique();
 			});
 
 			modelBuilder.Entity<Transit>(entity =>
 			{
+				entity.ToTable("Transit");
 				entity.HasKey(e => e.TransitID);
 
-				entity.HasOne(e => e.Reservation)
+				entity.HasOne(e => e.Rental)
 					.WithMany()
-					.HasForeignKey(e => e.ReservationID)
+					.HasForeignKey(e => e.RentalID)
 					.OnDelete(DeleteBehavior.Restrict);
 
 				entity.HasOne(e => e.Driver)
@@ -96,7 +111,28 @@ namespace EasyRent_Checking.Data
 					.HasForeignKey(e => e.VehicleID)
 					.OnDelete(DeleteBehavior.Restrict);
 
-				entity.HasIndex(e => e.ReservationID).IsUnique();
+				entity.HasIndex(e => e.RentalID).IsUnique();
+			});
+
+			modelBuilder.Entity<Driver>().ToTable("Driver");
+			modelBuilder.Entity<Vehicle>().ToTable("Vehicle");
+
+			modelBuilder.Entity<Feedback>(entity =>
+			{
+				entity.ToTable("Feedback");
+				entity.HasKey(e => e.FeedbackId);
+
+				entity.HasOne(e => e.Transit)
+					.WithOne(t => t.Feedback)
+					.HasForeignKey<Feedback>(e => e.TransitID)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				entity.HasOne(e => e.Customer)
+					.WithMany()
+					.HasForeignKey(e => e.CustomerId)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				entity.HasIndex(e => e.TransitID).IsUnique();
 			});
 		}
 	}

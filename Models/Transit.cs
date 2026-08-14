@@ -26,12 +26,12 @@ namespace EasyRent_Checking.Models
 		[Key]
 		public int TransitID { get; set; }
 
-		[Required(ErrorMessage = "Reservation is required.")]
-		[Display(Name = "Reservation")]
-		public int ReservationID { get; set; }
+		[Required(ErrorMessage = "Rental is required.")]
+		[Display(Name = "Rental")]
+		public int RentalID { get; set; }
 
-		[ForeignKey(nameof(ReservationID))]
-		public Reservation? Reservation { get; set; }
+		[ForeignKey(nameof(RentalID))]
+		public Rental? Rental { get; set; }
 
 		[Display(Name = "Driver")]
 		public int? DriverID { get; set; }
@@ -96,5 +96,7 @@ namespace EasyRent_Checking.Models
 		[Required]
 		[Display(Name = "Trip Status")]
 		public TripStatus TripStatus { get; set; } = TripStatus.Scheduled;
+
+		public Feedback? Feedback { get; set; }
 	}
 }

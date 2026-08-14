@@ -1,56 +1,279 @@
 @model EasyRent_Checking.Models.CustomerProfile
+@using EasyRent_Checking.Models
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Customer Details";
     ViewData["ActivePage"] = "Customers";
+
+    var isPending = Model.Status == Status.Pending;
+    var isActive = Model.Status == Status.Active;
+    var isInactive = Model.Status == Status.Inactive;
+    var email = Model.User?.Email ?? "—";
+    var createdAt = Model.User?.CreatedAt;
+    var customerLabel = $"CU-{Model.CustomerId:D5}";
+
+    string StatusBadgeClass(Status status) => status switch
+    {
+        Status.Active => "booking-status-approved",
+        Status.Inactive => "booking-status-cancelled",
+        _ => "booking-status-pending"
+    };
+
+    string StatusIcon(Status status) => status switch
+    {
+        Status.Active => "bi-check-circle",
+        Status.Inactive => "bi-x-circle",
+        _ => "bi-clock"
+    };
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "??";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0][..2].ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
+        }
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    string FormatIdType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type)) return "—";
+        return type switch
+        {
+            "NationalID" => "National ID",
+            "DriverLicense" => "Driver's License",
+            "VotersID" => "Voter's ID",
+            "UMID" => "UMID",
+            "Passport" => "Passport",
+            _ => type
+        };
+    }
 }
 
-<h1>Details</h1>
+<div class="container-fluid px-4 py-3 reservation-details-page customer-details-page">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+    }
 
-<div>
-    <h4>Customer</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.FullName)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.FullName)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.ContactNumber)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.ContactNumber)
-        </dd>
-        <dt class="col-sm-2">
-            Email
-        </dt>
-        <dd class="col-sm-10">
-            @(Model.User?.Email)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.ValidIDtype)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.ValidIDtype)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.ValidIDImagePath)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.ValidIDImagePath)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-customerid="@Model?.CustomerId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div class="reservation-details-topbar mb-3">
+        <div class="reservation-details-topbar-id">
+            <span class="reservation-view-id-label">Customer ID</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h1 class="reservation-view-id mb-0">@customerLabel</h1>
+                <span class="booking-status-badge @StatusBadgeClass(Model.Status)">
+                    <i class="bi @StatusIcon(Model.Status) me-1"></i>@Model.Status
+                </span>
+            </div>
+        </div>
+        <div class="details-page-actions mb-0">
+            <a asp-action="Index" class="btn btn-page-back">Back</a>
+            <a asp-action="Edit" asp-route-customerid="@Model.CustomerId" class="btn btn-reservation-edit">Edit Customer</a>
+        </div>
+    </div>
+
+    @if (isPending)
+    {
+        <div class="customer-review-banner mb-3" role="status">
+            <i class="bi bi-shield-check"></i>
+            <div>
+                <strong>Awaiting staff verification</strong>
+                <p class="mb-0">Review the customer’s valid ID, then approve or reject this account.</p>
+            </div>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="reservation-view-card mb-4">
+                <div class="customer-details-hero">
+                    <div class="reservation-view-avatar customer-details-avatar" aria-hidden="true">
+                        <span>@GetInitials(Model.FullName)</span>
+                    </div>
+                    <div class="customer-details-hero-meta">
+                        <div class="reservation-view-person-name">@Model.FullName</div>
+                        <div class="reservation-view-person-meta">@Model.ContactNumber</div>
+                        <div class="customer-details-email">
+                            <i class="bi bi-envelope"></i>
+                            <span>@email</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reservation-view-grid reservation-view-grid-two">
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Account Status</span>
+                        <span class="reservation-view-value">
+                            <span class="booking-status-badge @StatusBadgeClass(Model.Status)">
+                                <i class="bi @StatusIcon(Model.Status) me-1"></i>@Model.Status
+                            </span>
+                        </span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Valid ID Type</span>
+                        <span class="reservation-view-value">@FormatIdType(Model.ValidIDtype)</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Contact Number</span>
+                        <span class="reservation-view-value">@Model.ContactNumber</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Email Address</span>
+                        <span class="reservation-view-value">@email</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Account Created</span>
+                        <span class="reservation-view-value">
+                            @(createdAt.HasValue
+                                ? createdAt.Value.ToString("MMM. d, yyyy · h:mm tt")
+                                : "—")
+                        </span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Customer ID</span>
+                        <span class="reservation-view-value font-monospace">@customerLabel</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-section-title">
+                    <i class="bi bi-person-vcard"></i>
+                    <span>Valid ID Verification</span>
+                </div>
+                <div class="mb-2 fw-semibold small text-secondary">@FormatIdType(Model.ValidIDtype)</div>
+                <div class="reservation-id-frame customer-details-id-frame">
+                    @if (!string.IsNullOrWhiteSpace(Model.ValidIDImagePath))
+                    {
+                        <a href="~/images/@Model.ValidIDImagePath" target="_blank" rel="noopener">
+                            <img src="~/images/@Model.ValidIDImagePath" alt="Customer valid ID" />
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="reservation-view-placeholder" aria-hidden="true">
+                            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <line x1="0" y1="0" x2="100" y2="100" />
+                                <line x1="100" y1="0" x2="0" y2="100" />
+                            </svg>
+                        </div>
+                        <p class="small text-muted text-center mt-2 mb-0">No valid ID image uploaded.</p>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.ValidIDImagePath))
+                {
+                    <div class="reservation-verify-hint">
+                        <i class="bi bi-info-circle"></i>
+                        <span>Verify that the ID name matches the customer profile before approving.</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="reservation-view-side-card reservation-decision-card mb-4">
+                <h6 class="reservation-view-side-title">Staff Decision</h6>
+
+                @if (isPending)
+                {
+                    <p class="customer-decision-help">
+                        Review the submitted valid ID, then approve this customer account or reject it.
+                    </p>
+                    <form asp-action="Approve" asp-route-customerid="@Model.CustomerId" method="post" class="mb-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn reservation-btn-approve w-100">
+                            <i class="bi bi-check-lg me-1"></i> Approve Customer
+                        </button>
+                    </form>
+                    <form asp-action="Reject" asp-route-customerid="@Model.CustomerId" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn reservation-btn-reject w-100" onclick="return confirm('Reject this customer account?');">
+                            <i class="bi bi-x-lg me-1"></i> Reject Customer
+                        </button>
+                    </form>
+                }
+                else if (isActive)
+                {
+                    <div class="customer-decision-result is-approved">
+                        <i class="bi bi-check-circle"></i>
+                        <div>
+                            <strong>Approved</strong>
+                            <p class="mb-0">This customer account is active.</p>
+                        </div>
+                    </div>
+                    <form asp-action="Reject" asp-route-customerid="@Model.CustomerId" method="post" class="mt-3">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn reservation-btn-reject w-100" onclick="return confirm('Deactivate this customer account?');">
+                            <i class="bi bi-slash-circle me-1"></i> Deactivate
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="customer-decision-result is-rejected">
+                        <i class="bi bi-x-circle"></i>
+                        <div>
+                            <strong>Inactive</strong>
+                            <p class="mb-0">This customer account was rejected or deactivated.</p>
+                        </div>
+                    </div>
+                    <form asp-action="Approve" asp-route-customerid="@Model.CustomerId" method="post" class="mt-3">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn reservation-btn-approve w-100">
+                            <i class="bi bi-check-lg me-1"></i> Reactivate
+                        </button>
+                    </form>
+                }
+            </div>
+
+            <div class="reservation-view-side-card mb-4">
+                <h6 class="reservation-view-side-title">Account Timeline</h6>
+                <div class="customer-audit-timeline">
+                    <div class="customer-audit-item is-done">
+                        <span class="customer-audit-dot"></span>
+                        <div>
+                            <strong>Account Created</strong>
+                            <span>
+                                @(createdAt.HasValue
+                                    ? createdAt.Value.ToString("MMM. d, yyyy · h:mm tt")
+                                    : "—")
+                            </span>
+                        </div>
+                    </div>
+                    <div class="customer-audit-item @(isPending ? "is-active" : "is-done")">
+                        <span class="customer-audit-dot"></span>
+                        <div>
+                            <strong>ID Submitted</strong>
+                            <span>@(string.IsNullOrWhiteSpace(Model.ValidIDImagePath) ? "No ID uploaded" : "Valid ID on file")</span>
+                        </div>
+                    </div>
+                    <div class="customer-audit-item @(isActive ? "is-done" : (isInactive ? "is-rejected" : "is-locked"))">
+                        <span class="customer-audit-dot"></span>
+                        <div>
+                            <strong>Staff Decision</strong>
+                            <span>
+                                @if (isActive)
+                                {
+                                    <text>Approved — account active</text>
+                                }
+                                else if (isInactive)
+                                {
+                                    <text>Rejected / inactive</text>
+                                }
+                                else
+                                {
+                                    <text>Waiting for approval</text>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

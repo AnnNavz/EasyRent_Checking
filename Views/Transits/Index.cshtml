@@ -8,7 +8,7 @@
     ViewData["ActivePage"] = "Transit";
     ViewData["SectionTitle"] = "Booking Management";
 
-    var paymentsByReservation = ViewBag.PaymentsByReservationId as Dictionary<int, Payment>
+    var paymentsByRental = ViewBag.PaymentsByRentalId as Dictionary<int, Payment>
         ?? new Dictionary<int, Payment>();
 
     string currentSortName = ViewData["CurrentSort"]?.ToString() switch
@@ -169,14 +169,14 @@
                 {
                     @foreach (var item in Model)
                     {
-                        var bookingLabel = $"BK-{item.ReservationID:D4}";
-                        var customerName = item.Reservation?.CustomerName ?? "—";
-                        var contact = item.Reservation?.ContactNumber ?? "—";
-                        paymentsByReservation.TryGetValue(item.ReservationID, out Payment? payment);
+                        var bookingLabel = $"BK-{item.RentalID:D4}";
+                        var customerName = item.Rental?.CustomerName ?? "—";
+                        var contact = item.Rental?.ContactNumber ?? "—";
+                        paymentsByRental.TryGetValue(item.RentalID, out Payment? payment);
                         var paymentOption = string.IsNullOrWhiteSpace(payment?.PaymentType) ? "—" : payment.PaymentType;
                         var amountPaid = payment?.AmountPaid ?? 0m;
                         var isPaid = payment != null
-                            && payment.PaymentStatus == PaymentStatus.Approved
+                            && item.Rental?.RentalStatus == RentalStatus.Approved
                             && payment.AmountPaid >= payment.TotalAmount;
                         <tr>
                             <td class="fw-semibold text-dark font-monospace">@bookingLabel</td>
@@ -204,7 +204,7 @@
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                         <li><a class="dropdown-item" asp-action="Details" asp-route-transitid="@item.TransitID"><i class="bi bi-info-circle me-2"></i> Details</a></li>
-                                        <li><a class="dropdown-item" asp-controller="Reservations" asp-action="Details" asp-route-id="@item.ReservationID"><i class="bi bi-bookmark me-2"></i> Reservation</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Rentals" asp-action="Details" asp-route-id="@item.RentalID"><i class="bi bi-bookmark me-2"></i> Rental</a></li>
                                         <li><hr class="dropdown-menu-divider"></li>
                                         <li><a class="dropdown-item text-danger" asp-action="Delete" asp-route-transitid="@item.TransitID"><i class="bi bi-trash me-2"></i> Delete</a></li>
                                     </ul>

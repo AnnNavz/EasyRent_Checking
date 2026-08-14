@@ -97,20 +97,22 @@
     </div>
     <div class="client-rate-info-box">
         <i class="bi bi-file-earmark-text"></i>
-        <p>Reservation is <strong>not confirmed</strong> until staff approval after payment.</p>
+        <p>After trip details, choose <strong>Pay Now (Full)</strong>, <strong>Pay Deposit</strong>, or <strong>Pay at Venue</strong>.</p>
     </div>
 
     @if (!hideReserveButton)
     {
         if (canReserve)
         {
-            <a asp-controller="Vehicles"
-               asp-action="Reservation"
-               asp-route-id="@Model.VehicleId"
-               class="client-btn-reserve client-btn-reserve-lg">
-                <i class="bi bi-calendar-check"></i>
-                Reserve Now
-            </a>
+            <div class="client-rate-cta-stack">
+                <a asp-controller="ClientSide"
+                   asp-action="Rental"
+                   asp-route-id="@Model.VehicleId"
+                   class="client-btn-reserve client-btn-reserve-lg">
+                    <i class="bi bi-calendar-check"></i>
+                    Rent Now
+                </a>
+            </div>
         }
         else
         {

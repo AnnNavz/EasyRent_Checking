@@ -6,11 +6,10 @@
     {
         sectionTitle = ViewData["ActivePage"]?.ToString() switch
         {
-            "Dashboard" => "Admin Dashboard",
+            "Dashboard" => "Dashboard",
             "Drivers" => "Driver Management",
             "Vehicles" => "Vehicle Management",
-            "Reservations" => "Booking Management",
-            "Payments" => "Payment Management",
+            "Rentals" => "Booking Management",
             "Transit" => "Transit Management",
             "Customers" => "Customer Management",
             "Admins" => "Admin Management",
@@ -23,11 +22,10 @@
     {
         sectionUrl = ViewData["ActivePage"]?.ToString() switch
         {
-            "Dashboard" => Url.Action("Dashboard", "Admin"),
+            "Dashboard" => Url.Action("Index", "Dashboard"),
             "Drivers" => Url.Action("Index", "Drivers"),
             "Vehicles" => Url.Action("Index", "Vehicles"),
-            "Reservations" => Url.Action("Index", "Reservations"),
-            "Payments" => Url.Action("Index", "Payments"),
+            "Rentals" => Url.Action("Index", "Rentals"),
             "Transit" => Url.Action("Index", "Transits"),
             "Customers" => Url.Action("Index", "Customers"),
             "Admins" => Url.Action("Index", "Admins"),

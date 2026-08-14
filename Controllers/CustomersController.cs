@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EasyRent_Checking.Models;
+using EasyRent_Checking.ViewModels;
 using EasyRent_Checking.Data;
 using EasyRent_Checking.Services;
 
@@ -8,11 +9,16 @@ public class CustomersController : Controller
 {
 	private readonly EasyRent_CheckingContext _context;
 	private readonly IWebHostEnvironment _webHostEnvironment;
+	private readonly BookingEmailService _bookingEmailService;
 
-	public CustomersController(EasyRent_CheckingContext context, IWebHostEnvironment webHostEnvironment)
+	public CustomersController(
+		EasyRent_CheckingContext context,
+		IWebHostEnvironment webHostEnvironment,
+		BookingEmailService bookingEmailService)
 	{
 		_context = context;
 		_webHostEnvironment = webHostEnvironment;
+		_bookingEmailService = bookingEmailService;
 	}
 
 	// GET: CUSTOMERS
@@ -41,6 +47,46 @@ public class CustomersController : Controller
 		}
 
 		return View(customer);
+	}
+
+	// POST: CUSTOMERS/Approve/5
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> Approve(int customerid)
+	{
+		var customer = await _context.CustomerProfiles
+			.Include(c => c.User)
+			.FirstOrDefaultAsync(c => c.CustomerId == customerid);
+		if (customer == null)
+		{
+			return NotFound();
+		}
+
+		customer.Status = Status.Active;
+		await _context.SaveChangesAsync();
+
+		var loginUrl = Url.Action("Login", "Account", null, Request.Scheme);
+		await _bookingEmailService.SendAccountApprovedAsync(customer, loginUrl);
+
+		TempData["SuccessMessage"] = "Customer account approved and set to Active.";
+		return RedirectToAction(nameof(Details), new { customerid });
+	}
+
+	// POST: CUSTOMERS/Reject/5
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> Reject(int customerid)
+	{
+		var customer = await _context.CustomerProfiles.FindAsync(customerid);
+		if (customer == null)
+		{
+			return NotFound();
+		}
+
+		customer.Status = Status.Inactive;
+		await _context.SaveChangesAsync();
+		TempData["SuccessMessage"] = "Customer account rejected and set to Inactive.";
+		return RedirectToAction(nameof(Details), new { customerid });
 	}
 
 	// GET: CUSTOMERS/Create

@@ -25,14 +25,14 @@
 
     <header class="client-navbar">
         <div class="client-navbar-inner">
-            <a asp-controller="Vehicles" asp-action="Homepage" class="client-brand">
-                <span class="client-brand-logo">L</span>
+            <a asp-controller="ClientSide" asp-action="Homepage" class="client-brand">
+                <img src="~/images/System Images/EasyRentLogo.png" alt="EasyRent" class="client-brand-logo-img" asp-append-version="true" />
                 <span class="client-brand-name">EasyRent</span>
             </a>
 
             <nav class="client-nav-links d-none d-lg-flex">
-                <a asp-controller="Vehicles" asp-action="Homepage" class="client-nav-link @(activeNav == "Home" ? "active" : "")">Home</a>
-                <a asp-controller="Vehicles" asp-action="Browse" class="client-nav-link @(activeNav == "Vehicles" ? "active" : "")">Book a Vehicle</a>
+                <a asp-controller="ClientSide" asp-action="Homepage" class="client-nav-link @(activeNav == "Home" ? "active" : "")">Home</a>
+                <a asp-controller="ClientSide" asp-action="Browse" class="client-nav-link @(activeNav == "Vehicles" ? "active" : "")">Book a Vehicle</a>
                 <a href="#about-us" class="client-nav-link @(activeNav == "AboutUs" ? "active" : "")">About Us</a>
                 <a href="#faqs" class="client-nav-link @(activeNav == "FAQs" ? "active" : "")">FAQs</a>
             </nav>
@@ -47,15 +47,48 @@
                                 <span class="client-profile-name">@displayName</span>
                                 <span class="client-profile-avatar">@avatarInitial</span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end client-profile-menu shadow border-0">
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Vehicles" asp-action="MyBookings">My Bookings</a>
-                                </li>
-                                <li><hr class="dropdown-divider my-1"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">Log out</a>
-                                </li>
-                            </ul>
+                            <div class="dropdown-menu dropdown-menu-end client-profile-menu shadow border-0">
+                                <div class="client-profile-menu-header">
+                                    <div class="client-profile-menu-avatar" aria-hidden="true">@avatarInitial</div>
+                                    <div class="client-profile-menu-identity">
+                                        <span class="client-profile-menu-name">@displayName</span>
+                                        <span class="client-profile-menu-role">Customer</span>
+                                        <span class="client-profile-menu-status">Online</span>
+                                    </div>
+                                </div>
+
+                                <div class="client-profile-menu-divider" role="separator"></div>
+
+                                <a class="client-profile-menu-item" asp-controller="ClientSide" asp-action="MyBookings">
+                                    <i class="bi bi-calendar2-check client-profile-menu-icon" aria-hidden="true"></i>
+                                    <span class="client-profile-menu-copy">
+                                        <span class="client-profile-menu-item-title">Transactions &amp; Rentals</span>
+                                        <span class="client-profile-menu-item-sub">Active and past rentals</span>
+                                    </span>
+                                    <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
+                                </a>
+
+                                <div class="client-profile-menu-divider" role="separator"></div>
+
+                                <a class="client-profile-menu-item" asp-controller="ClientSide" asp-action="Browse">
+                                    <i class="bi bi-truck-front client-profile-menu-icon" aria-hidden="true"></i>
+                                    <span class="client-profile-menu-copy">
+                                        <span class="client-profile-menu-item-title">Book a Vehicle</span>
+                                        <span class="client-profile-menu-item-sub">Find and reserve a vehicle</span>
+                                    </span>
+                                    <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
+                                </a>
+
+                                <div class="client-profile-menu-divider" role="separator"></div>
+
+                                <a class="client-profile-menu-item is-logout" asp-controller="Account" asp-action="Logout">
+                                    <i class="bi bi-box-arrow-right client-profile-menu-icon" aria-hidden="true"></i>
+                                    <span class="client-profile-menu-copy">
+                                        <span class="client-profile-menu-item-title">Log Out</span>
+                                        <span class="client-profile-menu-item-sub">Sign out from your account</span>
+                                    </span>
+                                </a>
+                            </div>
                         </div>
                     }
                     else
@@ -73,8 +106,8 @@
         <div class="collapse d-lg-none" id="clientNavMenu">
             <div class="client-nav-mobile">
                 <nav class="client-nav-links">
-                    <a asp-controller="Vehicles" asp-action="Homepage" class="client-nav-link @(activeNav == "Home" ? "active" : "")">Home</a>
-                    <a asp-controller="Vehicles" asp-action="Browse" class="client-nav-link @(activeNav == "Vehicles" ? "active" : "")">Book a Vehicle</a>
+                    <a asp-controller="ClientSide" asp-action="Homepage" class="client-nav-link @(activeNav == "Home" ? "active" : "")">Home</a>
+                    <a asp-controller="ClientSide" asp-action="Browse" class="client-nav-link @(activeNav == "Vehicles" ? "active" : "")">Book a Vehicle</a>
                     <a href="#about-us" class="client-nav-link @(activeNav == "AboutUs" ? "active" : "")">About Us</a>
                     <a href="#faqs" class="client-nav-link @(activeNav == "FAQs" ? "active" : "")">FAQs</a>
                 </nav>
@@ -83,12 +116,40 @@
                     @if (isSignedIn)
                     {
                         <div class="client-profile-mobile">
-                            <div class="client-profile-mobile-info">
-                                <span class="client-profile-avatar">@avatarInitial</span>
-                                <span class="client-profile-name">@displayName</span>
+                            <div class="client-profile-menu-header">
+                                <div class="client-profile-menu-avatar" aria-hidden="true">@avatarInitial</div>
+                                <div class="client-profile-menu-identity">
+                                    <span class="client-profile-menu-name">@displayName</span>
+                                    <span class="client-profile-menu-role">Customer</span>
+                                    <span class="client-profile-menu-status">Online</span>
+                                </div>
                             </div>
-                            <a asp-controller="Vehicles" asp-action="MyBookings" class="client-profile-mobile-link">My Bookings</a>
-                            <a asp-controller="Account" asp-action="Logout" class="client-profile-mobile-logout">Log out</a>
+                            <div class="client-profile-menu-divider" role="separator"></div>
+                            <a asp-controller="ClientSide" asp-action="MyBookings" class="client-profile-menu-item">
+                                <i class="bi bi-calendar2-check client-profile-menu-icon" aria-hidden="true"></i>
+                                <span class="client-profile-menu-copy">
+                                    <span class="client-profile-menu-item-title">Transactions &amp; Rentals</span>
+                                    <span class="client-profile-menu-item-sub">Active and past rentals</span>
+                                </span>
+                                <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
+                            </a>
+                            <div class="client-profile-menu-divider" role="separator"></div>
+                            <a asp-controller="ClientSide" asp-action="Browse" class="client-profile-menu-item">
+                                <i class="bi bi-truck-front client-profile-menu-icon" aria-hidden="true"></i>
+                                <span class="client-profile-menu-copy">
+                                    <span class="client-profile-menu-item-title">Book a Vehicle</span>
+                                    <span class="client-profile-menu-item-sub">Find and reserve a vehicle</span>
+                                </span>
+                                <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
+                            </a>
+                            <div class="client-profile-menu-divider" role="separator"></div>
+                            <a asp-controller="Account" asp-action="Logout" class="client-profile-menu-item is-logout">
+                                <i class="bi bi-box-arrow-right client-profile-menu-icon" aria-hidden="true"></i>
+                                <span class="client-profile-menu-copy">
+                                    <span class="client-profile-menu-item-title">Log Out</span>
+                                    <span class="client-profile-menu-item-sub">Sign out from your account</span>
+                                </span>
+                            </a>
                         </div>
                     }
                     else

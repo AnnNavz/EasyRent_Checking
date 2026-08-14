@@ -1,0 +1,54 @@
+@model EasyRent_Checking.Models.Vehicle
+@using EasyRent_Checking.Models
+
+@{
+    string typeLabel = Model.Type == VehicleType.Van ? "VAN" : "SUV";
+    string vehicleTitle = $"{Model.Model} {Model.Brand}";
+}
+
+<aside class="client-details-sidebar d-none" id="clientTripSummarySidebar">
+    <div class="client-trip-summary">
+        <div class="client-trip-summary-image">
+            @if (!string.IsNullOrEmpty(Model.ImagePath))
+            {
+                <img src="/images/@Model.ImagePath" alt="@vehicleTitle" />
+            }
+            else
+            {
+                <div class="client-trip-summary-placeholder" aria-hidden="true">
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <line x1="0" y1="0" x2="100" y2="100" />
+                        <line x1="100" y1="0" x2="0" y2="100" />
+                    </svg>
+                </div>
+            }
+        </div>
+
+        <span class="client-trip-summary-type">@typeLabel</span>
+        <h2 class="client-trip-summary-name">@vehicleTitle</h2>
+
+        <div class="client-trip-summary-rows">
+            <div class="client-trip-summary-row">
+                <span>Pickup Date</span>
+                <strong id="tripSummaryPickup">—</strong>
+            </div>
+            <div class="client-trip-summary-row">
+                <span>Return Date</span>
+                <strong id="tripSummaryReturn">—</strong>
+            </div>
+            <div class="client-trip-summary-row">
+                <span>Duration</span>
+                <strong id="tripSummaryDuration">—</strong>
+            </div>
+            <div class="client-trip-summary-row">
+                <span>Passengers</span>
+                <strong id="tripSummaryPassengers">—</strong>
+            </div>
+        </div>
+
+        <div class="client-trip-summary-secure">
+            <i class="bi bi-shield-check"></i>
+            <span>Your payment is secure and encrypted. Staff will verify before confirming your booking.</span>
+        </div>
+    </div>
+</aside>

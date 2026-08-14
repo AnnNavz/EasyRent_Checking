@@ -5,8 +5,10 @@ namespace EasyRent_Checking.Services
 		public const string DriversFolder = "Drivers";
 		public const string VehiclesFolder = "Vehicles";
 		public const string CustomersFolder = "Customers";
-		public const string ReservationsFolder = "Reservations";
-		public const string PaymentReceiptsFolder = "Reservations/Cashless Receipts";
+		// Keep physical folder name aligned with the Rental domain.
+		// Old /images/Reservations/... URLs are rewritten in Program.cs.
+		public const string RentalsFolder = "Rentals";
+		public const string PaymentReceiptsFolder = "Rentals/Cashless Receipts";
 		public const string TransitsFolder = "Transits";
 		public const string SystemImagesFolder = "System Images";
 

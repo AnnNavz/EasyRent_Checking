@@ -1,0 +1,233 @@
+﻿@using System.Globalization
+@using System.Text.Json
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Dashboard";
+    ViewData["ActivePage"] = "Dashboard";
+    ViewData["SectionTitle"] = "Dashboard";
+
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+    var monthlyRevenue = ViewData["MonthlyRevenue"] as decimal? ?? 0m;
+    var revenueChange = ViewData["MonthlyRevenueChange"] as decimal? ?? 0m;
+    var activeTrips = ViewData["ActiveTrips"] as int? ?? 0;
+    var activeTripsChange = ViewData["ActiveTripsChange"] as decimal? ?? 0m;
+    var bookingRequests = ViewData["BookingRequests"] as int? ?? 0;
+    var bookingRequestsChange = ViewData["BookingRequestsChange"] as decimal? ?? 0m;
+    var fleetRented = ViewData["FleetRented"] as int? ?? 0;
+    var fleetAvailable = ViewData["FleetAvailable"] as int? ?? 0;
+    var fleetMaintenance = ViewData["FleetMaintenance"] as int? ?? 0;
+    var totalFleet = ViewData["TotalFleet"] as int? ?? 0;
+
+    var trendLabels = ViewBag.TrendLabels as IList<string> ?? Array.Empty<string>();
+    var trendValues = ViewBag.TrendValues as IList<int> ?? Array.Empty<int>();
+    var fleetTypeLabels = ViewBag.FleetTypeLabels as string[] ?? Array.Empty<string>();
+    var fleetTypeValues = ViewBag.FleetTypeValues as int[] ?? Array.Empty<int>();
+
+    string FormatChange(decimal change) =>
+        (change >= 0 ? "↑ " : "↓ ") + Math.Abs(change).ToString("0.#", CultureInfo.InvariantCulture) + "% vs last month";
+}
+
+<div class="admin-dashboard">
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="dash-kpi-stack">
+                <div class="dash-kpi-card">
+                    <div class="dash-kpi-icon"><i class="bi bi-wallet2"></i></div>
+                    <div class="dash-kpi-body">
+                        <span class="dash-kpi-label">Monthly Revenue</span>
+                        <div class="dash-kpi-value">₱@monthlyRevenue.ToString("N2", ph)</div>
+                    </div>
+                    <span class="dash-kpi-badge @(revenueChange >= 0 ? "is-up" : "is-down")">@FormatChange(revenueChange)</span>
+                </div>
+
+                <div class="dash-kpi-card">
+                    <div class="dash-kpi-icon"><i class="bi bi-geo-alt"></i></div>
+                    <div class="dash-kpi-body">
+                        <span class="dash-kpi-label">Active Trips</span>
+                        <div class="dash-kpi-value">@activeTrips</div>
+                    </div>
+                    <span class="dash-kpi-badge @(activeTripsChange >= 0 ? "is-up" : "is-down")">@FormatChange(activeTripsChange)</span>
+                </div>
+
+                <div class="dash-kpi-card">
+                    <div class="dash-kpi-icon"><i class="bi bi-file-earmark-text"></i></div>
+                    <div class="dash-kpi-body">
+                        <span class="dash-kpi-label">Booking Requests</span>
+                        <div class="dash-kpi-value">@bookingRequests</div>
+                    </div>
+                    <span class="dash-kpi-badge @(bookingRequestsChange >= 0 ? "is-up" : "is-down")">@FormatChange(bookingRequestsChange)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="dash-panel h-100">
+                <div class="dash-panel-header">
+                    <h2 class="dash-panel-title">Booking Trends</h2>
+                    <span class="dash-panel-subtitle">Last 7 days</span>
+                </div>
+                <div class="dash-chart-wrap">
+                    <canvas id="bookingTrendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="dash-panel">
+                <div class="dash-panel-header">
+                    <h2 class="dash-panel-title">Fleet Status</h2>
+                    <span class="dash-panel-subtitle">Fleet status overview</span>
+                </div>
+                <div class="dash-donut-layout">
+                    <div class="dash-donut-chart-wrap">
+                        <canvas id="fleetStatusChart"></canvas>
+                        <div class="dash-donut-center">
+                            <strong>@totalFleet.ToString("N0")</strong>
+                            <span>Total Fleet</span>
+                        </div>
+                    </div>
+                    <div class="dash-donut-legend">
+                        <div class="dash-legend-item">
+                            <span class="dash-legend-dot is-rented"></span>
+                            <span>Rented</span>
+                            <strong>@fleetRented.ToString("N0")</strong>
+                        </div>
+                        <div class="dash-legend-item">
+                            <span class="dash-legend-dot is-available"></span>
+                            <span>Available</span>
+                            <strong>@fleetAvailable.ToString("N0")</strong>
+                        </div>
+                        <div class="dash-legend-item">
+                            <span class="dash-legend-dot is-maintenance"></span>
+                            <span>Maintenance</span>
+                            <strong>@fleetMaintenance.ToString("N0")</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="dash-panel">
+                <div class="dash-panel-header">
+                    <h2 class="dash-panel-title">Fleets</h2>
+                    <span class="dash-panel-subtitle">Vehicles by type</span>
+                </div>
+                <div class="dash-chart-wrap dash-chart-wrap--bars">
+                    <canvas id="fleetTypesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const navy = '#1E3A8A';
+            const teal = '#0F766E';
+            const amber = '#F5B301';
+            const grid = '#E6E8EE';
+
+            const trendLabels = @Html.Raw(JsonSerializer.Serialize(trendLabels));
+            const trendValues = @Html.Raw(JsonSerializer.Serialize(trendValues));
+            const fleetTypeLabels = @Html.Raw(JsonSerializer.Serialize(fleetTypeLabels));
+            const fleetTypeValues = @Html.Raw(JsonSerializer.Serialize(fleetTypeValues));
+
+            const trendsCtx = document.getElementById('bookingTrendsChart');
+            if (trendsCtx) {
+                new Chart(trendsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [{
+                            data: trendValues,
+                            borderColor: navy,
+                            backgroundColor: (ctx) => {
+                                const { chart } = ctx;
+                                const { ctx: c, chartArea } = chart;
+                                if (!chartArea) return 'rgba(30,58,138,0.12)';
+                                const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                                g.addColorStop(0, 'rgba(30,58,138,0.28)');
+                                g.addColorStop(1, 'rgba(30,58,138,0.02)');
+                                return g;
+                            },
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointBackgroundColor: navy,
+                            borderWidth: 2.5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#6B7280', font: { weight: '600' } } },
+                            y: { beginAtZero: true, grid: { color: grid }, ticks: { color: '#6B7280', precision: 0 } }
+                        }
+                    }
+                });
+            }
+
+            const fleetCtx = document.getElementById('fleetStatusChart');
+            if (fleetCtx) {
+                new Chart(fleetCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Rented', 'Available', 'Maintenance'],
+                        datasets: [{
+                            data: [@fleetRented, @fleetAvailable, @fleetMaintenance],
+                            backgroundColor: [navy, teal, amber],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '68%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            const typesCtx = document.getElementById('fleetTypesChart');
+            if (typesCtx) {
+                new Chart(typesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: fleetTypeLabels,
+                        datasets: [{
+                            data: fleetTypeValues,
+                            backgroundColor: (ctx) => {
+                                const { chart } = ctx;
+                                const { ctx: c, chartArea } = chart;
+                                if (!chartArea) return navy;
+                                const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                                g.addColorStop(0, '#1E3A8A');
+                                g.addColorStop(1, '#5B7CDE');
+                                return g;
+                            },
+                            borderRadius: 6,
+                            maxBarThickness: 42
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#6B7280', font: { weight: '600' } } },
+                            y: { beginAtZero: true, grid: { color: grid }, ticks: { color: '#6B7280', precision: 0 } }
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+}

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EasyRent_Checking.Data;
 using EasyRent_Checking.Models;
+using EasyRent_Checking.ViewModels;
 using EasyRent_Checking.Services;
 using Microsoft.AspNetCore.Hosting;
 
@@ -37,7 +38,7 @@ namespace EasyRent_Checking.Controllers
 			ViewData["CurrentFilter"] = currentFilter;
 
 			// 1. Base query to work with
-			var driversQuery = from d in _context.Driver select d;
+			var driversQuery = from d in _context.Drivers select d;
 
 			// 2. Real-time KPI Metric Card Calculation
 			var systemDate = DateOnly.FromDateTime(DateTime.Now);
@@ -101,7 +102,7 @@ namespace EasyRent_Checking.Controllers
                 return NotFound();
             }
 
-            var driver = await _context.Driver
+            var driver = await _context.Drivers
                 .FirstOrDefaultAsync(m => m.DriverId == id);
             if (driver == null)
             {
@@ -156,7 +157,7 @@ namespace EasyRent_Checking.Controllers
                 return NotFound();
             }
 
-            var driver = await _context.Driver.FindAsync(id);
+            var driver = await _context.Drivers.FindAsync(id);
             if (driver == null)
             {
                 return NotFound();
@@ -185,7 +186,7 @@ namespace EasyRent_Checking.Controllers
                 return NotFound();
             }
 
-            var driver = await _context.Driver.FindAsync(id);
+            var driver = await _context.Drivers.FindAsync(id);
             if (driver == null)
             {
                 return NotFound();
@@ -211,7 +212,7 @@ namespace EasyRent_Checking.Controllers
 				return NotFound();
 			}
 
-			var existingDriver = await _context.Driver.FindAsync(driver.DriverId);
+			var existingDriver = await _context.Drivers.FindAsync(driver.DriverId);
 			if (existingDriver == null)
 			{
 				return NotFound();
@@ -287,7 +288,7 @@ namespace EasyRent_Checking.Controllers
                 return NotFound();
             }
 
-            var driver = await _context.Driver
+            var driver = await _context.Drivers
                 .FirstOrDefaultAsync(m => m.DriverId == id);
             if (driver == null)
             {
@@ -302,10 +303,10 @@ namespace EasyRent_Checking.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var driver = await _context.Driver.FindAsync(id);
+            var driver = await _context.Drivers.FindAsync(id);
             if (driver != null)
             {
-                _context.Driver.Remove(driver);
+                _context.Drivers.Remove(driver);
             }
 
             await _context.SaveChangesAsync();
@@ -314,7 +315,7 @@ namespace EasyRent_Checking.Controllers
 
         private bool DriverExists(int id)
         {
-            return _context.Driver.Any(e => e.DriverId == id);
+            return _context.Drivers.Any(e => e.DriverId == id);
         }
     }
 }

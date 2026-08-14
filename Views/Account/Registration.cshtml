@@ -1,4 +1,4 @@
-﻿@model EasyRent_Checking.Models.CustomerAccountInputModel
+﻿@model EasyRent_Checking.ViewModels.CustomerAccountInputModel
 @using EasyRent_Checking.Models
 
 @{
@@ -10,7 +10,7 @@
 <div class="auth-page">
     <div class="auth-register-header">
         <div class="auth-card-brand">
-            <span class="client-brand-logo">L</span>
+            <img src="~/images/System Images/EasyRentLogo.png" alt="EasyRent" class="client-brand-logo-img" asp-append-version="true" />
             <span class="client-brand-name">EasyRent</span>
         </div>
         <h1 class="auth-title">Create Your Account</h1>
@@ -18,7 +18,15 @@
     </div>
 
     <div class="auth-card auth-card-register">
+        @if (ViewData["LoginReminder"] != null)
+        {
+            <div class="auth-reminder" role="status">
+                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                <p>@ViewData["LoginReminder"]</p>
+            </div>
+        }
         <form asp-controller="Account" asp-action="Registration" method="post" enctype="multipart/form-data" class="auth-form" novalidate>
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
             <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
             <div class="auth-field">
@@ -124,7 +132,7 @@
         <div class="auth-divider"></div>
         <p class="auth-footer-text">
             Already have an account?
-            <a asp-controller="Account" asp-action="Login" class="auth-footer-link">Login here</a>
+            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="auth-footer-link">Login here</a>
         </p>
     </div>
 </div>

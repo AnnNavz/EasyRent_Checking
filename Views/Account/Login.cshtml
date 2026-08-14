@@ -7,7 +7,7 @@
 <div class="auth-page">
     <div class="auth-login-header">
         <div class="auth-card-brand">
-            <span class="client-brand-logo">L</span>
+            <img src="~/images/System Images/EasyRentLogo.png" alt="EasyRent" class="client-brand-logo-img" asp-append-version="true" />
             <span class="client-brand-name">EasyRent</span>
         </div>
         <p class="auth-subtitle auth-login-welcome">Welcome back! Please login to your account</p>
@@ -22,7 +22,15 @@
         {
             <div class="alert alert-danger small py-2 px-3 mb-3" role="alert">@TempData["ErrorMessage"]</div>
         }
+        @if (ViewData["LoginReminder"] != null)
+        {
+            <div class="auth-reminder" role="status">
+                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                <p>@ViewData["LoginReminder"]</p>
+            </div>
+        }
         <form asp-controller="Account" asp-action="Login" method="post" class="auth-form" novalidate>
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
             <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
             <div class="auth-field">
@@ -54,7 +62,7 @@
 
         <p class="auth-footer-text auth-login-footer">
             Don't have an account yet?
-            <a asp-controller="Account" asp-action="Registration" class="auth-footer-link">Sign up for free</a>
+            <a asp-controller="Account" asp-action="Registration" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="auth-footer-link">Sign up for free</a>
         </p>
     </div>
 </div>

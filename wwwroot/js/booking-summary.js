@@ -41,6 +41,35 @@
         return Math.max(0, Math.round((end - start) / 3600000));
     }
 
+    function setPreviewImage(wrapId, imgId, linkId, src) {
+        var wrap = document.getElementById(wrapId);
+        var img = document.getElementById(imgId);
+        var link = document.getElementById(linkId);
+        if (!wrap || !img) return;
+
+        if (src) {
+            img.src = src;
+            if (link) link.href = src;
+            wrap.classList.remove('d-none');
+        } else {
+            img.removeAttribute('src');
+            if (link) link.href = '#';
+            wrap.classList.add('d-none');
+        }
+    }
+
+    function loadFilePreview(file, wrapId, imgId, linkId) {
+        if (!file || !(file.type && file.type.indexOf('image/') === 0)) {
+            setPreviewImage(wrapId, imgId, linkId, null);
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            setPreviewImage(wrapId, imgId, linkId, e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+
     function populateBookingSummary(data) {
         var now = data.bookingDate || new Date();
         var bookingLabel = formatDisplayDate(
@@ -56,7 +85,7 @@
         var succeedingFee = Number(data.succeedingFee || 0);
         var succeedingAmount = succeedingHours * succeedingFee;
         var subtotal = basePrice + succeedingAmount;
-        var hasDiscount = data.discount === 'Yes' || data.discount === true;
+        var hasDiscount = data.discount === 'Yes' || data.discount === true || data.discount === '1';
         var discountAmount = hasDiscount ? subtotal * 0.10 : 0;
         var total = subtotal - discountAmount;
 
@@ -72,7 +101,6 @@
         text('summaryPickupDateTime', (data.pickupDate ? formatDisplayDate(data.pickupDate) : '—') + (data.pickupTime ? ' • ' + formatDisplayTime(data.pickupTime) : ''));
         text('summaryReturnDateTime', (data.returnDate ? formatDisplayDate(data.returnDate) : '—') + (data.returnTime ? ' • ' + formatDisplayTime(data.returnTime) : ''));
         text('summaryDuration', hours === 1 ? '1 hour' : hours + ' hours');
-        text('summaryValidId', hasDiscount ? (data.discountFileName || 'ID uploaded') : 'Not required');
         text('summaryNotes', data.notes || 'None');
 
         text('summaryBaseFee', formatPeso(basePrice));
@@ -82,38 +110,111 @@
         text('summarySucceedingFee', formatPeso(succeedingAmount));
 
         var discountRow = document.getElementById('summaryDiscountRow');
-        if (discountRow) {
-            discountRow.style.display = hasDiscount ? '' : 'none';
-        }
+        var discountSpacer = document.getElementById('summaryDiscountSpacer');
+        if (discountRow) discountRow.hidden = !hasDiscount;
+        if (discountSpacer) discountSpacer.hidden = !hasDiscount;
         text('summaryDiscountAmount', '-' + formatPeso(discountAmount));
         text('summaryTotalCost', formatPeso(total));
+
+        // Discount / Senior ID preview
+        var discountFileInput = document.getElementById('input-DiscountFile');
+        var discountFile = (discountFileInput && discountFileInput.files && discountFileInput.files[0])
+            ? discountFileInput.files[0]
+            : null;
+        if (hasDiscount) {
+            if (discountFile) {
+                text('summaryValidId', discountFile.name);
+                loadFilePreview(discountFile, 'summaryDiscountPreviewWrap', 'summaryDiscountPreviewImg', 'summaryDiscountPreviewLink');
+            } else if (data.discountImageUrl) {
+                text('summaryValidId', data.discountFileName || 'ID on file');
+                setPreviewImage('summaryDiscountPreviewWrap', 'summaryDiscountPreviewImg', 'summaryDiscountPreviewLink', data.discountImageUrl);
+            } else {
+                text('summaryValidId', data.discountFileName || 'ID uploaded');
+                setPreviewImage('summaryDiscountPreviewWrap', 'summaryDiscountPreviewImg', 'summaryDiscountPreviewLink', null);
+            }
+        } else {
+            text('summaryValidId', 'Not required');
+            setPreviewImage('summaryDiscountPreviewWrap', 'summaryDiscountPreviewImg', 'summaryDiscountPreviewLink', null);
+        }
+
+        // Receipt preview (cashless payments)
+        var receiptSection = document.getElementById('summaryReceiptSection');
+        var receiptFileInput = document.getElementById('input-ReceiptFile');
+        var receiptFile = (receiptFileInput && receiptFileInput.files && receiptFileInput.files[0])
+            ? receiptFileInput.files[0]
+            : null;
+        var paymentMethod = data.paymentMethod || '';
+        var showReceipt = receiptSection && paymentMethod && paymentMethod !== 'Walk-in' && (receiptFile || data.receiptImageUrl);
+
+        if (receiptSection) {
+            receiptSection.hidden = !showReceipt;
+            if (showReceipt) {
+                if (receiptFile) {
+                    text('summaryReceiptName', receiptFile.name);
+                    loadFilePreview(receiptFile, 'summaryReceiptPreviewWrap', 'summaryReceiptPreviewImg', 'summaryReceiptPreviewLink');
+                } else {
+                    text('summaryReceiptName', data.receiptFileName || 'Receipt on file');
+                    setPreviewImage('summaryReceiptPreviewWrap', 'summaryReceiptPreviewImg', 'summaryReceiptPreviewLink', data.receiptImageUrl || null);
+                }
+            } else {
+                text('summaryReceiptName', '—');
+                setPreviewImage('summaryReceiptPreviewWrap', 'summaryReceiptPreviewImg', 'summaryReceiptPreviewLink', null);
+            }
+        }
+
+        if (data.paymentType != null) text('summaryPaymentType', data.paymentType);
+        if (data.paymentMethod != null) text('summaryPaymentMethod', data.paymentMethod);
+        if (data.amountPaid != null) text('summaryAmountPaid', formatPeso(data.amountPaid));
+        if (data.accountName != null) text('summaryPaymentAccount', data.accountName || '—');
     }
 
     function initBookingWizard(options) {
         var form = document.getElementById(options.formId || 'reservationWizardForm');
         var stepNodes = Array.prototype.slice.call(document.querySelectorAll(options.stepSelector || '.admin-booking-stepper .step-node'));
-        var step1 = document.getElementById(options.step1Id || 'reservationStep1');
-        var step2 = document.getElementById(options.step2Id || 'reservationStep2');
-        var continueBtn = document.getElementById(options.continueBtnId || 'continueToSummaryBtn');
-        var summaryBackBtn = document.getElementById('summaryBackBtn');
+        var stepLines = Array.prototype.slice.call(document.querySelectorAll('.client-reservation-stepper .client-reservation-step-line'));
+        var panelIds = options.stepPanelIds || ['reservationStep1', 'reservationStep2'];
+        var panels = panelIds.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+        var totalPanels = panels.length || 2;
+        var submitStep = options.submitStep || totalPanels;
+        var visualStepMap = options.visualStepMap || null;
         var currentStep = 1;
 
         function setStep(step) {
             currentStep = step;
-            if (step1) step1.classList.toggle('active', step === 1);
-            if (step2) step2.classList.toggle('active', step === 2);
+            panels.forEach(function (panel, index) {
+                panel.classList.toggle('active', (index + 1) === step);
+            });
+
+            // Legacy 2-panel support when stepPanelIds not used fully
+            var step1 = document.getElementById(options.step1Id || 'reservationStep1');
+            var step2 = document.getElementById(options.step2Id || 'reservationStep2');
+            if (!options.stepPanelIds) {
+                if (step1) step1.classList.toggle('active', step === 1);
+                if (step2) step2.classList.toggle('active', step === 2);
+            }
+
+            var visualStep = visualStepMap && visualStepMap[step] != null
+                ? Number(visualStepMap[step])
+                : step;
 
             stepNodes.forEach(function (node, index) {
                 var n = index + 1;
-                node.classList.toggle('active', n === step);
-                node.classList.toggle('completed', n < step);
-                var circle = node.querySelector('.step-circle');
+                var isActive = n === visualStep;
+                var isCompleted = n < visualStep;
+                node.classList.toggle('active', isActive);
+                node.classList.toggle('completed', isCompleted);
+
+                var circle = node.querySelector('.step-circle, .client-reservation-step-dot');
                 if (!circle) return;
-                if (n < step) {
+                if (isCompleted) {
                     circle.innerHTML = '<i class="bi bi-check-lg"></i>';
                 } else {
                     circle.textContent = String(n);
                 }
+            });
+
+            stepLines.forEach(function (line, index) {
+                line.classList.toggle('is-complete', index < (visualStep - 1));
             });
 
             if (typeof options.onStepChange === 'function') {
@@ -123,55 +224,167 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function validateStep1() {
-            if (typeof options.validateStep1 === 'function') {
-                return options.validateStep1();
+        function runValidator(name) {
+            if (typeof options[name] === 'function') {
+                return options[name]();
             }
             return true;
         }
 
-        if (continueBtn) {
-            continueBtn.addEventListener('click', function () {
-                if (!validateStep1()) return;
-                if (typeof options.collectSummaryData === 'function') {
-                    populateBookingSummary(options.collectSummaryData());
+        function goNextFrom(step) {
+            if (step === 1 && !runValidator('validateStep1')) return;
+            if (step === 2 && !runValidator('validateStep2')) return;
+            if (step === 3 && !runValidator('validateStep3')) return;
+            if (step === 4 && !runValidator('validateStep4')) return;
+
+            var next = typeof options.resolveNextStep === 'function'
+                ? Number(options.resolveNextStep(step))
+                : step + 1;
+            if (!next || next < 1) next = step + 1;
+
+            var effectiveSubmit = typeof options.getSubmitStep === 'function'
+                ? Number(options.getSubmitStep())
+                : submitStep;
+
+            if (next >= effectiveSubmit && typeof options.collectSummaryData === 'function') {
+                populateBookingSummary(options.collectSummaryData());
+            }
+            setStep(Math.min(next, totalPanels));
+        }
+
+        function goBackFrom(step) {
+            var to = typeof options.resolveBackStep === 'function'
+                ? Number(options.resolveBackStep(step))
+                : step - 1;
+            if (!to || to < 1) to = Math.max(1, step - 1);
+            setStep(to);
+        }
+
+        document.querySelectorAll('[data-wizard-next]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var from = Number(btn.getAttribute('data-wizard-next') || currentStep);
+                goNextFrom(from);
+            });
+        });
+
+        document.querySelectorAll('[data-wizard-back]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (typeof options.resolveBackStep === 'function') {
+                    goBackFrom(currentStep);
+                    return;
                 }
-                setStep(2);
+                var to = Number(btn.getAttribute('data-wizard-back') || (currentStep - 1));
+                setStep(Math.max(1, to));
+            });
+        });
+
+        var continueBtn = document.getElementById(options.continueBtnId || 'continueToSummaryBtn');
+        if (continueBtn && !continueBtn.hasAttribute('data-wizard-next')) {
+            continueBtn.addEventListener('click', function () {
+                goNextFrom(1);
             });
         }
 
+        var summaryBackBtn = document.getElementById('summaryBackBtn');
         if (summaryBackBtn) {
-            summaryBackBtn.addEventListener('click', function () {
-                setStep(1);
+            summaryBackBtn.addEventListener('click', function (e) {
+                if (typeof options.resolveBackStep === 'function') {
+                    e.preventDefault();
+                    goBackFrom(currentStep);
+                } else if (!summaryBackBtn.hasAttribute('data-wizard-back')) {
+                    var effectiveSubmit = typeof options.getSubmitStep === 'function'
+                        ? Number(options.getSubmitStep())
+                        : submitStep;
+                    setStep(Math.max(1, effectiveSubmit - 1));
+                }
             });
         }
 
         document.querySelectorAll('[data-summary-edit]').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                setStep(1);
+                var target = Number(btn.getAttribute('data-summary-edit-step') || 1);
+                if (typeof options.resolveSummaryEditStep === 'function') {
+                    target = Number(options.resolveSummaryEditStep(btn, target));
+                }
+                setStep(target);
             });
         });
 
         if (form) {
             form.addEventListener('submit', function (e) {
-                if (currentStep !== 2) {
+                var effectiveSubmit = typeof options.getSubmitStep === 'function'
+                    ? Number(options.getSubmitStep())
+                    : submitStep;
+                if (currentStep !== effectiveSubmit) {
                     e.preventDefault();
-                    if (!validateStep1()) return;
-                    if (typeof options.collectSummaryData === 'function') {
-                        populateBookingSummary(options.collectSummaryData());
-                    }
-                    setStep(2);
+                    goNextFrom(currentStep);
                 }
             });
         }
 
         setStep(1);
-        return { setStep: setStep, populateBookingSummary: populateBookingSummary };
+        return { setStep: setStep, populateBookingSummary: populateBookingSummary, getCurrentStep: function () { return currentStep; } };
+    }
+
+    function initReceiptUpload() {
+        var fileInput = document.getElementById('input-ReceiptFile');
+        var emptyState = document.getElementById('receiptUploadEmpty');
+        var previewState = document.getElementById('receiptUploadPreview');
+        var previewImg = document.getElementById('receiptPreviewImg');
+        var previewPlaceholder = document.getElementById('receiptPreviewPlaceholder');
+        var filenameLabel = document.getElementById('receiptFilename');
+        var removeBtn = document.getElementById('receiptRemoveBtn');
+        if (!fileInput || !emptyState || !previewState) return;
+
+        function clearReceipt() {
+            fileInput.value = '';
+            if (previewImg) {
+                previewImg.src = '';
+                previewImg.classList.add('d-none');
+            }
+            if (previewPlaceholder) previewPlaceholder.classList.remove('d-none');
+            if (filenameLabel) filenameLabel.textContent = '';
+            emptyState.classList.remove('d-none');
+            previewState.classList.remove('is-visible');
+        }
+
+        function showReceipt(file) {
+            if (!file) return;
+            if (filenameLabel) filenameLabel.textContent = file.name;
+            emptyState.classList.add('d-none');
+            previewState.classList.add('is-visible');
+            if (file.type && file.type.indexOf('image/') === 0 && previewImg) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    if (previewPlaceholder) previewPlaceholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            } else if (previewImg) {
+                previewImg.classList.add('d-none');
+                if (previewPlaceholder) previewPlaceholder.classList.remove('d-none');
+            }
+        }
+
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files[0]) showReceipt(fileInput.files[0]);
+            else clearReceipt();
+        });
+
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                clearReceipt();
+            });
+        }
     }
 
     window.BookingSummary = {
         populate: populateBookingSummary,
         initWizard: initBookingWizard,
+        initReceiptUpload: initReceiptUpload,
         calcHours: calcHours,
         formatPeso: formatPeso
     };

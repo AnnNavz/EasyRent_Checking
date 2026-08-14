@@ -1,10 +1,11 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EasyRent_Checking.Models;
+using EasyRent_Checking.ViewModels;
 using EasyRent_Checking.Data;
 using EasyRent_Checking.Services;
 
@@ -12,6 +13,8 @@ namespace EasyRent_Checking.Controllers
 {
 	public class AccountController : Controller
 	{
+		private const string BookingAccountReminder = "Please log in or create an account to continue booking. An EasyRent account is required before you can rent a vehicle.";
+
 		private readonly EasyRent_CheckingContext _context;
 		private readonly IWebHostEnvironment _webHostEnvironment;
 		private readonly IEmailSender _emailSender;
@@ -30,16 +33,18 @@ namespace EasyRent_Checking.Controllers
 		}
 
 		[HttpGet]
-		public IActionResult Registration()
+		public IActionResult Registration(string? returnUrl)
 		{
+			PrepareAuthReminder(returnUrl);
 			return View(new CustomerAccountInputModel { Status = Status.Pending });
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Registration([Bind("FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,ValidIDImageFile")] CustomerAccountInputModel model)
+		public async Task<IActionResult> Registration([Bind("FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,ValidIDImageFile")] CustomerAccountInputModel model, string? returnUrl)
 		{
 			model.Status = Status.Pending;
+			PrepareAuthReminder(returnUrl);
 
 			if (string.IsNullOrWhiteSpace(model.Password))
 			{
@@ -130,7 +135,7 @@ namespace EasyRent_Checking.Controllers
 				TempData["SuccessMessage"] = "Account created, but we could not send the verification email. Please contact support.";
 			}
 
-			return RedirectToAction(nameof(Login));
+			return RedirectToAction(nameof(Login), new { returnUrl });
 		}
 
 		[HttpGet]
@@ -162,15 +167,18 @@ namespace EasyRent_Checking.Controllers
 		}
 
 		[HttpGet]
-		public IActionResult Login()
+		public IActionResult Login(string? returnUrl)
 		{
+			PrepareAuthReminder(returnUrl);
 			return View();
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Login(string email, string password, bool rememberMe)
+		public async Task<IActionResult> Login(string email, string password, bool rememberMe, string? returnUrl)
 		{
+			PrepareAuthReminder(returnUrl);
+
 			if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
 			{
 				ModelState.AddModelError(string.Empty, "Email and password are required.");
@@ -182,10 +190,43 @@ namespace EasyRent_Checking.Controllers
 				.Include(u => u.AdminProfile)
 				.FirstOrDefaultAsync(u => u.Email == email.Trim());
 
-			if (user == null || !user.VerifyPassword(password))
+			if (user == null)
 			{
 				ModelState.AddModelError(string.Empty, "Invalid email or password.");
 				return View();
+			}
+
+			var utcNow = DateTime.UtcNow;
+			if (user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value <= utcNow)
+			{
+				user.ResetLockout();
+				await _context.SaveChangesAsync();
+			}
+
+			if (user.IsLockedOut(utcNow))
+			{
+				AddLockoutError(user.RemainingLockoutMinutes(utcNow));
+				return View();
+			}
+
+			if (!user.VerifyPassword(password))
+			{
+				if (user.RegisterFailedAttempt(utcNow))
+				{
+					await _context.SaveChangesAsync();
+					AddLockoutError(user.RemainingLockoutMinutes(utcNow));
+					return View();
+				}
+
+				await _context.SaveChangesAsync();
+				ModelState.AddModelError(string.Empty, "Invalid email or password.");
+				return View();
+			}
+
+			if (user.AccessFailedCount > 0 || user.LockoutEndUtc != null)
+			{
+				user.ResetLockout();
+				await _context.SaveChangesAsync();
 			}
 
 			if (!user.EmailConfirmed)
@@ -232,9 +273,16 @@ namespace EasyRent_Checking.Controllers
 				authProperties);
 
 			TempData["SuccessMessage"] = "Signed in successfully.";
+			if (user.Role == UserRole.Customer
+				&& !string.IsNullOrWhiteSpace(returnUrl)
+				&& Url.IsLocalUrl(returnUrl))
+			{
+				return Redirect(returnUrl);
+			}
+
 			return user.Role == UserRole.Customer
-				? RedirectToAction("Homepage", "Vehicles")
-				: RedirectToAction("Index", "Reservations");
+				? RedirectToAction("Homepage", "ClientSide")
+				: RedirectToAction("Index", "Rentals");
 		}
 
 		[HttpGet]
@@ -243,6 +291,36 @@ namespace EasyRent_Checking.Controllers
 			await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 			TempData["SuccessMessage"] = "You have been logged out.";
 			return RedirectToAction(nameof(Login));
+		}
+
+		private void AddLockoutError(int remainingMinutes)
+		{
+			var minuteLabel = remainingMinutes == 1 ? "minute" : "minutes";
+			ModelState.AddModelError(
+				string.Empty,
+				$"Too many failed login attempts. Your account is locked. Please try again in {remainingMinutes} {minuteLabel}.");
+		}
+
+		private void PrepareAuthReminder(string? returnUrl)
+		{
+			ViewData["ReturnUrl"] = returnUrl;
+			if (IsBookingReturnUrl(returnUrl))
+			{
+				ViewData["LoginReminder"] = BookingAccountReminder;
+			}
+		}
+
+		private static bool IsBookingReturnUrl(string? returnUrl)
+		{
+			if (string.IsNullOrWhiteSpace(returnUrl))
+			{
+				return false;
+			}
+
+			return returnUrl.Contains("/ClientSide/Rental", StringComparison.OrdinalIgnoreCase)
+				|| returnUrl.Contains("/ClientSide/Reservation", StringComparison.OrdinalIgnoreCase)
+				|| returnUrl.Contains("/Vehicles/Rental", StringComparison.OrdinalIgnoreCase)
+				|| returnUrl.Contains("/Vehicles/Reservation", StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }

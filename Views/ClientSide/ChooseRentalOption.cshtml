@@ -1,0 +1,55 @@
+@model EasyRent_Checking.Models.Vehicle
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Book or Reserve";
+    ViewData["ActiveNav"] = "Vehicles";
+    string vehicleTitle = $"{Model.Brand} {Model.Model}";
+    string breadcrumbLabel = vehicleTitle;
+}
+
+<div class="client-details-breadcrumb-bar">
+    <div class="client-details-breadcrumb-inner">
+        <nav class="client-details-breadcrumb" aria-label="Breadcrumb">
+            <a asp-action="Homepage"><i class="bi bi-house-door"></i></a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <a asp-action="Browse">Browse Vehicles</a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <a asp-action="VehicleDetails" asp-route-id="@Model.VehicleId">@breadcrumbLabel</a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <span class="client-details-breadcrumb-current">Choose Option</span>
+        </nav>
+        <a asp-action="VehicleDetails" asp-route-id="@Model.VehicleId" class="client-btn-back-browse">
+            <i class="bi bi-arrow-left"></i>
+            Back to Vehicle Details
+        </a>
+    </div>
+</div>
+
+<div class="client-page client-choose-option-page">
+    <div class="client-choose-option-wrap">
+        <h1 class="client-choose-option-title">How would you like to proceed?</h1>
+        <p class="client-choose-option-subtitle">
+            Choose <strong>Book</strong> to pay now, or <strong>Reserve</strong> to hold the vehicle and pay within @RentalRules.ReservePaymentWindowDays days.
+        </p>
+
+        <div class="client-choose-option-grid">
+            <a asp-action="Rental" asp-route-id="@Model.VehicleId" asp-route-option="Book" class="client-choose-option-card is-book">
+                <span class="client-choose-option-icon"><i class="bi bi-credit-card-2-front"></i></span>
+                <h2>Book</h2>
+                <p>Complete trip details and payment now. Your request goes to staff for confirmation right away.</p>
+                <span class="client-choose-option-cta">Continue to Book <i class="bi bi-arrow-right"></i></span>
+            </a>
+
+            <a asp-action="Rental" asp-route-id="@Model.VehicleId" asp-route-option="Reserve" class="client-choose-option-card is-reserve">
+                <span class="client-choose-option-icon"><i class="bi bi-hourglass-split"></i></span>
+                <h2>Reserve</h2>
+                <p>Hold this vehicle without paying yet. You must pay within @RentalRules.ReservePaymentWindowDays days, or the hold expires automatically.</p>
+                <span class="client-choose-option-cta">Continue to Reserve <i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+
+        <p class="client-choose-option-vehicle">Selected vehicle: <strong>@vehicleTitle</strong></p>
+    </div>
+</div>

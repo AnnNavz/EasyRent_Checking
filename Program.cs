@@ -11,6 +11,7 @@ builder.Services.AddDbContext<EasyRent_CheckingContext>(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddScoped<BookingEmailService>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
 	.AddCookie(options =>
 	{
@@ -33,6 +34,19 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+	var path = context.Request.Path.Value;
+	if (!string.IsNullOrEmpty(path)
+		&& path.StartsWith("/images/Reservations", StringComparison.OrdinalIgnoreCase))
+	{
+		context.Request.Path = "/images/Rentals" + path["/images/Reservations".Length..];
+	}
+
+	await next();
+});
+
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -41,7 +55,39 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
+    name: "legacy-client-reservation",
+    pattern: "ClientSide/Reservation/{id?}",
+    defaults: new { controller = "ClientSide", action = "Rental" });
+
+app.MapControllerRoute(
+    name: "legacy-client-pay-reservation",
+    pattern: "ClientSide/PayReservation/{id?}",
+    defaults: new { controller = "ClientSide", action = "PayRental" });
+
+app.MapControllerRoute(
+    name: "legacy-vehicles-reservation",
+    pattern: "Vehicles/Reservation/{id?}",
+    defaults: new { controller = "ClientSide", action = "Rental" });
+
+app.MapControllerRoute(
+    name: "legacy-vehicles-pay-reservation",
+    pattern: "Vehicles/PayReservation/{id?}",
+    defaults: new { controller = "ClientSide", action = "PayRental" });
+
+app.MapControllerRoute(
+    name: "legacy-client-from-vehicles",
+    pattern: "Vehicles/{action}/{id?}",
+    defaults: new { controller = "ClientSide" },
+    constraints: new { action = "Homepage|Browse|VehicleDetails|Rental|PayRental|MyBookings|MyBookingDetails|RateTrip" });
+
+app.MapControllerRoute(
+    name: "legacy-admin-dashboard",
+    pattern: "Admin/{action=Dashboard}/{id?}",
+    defaults: new { controller = "Dashboard", action = "Index" },
+    constraints: new { action = "Dashboard|Index" });
+
+app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Admin}/{action=Dashboard}/{id?}");
+    pattern: "{controller=ClientSide}/{action=Homepage}/{id?}");
 
 app.Run();

@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EasyRent_Checking.Data;
 using EasyRent_Checking.Models;
+using EasyRent_Checking.ViewModels;
 
 namespace EasyRent_Checking.Controllers
 {
+	/// <summary>CRUD for admin user accounts.</summary>
 	public class AdminsController : Controller
 	{
 		private readonly EasyRent_CheckingContext _context;
