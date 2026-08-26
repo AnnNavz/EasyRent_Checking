@@ -1,4 +1,4 @@
-﻿@model EasyRent_Checking.Models.Driver
+@model EasyRent_Checking.Models.Driver
 
 @{
     Layout = "_LayoutAdminDashboard";
@@ -6,21 +6,25 @@
     ViewData["ActivePage"] = "Drivers";
 }
 
-<div class="wizard-max-wrapper py-3">
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/driver-create.css" asp-append-version="true" />
+}
+
+<div class="wizard-max-wrapper driver-create-wizard py-3">
 
     <!-- Wizard Step Navigation Breadcrumbs -->
     <div class="step-timeline">
         <div class="step-node active" id="node-1">
             <div class="step-circle" id="circle-1">1</div>
-            <div class="step-label">Info</div>
+            <div class="step-label">INFO</div>
         </div>
         <div class="step-node" id="node-2">
             <div class="step-circle" id="circle-2">2</div>
-            <div class="step-label">Review</div>
+            <div class="step-label">REVIEW</div>
         </div>
         <div class="step-node" id="node-3">
             <div class="step-circle" id="circle-3">3</div>
-            <div class="step-label">Complete</div>
+            <div class="step-label">COMPLETE</div>
         </div>
     </div>
 
@@ -30,157 +34,119 @@
 
         <!-- STEP 1: PERSONAL INFORMATION PANEL -->
         <div class="wizard-step-panel active" id="stepPanel-1">
-            <div class="text-start mb-4">
-                <h5 class="wizard-page-title fw-bold text-dark mb-1" id="step1-title" style="letter-spacing: -0.3px;">Register new driver</h5>
-                <p class="text-muted small" id="step1-subtitle">Enter the foundational identity and contact details for the new driver.</p>
+            <div class="text-start mb-2">
+                <h5 class="driver-wizard-heading" id="step1-title">Register new driver</h5>
+                <p class="driver-wizard-subheading" id="step1-subtitle">Enter the foundational identity and contact details for the new driver.</p>
             </div>
 
-            <!-- Personal Information Section -->
-            <div class="form-container-card p-4 mb-4 shadow-sm">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-person-circle fs-5 text-secondary"></i>
-                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Personal Information</h6>
+            <div class="driver-wizard-card">
+                <div class="driver-wizard-section-head">
+                    <span class="driver-wizard-section-icon"><i class="bi bi-person-fill"></i></span>
+                    <h6 class="driver-wizard-section-title">Personal Information</h6>
                 </div>
-                <hr class="wizard-section-divider" />
 
-                <div class="text-center mb-4" id="profile-upload-section">
-                    <label for="input-File" class="d-inline-block mb-0" style="cursor: pointer;">
-                        <div id="photo-preview-circle" class="review-avatar-circle shadow-sm mx-auto position-relative overflow-hidden" style="width: 100px; height: 100px; border-radius: 50%; border: 2px dashed #dee2e6;">
-                            <i class="bi bi-cloud-upload text-muted fs-3" id="photo-placeholder-icon"></i>
-                            <img id="photo-preview-img" class="d-none position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; border-radius: 50%;" alt="Driver photo preview" />
+                <div class="driver-profile-upload-wrap" id="profile-upload-section">
+                    <label for="input-File" class="mb-0" style="cursor: pointer;">
+                        <div id="photo-preview-circle" class="driver-profile-upload-circle mx-auto position-relative">
+                            <i class="bi bi-image" id="photo-placeholder-icon"></i>
+                            <i class="bi bi-arrow-up-short driver-profile-upload-arrow" id="photo-upload-arrow"></i>
+                            <img id="photo-preview-img" class="d-none position-absolute top-0 start-0 w-100 h-100" alt="Driver photo preview" />
                         </div>
-                        <span class="d-block small text-muted mt-2 fw-semibold">Upload profile picture</span>
+                        <span class="driver-profile-upload-label">Upload profile picture</span>
+                        <span class="driver-profile-upload-hint">PNG, JPG, or JPEG (max)</span>
                         <input asp-for="ImageFile" id="input-File" type="file" class="d-none" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFileFeedback(this)" />
                     </label>
-                    <div id="file-upload-feedback" class="mt-2 bg-white p-2 px-3 rounded-3 d-none align-items-center justify-content-between shadow-sm border mx-auto" style="max-width: 320px;">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-check-circle-fill text-success fs-6"></i>
-                            <span id="feedback-filename" class="small fw-semibold text-dark font-monospace" style="font-size:0.8rem;">file_name.png</span>
-                        </div>
-                        <button type="button" class="btn btn-link text-muted small text-decoration-none p-0 border-0" style="font-size:0.8rem;" onclick="clearFileSelection()">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                    <div id="file-upload-feedback" class="driver-profile-file-bar d-none">
+                        <span id="feedback-filename" class="filename">file_name.png</span>
+                        <button type="button" class="driver-profile-remove-btn" onclick="clearFileSelection()">Remove</button>
                     </div>
                 </div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label fw-semibold small text-secondary mb-1">First Name</label>
-                            <input id="input-FirstName" class="form-control form-control-thin shadow-sm" placeholder="e.g. Jane" />
-                        </div>
+                        <label class="driver-wizard-label">Full Name</label>
+                        <input asp-for="Name" id="input-Name" class="form-control driver-wizard-input" placeholder="e.g. Jane Doe" />
+                        <span asp-validation-for="Name" id="name-validation-error" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label fw-semibold small text-secondary mb-1">Last Name</label>
-                            <input id="input-LastName" class="form-control form-control-thin shadow-sm" placeholder="e.g. Doe" />
-                        </div>
-                    </div>
-
-                    <input asp-for="Name" id="input-Name" type="hidden" />
-                    <span asp-validation-for="Name" id="name-validation-error" class="text-danger small d-block col-12"></span>
-
-                    <div class="col-12">
-                        <div class="form-group">
-                            <label class="form-label fw-semibold small text-secondary mb-1">Phone Number</label>
-                            <input asp-for="ContactNo" id="input-Contact" class="form-control form-control-thin shadow-sm" placeholder="+63 963 690 2998" />
-                            <span asp-validation-for="ContactNo" class="text-danger small mt-1 d-block"></span>
-                        </div>
+                        <label class="driver-wizard-label">Phone Number</label>
+                        <input asp-for="ContactNo" id="input-Contact" class="form-control driver-wizard-input" placeholder="09123456789 or +639123456789" />
+                        <span asp-validation-for="ContactNo" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-12">
-                        <div class="form-group">
-                            <label class="form-label fw-semibold small text-secondary mb-1">Address</label>
-                            <input asp-for="Address" id="input-Address" class="form-control form-control-thin shadow-sm" placeholder="123 Fleet Street, Suite 400, City, State, ZIP Code" />
-                            <span asp-validation-for="Address" class="text-danger small mt-1 d-block"></span>
-                        </div>
+                        <label class="driver-wizard-label">Address</label>
+                        <input asp-for="Address" id="input-Address" class="form-control driver-wizard-input" placeholder="123 Fleet Street, Suite 400, City, State, ZIP Code" />
+                        <span asp-validation-for="Address" class="text-danger small mt-1 d-block"></span>
                     </div>
                 </div>
             </div>
 
-            <!-- License and Uploads Section -->
-            <div class="form-container-card p-4 mb-4 shadow-sm">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
-                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">License and Uploads</h6>
+            <div class="driver-wizard-card">
+                <div class="driver-wizard-section-head">
+                    <span class="driver-wizard-section-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                    <h6 class="driver-wizard-section-title">License and Uploads</h6>
                 </div>
-                <hr class="wizard-section-divider" />
 
-                <div class="row g-3 mb-4">
+                <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label fw-semibold small text-secondary mb-1">Driver's License Number</label>
-                            <input asp-for="LicenseNo" id="input-License" class="form-control form-control-thin shadow-sm text-uppercase font-monospace" placeholder="e.g. D12938475" />
-                            <span asp-validation-for="LicenseNo" class="text-danger small mt-1 d-block"></span>
-                        </div>
+                        <label class="driver-wizard-label">Driver's License Number</label>
+                        <input asp-for="LicenseNo" id="input-License" class="form-control driver-wizard-input text-uppercase font-monospace" placeholder="e.g. D12938475" />
+                        <span asp-validation-for="LicenseNo" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label fw-semibold small text-secondary mb-1">Expiry Date</label>
-                            <input asp-for="ExpiryDate" id="input-Expiry" type="date" class="form-control form-control-thin shadow-sm" />
-                            <span asp-validation-for="ExpiryDate" class="text-danger small mt-1 d-block"></span>
-                        </div>
+                        <label class="driver-wizard-label">Expiry Date</label>
+                        <input asp-for="ExpiryDate" id="input-Expiry" type="date" class="form-control driver-wizard-input" />
+                        <span asp-validation-for="ExpiryDate" class="text-danger small mt-1 d-block"></span>
                     </div>
                 </div>
 
-                <div class="row g-4">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <div class="text-center fw-semibold small text-secondary mb-2">Front</div>
+                        <div class="driver-license-panel">
+                            <div class="driver-license-panel-title">Front of License</div>
 
                             <div id="front-license-upload-zone" class="license-upload-zone">
                                 <div>
-                                    <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
-                                    <span class="d-block small fw-bold text-dark mb-1">Drag & drop image scan or <span class="text-decoration-underline">click to browse</span></span>
-                                    <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                                    <i class="bi bi-person-vcard fs-3 d-block mb-2"></i>
+                                    <span class="d-block upload-main-text mb-1">Drag &amp; drop or click to upload</span>
+                                    <span class="d-block upload-sub-text">PNG, JPG, or JPEG (max)</span>
                                 </div>
                                 <input asp-for="FrontLicenseImageFile" id="input-FrontLicense" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFrontLicenseFeedback(this)" />
                             </div>
 
                             <div id="front-license-preview-state" class="d-none">
-                                <div class="edit-license-preview-wrap">
-                                    <div class="license-preview-box" id="front-license-preview-box" title="Click to replace image">
-                                        <img id="front-license-preview-img" class="d-none" alt="Front license preview" />
-                                        <div id="front-license-preview-placeholder" class="license-preview-placeholder"></div>
-                                    </div>
-                                    <button type="button" id="front-license-edit-remove" class="edit-license-remove-btn d-none" onclick="clearFrontLicenseSelection()" aria-label="Remove front license">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                    <span id="front-license-edit-filename" class="d-none small text-muted font-monospace text-center d-block mt-2"></span>
+                                <div class="license-preview-box" id="front-license-preview-box" title="Click to replace image" onclick="document.getElementById('input-FrontLicense').click()">
+                                    <img id="front-license-preview-img" class="d-none" alt="Front license preview" />
+                                    <div id="front-license-preview-placeholder" class="license-preview-placeholder"></div>
                                 </div>
-                                <div id="front-license-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between p-3">
+                                <div id="front-license-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between">
                                     <span id="front-license-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">front_license.png</span>
-                                    <button type="button" class="btn btn-link text-dark small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearFrontLicenseSelection()">Remove</button>
+                                    <button type="button" class="driver-license-remove-btn" onclick="clearFrontLicenseSelection()">Remove</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <div class="text-center fw-semibold small text-secondary mb-2">Back</div>
+                        <div class="driver-license-panel">
+                            <div class="driver-license-panel-title">Back of License</div>
 
                             <div id="back-license-upload-zone" class="license-upload-zone">
                                 <div>
-                                    <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
-                                    <span class="d-block small fw-bold text-dark mb-1">Drag & drop image scan or <span class="text-decoration-underline">click to browse</span></span>
-                                    <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                                    <i class="bi bi-person-vcard fs-3 d-block mb-2"></i>
+                                    <span class="d-block upload-main-text mb-1">Drag &amp; drop or click to upload</span>
+                                    <span class="d-block upload-sub-text">PNG, JPG, or JPEG (max)</span>
                                 </div>
                                 <input asp-for="BackLicenseImageFile" id="input-BackLicense" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,.pdf" onchange="updateBackLicenseFeedback(this)" />
                             </div>
 
                             <div id="back-license-preview-state" class="d-none">
-                                <div class="edit-license-preview-wrap">
-                                    <div class="license-preview-box" id="back-license-preview-box" title="Click to replace image">
-                                        <img id="back-license-preview-img" class="d-none" alt="Back license preview" />
-                                        <div id="back-license-preview-placeholder" class="license-preview-placeholder"></div>
-                                    </div>
-                                    <button type="button" id="back-license-edit-remove" class="edit-license-remove-btn d-none" onclick="clearBackLicenseSelection()" aria-label="Remove back license">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                    <span id="back-license-edit-filename" class="d-none small text-muted font-monospace text-center d-block mt-2"></span>
+                                <div class="license-preview-box" id="back-license-preview-box" title="Click to replace image" onclick="document.getElementById('input-BackLicense').click()">
+                                    <img id="back-license-preview-img" class="d-none" alt="Back license preview" />
+                                    <div id="back-license-preview-placeholder" class="license-preview-placeholder"></div>
                                 </div>
-                                <div id="back-license-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between p-3">
+                                <div id="back-license-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between">
                                     <span id="back-license-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">back_license.png</span>
-                                    <button type="button" class="btn btn-link text-dark small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearBackLicenseSelection()">Remove</button>
+                                    <button type="button" class="driver-license-remove-btn" onclick="clearBackLicenseSelection()">Remove</button>
                                 </div>
                             </div>
                         </div>
@@ -191,114 +157,118 @@
 
         <!-- STEP 2: REVIEW PANEL -->
         <div class="wizard-step-panel" id="stepPanel-2">
-            <div class="text-start mb-4">
-                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Reviews & Verify</h5>
-                <p class="text-muted small">Please confirm the driver details before saving to the database.</p>
+            <div class="text-start mb-2">
+                <h5 class="driver-wizard-heading">Reviews &amp; Verify</h5>
+                <p class="driver-wizard-subheading">Please confirm the driver details before saving to the database.</p>
             </div>
 
-            <div class="form-container-card p-4 mb-4 shadow-sm text-dark">
-                <!-- Summary: Personal Info -->
-                <div class="mb-4">
-                    <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
-                        <i class="bi bi-person-circle fs-5"></i>
-                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Personal Information</h6>
+            <div class="driver-wizard-card driver-review-card">
+                <div class="driver-review-card-head">
+                    <div class="driver-wizard-section-head mb-0">
+                        <span class="driver-wizard-section-icon"><i class="bi bi-person-fill"></i></span>
+                        <h6 class="driver-wizard-section-title">Personal Information</h6>
                     </div>
-                    <hr class="wizard-section-divider" />
-                    <div class="review-avatar-circle mb-4 shadow-sm position-relative overflow-hidden mx-auto" id="review-avatar-circle" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #dee2e6;">
-                        <i class="bi bi-person-fill text-muted fs-4" id="review-avatar-icon"></i>
-                        <img id="review-avatar-img" class="d-none position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; border-radius: 50%;" alt="Driver photo" />
+                    <button type="button" class="driver-review-edit-btn" onclick="openEditMode()">
+                        Edit <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+
+                <div class="driver-review-personal-layout">
+                    <div class="driver-review-avatar" id="review-avatar-circle">
+                        <i class="bi bi-person-fill" id="review-avatar-icon"></i>
+                        <img id="review-avatar-img" class="d-none position-absolute top-0 start-0 w-100 h-100" style="object-fit: contain;" alt="Driver photo" />
                     </div>
-                    <div class="row g-3 px-1" style="font-size: 0.9rem;">
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">First Name</span>
-                            <span id="review-FirstName" class="fw-bold text-dark">-</span>
+                    <div class="driver-review-grid">
+                        <div>
+                            <span class="driver-review-field-label">Full Name</span>
+                            <span id="review-Name" class="driver-review-field-value">-</span>
                         </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Last Name</span>
-                            <span id="review-LastName" class="fw-bold text-dark">-</span>
+                        <div>
+                            <span class="driver-review-field-label">Phone Number</span>
+                            <span id="review-Contact" class="driver-review-field-value">-</span>
                         </div>
-                        <div class="col-12">
-                            <span class="text-muted d-block small mb-0.5">Phone Number</span>
-                            <span id="review-Contact" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-12">
-                            <span class="text-muted d-block small mb-0.5">Address</span>
-                            <span id="review-Address" class="fw-bold text-dark" style="font-size:0.85rem;">-</span>
+                        <div class="driver-review-grid-full">
+                            <span class="driver-review-field-label">Address</span>
+                            <span id="review-Address" class="driver-review-field-value">-</span>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Summary: License Details -->
-                <div class="mb-4">
-                    <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
-                        <i class="bi bi-card-text fs-5"></i>
-                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">License Details</h6>
+            <div class="driver-wizard-card driver-review-card">
+                <div class="driver-review-card-head">
+                    <div class="driver-wizard-section-head mb-0">
+                        <span class="driver-wizard-section-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                        <h6 class="driver-wizard-section-title">License Details</h6>
                     </div>
-                    <hr class="wizard-section-divider" />
-                    <div class="row g-3 px-1" style="font-size: 0.9rem;">
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">License Number</span>
-                            <span id="review-License" class="fw-bold text-dark font-monospace text-uppercase">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Expiry Date</span>
-                            <span id="review-Expiry" class="fw-bold text-dark">-</span>
-                        </div>
+                    <button type="button" class="driver-review-edit-btn" onclick="openEditMode()">
+                        Edit <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+                <div class="driver-review-grid">
+                    <div>
+                        <span class="driver-review-field-label">License Number</span>
+                        <span id="review-License" class="driver-review-field-value font-monospace text-uppercase">-</span>
+                    </div>
+                    <div>
+                        <span class="driver-review-field-label">Expiry Date</span>
+                        <span id="review-Expiry" class="driver-review-field-value">-</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Summary: Uploaded Documents -->
-                <div>
-                    <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
-                        <i class="bi bi-file-earmark-arrow-up fs-5"></i>
-                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Uploaded Documents</h6>
+            <div class="driver-wizard-card driver-review-card">
+                <div class="driver-review-card-head">
+                    <div class="driver-wizard-section-head mb-0">
+                        <span class="driver-wizard-section-icon"><i class="bi bi-file-earmark-arrow-up-fill"></i></span>
+                        <h6 class="driver-wizard-section-title">Uploaded Documents</h6>
                     </div>
-                    <hr class="wizard-section-divider" />
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="review-doc-card">
-                                <div class="review-doc-preview">
-                                    <img id="review-FrontLicenseImg" class="d-none" alt="Front License" />
-                                    <div id="review-FrontLicensePlaceholder" class="license-preview-placeholder"></div>
-                                </div>
-                                <span id="review-FrontLicenseName" class="review-doc-filename">No front license</span>
+                    <button type="button" class="driver-review-edit-btn" onclick="openEditMode()">
+                        Edit <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="driver-review-doc-label">Front</div>
+                        <div class="review-doc-card">
+                            <div class="review-doc-preview">
+                                <img id="review-FrontLicenseImg" class="d-none" alt="Front License" />
+                                <div id="review-FrontLicensePlaceholder" class="license-preview-placeholder"></div>
                             </div>
+                            <span id="review-FrontLicenseName" class="review-doc-filename">No front license</span>
                         </div>
-                        <div class="col-md-6">
-                            <div class="review-doc-card">
-                                <div class="review-doc-preview">
-                                    <img id="review-BackLicenseImg" class="d-none" alt="Back License" />
-                                    <div id="review-BackLicensePlaceholder" class="license-preview-placeholder"></div>
-                                </div>
-                                <span id="review-BackLicenseName" class="review-doc-filename">No back license</span>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="driver-review-doc-label">Back</div>
+                        <div class="review-doc-card">
+                            <div class="review-doc-preview">
+                                <img id="review-BackLicenseImg" class="d-none" alt="Back License" />
+                                <div id="review-BackLicensePlaceholder" class="license-preview-placeholder"></div>
                             </div>
+                            <span id="review-BackLicenseName" class="review-doc-filename">No back license</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- STEP 3: COMPLETE PANEL -->
         <div class="wizard-step-panel" id="stepPanel-3">
-            <div class="text-center py-5">
+            <div class="driver-success-panel">
                 <div class="mb-4">
-                    <div class="success-circle mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background-color: #d4edda; border-radius: 50%;">
-                        <i class="bi bi-check-lg text-success fs-2"></i>
-                    </div>
+                    <partial name="_SuccessCheckIcon" />
                 </div>
-                <h5 class="wizard-page-title fw-bold text-dark mb-2" style="letter-spacing: -0.3px;">Driver Created Successfully!</h5>
-                <p class="text-muted small mb-4">The driver has been added to the system and is ready for assignment.</p>
-                <div class="d-flex justify-content-center gap-2">
-                    <a href="@Url.Action("Index")" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;">View Drivers</a>
-                    <a href="@Url.Action("Create")" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;">Add Another Driver</a>
+                <h5 class="driver-wizard-heading mb-2">Driver Profile Created</h5>
+                <p class="driver-wizard-subheading mb-4">The driver has been added to the system and is ready for assignment.</p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <a href="@Url.Action("Details", new { id = 0 })" class="btn driver-wizard-btn-next" id="successProfileLink">View Driver's Profile</a>
+                    <a href="@Url.Action("Create")" class="btn driver-wizard-btn-back">Add Another Driver</a>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom Actions Row -->
-        <div class="d-flex justify-content-end gap-2 align-items-center">
-            <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;" id="btnWizardCancel" onclick="handleCancelClick()">Back</button>
-            <button type="button" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;" id="btnWizardNext" onclick="navigateStep(1)">Continue</button>
+        <div class="driver-wizard-actions">
+            <button type="button" class="btn driver-wizard-btn-back" id="btnWizardCancel" onclick="handleCancelClick()">Cancel</button>
+            <button type="button" class="btn driver-wizard-btn-next" id="btnWizardNext" onclick="navigateStep(1)">Continue</button>
         </div>
     </form>
 </div>
@@ -314,47 +284,15 @@
         3: []
     };
 
-    function combineNames() {
-        const firstName = document.getElementById('input-FirstName').value.trim();
-        const lastName = document.getElementById('input-LastName').value.trim();
-        document.getElementById('input-Name').value = (firstName + ' ' + lastName).trim();
-    }
-
     function validateStep(stepNum) {
         const fields = stepFields[stepNum];
         if (!fields || fields.length === 0) {
             return true;
         }
 
-        if (stepNum === 1) {
-            combineNames();
-        }
-
         const form = document.getElementById('driverWizardForm');
         let valid = true;
         let firstInvalid = null;
-
-        if (stepNum === 1) {
-            const firstName = document.getElementById('input-FirstName');
-            const lastName = document.getElementById('input-LastName');
-            const nameError = document.getElementById('name-validation-error');
-
-            if (!firstName.value.trim() || !lastName.value.trim()) {
-                if (nameError) {
-                    nameError.textContent = 'First and last name are required.';
-                }
-                firstName.classList.toggle('input-validation-error', !firstName.value.trim());
-                lastName.classList.toggle('input-validation-error', !lastName.value.trim());
-                valid = false;
-                firstInvalid = !firstName.value.trim() ? firstName : lastName;
-            } else {
-                if (nameError) {
-                    nameError.textContent = '';
-                }
-                firstName.classList.remove('input-validation-error');
-                lastName.classList.remove('input-validation-error');
-            }
-        }
 
         if (typeof jQuery !== 'undefined' && jQuery.fn.validate) {
             const validator = jQuery(form).validate();
@@ -438,7 +376,6 @@
         currentStep = targetStep;
         isEditMode = false;
         resetStep1Header();
-        setLicensePreviewMode(false);
         document.getElementById(`stepPanel-${currentStep}`).classList.add('active');
 
         for (let i = 1; i <= totalSteps; i++) {
@@ -451,6 +388,19 @@
         }
 
         updateWizardButtons();
+        updateStepCircles();
+    }
+
+    function updateStepCircles() {
+        for (let i = 1; i <= totalSteps; i++) {
+            const circle = document.getElementById(`circle-${i}`);
+            const node = document.getElementById(`node-${i}`);
+            if (!circle || !node) {
+                continue;
+            }
+
+            circle.textContent = String(i);
+        }
     }
 
     function openEditMode() {
@@ -495,35 +445,14 @@
     }
 
     function setLicensePreviewMode(isEdit) {
-        const frontRemoveBtn = document.getElementById('front-license-edit-remove');
-        const backRemoveBtn = document.getElementById('back-license-edit-remove');
-        const frontFilenameBar = document.getElementById('front-license-filename-bar');
-        const backFilenameBar = document.getElementById('back-license-filename-bar');
-        const frontEditFilename = document.getElementById('front-license-edit-filename');
-        const backEditFilename = document.getElementById('back-license-edit-filename');
         const frontPreviewBox = document.getElementById('front-license-preview-box');
         const backPreviewBox = document.getElementById('back-license-preview-box');
 
-        if (isEdit) {
-            frontRemoveBtn.classList.remove('d-none');
-            backRemoveBtn.classList.remove('d-none');
-            frontFilenameBar.classList.add('d-none');
-            backFilenameBar.classList.add('d-none');
-            frontEditFilename.classList.remove('d-none');
-            backEditFilename.classList.remove('d-none');
-            frontPreviewBox.classList.add('edit-clickable');
-            backPreviewBox.classList.add('edit-clickable');
-            frontEditFilename.innerText = document.getElementById('front-license-filename').innerText;
-            backEditFilename.innerText = document.getElementById('back-license-filename').innerText;
-        } else {
-            frontRemoveBtn.classList.add('d-none');
-            backRemoveBtn.classList.add('d-none');
-            frontFilenameBar.classList.remove('d-none');
-            backFilenameBar.classList.remove('d-none');
-            frontEditFilename.classList.add('d-none');
-            backEditFilename.classList.add('d-none');
-            frontPreviewBox.classList.remove('edit-clickable');
-            backPreviewBox.classList.remove('edit-clickable');
+        if (frontPreviewBox) {
+            frontPreviewBox.classList.toggle('edit-clickable', isEdit);
+        }
+        if (backPreviewBox) {
+            backPreviewBox.classList.toggle('edit-clickable', isEdit);
         }
     }
 
@@ -537,7 +466,6 @@
             updateFileFeedback(profileInput);
         } else if (profilePreview.src && !profilePreview.classList.contains('d-none')) {
             profileFeedback.classList.remove('d-none');
-            profileFeedback.classList.add('d-flex');
             document.getElementById('feedback-filename').innerText = profileInput.files.length > 0
                 ? profileInput.files[0].name
                 : 'profile_picture.png';
@@ -545,7 +473,6 @@
             profilePreview.classList.add('d-none');
             profileIcon.classList.remove('d-none');
             profileFeedback.classList.add('d-none');
-            profileFeedback.classList.remove('d-flex');
         }
 
         refreshLicensePreviewState('front');
@@ -559,8 +486,6 @@
         const uploadZone = document.getElementById(`${prefix}-license-upload-zone`);
         const previewImg = document.getElementById(`${prefix}-license-preview-img`);
         const previewPlaceholder = document.getElementById(`${prefix}-license-preview-placeholder`);
-        const editFilename = document.getElementById(`${prefix}-license-edit-filename`);
-        const filename = document.getElementById(`${prefix}-license-filename`);
 
         const hasFile = fileInput.files && fileInput.files.length > 0;
         const hasPreview = previewImg.src && !previewImg.classList.contains('d-none');
@@ -574,9 +499,6 @@
                 } else {
                     updateBackLicenseFeedback(fileInput);
                 }
-            }
-            if (isEditMode && editFilename) {
-                editFilename.innerText = hasFile ? fileInput.files[0].name : filename.innerText;
             }
         } else {
             uploadZone.classList.remove('d-none');
@@ -606,7 +528,7 @@
         const nextBtn = document.getElementById("btnWizardNext");
 
         if (isEditMode) {
-            cancelBtn.innerText = "Edit Details";
+            cancelBtn.innerText = "Back";
             cancelBtn.classList.remove('d-none');
             nextBtn.innerText = "Continue";
             nextBtn.classList.remove('d-none');
@@ -649,7 +571,6 @@
             const file = input.files[0];
             nameSpan.innerText = file.name;
             feedbackContainer.classList.remove('d-none');
-            feedbackContainer.classList.add('d-flex');
 
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
@@ -657,11 +578,13 @@
                     previewImg.src = e.target.result;
                     previewImg.classList.remove('d-none');
                     placeholderIcon.classList.add('d-none');
+                    document.getElementById('photo-upload-arrow').classList.add('d-none');
                 };
                 reader.readAsDataURL(file);
             } else {
                 previewImg.classList.add('d-none');
                 placeholderIcon.classList.remove('d-none');
+                document.getElementById('photo-upload-arrow').classList.remove('d-none');
             }
         }
     }
@@ -694,10 +617,7 @@
             }
 
             if (isEditMode) {
-                const editFilename = document.getElementById('front-license-edit-filename');
-                if (editFilename) {
-                    editFilename.innerText = file.name;
-                }
+                setLicensePreviewMode(true);
             }
         }
     }
@@ -728,13 +648,6 @@
                 previewImg.src = '';
                 previewPlaceholder.classList.remove('d-none');
             }
-
-            if (isEditMode) {
-                const editFilename = document.getElementById('back-license-edit-filename');
-                if (editFilename) {
-                    editFilename.innerText = file.name;
-                }
-            }
         }
     }
 
@@ -744,7 +657,6 @@
         const previewState = document.getElementById('front-license-preview-state');
         const previewImg = document.getElementById('front-license-preview-img');
         const previewPlaceholder = document.getElementById('front-license-preview-placeholder');
-        const editFilename = document.getElementById('front-license-edit-filename');
 
         fileInput.value = '';
         uploadZone.classList.remove('d-none');
@@ -752,9 +664,6 @@
         previewImg.src = '';
         previewImg.classList.add('d-none');
         previewPlaceholder.classList.remove('d-none');
-        if (editFilename) {
-            editFilename.innerText = '';
-        }
     }
 
     function clearBackLicenseSelection() {
@@ -770,10 +679,6 @@
         previewImg.src = '';
         previewImg.classList.add('d-none');
         previewPlaceholder.classList.remove('d-none');
-        const editFilename = document.getElementById('back-license-edit-filename');
-        if (editFilename) {
-            editFilename.innerText = '';
-        }
     }
 
     function setupLicenseDragDrop(zoneId, inputId, updateFn) {
@@ -814,6 +719,7 @@
         setupLicenseDragDrop('front-license-upload-zone', 'input-FrontLicense', updateFrontLicenseFeedback);
         setupLicenseDragDrop('back-license-upload-zone', 'input-BackLicense', updateBackLicenseFeedback);
         setupEditPreviewClicks();
+        updateStepCircles();
     });
 
     function clearFileSelection() {
@@ -824,15 +730,14 @@
 
         fileInput.value = '';
         feedbackContainer.classList.add('d-none');
-        feedbackContainer.classList.remove('d-flex');
         previewImg.src = '';
         previewImg.classList.add('d-none');
         placeholderIcon.classList.remove('d-none');
+        document.getElementById('photo-upload-arrow').classList.remove('d-none');
     }
 
     function compileReviewSummary() {
-        document.getElementById("review-FirstName").innerText = document.getElementById("input-FirstName").value.trim() || "N/A";
-        document.getElementById("review-LastName").innerText = document.getElementById("input-LastName").value.trim() || "N/A";
+        document.getElementById("review-Name").innerText = document.getElementById("input-Name").value.trim() || "N/A";
         document.getElementById("review-Contact").innerText = document.getElementById("input-Contact").value.trim() || "N/A";
         document.getElementById("review-Address").innerText = document.getElementById("input-Address").value.trim() || "N/A";
         document.getElementById("review-License").innerText = document.getElementById("input-License").value.trim() || "N/A";

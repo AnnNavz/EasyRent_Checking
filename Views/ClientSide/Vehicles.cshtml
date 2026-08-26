@@ -1,4 +1,4 @@
-﻿@model IEnumerable<EasyRent_Checking.Models.Vehicle>
+@model EasyRent_Checking.ViewModels.BrowseVehiclesViewModel
 @using EasyRent_Checking.Models
 
 @{
@@ -6,140 +6,291 @@
     ViewData["Title"] = "Browse Vehicles";
     ViewData["ActiveNav"] = "Vehicles";
 
-    var currentCategory = ViewData["CurrentCategory"]?.ToString() ?? "All";
-    var currentSort = ViewData["CurrentSort"]?.ToString() ?? "Default";
+    var categories = Model.Categories?.Count > 0 ? Model.Categories : new[] { "All", "SUV", "Sedan", "Van" };
 
-    var categories = new[] { "All", "SUV", "Sedan", "Van" };
-    var categoryLabels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    IEnumerable<int> PageNumbers()
     {
-        ["All"] = "All Cars",
-        ["SUV"] = "SUVs",
-        ["Sedan"] = "Sedans",
-        ["Van"] = "VANs"
-    };
+        if (Model.TotalPages <= 7)
+        {
+            return Enumerable.Range(1, Model.TotalPages);
+        }
+
+        var pages = new List<int> { 1 };
+        var start = Math.Max(2, Model.Page - 1);
+        var end = Math.Min(Model.TotalPages - 1, Model.Page + 1);
+        if (start > 2) pages.Add(0);
+        for (var i = start; i <= end; i++) pages.Add(i);
+        if (end < Model.TotalPages - 1) pages.Add(0);
+        pages.Add(Model.TotalPages);
+        return pages;
+    }
 }
 
-@functions {
-    string GetTypeLabel(VehicleType type) => type == VehicleType.Van ? "VAN" : type.ToString().ToUpper();
-}
-
-<div class="client-page">
-    <div class="client-page-header">
-        <div>
+<div class="client-home browse-page">
+    <div class="home-wrap">
+        <div class="browse-header">
             <h1>Browse Vehicles</h1>
             <p>Find the perfect vehicle for your next adventure.</p>
         </div>
-    </div>
 
-    <div class="client-toolbar">
-        <div class="client-category-filters">
-            @foreach (var category in categories)
-            {
-                var isActive = string.Equals(currentCategory, category, StringComparison.OrdinalIgnoreCase);
-                <a asp-action="Browse"
-                   asp-route-category="@category"
-                   asp-route-sortBy="@currentSort"
-                   class="client-filter-pill @(isActive ? "active" : "")">
-                    @categoryLabels[category]
-                </a>
-            }
-        </div>
+        <form asp-controller="ClientSide" asp-action="Browse" method="get" class="home-search browse-search" id="browseSearchForm">
+            <input type="hidden" name="sortBy" value="@Model.CurrentSort" />
+            <input type="hidden" name="category" value="@Model.CurrentCategory" />
+            <input type="hidden" name="q" value="@Model.Query" />
 
-        <div class="client-toolbar-actions">
-            <div class="dropdown">
-                <button class="client-toolbar-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Filters
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li><a class="dropdown-item" asp-action="Browse" asp-route-category="All" asp-route-sortBy="@currentSort">Available only</a></li>
-                    <li><a class="dropdown-item" asp-action="Browse" asp-route-category="SUV" asp-route-sortBy="@currentSort">SUVs only</a></li>
-                    <li><a class="dropdown-item" asp-action="Browse" asp-route-category="Sedan" asp-route-sortBy="@currentSort">Sedans only</a></li>
-                    <li><a class="dropdown-item" asp-action="Browse" asp-route-category="Van" asp-route-sortBy="@currentSort">VANs only</a></li>
-                </ul>
-            </div>
-
-            <div class="dropdown">
-                <button class="client-toolbar-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Sorting by
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li><a class="dropdown-item @(currentSort == "Default" ? "active" : "")" asp-action="Browse" asp-route-category="@currentCategory" asp-route-sortBy="Default">Newest first</a></li>
-                    <li><a class="dropdown-item @(currentSort == "Model" ? "active" : "")" asp-action="Browse" asp-route-category="@currentCategory" asp-route-sortBy="Model">Model (A–Z)</a></li>
-                    <li><a class="dropdown-item @(currentSort == "Brand" ? "active" : "")" asp-action="Browse" asp-route-category="@currentCategory" asp-route-sortBy="Brand">Brand (A–Z)</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    @if (Model != null && Model.Any())
-    {
-        <div class="client-vehicle-grid">
-            @foreach (var item in Model)
-            {
-                <article class="client-vehicle-card">
-                    <div class="client-vehicle-image">
-                        @if (!string.IsNullOrEmpty(item.ImagePath))
+            <label class="home-search-field">
+                <span>Passenger Capacity</span>
+                <span class="home-search-control">
+                    <select name="capacity" aria-label="Passenger Capacity">
+                        <option value="">Select Capacity</option>
+                        @foreach (var seats in Model.CapacityOptions)
                         {
-                            <img src="/images/@item.ImagePath" alt="@item.Model" />
+                            <option value="@seats" selected="@(Model.Capacity == seats)">@seats seater</option>
+                        }
+                    </select>
+                    <i class="bi bi-chevron-down"></i>
+                </span>
+            </label>
+
+            <label class="home-search-field">
+                <span>Pick-up Date</span>
+                <span class="home-search-control">
+                    <input type="date" name="pickupDate" id="browsePickupDate" value="@Model.PickupDate?.ToString("yyyy-MM-dd")" aria-label="Pick-up Date" />
+                    <i class="bi bi-calendar3"></i>
+                </span>
+            </label>
+
+            <label class="home-search-field">
+                <span>Drop-off Date</span>
+                <span class="home-search-control">
+                    <input type="date" name="returnDate" id="browseDropoffDate" value="@Model.ReturnDate?.ToString("yyyy-MM-dd")" aria-label="Drop-off Date" />
+                    <i class="bi bi-calendar3"></i>
+                </span>
+            </label>
+
+            <button type="submit" class="home-btn home-btn-primary home-search-submit">
+                <i class="bi bi-search"></i>
+                Search Vehicles
+            </button>
+        </form>
+
+        <div class="browse-panel">
+            <div class="browse-toolbar">
+                <div class="browse-toolbar-left">
+                    <div class="dropdown">
+                        <button class="browse-tool-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Sorting by
+                        </button>
+                        <ul class="dropdown-menu shadow border-0">
+                            <li><a class="dropdown-item @(Model.CurrentSort == "Default" ? "active" : "")" asp-action="Browse" asp-route-category="@Model.CurrentCategory" asp-route-sortBy="Default" asp-route-capacity="@Model.Capacity" asp-route-pickupDate="@Model.PickupDate?.ToString("yyyy-MM-dd")" asp-route-returnDate="@Model.ReturnDate?.ToString("yyyy-MM-dd")" asp-route-q="@Model.Query">Newest first</a></li>
+                            <li><a class="dropdown-item @(Model.CurrentSort == "Model" ? "active" : "")" asp-action="Browse" asp-route-category="@Model.CurrentCategory" asp-route-sortBy="Model" asp-route-capacity="@Model.Capacity" asp-route-pickupDate="@Model.PickupDate?.ToString("yyyy-MM-dd")" asp-route-returnDate="@Model.ReturnDate?.ToString("yyyy-MM-dd")" asp-route-q="@Model.Query">Model (A–Z)</a></li>
+                            <li><a class="dropdown-item @(Model.CurrentSort == "Brand" ? "active" : "")" asp-action="Browse" asp-route-category="@Model.CurrentCategory" asp-route-sortBy="Brand" asp-route-capacity="@Model.Capacity" asp-route-pickupDate="@Model.PickupDate?.ToString("yyyy-MM-dd")" asp-route-returnDate="@Model.ReturnDate?.ToString("yyyy-MM-dd")" asp-route-q="@Model.Query">Brand (A–Z)</a></li>
+                            <li><a class="dropdown-item @(Model.CurrentSort == "Price" ? "active" : "")" asp-action="Browse" asp-route-category="@Model.CurrentCategory" asp-route-sortBy="Price" asp-route-capacity="@Model.Capacity" asp-route-pickupDate="@Model.PickupDate?.ToString("yyyy-MM-dd")" asp-route-returnDate="@Model.ReturnDate?.ToString("yyyy-MM-dd")" asp-route-q="@Model.Query">Price (low to high)</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="browse-tool-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Filters
+                        </button>
+                        <ul class="dropdown-menu shadow border-0">
+                            @foreach (var category in categories)
+                            {
+                                <li>
+                                    <a class="dropdown-item @(string.Equals(Model.CurrentCategory, category, StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                                       asp-action="Browse"
+                                       asp-route-category="@category"
+                                       asp-route-sortBy="@Model.CurrentSort"
+                                       asp-route-capacity="@Model.Capacity"
+                                       asp-route-pickupDate="@Model.PickupDate?.ToString("yyyy-MM-dd")"
+                                       asp-route-returnDate="@Model.ReturnDate?.ToString("yyyy-MM-dd")"
+                                       asp-route-q="@Model.Query">
+                                        @VehicleTypes.BrowseLabel(category)
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+                <form asp-action="Browse" method="get" class="browse-find" id="browseFindForm">
+                    <input type="hidden" name="category" value="@Model.CurrentCategory" />
+                    <input type="hidden" name="sortBy" value="@Model.CurrentSort" />
+                    <input type="hidden" name="capacity" value="@Model.Capacity" />
+                    <input type="hidden" name="pickupDate" value="@Model.PickupDate?.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="returnDate" value="@Model.ReturnDate?.ToString("yyyy-MM-dd")" />
+                    <button type="submit" class="browse-find-submit" aria-label="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <input type="search" name="q" id="browseFindInput" value="@Model.Query" placeholder="Search available vehicle..." aria-label="Search available vehicle" />
+                    <button type="button" class="browse-find-mic" id="browseFindMic" aria-label="Search by voice">
+                        <i class="bi bi-mic"></i>
+                    </button>
+                </form>
+            </div>
+
+            @if (Model.Vehicles.Any())
+            {
+                <div class="browse-grid">
+                    @foreach (var item in Model.Vehicles)
+                    {
+                        <article class="browse-card">
+                            <div class="browse-card-image">
+                                @if (!string.IsNullOrEmpty(item.ImagePath))
+                                {
+                                    <img src="/images/@item.ImagePath" alt="@item.Model" />
+                                }
+                                else
+                                {
+                                    <div class="browse-card-placeholder"><i class="bi bi-car-front"></i></div>
+                                }
+                            </div>
+                            <div class="browse-card-body">
+                                <div class="browse-card-top">
+                                    <h2>@item.Model</h2>
+                                    @if (item.Rating.HasValue)
+                                    {
+                                        <span class="home-rating">
+                                            <i class="bi bi-star-fill"></i>
+                                            @item.Rating.Value.ToString("0.0")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="home-rating-empty">No reviews yet</span>
+                                    }
+                                </div>
+                                <p>@item.TypeLabel • @item.PassengersCount seater</p>
+                                <strong>₱@item.BasePrice.ToString("N0") / 8 hours</strong>
+                                <small>₱@item.SucceedingFee.ToString("N0") succeeding rate</small>
+                                <a asp-action="VehicleDetails" asp-route-id="@item.VehicleId" class="home-btn home-btn-primary browse-card-btn">
+                                    Browse Vehicle
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </article>
+                    }
+                </div>
+
+                @if (Model.TotalPages > 1)
+                {
+                    <nav class="browse-pager" aria-label="Vehicle pages">
+                        @if (Model.Page > 1)
+                        {
+                            <a asp-action="Browse" asp-route-category="@Model.CurrentCategory" asp-route-sortBy="@Model.CurrentSort" asp-route-capacity="@Model.Capacity" asp-route-pickupDate="@Model.PickupDate?.ToString("yyyy-MM-dd")" asp-route-returnDate="@Model.ReturnDate?.ToString("yyyy-MM-dd")" asp-route-q="@Model.Query" asp-route-page="@(Model.Page - 1)" aria-label="Previous page">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
                         }
                         else
                         {
-                            <div class="client-vehicle-placeholder">
-                                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                                    <line x1="0" y1="0" x2="100" y2="100" />
-                                    <line x1="100" y1="0" x2="0" y2="100" />
-                                </svg>
-                            </div>
+                            <span class="is-disabled" aria-hidden="true"><i class="bi bi-chevron-left"></i></span>
                         }
 
-                        <span class="client-vehicle-type-tag">@GetTypeLabel(item.Type)</span>
-                        <button type="button" class="client-vehicle-favorite" aria-label="Save vehicle">
-                            <i class="bi bi-heart"></i>
-                        </button>
-                    </div>
+                        @foreach (var number in PageNumbers())
+                        {
+                            if (number == 0)
+                            {
+                                <span class="browse-pager-gap">…</span>
+                            }
+                            else if (number == Model.Page)
+                            {
+                                <span class="is-current" aria-current="page">@number</span>
+                            }
+                            else
+                            {
+                                <a asp-action="Browse" asp-route-category="@Model.CurrentCategory" asp-route-sortBy="@Model.CurrentSort" asp-route-capacity="@Model.Capacity" asp-route-pickupDate="@Model.PickupDate?.ToString("yyyy-MM-dd")" asp-route-returnDate="@Model.ReturnDate?.ToString("yyyy-MM-dd")" asp-route-q="@Model.Query" asp-route-page="@number">@number</a>
+                            }
+                        }
 
-                    <div class="client-vehicle-body">
-                        <div class="client-vehicle-title-row">
-                            <h2 class="client-vehicle-model">@item.Model</h2>
-                            <div class="client-vehicle-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.9</span>
-                            </div>
-                        </div>
-
-                        <p class="client-vehicle-brand">@item.Brand</p>
-
-                        <p class="client-vehicle-price">
-                            <strong>₱@item.BasePrice.ToString("N0")</strong>
-                            <span>starting 8 hours rate</span>
-                        </p>
-
-                        <div class="client-vehicle-specs">
-                            <div class="client-vehicle-spec">
-                                <i class="bi bi-people"></i>
-                                <span>@item.PassengersCount Seats</span>
-                            </div>
-                            <div class="client-vehicle-spec">
-                                <i class="bi bi-snow"></i>
-                                <span>Air-conditioned</span>
-                            </div>
-                        </div>
-
-                        <a asp-action="VehicleDetails" asp-route-id="@item.VehicleId" class="client-btn-reserve">
-                            View Details
-                            <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </article>
+                        @if (Model.Page < Model.TotalPages)
+                        {
+                            <a asp-action="Browse" asp-route-category="@Model.CurrentCategory" asp-route-sortBy="@Model.CurrentSort" asp-route-capacity="@Model.Capacity" asp-route-pickupDate="@Model.PickupDate?.ToString("yyyy-MM-dd")" asp-route-returnDate="@Model.ReturnDate?.ToString("yyyy-MM-dd")" asp-route-q="@Model.Query" asp-route-page="@(Model.Page + 1)" aria-label="Next page">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="is-disabled" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                        }
+                    </nav>
+                }
+            }
+            else
+            {
+                <div class="client-empty-state">
+                    <i class="bi bi-car-front d-block"></i>
+                    <p class="mb-0 fw-semibold">No vehicles match your search.</p>
+                    <p class="small text-muted mt-1">Try a different capacity, date, or keyword.</p>
+                </div>
             }
         </div>
-    }
-    else
-    {
-        <div class="client-empty-state">
-            <i class="bi bi-car-front d-block"></i>
-            <p class="mb-0 fw-semibold">No vehicles are available right now.</p>
-            <p class="small text-muted mt-1">Try a different category or check back later.</p>
-        </div>
-    }
+
+        <section class="how-cta-section browse-help">
+            <div class="how-cta">
+                <div class="how-cta-copy">
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                        <h2>Need help?</h2>
+                        <p>Our staff will assist you every step of the way</p>
+                    </div>
+                </div>
+                <a asp-controller="ClientSide" asp-action="ContactUs" class="home-btn home-btn-light">
+                    Contact Us
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </section>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var pickup = document.getElementById('browsePickupDate');
+            var dropoff = document.getElementById('browseDropoffDate');
+            if (pickup && dropoff) {
+                function todayIso() {
+                    var now = new Date();
+                    return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                }
+                var today = todayIso();
+                if (!pickup.min) pickup.min = today;
+                dropoff.min = pickup.value || today;
+                pickup.addEventListener('change', function () {
+                    dropoff.min = pickup.value || today;
+                    if (pickup.value && dropoff.value && dropoff.value < pickup.value) {
+                        dropoff.value = pickup.value;
+                    }
+                });
+            }
+
+            function stripEmpty(form) {
+                if (!form) return;
+                form.addEventListener('submit', function () {
+                    form.querySelectorAll('input, select').forEach(function (field) {
+                        if (!field.value) field.disabled = true;
+                    });
+                });
+            }
+            stripEmpty(document.getElementById('browseSearchForm'));
+            stripEmpty(document.getElementById('browseFindForm'));
+
+            var mic = document.getElementById('browseFindMic');
+            var input = document.getElementById('browseFindInput');
+            var Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (mic && input && Speech) {
+                mic.addEventListener('click', function () {
+                    var recognition = new Speech();
+                    recognition.lang = 'en-US';
+                    recognition.onresult = function (event) {
+                        input.value = event.results[0][0].transcript;
+                        input.form && input.form.requestSubmit();
+                    };
+                    recognition.start();
+                });
+            } else if (mic) {
+                mic.hidden = true;
+            }
+        })();
+    </script>
+}

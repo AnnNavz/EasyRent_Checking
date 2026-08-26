@@ -2,53 +2,132 @@
 @using EasyRent_Checking.Models
 
 @{
-    string typeLabel = Model.Type == VehicleType.Van ? "VAN" : "SUV";
+    string typeLabel = VehicleTypes.DisplayUpper(Model.Type);
     string vehicleTitle = $"{Model.Model} {Model.Brand}";
+    int capacity = Model.PassengersCount;
 }
 
-<aside class="client-details-sidebar d-none" id="clientTripSummarySidebar">
-    <div class="client-trip-summary">
-        <div class="client-trip-summary-image">
+<aside class="client-details-sidebar client-trip-summary-sidebar d-none" id="clientTripSummarySidebar">
+    <div class="rent-vehicle-preview">
+        <div class="rent-vehicle-preview-image">
             @if (!string.IsNullOrEmpty(Model.ImagePath))
             {
                 <img src="/images/@Model.ImagePath" alt="@vehicleTitle" />
             }
             else
             {
-                <div class="client-trip-summary-placeholder" aria-hidden="true">
-                    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <line x1="0" y1="0" x2="100" y2="100" />
-                        <line x1="100" y1="0" x2="0" y2="100" />
-                    </svg>
-                </div>
+                <i class="bi bi-car-front"></i>
             }
         </div>
+        <div class="rent-vehicle-preview-meta">
+            <strong>@Model.Model</strong>
+            <p>@typeLabel • @capacity seater</p>
+        </div>
+    </div>
 
-        <span class="client-trip-summary-type">@typeLabel</span>
-        <h2 class="client-trip-summary-name">@vehicleTitle</h2>
-
-        <div class="client-trip-summary-rows">
-            <div class="client-trip-summary-row">
-                <span>Pickup Date</span>
-                <strong id="tripSummaryPickup">—</strong>
-            </div>
-            <div class="client-trip-summary-row">
-                <span>Return Date</span>
-                <strong id="tripSummaryReturn">—</strong>
-            </div>
-            <div class="client-trip-summary-row">
-                <span>Duration</span>
-                <strong id="tripSummaryDuration">—</strong>
-            </div>
-            <div class="client-trip-summary-row">
-                <span>Passengers</span>
-                <strong id="tripSummaryPassengers">—</strong>
-            </div>
+    <div class="rent-trip-card">
+        <div class="rent-trip-row">
+            <span>Customer</span>
+            <strong id="tripSummaryCustomer">—</strong>
+        </div>
+        <div class="rent-trip-row">
+            <span>Pickup Date</span>
+            <strong id="tripSummaryPickup">—</strong>
+        </div>
+        <div class="rent-trip-row">
+            <span>Return Date</span>
+            <strong id="tripSummaryReturn">—</strong>
+        </div>
+        <div class="rent-trip-row">
+            <span>Duration</span>
+            <strong id="tripSummaryDuration">—</strong>
+        </div>
+        <div class="rent-trip-row">
+            <span>Passengers</span>
+            <strong id="tripSummaryPassengers">—</strong>
+        </div>
+        <div class="rent-trip-row">
+            <span>Discount</span>
+            <strong id="tripSummaryDiscount">—</strong>
+        </div>
+        <div class="rent-trip-row">
+            <span>Status</span>
+            <strong id="tripSummaryStatus">—</strong>
         </div>
 
-        <div class="client-trip-summary-secure">
-            <i class="bi bi-shield-check"></i>
-            <span>Your payment is secure and encrypted. Staff will verify before confirming your booking.</span>
+        <div class="rent-trip-box d-none" id="tripCostBreakdown">
+            <div class="rent-trip-row">
+                <span id="tripBreakdownTypeLabel">Partial Payment</span>
+                <strong id="tripBreakdownTypeAmount">—</strong>
+            </div>
+            <div class="rent-trip-row" id="tripBreakdownHoursRow">
+                <span id="tripBreakdownHoursLabel">Succeeding Hours</span>
+                <strong id="tripBreakdownHoursAmount">—</strong>
+            </div>
+            <div class="rent-trip-row rent-trip-row--total">
+                <span>Total Amount</span>
+                <strong id="tripBreakdownTotal">—</strong>
+            </div>
         </div>
+    </div>
+
+    <div class="remaining-balance-card d-none" id="tripBalanceCard">
+        <div class="remaining-balance-row">
+            <span>Remaining Balance</span>
+            <strong id="tripBalanceAmount">₱0.00</strong>
+        </div>
+        <div class="remaining-balance-note-box">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>Please pay this exact amount to the driver upon arrival.</span>
+        </div>
+    </div>
+
+    <div class="payment-reminders-sidebar-card d-none" id="tripPaymentRemindersCard">
+        <div class="payment-reminders-sidebar-title">
+            <span class="payment-reminders-sidebar-icon" aria-hidden="true">i</span>
+            <span>Important Reminders</span>
+        </div>
+        <ul>
+            <li>Send the exact amount given to avoid delays.</li>
+            <li>Use the correct QR code or account details for your selected channel.</li>
+            <li>Keep the transaction receipt for reference.</li>
+        </ul>
+    </div>
+
+    <div class="booking-summary-next-card d-none" id="summaryNextStepsCard">
+        <div class="booking-summary-next-title">
+            <i class="bi bi-signpost-2" aria-hidden="true"></i>
+            <span>What Happens Next?</span>
+        </div>
+        <ol class="booking-summary-next-list">
+            <li>
+                <span class="booking-summary-next-step is-current" aria-hidden="true">1</span>
+                <div class="booking-summary-next-body">
+                    <strong>Rent Verification</strong>
+                    <p>Our staff will verify your inquiry within 24 hours. You'll receive an Email/SMS notification once verified.</p>
+                </div>
+            </li>
+            <li>
+                <span class="booking-summary-next-step" aria-hidden="true">2</span>
+                <div class="booking-summary-next-body">
+                    <strong>Booking Confirmation</strong>
+                    <p>Once payment is verified, you will be confirmed and a driver will be assigned.</p>
+                </div>
+            </li>
+            <li>
+                <span class="booking-summary-next-step" aria-hidden="true">3</span>
+                <div class="booking-summary-next-body">
+                    <strong>Driver Assignment</strong>
+                    <p>Your designated driver will contact you 24 hours before the pick-up date to confirm arrangements.</p>
+                </div>
+            </li>
+            <li>
+                <span class="booking-summary-next-step" aria-hidden="true">4</span>
+                <div class="booking-summary-next-body">
+                    <strong>Enjoy your trip!</strong>
+                    <p>Your driver will be at the pick-up location on time. Present your valid ID and booking reference.</p>
+                </div>
+            </li>
+        </ol>
     </div>
 </aside>

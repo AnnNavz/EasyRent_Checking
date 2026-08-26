@@ -1,0 +1,593 @@
+@model EasyRent_Checking.ViewModels.MaintenanceIndexViewModel
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using System.Reflection
+@using EasyRent_Checking.Models
+@using EasyRent_Checking.Services
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Vehicle Maintenance";
+    ViewData["ActivePage"] = "Maintenance";
+
+    var tab = Model.Tab;
+    var overdueChange = ViewData["OverdueChange"] as decimal? ?? 0m;
+    var dueNowChange = ViewData["DueNowChange"] as decimal? ?? 0m;
+    var dueSoonChange = ViewData["DueSoonChange"] as decimal? ?? 0m;
+    var inProgressChange = ViewData["InProgressChange"] as decimal? ?? 0m;
+    var currentSort = ViewData["CurrentSort"]?.ToString();
+    var currentFilter = ViewData["CurrentFilter"]?.ToString();
+    var currentSearch = ViewData["CurrentSearch"]?.ToString();
+    var autoExpand = !string.IsNullOrEmpty(currentFilter);
+
+    string EnumLabel(Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>()?.GetName();
+        return display ?? value.ToString();
+    }
+
+    string FormatTrend(decimal change) =>
+        Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
+
+    string IndexUrl(string? tabName = null, string? sortBy = null, string? filter = null, string? search = null)
+        => Url.Action("Index", new
+        {
+            tab = tabName ?? tab,
+            sortBy = sortBy ?? currentSort,
+            currentFilter = filter ?? currentFilter,
+            searchString = search ?? currentSearch
+        }) ?? "?";
+
+    string currentSortName = currentSort switch
+    {
+        "Vehicle" => "Vehicle",
+        "Odometer" => "Odometer",
+        "NextDue" => "Next Due",
+        _ => tab == "history" ? "Completed" : "Sorting by"
+    };
+
+    string currentFilterName = currentFilter switch
+    {
+        "InProgress" => "In Progress",
+        "Overdue" => "Overdue",
+        "DueNow" => "Due Now",
+        "DueSoon" => "Due Soon",
+        "Upcoming" => "Upcoming",
+        _ => "Filters"
+    };
+
+    string StatusClass(PmsDueKind kind) => kind switch
+    {
+        PmsDueKind.Overdue => "pms-status is-overdue",
+        PmsDueKind.DueNow => "pms-status is-due-now",
+        PmsDueKind.DueSoon => "pms-status is-due-soon",
+        PmsDueKind.InProgress => "pms-status is-progress",
+        _ => "pms-status is-upcoming"
+    };
+
+    string StatusLabel(PmsDueKind kind) => kind switch
+    {
+        PmsDueKind.Overdue => "Overdue",
+        PmsDueKind.DueNow => "Due Now",
+        PmsDueKind.DueSoon => "Due Soon",
+        PmsDueKind.InProgress => "In Progress",
+        _ => "Upcoming"
+    };
+
+    string CheckupIcon(MaintenanceType type) => type switch
+    {
+        MaintenanceType.OilChange => "bi-droplet-fill",
+        MaintenanceType.TireInspection => "bi-circle",
+        MaintenanceType.BrakeInspection => "bi-disc",
+        MaintenanceType.GeneralCheckup => "bi-clipboard-check",
+        MaintenanceType.AirFilterReplacement => "bi-wind",
+        _ => "bi-wrench-adjustable"
+    };
+
+    string DueDateLabel(MaintenanceDueItem item)
+        => item.NextDueDate is DateOnly due
+            ? AdminDates.Format(due)
+            : (item.NextDueOdometer != null ? $"{item.NextDueOdometer.Value:N0} km" : "—");
+
+    string RelativeDue(MaintenanceDueItem item)
+    {
+        if (item.NextDueDate is DateOnly due)
+        {
+            var days = due.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
+            if (days < -1) return $"{-days} days ago";
+            if (days == -1) return "1 day ago";
+            if (days == 0) return "due now";
+            if (days == 1) return "in 1 day";
+            return $"in {days} days";
+        }
+
+        if (item.NextDueOdometer is int km)
+        {
+            var remaining = km - item.CurrentOdometer;
+            if (remaining < 0) return $"{Math.Abs(remaining):N0} km overdue";
+            if (remaining <= PmsRules.DueNowKilometers) return "due now";
+            return $"in {remaining:N0} km";
+        }
+
+        return "";
+    }
+
+    string RelativeClass(PmsDueKind kind)
+        => kind is PmsDueKind.Overdue or PmsDueKind.DueNow or PmsDueKind.DueSoon ? "pms-relative is-urgent" : "pms-relative";
+
+    bool CanStart(PmsDueKind kind) => PmsRules.CanStart(kind);
+}
+
+<div class="drivers-index-page pms-index-page">
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="driver-metric-card">
+                <div class="driver-metric-icon" aria-hidden="true">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="driver-metric-body">
+                    <span class="driver-metric-label">Overdue</span>
+                    <div class="driver-metric-value">@(ViewData["OverdueCount"] ?? "0")</div>
+                </div>
+                <div class="driver-metric-trend">
+                    <span class="driver-metric-badge @(overdueChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(overdueChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(overdueChange)
+                    </span>
+                    <span class="driver-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="driver-metric-card">
+                <div class="driver-metric-icon" aria-hidden="true">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="driver-metric-body">
+                    <span class="driver-metric-label">Due Now</span>
+                    <div class="driver-metric-value">@(ViewData["DueNowCount"] ?? "0")</div>
+                </div>
+                <div class="driver-metric-trend">
+                    <span class="driver-metric-badge @(dueNowChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(dueNowChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(dueNowChange)
+                    </span>
+                    <span class="driver-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="driver-metric-card">
+                <div class="driver-metric-icon" aria-hidden="true">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="driver-metric-body">
+                    <span class="driver-metric-label">Due Soon</span>
+                    <div class="driver-metric-value">@(ViewData["DueSoonCount"] ?? "0")</div>
+                </div>
+                <div class="driver-metric-trend">
+                    <span class="driver-metric-badge @(dueSoonChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(dueSoonChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(dueSoonChange)
+                    </span>
+                    <span class="driver-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="driver-metric-card">
+                <div class="driver-metric-icon" aria-hidden="true">
+                    <i class="bi bi-wrench-adjustable"></i>
+                </div>
+                <div class="driver-metric-body">
+                    <span class="driver-metric-label">In Progress</span>
+                    <div class="driver-metric-value">@(ViewData["InProgressCount"] ?? "0")</div>
+                </div>
+                <div class="driver-metric-trend">
+                    <span class="driver-metric-badge @(inProgressChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(inProgressChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(inProgressChange)
+                    </span>
+                    <span class="driver-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Index" method="get" class="w-100">
+        <input type="hidden" name="tab" value="@tab" />
+        <input type="hidden" name="sortBy" value="@currentSort" />
+        <input type="hidden" name="currentFilter" value="@currentFilter" />
+
+        <div class="driver-index-toolbar mb-4">
+            <div class="driver-index-toolbar-filters">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentSortName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="@IndexUrl(sortBy: "Vehicle")">Vehicle</a></li>
+                        <li><a class="dropdown-item" href="@IndexUrl(sortBy: "Odometer")">Odometer</a></li>
+                        @if (tab != "history")
+                        {
+                            <li><a class="dropdown-item" href="@IndexUrl(sortBy: "NextDue")">Next Due</a></li>
+                        }
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="@IndexUrl(sortBy: "")">Clear Sorting</a></li>
+                    </ul>
+                </div>
+
+                @if (tab != "history")
+                {
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                            @currentFilterName
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="@IndexUrl(filter: "Overdue")">Overdue</a></li>
+                            <li><a class="dropdown-item" href="@IndexUrl(filter: "DueNow")">Due Now</a></li>
+                            <li><a class="dropdown-item" href="@IndexUrl(filter: "DueSoon")">Due Soon</a></li>
+                            <li><a class="dropdown-item" href="@IndexUrl(filter: "InProgress")">In Progress</a></li>
+                            <li><a class="dropdown-item" href="@IndexUrl(filter: "Upcoming")">Upcoming</a></li>
+                            <li><hr class="dropdown-menu-divider"></li>
+                            <li><a class="dropdown-item text-muted small" href="@IndexUrl(filter: "")">Clear Filters</a></li>
+                        </ul>
+                    </div>
+                }
+            </div>
+
+            <div class="driver-index-toolbar-search">
+                <i class="bi bi-search driver-index-search-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="searchString"
+                       value="@currentSearch"
+                       class="form-control driver-index-search-input"
+                       placeholder="Search maintenance..." />
+                <i class="bi bi-mic driver-index-mic-icon" aria-hidden="true"></i>
+                @if (!string.IsNullOrEmpty(currentSearch))
+                {
+                    <a href="@IndexUrl(search: "")"
+                       class="driver-index-search-clear"
+                       aria-label="Clear search">&times;</a>
+                }
+            </div>
+
+            <a asp-action="Setup" class="btn driver-index-add-btn">
+                <i class="bi bi-plus-lg"></i> Set Up Vehicle
+                @if ((ViewData["UnsetVehicleCount"] as int? ?? 0) > 0)
+                {
+                    <span class="badge bg-white text-dark ms-1">@ViewData["UnsetVehicleCount"]</span>
+                }
+            </a>
+        </div>
+    </form>
+
+    <div class="index-table-panel pms-table-panel mb-4">
+        <div class="pms-table-tabs">
+            <a class="pms-table-tab @(tab == "overview" ? "active" : "")" href="@IndexUrl(tabName: "overview")">Maintenance Overview</a>
+            <a class="pms-table-tab @(tab == "schedule" ? "active" : "")" href="@IndexUrl(tabName: "schedule")">Schedule</a>
+            <a class="pms-table-tab @(tab == "history" ? "active" : "")" href="@IndexUrl(tabName: "history")">Completed History</a>
+        </div>
+
+    <div class="table-responsive">
+            @if (tab == "overview")
+            {
+        <table class="table admin-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Vehicle</th>
+                            <th>Odometer</th>
+                            <th>Next Due</th>
+                    <th>Status</th>
+                            <th class="text-end" style="width: 72px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                        @if (Model.Vehicles.Count > 0)
+                        {
+                            @foreach (var group in Model.Vehicles)
+                            {
+                                var collapseId = $"pms-vehicle-{group.VehicleId}";
+                                var expanded = autoExpand;
+                                <tr class="pms-vehicle-row @(expanded ? "" : "collapsed")"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#@collapseId"
+                                    aria-expanded="@(expanded ? "true" : "false")"
+                                    aria-controls="@collapseId">
+                                    <td>
+                                        <div class="pms-vehicle-cell">
+                                            <i class="bi bi-chevron-right pms-expand-chevron" aria-hidden="true"></i>
+                                            <div class="pms-vehicle-thumb">
+                                                @if (!string.IsNullOrEmpty(group.ImagePath))
+                                                {
+                                                    <img src="~/images/@group.ImagePath" alt="@group.VehicleName" />
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-car-front-fill"></i>
+                                                }
+                                            </div>
+                                            <div class="pms-vehicle-copy">
+                                                <div class="pms-vehicle-plate">@group.PlateNumber</div>
+                                                <div class="pms-vehicle-model">@group.VehicleName</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="pms-cell-primary">@group.CurrentOdometer.ToString("N0")km</div>
+                                        @if (group.OdometerUpdatedOn != null)
+                                        {
+                                            <div class="pms-cell-secondary">last updated: @AdminDates.Format(group.OdometerUpdatedOn.Value)</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (group.NextCheckup != null)
+                                        {
+                                            <div class="pms-cell-primary">@DueDateLabel(group.NextCheckup)</div>
+                                            <div class="@RelativeClass(group.NextCheckup.DueKind)">@RelativeDue(group.NextCheckup)</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="@StatusClass(group.WorstKind)">@StatusLabel(group.WorstKind)</span>
+                                    </td>
+                                    <td class="text-end" onclick="event.stopPropagation()">
+                                        <div class="dropdown">
+                                            <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' aria-label="Vehicle actions">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                                <li><a class="dropdown-item" asp-action="EditSchedule" asp-route-id="@group.VehicleId"><i class="bi bi-calendar2-week me-2"></i> Edit schedule</a></li>
+                                                <li><a class="dropdown-item" asp-controller="Vehicles" asp-action="Details" asp-route-id="@group.VehicleId"><i class="bi bi-info-circle me-2"></i> Vehicle details</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="pms-expand-row">
+                                    <td colspan="5" class="p-0" onclick="event.stopPropagation()">
+                                        <div class="collapse @(expanded ? "show" : "")" id="@collapseId">
+                                            <table class="table admin-table pms-nested-table mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Checkup</th>
+                                                        <th>Schedule</th>
+                                                        <th>Next Due</th>
+                                                        <th>Status</th>
+                                                        <th class="text-end" style="width: 220px;"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var item in group.Checkups)
+                    {
+                        <tr>
+                                                            <td>
+                                                                <div class="pms-checkup-cell">
+                                                                    <span class="pms-checkup-icon" aria-hidden="true">
+                                                                        <i class="bi @CheckupIcon(item.Type)"></i>
+                                                                    </span>
+                                                                    <span class="pms-checkup-name">@EnumLabel(item.Type)</span>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="pms-cell-primary">@item.ScheduleLabel</div>
+                                                                @if (item.LastCompletedDate != null)
+                                                                {
+                                                                    <div class="pms-cell-secondary">last done: @AdminDates.Format(item.LastCompletedDate.Value)</div>
+                                }
+                            </td>
+                                                            <td>
+                                                                <div class="pms-cell-primary">@DueDateLabel(item)</div>
+                                                                <div class="@RelativeClass(item.DueKind)">@RelativeDue(item)</div>
+                                                            </td>
+                                                            <td>
+                                                                <span class="@StatusClass(item.DueKind)">@StatusLabel(item.DueKind)</span>
+                                                            </td>
+                                                            <td class="text-end">
+                                                                <div class="pms-task-actions">
+                                                                    @if (item.DueKind == PmsDueKind.InProgress)
+                                                                    {
+                                                                        <a class="btn pms-btn-record" asp-action="Complete" asp-route-id="@item.MaintenancePlanId">Record</a>
+                                                                    }
+                                                                    else if (CanStart(item.DueKind))
+                                                                    {
+                                                                        <form asp-action="StartWork" asp-route-id="@item.MaintenancePlanId" method="post" class="d-inline"
+                                                                              data-confirm="Start this checkup?"
+                                                                              data-confirm-text="The vehicle will be marked In Maintenance and unavailable for booking."
+                                                                              data-confirm-button="Start Checkup"
+                                                                              data-confirm-tone="approve">
+                                                                            @Html.AntiForgeryToken()
+                                                                            <button type="submit" class="btn pms-btn-record">Start</button>
+                                                                        </form>
+                                                                    }
+                                                                    <a class="btn pms-btn-details" asp-action="Details" asp-route-id="@item.MaintenancePlanId">Details</a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted fw-medium">
+                                    <i class="bi bi-clipboard2-pulse fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                    No matching vehicles found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else if (tab == "schedule")
+            {
+                <table class="table admin-table mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Vehicle</th>
+                            <th>Checkup</th>
+                            <th>Schedule</th>
+                            <th>Next Due</th>
+                            <th>Status</th>
+                            <th class="text-end" style="width: 220px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Schedule.Count > 0)
+                        {
+                            @foreach (var item in Model.Schedule)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="pms-vehicle-cell">
+                                            <div class="pms-vehicle-thumb">
+                                                @if (!string.IsNullOrEmpty(item.ImagePath))
+                                                {
+                                                    <img src="~/images/@item.ImagePath" alt="@item.VehicleName" />
+                                }
+                                else
+                                {
+                                                    <i class="bi bi-car-front-fill"></i>
+                                                }
+                                            </div>
+                                            <div class="pms-vehicle-copy">
+                                                <div class="pms-vehicle-plate">@item.PlateNumber</div>
+                                                <div class="pms-vehicle-model">@item.VehicleName</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="pms-checkup-cell">
+                                            <span class="pms-checkup-icon" aria-hidden="true">
+                                                <i class="bi @CheckupIcon(item.Type)"></i>
+                                            </span>
+                                            <span class="pms-checkup-name">@EnumLabel(item.Type)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="pms-cell-primary">@item.ScheduleLabel</div>
+                                        @if (item.LastCompletedDate != null)
+                                        {
+                                            <div class="pms-cell-secondary">last done: @AdminDates.Format(item.LastCompletedDate.Value)</div>
+                                }
+                            </td>
+                                    <td>
+                                        <div class="pms-cell-primary">@DueDateLabel(item)</div>
+                                        <div class="@RelativeClass(item.DueKind)">@RelativeDue(item)</div>
+                                    </td>
+                                    <td>
+                                        <span class="@StatusClass(item.DueKind)">@StatusLabel(item.DueKind)</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="pms-task-actions">
+                                            @if (item.DueKind == PmsDueKind.InProgress)
+                                            {
+                                                <a class="btn pms-btn-record" asp-action="Complete" asp-route-id="@item.MaintenancePlanId">Record</a>
+                                            }
+                                            else if (CanStart(item.DueKind))
+                                            {
+                                                <form asp-action="StartWork" asp-route-id="@item.MaintenancePlanId" method="post" class="d-inline"
+                                                      data-confirm="Start this checkup?"
+                                                      data-confirm-text="The vehicle will be marked In Maintenance and unavailable for booking."
+                                                      data-confirm-button="Start Checkup"
+                                                      data-confirm-tone="approve">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn pms-btn-record">Start</button>
+                                                </form>
+                                            }
+                                            <a class="btn pms-btn-details" asp-action="Details" asp-route-id="@item.MaintenancePlanId">Details</a>
+                                        </div>
+                                    </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                                <td colspan="6" class="text-center py-5 text-muted fw-medium">
+                                    <i class="bi bi-calendar2-week fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                    No matching checkups found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <table class="table admin-table mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Vehicle</th>
+                            <th>Checkup</th>
+                            <th>Completed</th>
+                            <th>Odometer</th>
+                            <th>Cost</th>
+                            <th class="text-end" style="width: 120px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.History.Count > 0)
+                        {
+                            var ph = CultureInfo.GetCultureInfo("en-PH");
+                            @foreach (var item in Model.History)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="pms-vehicle-cell">
+                                            <div class="pms-vehicle-thumb">
+                                                @if (!string.IsNullOrEmpty(item.ImagePath))
+                                                {
+                                                    <img src="~/images/@item.ImagePath" alt="@item.VehicleName" />
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-car-front-fill"></i>
+                                                }
+                                            </div>
+                                            <div class="pms-vehicle-copy">
+                                                <div class="pms-vehicle-plate">@item.PlateNumber</div>
+                                                <div class="pms-vehicle-model">@item.VehicleName</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="pms-checkup-cell">
+                                            <span class="pms-checkup-icon" aria-hidden="true">
+                                                <i class="bi @CheckupIcon(item.Type)"></i>
+                                            </span>
+                                            <span class="pms-checkup-name">@EnumLabel(item.Type)</span>
+                                        </div>
+                                    </td>
+                                    <td>@AdminDates.Format(item.CompletedAt)</td>
+                                    <td>@(item.Odometer != null ? $"{item.Odometer.Value:N0}km" : "—")</td>
+                                    <td>@(item.Cost != null ? item.Cost.Value.ToString("C", ph) : "—")</td>
+                                    <td class="text-end">
+                                        @if (item.MaintenancePlanId != null)
+                                        {
+                                            <a class="btn pms-btn-details" asp-action="Details" asp-route-id="@item.MaintenancePlanId">Details</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted fw-medium">
+                                    <i class="bi bi-check2-circle fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                    No completed checkups yet.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+            }
+        </div>
+        <partial name="_AdminPagination" />
+    </div>
+</div>

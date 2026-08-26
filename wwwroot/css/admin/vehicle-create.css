@@ -1,0 +1,435 @@
+/* Vehicle add wizard — mockup layout */
+.vehicle-create-wizard {
+    max-width: 920px;
+}
+
+.vehicle-create-wizard .step-timeline {
+    --step-circle-size: 36px;
+    max-width: 520px;
+    margin-bottom: 2.25rem;
+}
+
+.vehicle-create-wizard .step-node {
+    background: transparent;
+}
+
+.vehicle-create-wizard .step-circle {
+    width: 36px;
+    height: 36px;
+    color: #1E296A;
+    font-weight: 700;
+}
+
+.vehicle-create-wizard .step-node.active .step-circle,
+.vehicle-create-wizard .step-node.completed .step-circle {
+    color: #fff;
+}
+
+.vehicle-create-wizard .step-label {
+    color: #6b7280;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.vehicle-create-wizard .step-node.active .step-label {
+    color: var(--admin-navy, #1e3a8a);
+    font-weight: 800;
+}
+
+.vehicle-create-wizard .step-node.completed .step-label {
+    color: #374151;
+    font-weight: 700;
+}
+
+.vehicle-create-wizard .vehicle-wizard-heading {
+    font-family: var(--font-title);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    letter-spacing: -0.3px;
+    margin-bottom: 0.35rem;
+}
+
+.vehicle-create-wizard .vehicle-wizard-subheading {
+    font-size: 0.88rem;
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+.vehicle-create-wizard .vehicle-wizard-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 1.35rem 1.5rem 1.5rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.vehicle-create-wizard .vehicle-wizard-section-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.1rem;
+}
+
+.vehicle-create-wizard .vehicle-wizard-section-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: var(--admin-navy, #1e3a8a);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.vehicle-create-wizard .vehicle-wizard-section-title {
+    font-family: var(--font-title);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    margin: 0;
+}
+
+.vehicle-create-wizard .vehicle-wizard-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    margin-bottom: 0.4rem;
+}
+
+.vehicle-create-wizard .vehicle-wizard-input,
+.vehicle-create-wizard .form-select.vehicle-wizard-input {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    background: #f3f4f6 !important;
+    padding: 0.65rem 0.9rem !important;
+    font-size: 0.88rem;
+    color: #111827;
+    box-shadow: none !important;
+}
+
+.vehicle-create-wizard .vehicle-wizard-input:focus,
+.vehicle-create-wizard .form-select.vehicle-wizard-input:focus {
+    border-color: var(--admin-navy, #1e3a8a) !important;
+    background: #fff !important;
+}
+
+.vehicle-create-wizard .vehicle-wizard-input.input-validation-error {
+    border-color: #dc3545 !important;
+}
+
+.vehicle-type-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.vehicle-type-row .form-select {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.vehicle-type-add-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    border: none;
+    border-radius: 10px;
+    background: var(--admin-navy, #1e3a8a);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0 0.95rem;
+    white-space: nowrap;
+}
+
+.vehicle-type-add-btn:hover {
+    background: var(--admin-navy-deep, #172e6e);
+    color: #fff;
+}
+
+.vehicle-type-new {
+    margin-top: 0.5rem;
+}
+
+.vehicle-create-wizard .input-group .vehicle-wizard-input {
+    border-radius: 0 10px 10px 0 !important;
+}
+
+.vehicle-create-wizard .input-group .input-group-text {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 10px 0 0 10px;
+}
+
+.vehicle-create-wizard .input-group.vehicle-input-suffix .vehicle-wizard-input {
+    border-radius: 10px 0 0 10px !important;
+}
+
+.vehicle-create-wizard .input-group.vehicle-input-suffix .input-group-text {
+    border-radius: 0 10px 10px 0;
+}
+
+.vehicle-create-wizard .vehicle-date-input-wrap {
+    position: relative;
+}
+
+.vehicle-create-wizard .vehicle-date-input-wrap .vehicle-wizard-input {
+    padding-right: 2.4rem !important;
+}
+
+.vehicle-create-wizard .vehicle-date-input-wrap .vehicle-date-icon {
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--admin-navy, #1e3a8a);
+    pointer-events: none;
+    font-size: 0.95rem;
+}
+
+.vehicle-create-wizard .vehicle-date-input-wrap input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    width: 2.5rem;
+    height: 100%;
+    cursor: pointer;
+}
+
+.vehicle-create-wizard .license-upload-zone {
+    background: #f3f4f6;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    min-height: 150px;
+    padding: 1.5rem 0.75rem;
+}
+
+.vehicle-create-wizard .license-upload-zone:hover {
+    background: #eef2ff;
+}
+
+.vehicle-create-wizard .license-upload-zone i {
+    color: var(--admin-navy, #1e3a8a) !important;
+}
+
+.vehicle-create-wizard .license-upload-zone .upload-main-text {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+}
+
+.vehicle-create-wizard .license-upload-zone .upload-sub-text {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.vehicle-create-wizard .vehicle-image-preview-box {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 180px;
+    cursor: pointer;
+}
+
+.vehicle-create-wizard .vehicle-image-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.vehicle-create-wizard .vehicle-image-preview-box:hover {
+    border-color: #93c5fd;
+}
+
+.vehicle-create-wizard .upload-preview-bar {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    margin-top: 0.75rem;
+    padding: 0.45rem 0.75rem 0.45rem 1rem;
+}
+
+.vehicle-create-wizard .vehicle-image-remove-btn {
+    border: none;
+    background: transparent;
+    color: var(--admin-navy, #1e3a8a);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+}
+
+.vehicle-create-wizard .vehicle-review-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.vehicle-create-wizard .vehicle-review-edit-btn {
+    border: 1px solid var(--admin-navy, #1e3a8a);
+    background: #fff;
+    color: var(--admin-navy, #1e3a8a);
+    border-radius: 8px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.vehicle-create-wizard .vehicle-review-edit-btn:hover {
+    background: #eff6ff;
+}
+
+.vehicle-create-wizard .vehicle-review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+}
+
+.vehicle-create-wizard .vehicle-review-field-label {
+    display: block;
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-bottom: 0.2rem;
+}
+
+.vehicle-create-wizard .vehicle-review-field-value {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    word-break: break-word;
+}
+
+.vehicle-create-wizard .vehicle-review-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.vehicle-create-wizard .vehicle-review-date i {
+    color: var(--admin-navy, #1e3a8a);
+    font-size: 0.95rem;
+}
+
+.vehicle-create-wizard .vehicle-review-grid-full {
+    grid-column: 1 / -1;
+}
+
+.vehicle-create-wizard .vehicle-review-image-wrap {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vehicle-create-wizard .vehicle-review-image-wrap img {
+    width: 100%;
+    height: 100%;
+    max-height: 320px;
+    object-fit: contain;
+}
+
+.vehicle-create-wizard .vehicle-review-image-empty {
+    width: 100%;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    gap: 0.35rem;
+}
+
+.vehicle-create-wizard .vehicle-wizard-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    padding-top: 0.5rem;
+}
+
+.vehicle-create-wizard .vehicle-wizard-btn-back {
+    background: #fff !important;
+    border: 1px solid var(--admin-navy, #1e3a8a) !important;
+    color: var(--admin-navy, #1e3a8a) !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.35rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.vehicle-create-wizard .vehicle-wizard-btn-back:hover {
+    background: #eff6ff !important;
+}
+
+.vehicle-create-wizard a.vehicle-wizard-btn-back {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vehicle-create-wizard .vehicle-wizard-btn-next {
+    background: var(--admin-navy, #1e3a8a) !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.35rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.vehicle-create-wizard .vehicle-wizard-btn-next:hover {
+    background: var(--admin-navy-deep, #172e6e) !important;
+}
+
+.vehicle-create-wizard .vehicle-success-panel {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.vehicle-create-wizard .vehicle-success-panel .admin-success-check-img {
+    margin-bottom: 0;
+}
+
+.vehicle-create-success .admin-success-message strong {
+    color: var(--admin-navy, #1e3a8a);
+}
+
+.vehicle-create-success .btn-admin-primary {
+    background: var(--admin-navy, #1e3a8a) !important;
+    border-radius: 10px !important;
+}
+
+.vehicle-create-success .btn-admin-outline {
+    border-color: #374151 !important;
+    color: var(--admin-navy, #1e3a8a) !important;
+    border-radius: 10px !important;
+}
+
+@media (max-width: 767.98px) {
+    .vehicle-create-wizard .vehicle-review-grid {
+        grid-template-columns: 1fr;
+    }
+}

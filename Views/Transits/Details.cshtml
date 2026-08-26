@@ -17,6 +17,7 @@
     var canAssignDriver = ViewBag.CanAssignDriver as bool? == true;
     var canStartTrip = ViewBag.CanStartTrip as bool? == true;
     var canCompleteTrip = ViewBag.CanCompleteTrip as bool? == true;
+    var canReportAccident = Model?.TripStatus is TripStatus.InTransit or TripStatus.Completed;
 
     string FormatDateTime(DateOnly? date, TimeOnly? time)
     {
@@ -57,20 +58,15 @@
 }
 
 <div class="container-fluid px-4 py-3 reservation-details-page">
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger py-2 px-3 mb-3" role="alert">@TempData["ErrorMessage"]</div>
-    }
-
     <div class="details-page-actions mb-3">
         <a asp-action="Index" class="btn btn-page-back">Back</a>
         @if (canCompleteTrip)
         {
             <a asp-action="CompleteTrip" asp-route-transitid="@Model?.TransitID" class="btn reservation-btn-approve">Complete Trip</a>
+        }
+        @if (canReportAccident)
+        {
+            <a asp-controller="Incidents" asp-action="Create" asp-route-transitid="@Model?.TransitID" class="btn reservation-btn-reject">Report Accident</a>
         }
     </div>
 
@@ -166,6 +162,22 @@
                         <span class="reservation-view-label">Fuel (End)</span>
                         <span class="reservation-view-value">@FuelLabel(Model.FuelLevelEnd)</span>
                     </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Odometer (Start)</span>
+                        <span class="reservation-view-value">@(Model.OdometerStart.HasValue ? Model.OdometerStart.Value.ToString("N0") + " km" : "—")</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Odometer (End)</span>
+                        <span class="reservation-view-value">@(Model.OdometerEnd.HasValue ? Model.OdometerEnd.Value.ToString("N0") + " km" : "—")</span>
+                    </div>
+                    <div class="reservation-view-field">
+                        <span class="reservation-view-label">Distance Driven</span>
+                        <span class="reservation-view-value">
+                            @(Model.OdometerStart.HasValue && Model.OdometerEnd.HasValue
+                                ? (Model.OdometerEnd.Value - Model.OdometerStart.Value).ToString("N0") + " km"
+                                : "—")
+                        </span>
+                    </div>
                 </div>
 
                 <div class="reservation-view-grid reservation-view-grid-two mb-3">
@@ -203,11 +215,6 @@
                         }
                     </div>
                 </div>
-
-                <div class="reservation-view-field mb-0">
-                    <span class="reservation-view-label">Remarks</span>
-                    <div class="reservation-view-notes">@(string.IsNullOrWhiteSpace(Model.Remarks) ? "None" : Model.Remarks)</div>
-                </div>
             </div>
         </div>
 
@@ -234,10 +241,14 @@
 
                 @if (canAssignDriver)
                 {
-                    <form asp-action="AssignDriver" asp-route-transitid="@Model.TransitID" method="post">
+                    <form asp-action="AssignDriver" asp-route-transitid="@Model.TransitID" method="post"
+                          data-confirm="@(Model.DriverID == null ? "Assign this driver to the trip?" : "Change the assigned driver?")"
+                          data-confirm-text="@(Model.DriverID == null ? "This driver will be responsible for the trip once it starts." : "The current driver will be replaced on this trip.")"
+                          data-confirm-button="@(Model.DriverID == null ? "Assign Driver" : "Update Driver")"
+                          data-confirm-tone="approve">
                         @Html.AntiForgeryToken()
                         <label class="form-label small fw-semibold" for="driverId">@(Model.DriverID == null ? "Assign Driver" : "Change Driver")</label>
-                        <select name="driverId" id="driverId" class="form-select mb-3" asp-items="driverList">
+                        <select name="driverId" id="driverId" class="form-select mb-3" asp-items="driverList" required>
                             <option value="">Select driver...</option>
                         </select>
                         <button type="submit" class="btn reservation-btn-approve w-100">
@@ -261,11 +272,11 @@
                     <a asp-action="CompleteTrip" asp-route-transitid="@Model.TransitID" class="btn reservation-btn-payment w-100 mb-2">
                         Complete Trip
                     </a>
-                    <p class="small text-muted mb-0">Enter return fuel, condition, and post-trip photo.</p>
+                    <p class="small text-muted @(canReportAccident ? "mb-2" : "mb-0")">Enter return fuel, condition, and post-trip photo.</p>
                 }
                 else if (Model.TripStatus == TripStatus.Completed)
                 {
-                    <p class="small text-muted mb-0">This trip is already completed.</p>
+                    <p class="small text-muted @(canReportAccident ? "mb-2" : "mb-0")">This trip is already completed.</p>
                 }
                 else if (Model.DriverID == null)
                 {
@@ -274,6 +285,10 @@
                 else
                 {
                     <p class="small text-muted mb-0">No actions available for this status.</p>
+                }
+                @if (canReportAccident)
+                {
+                    <a asp-controller="Incidents" asp-action="Create" asp-route-transitid="@Model.TransitID" class="btn reservation-btn-reject w-100">Report Accident</a>
                 }
             </div>
 

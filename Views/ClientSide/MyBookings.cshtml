@@ -1,11 +1,13 @@
-@model IEnumerable<EasyRent_Checking.ViewModels.MyBookingListItem>
+@model EasyRent_Checking.ViewModels.MyBookingsPageViewModel
 @using EasyRent_Checking.Models
 @using System.Globalization
 
 @{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
-    ViewData["Title"] = "Transactions & Rentals";
-    var currentFilter = ViewData["CurrentFilter"]?.ToString() ?? "all";
+    ViewData["Title"] = "Transaction and Rentals";
+    ViewData["HubFullName"] = Model.FullName;
+    ViewData["HubInitials"] = Model.AvatarInitials;
+    ViewData["HubActive"] = "bookings";
 
     string StatusLabel(RentalStatus status) => status switch
     {
@@ -19,7 +21,7 @@
     {
         RentalStatus.Approved => "is-approved",
         RentalStatus.Cancelled => "is-cancelled",
-        RentalStatus.Expired => "is-cancelled",
+        RentalStatus.Expired => "is-expired",
         _ => "is-pending"
     };
 
@@ -27,111 +29,156 @@
         "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
 
     string FormatTime(TimeOnly time) => time.ToString("h:mmtt", CultureInfo.InvariantCulture);
+
+    string FilterLabel = Model.Filter switch
+    {
+        "upcoming" => "Upcoming",
+        "completed" => "Completed",
+        _ => "All Bookings"
+    };
+
+    string SortLabel = Model.Sort switch
+    {
+        "oldest" => "Oldest",
+        "pickup" => "Pickup date",
+        _ => "Newest"
+    };
 }
 
-<div class="client-page my-bookings-page">
-    <div class="my-bookings-header">
-        <div>
-            <h1 class="my-bookings-title">Transactions &amp; Rentals</h1>
-            <p class="my-bookings-subtitle">Manage your active rentals and view your rental history.</p>
-        </div>
-        <div class="my-bookings-filters" role="tablist" aria-label="Booking filters">
-            <a asp-action="MyBookings" asp-route-filter="all"
-               class="my-bookings-filter @(currentFilter == "all" ? "active" : "")">All Bookings</a>
-            <a asp-action="MyBookings" asp-route-filter="upcoming"
-               class="my-bookings-filter @(currentFilter == "upcoming" ? "active" : "")">Upcoming</a>
-            <a asp-action="MyBookings" asp-route-filter="completed"
-               class="my-bookings-filter @(currentFilter == "completed" ? "active" : "")">Completed</a>
-        </div>
-    </div>
+<div class="client-page account-hub is-wide-main my-bookings-page">
+    <partial name="_AccountHubNav" />
 
-    <div class="my-bookings-list">
-        @if (Model != null && Model.Any())
-        {
-            @foreach (var item in Model)
-            {
-                <article class="my-booking-row">
-                    <div class="my-booking-thumb" aria-hidden="true">
-                        @if (!string.IsNullOrEmpty(item.VehicleImagePath))
-                        {
-                            <img src="~/images/@item.VehicleImagePath" alt="@item.VehicleTitle" />
-                        }
-                    </div>
-
-                    <div class="my-booking-main">
-                        <span class="my-booking-status @StatusClass(item.RentalStatus)">@StatusLabel(item.RentalStatus)</span>
-                        <h2 class="my-booking-vehicle">@item.VehicleTitle</h2>
-                        <p class="my-booking-id">Booking ID: @item.BookingLabel</p>
-                    </div>
-
-                    <div class="my-booking-meta">
-                        <span class="my-booking-meta-label">Schedule</span>
-                        <span class="my-booking-meta-value">@item.PickupDate.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)</span>
-                        <span class="my-booking-meta-sub">@FormatTime(item.PickupTime) - @FormatTime(item.ReturnTime)</span>
-                    </div>
-
-                    <div class="my-booking-meta">
-                        <span class="my-booking-meta-label">Total Paid</span>
-                        @if (item.RentalStatus is RentalStatus.Cancelled or RentalStatus.Expired)
-                        {
-                            <span class="my-booking-meta-value">@StatusLabel(item.RentalStatus)</span>
-                        }
-                        else
-                        {
-                            <span class="my-booking-meta-value">@FormatPeso(item.AmountPaid)</span>
-                            <span class="my-booking-meta-sub">@(string.IsNullOrWhiteSpace(item.PaymentMethod) ? "Unpaid" : item.PaymentMethod)</span>
-                        }
-                    </div>
-
-                    <div class="my-booking-meta my-booking-driver">
-                        <span class="my-booking-meta-label">Driver Assigned</span>
-                        @if (!string.IsNullOrWhiteSpace(item.DriverName))
-                        {
-                            <span class="my-booking-driver-pill">
-                                <span class="my-booking-driver-avatar" aria-hidden="true"><i class="bi bi-person"></i></span>
-                                @item.DriverName
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="my-booking-meta-value my-booking-driver-empty">Not Assigned Yet</span>
-                        }
-                    </div>
-
-                    <div class="my-booking-actions">
-                        <a asp-action="MyBookingDetails" asp-route-id="@item.RentalId" class="my-booking-btn-primary">View Details</a>
-                        @if (item.CanRate)
-                        {
-                            <a asp-action="RateTrip" asp-route-id="@item.RentalId" class="my-booking-btn-secondary">Rate &amp; Review</a>
-                        }
-                        else if (item.HasFeedback)
-                        {
-                            <a asp-action="MyBookingDetails" asp-route-id="@item.RentalId" class="my-booking-btn-secondary">View review</a>
-                        }
-                        else
-                        {
-                            <a href="#support" class="my-booking-btn-secondary">Need help?</a>
-                        }
-                    </div>
-                </article>
-            }
-        }
-        else
-        {
-            <div class="my-bookings-empty">
-                <i class="bi bi-calendar2-x" aria-hidden="true"></i>
-                <p>No bookings found.</p>
-                <a asp-action="Browse" class="my-booking-btn-primary">Book a Vehicle</a>
+    <section class="account-hub-main">
+        <div class="my-bookings-header">
+            <div>
+                <h1 class="my-bookings-title">Transaction and Rentals</h1>
+                <p class="my-bookings-subtitle">Manage your active rentals and view your rental history.</p>
             </div>
-        }
-    </div>
-
-    <section id="support" class="my-bookings-support">
-        <div class="my-bookings-support-icon" aria-hidden="true">?</div>
-        <div class="my-bookings-support-copy">
-            <h2>Need assistance with your booking?</h2>
-            <p>Our support team is available 24/7 to help with changes, cancellations, or any questions.</p>
+            <div class="my-bookings-toolbar">
+                <div class="dropdown">
+                    <button class="my-bookings-tool" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Sorting by
+                        <span>@SortLabel</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item @(Model.Sort == "newest" ? "active" : null)" asp-action="MyBookings" asp-route-filter="@Model.Filter" asp-route-sort="newest">Newest</a></li>
+                        <li><a class="dropdown-item @(Model.Sort == "oldest" ? "active" : null)" asp-action="MyBookings" asp-route-filter="@Model.Filter" asp-route-sort="oldest">Oldest</a></li>
+                        <li><a class="dropdown-item @(Model.Sort == "pickup" ? "active" : null)" asp-action="MyBookings" asp-route-filter="@Model.Filter" asp-route-sort="pickup">Pickup date</a></li>
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="my-bookings-tool" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Filters
+                        <span>@FilterLabel</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item @(Model.Filter == "all" ? "active" : null)" asp-action="MyBookings" asp-route-filter="all" asp-route-sort="@Model.Sort">All Bookings</a></li>
+                        <li><a class="dropdown-item @(Model.Filter == "upcoming" ? "active" : null)" asp-action="MyBookings" asp-route-filter="upcoming" asp-route-sort="@Model.Sort">Upcoming</a></li>
+                        <li><a class="dropdown-item @(Model.Filter == "completed" ? "active" : null)" asp-action="MyBookings" asp-route-filter="completed" asp-route-sort="@Model.Sort">Completed</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
-        <a href="tel:+6292545593567" class="my-booking-btn-primary my-bookings-support-btn">Call (+629 254 559 3567)</a>
+
+        <div class="my-bookings-list">
+            @if (Model.Items.Count > 0)
+            {
+                @foreach (var item in Model.Items)
+                {
+                    <article class="my-booking-row">
+                        <div class="my-booking-thumb" aria-hidden="true">
+                            @if (!string.IsNullOrEmpty(item.VehicleImagePath))
+                            {
+                                <img src="~/images/@item.VehicleImagePath" alt="@item.VehicleTitle" />
+                            }
+                        </div>
+
+                        <div class="my-booking-main">
+                            <span class="my-booking-status @StatusClass(item.RentalStatus)">@StatusLabel(item.RentalStatus)</span>
+                            <h2 class="my-booking-vehicle">@item.VehicleTitle</h2>
+                            <p class="my-booking-spec">@item.VehicleTypeLabel • @item.PassengersCount seater</p>
+                        </div>
+
+                        <div class="my-booking-meta my-booking-schedule">
+                            <span class="my-booking-meta-label">Schedule</span>
+                            <span class="my-booking-meta-value">@item.PickupDate.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)</span>
+                            <span class="my-booking-meta-sub">@FormatTime(item.PickupTime) - @FormatTime(item.ReturnTime)</span>
+                        </div>
+
+                        <div class="my-booking-meta my-booking-paid">
+                            <span class="my-booking-meta-label">Paid/Balance</span>
+                            <span class="my-booking-meta-value">@FormatPeso(item.AmountPaid)</span>
+                            @if (item.RemainingBalance > 0)
+                            {
+                                <span class="my-booking-meta-sub my-booking-balance-due">Balance @FormatPeso(item.RemainingBalance)</span>
+                            }
+                            else if (item.AmountPaid > 0)
+                            {
+                                <span class="my-booking-meta-sub">@(string.IsNullOrWhiteSpace(item.PaymentMethod) ? "Settled" : item.PaymentMethod + " • Settled")</span>
+                            }
+                            else
+                            {
+                                <span class="my-booking-meta-sub">Unpaid</span>
+                            }
+                        </div>
+
+                        <div class="my-booking-meta my-booking-driver">
+                            <span class="my-booking-meta-label">Driver Assigned</span>
+                            @if (!string.IsNullOrWhiteSpace(item.DriverName))
+                            {
+                                <span class="my-booking-driver-pill">
+                                    <span class="my-booking-driver-avatar" aria-hidden="true">@(item.DriverInitials ?? "D")</span>
+                                    @item.DriverName
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="my-booking-meta-value my-booking-driver-empty">Not Assigned Yet</span>
+                            }
+                        </div>
+
+                        <div class="my-booking-actions">
+                            @if (item.CanPay)
+                            {
+                                <a asp-action="PayRental" asp-route-id="@item.RentalId" class="my-booking-btn-primary">
+                                    Pay Now
+                                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                                </a>
+                                <a asp-action="MyBookingDetails" asp-route-id="@item.RentalId" class="my-booking-btn-secondary">View Details</a>
+                            }
+                            else
+                            {
+                                <a asp-action="MyBookingDetails" asp-route-id="@item.RentalId" class="my-booking-btn-primary">
+                                    View Details
+                                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                                </a>
+                                @if (item.CanRate)
+                                {
+                                    <a asp-action="RateTrip" asp-route-id="@item.RentalId" class="my-booking-btn-secondary">Ratings &amp; Review</a>
+                                }
+                                else if (item.HasFeedback)
+                                {
+                                    <a asp-action="MyBookingDetails" asp-route-id="@item.RentalId" class="my-booking-btn-secondary">Ratings &amp; Review</a>
+                                }
+                                else
+                                {
+                                    <span class="my-booking-btn-secondary is-disabled">Ratings &amp; Review</span>
+                                }
+                            }
+                        </div>
+                    </article>
+                }
+            }
+            else
+            {
+                <div class="my-bookings-empty">
+                    <i class="bi bi-calendar2-x" aria-hidden="true"></i>
+                    <p>No bookings found.</p>
+                    <a asp-action="Browse" class="my-booking-btn-primary">Book a Vehicle</a>
+                </div>
+            }
+        </div>
     </section>
 </div>

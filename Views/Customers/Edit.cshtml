@@ -3,83 +3,236 @@
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Customer Details";
     ViewData["ActivePage"] = "Customers";
+
+    string GetDisplayFileName(string? path, string fallback)
+    {
+        if (string.IsNullOrEmpty(path)) return fallback;
+        var fileName = System.IO.Path.GetFileName(path);
+        var separatorIndex = fileName.IndexOf('_');
+        return separatorIndex >= 0 && separatorIndex < fileName.Length - 1
+            ? fileName[(separatorIndex + 1)..]
+            : fileName;
+    }
+
+    var hasFrontIdImage = !string.IsNullOrEmpty(Model.FrontValidIDImagePath);
+    var hasBackIdImage = !string.IsNullOrEmpty(Model.BackValidIDImagePath);
+    var frontIdFileName = GetDisplayFileName(Model.FrontValidIDImagePath, "front.png");
+    var backIdFileName = GetDisplayFileName(Model.BackValidIDImagePath, "back.png");
 }
 
-<h1>Edit</h1>
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/customer-create.css" asp-append-version="true" />
+}
 
-<h4>Customer</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit" asp-route-customerid="@Model.CustomerId" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="CustomerId" />
-            <input type="hidden" asp-for="ValidIDImagePath" />
+<div class="wizard-max-wrapper customer-create-wizard py-3">
+    <form asp-action="Edit" asp-route-customerid="@Model.CustomerId" enctype="multipart/form-data" id="editCustomerForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+        <input type="hidden" asp-for="CustomerId" />
+        <input type="hidden" asp-for="FrontValidIDImagePath" />
+        <input type="hidden" asp-for="BackValidIDImagePath" />
 
-            <div class="form-group">
-                <label asp-for="FullName" class="control-label"></label>
-                <input asp-for="FullName" class="form-control" />
-                <span asp-validation-for="FullName" class="text-danger"></span>
+        <div class="text-start mb-2">
+            <h5 class="customer-wizard-heading">Edit Customer Details</h5>
+            <p class="customer-wizard-subheading">Update the customer's identity, contact, and ID details.</p>
+        </div>
+
+        <div class="customer-wizard-card">
+            <div class="customer-wizard-section-head">
+                <span class="customer-wizard-section-icon"><i class="bi bi-person-fill"></i></span>
+                <h6 class="customer-wizard-section-title">Personal Information</h6>
             </div>
-            <div class="form-group">
-                <label asp-for="ContactNumber" class="control-label"></label>
-                <input asp-for="ContactNumber" class="form-control" />
-                <span asp-validation-for="ContactNumber" class="text-danger"></span>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="customer-wizard-label">Full Name</label>
+                    <input asp-for="FullName" class="form-control customer-wizard-input" placeholder="e.g. Jane Doe" />
+                    <span asp-validation-for="FullName" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Phone Number</label>
+                    <input asp-for="ContactNumber" class="form-control customer-wizard-input" placeholder="09123456789 or +639123456789" />
+                    <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Email Address</label>
+                    <input asp-for="Email" class="form-control customer-wizard-input" placeholder="name@example.com" />
+                    <span asp-validation-for="Email" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-12">
+                    <p class="customer-password-hint">Leave blank to keep the current password. New passwords must be at least 8 characters and include a number.</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Password</label>
+                    <div class="customer-password-wrap">
+                        <input asp-for="Password" class="form-control customer-wizard-input customer-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                        <button type="button" class="customer-password-toggle" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Confirm Password</label>
+                    <div class="customer-password-wrap">
+                        <input asp-for="ConfirmPassword" class="form-control customer-wizard-input customer-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                        <button type="button" class="customer-password-toggle" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Choose a valid ID</label>
+                    <select asp-for="ValidIDtype" class="form-select customer-wizard-input">
+                        <option value="">Select ID type</option>
+                        <option value="@nameof(ValidIDtype.NationalID)">National ID</option>
+                        <option value="@nameof(ValidIDtype.Passport)">Passport</option>
+                        <option value="@nameof(ValidIDtype.UMID)">UMID</option>
+                        <option value="@nameof(ValidIDtype.DriverLicense)">Driver's License</option>
+                        <option value="@nameof(ValidIDtype.VotersID)">Voter's ID</option>
+                    </select>
+                    <span asp-validation-for="ValidIDtype" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Status</label>
+                    <select asp-for="Status" class="form-select customer-wizard-input" asp-items="Html.GetEnumSelectList<Status>()"></select>
+                    <span asp-validation-for="Status" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6 id-slot">
+                    <div id="id-front-upload-zone" class="id-upload-zone @(hasFrontIdImage ? "d-none" : "")">
+                        <div>
+                            <i class="bi bi-person-vcard fs-3 d-block mb-2"></i>
+                            <span class="d-block upload-main-text mb-1">Drag &amp; drop or click to upload</span>
+                            <span class="d-block upload-sub-text">PNG, JPG, or JPEG</span>
+                        </div>
+                        <input asp-for="FrontValidIDImageFile" id="input-FrontIdFile" type="file" class="id-file-input" accept=".png,.jpg,.jpeg" />
+                    </div>
+                    <div id="id-front-preview-state" class="@(hasFrontIdImage ? "" : "d-none")">
+                        <div class="id-preview-box" title="Click to replace image" onclick="document.getElementById('input-FrontIdFile').click()">
+                            @if (hasFrontIdImage)
+                            {
+                                <img id="id-front-preview-img" src="~/images/@Model.FrontValidIDImagePath" alt="Front of valid ID" />
+                            }
+                            else
+                            {
+                                <img id="id-front-preview-img" class="d-none" alt="Front of valid ID" />
+                            }
+                        </div>
+                        <div class="upload-preview-bar d-flex align-items-center justify-content-between">
+                            <span id="id-front-filename" class="small fw-semibold text-muted font-monospace">@frontIdFileName</span>
+                            <button type="button" class="id-remove-btn" onclick="clearIdFile('front')">Remove</button>
+                        </div>
+                    </div>
+                    <span asp-validation-for="FrontValidIDImageFile" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6 id-slot">
+                    <div id="id-back-upload-zone" class="id-upload-zone @(hasBackIdImage ? "d-none" : "")">
+                        <div>
+                            <i class="bi bi-person-vcard fs-3 d-block mb-2"></i>
+                            <span class="d-block upload-main-text mb-1">Drag &amp; drop or click to upload</span>
+                            <span class="d-block upload-sub-text">PNG, JPG, or JPEG</span>
+                        </div>
+                        <input asp-for="BackValidIDImageFile" id="input-BackIdFile" type="file" class="id-file-input" accept=".png,.jpg,.jpeg" />
+                    </div>
+                    <div id="id-back-preview-state" class="@(hasBackIdImage ? "" : "d-none")">
+                        <div class="id-preview-box" title="Click to replace image" onclick="document.getElementById('input-BackIdFile').click()">
+                            @if (hasBackIdImage)
+                            {
+                                <img id="id-back-preview-img" src="~/images/@Model.BackValidIDImagePath" alt="Back of valid ID" />
+                            }
+                            else
+                            {
+                                <img id="id-back-preview-img" class="d-none" alt="Back of valid ID" />
+                            }
+                        </div>
+                        <div class="upload-preview-bar d-flex align-items-center justify-content-between">
+                            <span id="id-back-filename" class="small fw-semibold text-muted font-monospace">@backIdFileName</span>
+                            <button type="button" class="id-remove-btn" onclick="clearIdFile('back')">Remove</button>
+                        </div>
+                    </div>
+                    <span asp-validation-for="BackValidIDImageFile" class="text-danger small mt-1 d-block"></span>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Password" class="control-label"></label>
-                <input asp-for="Password" class="form-control" placeholder="Leave blank to keep current password" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ConfirmPassword" class="control-label"></label>
-                <input asp-for="ConfirmPassword" class="form-control" />
-                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ValidIDtype" class="control-label"></label>
-                <select asp-for="ValidIDtype" class="form-select">
-                    <option value="">Select ID type</option>
-                    <option value="@nameof(ValidIDtype.NationalID)">National ID</option>
-                    <option value="@nameof(ValidIDtype.Passport)">Passport</option>
-                    <option value="@nameof(ValidIDtype.UMID)">UMID</option>
-                    <option value="@nameof(ValidIDtype.DriverLicense)">Driver License</option>
-                    <option value="@nameof(ValidIDtype.VotersID)">Voters ID</option>
-                </select>
-                <span asp-validation-for="ValidIDtype" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ValidIDImageFile" class="control-label"></label>
-                <input asp-for="ValidIDImageFile" class="form-control" type="file" accept=".png,.jpg,.jpeg" />
-                @if (!string.IsNullOrEmpty(Model.ValidIDImagePath))
-                {
-                    <p class="small text-muted mt-1">Current: @Model.ValidIDImagePath</p>
-                }
-                <span asp-validation-for="ValidIDImageFile" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<Status>()"></select>
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
+        </div>
+
+        <div class="customer-wizard-actions">
+            <a asp-action="Details" asp-route-customerid="@Model.CustomerId" class="btn customer-wizard-btn-back">Cancel</a>
+            <button type="submit" class="btn customer-wizard-btn-next">Save Changes</button>
+        </div>
+    </form>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<script>
+    document.querySelectorAll('.customer-password-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = btn.parentElement.querySelector('.customer-password-input');
+            if (!input) return;
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+
+    function showIdPreview(side, file) {
+        document.getElementById('id-' + side + '-filename').innerText = file.name;
+        document.getElementById('id-' + side + '-upload-zone').classList.add('d-none');
+        document.getElementById('id-' + side + '-preview-state').classList.remove('d-none');
+        var previewImg = document.getElementById('id-' + side + '-preview-img');
+        if (file.type.startsWith('image/')) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                previewImg.classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearIdFile(side) {
+        var fileInput = document.getElementById('input-' + (side === 'front' ? 'Front' : 'Back') + 'IdFile');
+        fileInput.value = '';
+        document.getElementById('id-' + side + '-upload-zone').classList.remove('d-none');
+        document.getElementById('id-' + side + '-preview-state').classList.add('d-none');
+        var previewImg = document.getElementById('id-' + side + '-preview-img');
+        previewImg.src = '';
+        previewImg.classList.add('d-none');
+        var pathName = side === 'front' ? 'FrontValidIDImagePath' : 'BackValidIDImagePath';
+        var pathInput = document.querySelector('input[name="' + pathName + '"]');
+        if (pathInput) pathInput.value = '';
+    }
+
+    ['front', 'back'].forEach(function (side) {
+        var input = document.getElementById('input-' + (side === 'front' ? 'Front' : 'Back') + 'IdFile');
+        var zone = document.getElementById('id-' + side + '-upload-zone');
+        input.addEventListener('change', function () {
+            if (this.files && this.files[0]) showIdPreview(side, this.files[0]);
+        });
+        ['dragenter', 'dragover'].forEach(function (name) {
+            zone.addEventListener(name, function (e) {
+                e.preventDefault();
+                zone.style.backgroundColor = '#e9e9e9';
+            });
+        });
+        ['dragleave', 'drop'].forEach(function (name) {
+            zone.addEventListener(name, function (e) {
+                e.preventDefault();
+                zone.style.backgroundColor = '';
+            });
+        });
+        zone.addEventListener('drop', function (e) {
+            var files = e.dataTransfer.files;
+            if (!files.length) return;
+            var transfer = new DataTransfer();
+            transfer.items.add(files[0]);
+            input.files = transfer.files;
+            showIdPreview(side, files[0]);
+        });
+    });
+</script>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

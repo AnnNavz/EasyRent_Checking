@@ -1,0 +1,310 @@
+/* Customer index styles. Loaded by the admin layout when ActivePage is Customers. */
+
+.customers-index-page {
+    background-color: #ffffff;
+}
+
+.customers-index-page .customer-metric-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    min-height: 110px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.customers-index-page .customer-metric-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.customers-index-page .customer-metric-icon.is-total {
+    background: #e8f1ff;
+    color: #3b82f6;
+}
+
+.customers-index-page .customer-metric-icon.is-pending {
+    background: #fff4e5;
+    color: #f79009;
+}
+
+.customers-index-page .customer-metric-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.customers-index-page .customer-metric-label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #667085;
+    margin-bottom: 0.15rem;
+}
+
+.customers-index-page .customer-metric-value {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a3275;
+    line-height: 1.1;
+}
+
+.customers-index-page .customer-metric-trend {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.customers-index-page .customer-metric-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    background: #ecfdf3;
+    color: #027a48;
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.customers-index-page .customer-metric-badge.is-down {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.customers-index-page .customer-metric-badge i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.customers-index-page .customer-metric-compare {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.68rem;
+    color: #98a2b3;
+    font-weight: 500;
+}
+
+.customers-index-page .customer-index-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 0.85rem 1rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.customers-index-page .customer-index-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.customers-index-page .customer-index-toolbar-search {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 220px;
+}
+
+.customers-index-page .customer-index-search-icon,
+.customers-index-page .customer-index-mic-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667085;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.customers-index-page .customer-index-search-icon {
+    left: 0.95rem;
+}
+
+.customers-index-page .customer-index-mic-icon {
+    right: 0.95rem;
+}
+
+.customers-index-page .customer-index-search-input {
+    height: 42px;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: #ffffff !important;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    font-size: 0.85rem;
+    color: #344054;
+}
+
+.customers-index-page .customer-index-search-input:focus {
+    border-color: #1a3275;
+    box-shadow: 0 0 0 0.15rem rgba(26, 50, 117, 0.12);
+}
+
+.customers-index-page .customer-index-search-clear {
+    position: absolute;
+    right: 2.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667085;
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.customers-index-page .customer-index-add-btn {
+    background: #1a3275 !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.customers-index-page .customer-index-add-btn:hover {
+    background: #12234f !important;
+    color: #ffffff !important;
+}
+
+.customers-index-page .index-table-panel {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.customers-index-page .index-table-panel .admin-table thead th {
+    background: #eef1f6;
+    color: #344054;
+    font-weight: 700;
+    border-bottom: 1px solid #d8dde6;
+    border-top: 1px solid #d8dde6;
+    border-right: 1px solid #d8dde6;
+}
+
+.customers-index-page .index-table-panel .admin-table thead th:first-child {
+    border-left: 1px solid #d8dde6;
+    border-top-left-radius: 12px;
+}
+
+.customers-index-page .index-table-panel .admin-table thead th:last-child {
+    border-top-right-radius: 12px;
+    border-right: 1px solid #d8dde6;
+}
+
+.customers-index-page .index-table-panel .admin-table tbody td {
+    background: #ffffff;
+    vertical-align: middle;
+}
+
+.customers-index-page .table-customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.customers-index-page .table-customer-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #d9e2f3;
+    color: #1a3275;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.customers-index-page .table-customer-name {
+    font-weight: 700;
+    color: #1d2939;
+    white-space: nowrap;
+}
+
+.customers-index-page .customer-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 88px;
+    padding: 0.32rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.customers-index-page .customer-status-badge.is-approved {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.customers-index-page .customer-status-badge.is-pending {
+    background: #fff4e5;
+    color: #b54708;
+}
+
+.customers-index-page .customer-status-badge.is-inactive {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.customers-index-page .customer-row-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #e4e7ec;
+    background: #ffffff;
+    color: #344054;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+}
+
+.customers-index-page .customer-row-action:hover,
+.customers-index-page .customer-row-action:focus,
+.customers-index-page .customer-row-action.show {
+    background: #f8fafc;
+    border-color: #d0d5dd;
+    color: #1a3275;
+}
+
+.customers-index-page .pagination-wrapper {
+    font-size: 0.82rem;
+    color: #667085;
+}
+
+@media (max-width: 991.98px) {
+    .customers-index-page .customer-index-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .customers-index-page .customer-index-add-btn {
+        justify-content: center;
+    }
+
+    .customers-index-page .customer-metric-trend {
+        display: none;
+    }
+}

@@ -4,13 +4,35 @@
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = Model.PageTitle;
     ViewData["ActivePage"] = Model.ActivePage;
+
+    var successClass = Model.ActivePage switch
+    {
+        "Drivers" => "driver-create-success",
+        "Vehicles" => "vehicle-create-success",
+        "Customers" => "customer-create-success",
+        "Maintenance" => "pms-record-success",
+        _ => ""
+    };
 }
 
-<div class="admin-success-screen">
+@section Styles {
+    @if (Model.ActivePage == "Drivers")
+    {
+        <link rel="stylesheet" href="~/css/admin/driver-create.css" asp-append-version="true" />
+    }
+    else if (Model.ActivePage == "Vehicles")
+    {
+        <link rel="stylesheet" href="~/css/admin/vehicle-create.css" asp-append-version="true" />
+    }
+    else if (Model.ActivePage == "Customers")
+    {
+        <link rel="stylesheet" href="~/css/admin/customer-create.css" asp-append-version="true" />
+    }
+}
+
+<div class="admin-success-screen @successClass">
     <div class="admin-success-icon-wrap">
-        <div class="admin-success-icon">
-            <i class="bi bi-check-lg"></i>
-        </div>
+        <partial name="_SuccessCheckIcon" />
     </div>
 
     <h2 class="admin-success-heading">@Model.Heading</h2>

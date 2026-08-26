@@ -1,104 +1,421 @@
-﻿@model EasyRent_Checking.Models.Vehicle
+@model EasyRent_Checking.ViewModels.VehicleDetailsViewModel
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using System.Reflection
+@using EasyRent_Checking.Models
+@using EasyRent_Checking.Services
 
 @{
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "View Details";
     ViewData["ActivePage"] = "Vehicles";
 
-    string registrationFrom = Model?.RegistrationDate.ToString("MMMM dd, yyyy") ?? "—";
-    string registrationTo = Model?.RegistrationExpiry.ToString("MMMM dd, yyyy") ?? "—";
-    string detailsReturnUrl = Url.Action("Details", new { id = Model?.VehicleId }) ?? "";
+    var vehicle = Model.Vehicle;
+    string detailsReturnUrl = Url.Action("Details", new { id = vehicle?.VehicleId }) ?? "";
+
+    string EnumLabel(Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>()?.GetName();
+        return display ?? value.ToString();
+    }
+
+    string StatusLabel(VehicleStatus status) => status switch
+    {
+        VehicleStatus.Available => "Available",
+        VehicleStatus.InMaintenance => "In Maintenance",
+        _ => status.ToString()
+    };
+
+    string StatusDotClass(VehicleStatus status) => status switch
+    {
+        VehicleStatus.Available => "",
+        VehicleStatus.Rented => "is-rented",
+        VehicleStatus.InMaintenance => "is-maintenance",
+        _ => "is-unavailable"
+    };
+
+    string DueStatusClass(PmsDueKind kind) => kind switch
+    {
+        PmsDueKind.Overdue => "pms-status is-overdue",
+        PmsDueKind.DueNow => "pms-status is-due-now",
+        PmsDueKind.DueSoon => "pms-status is-due-soon",
+        PmsDueKind.InProgress => "pms-status is-progress",
+        _ => "pms-status is-upcoming"
+    };
+
+    string CheckupIcon(MaintenanceType type) => type switch
+    {
+        MaintenanceType.OilChange => "bi-droplet-fill",
+        MaintenanceType.TireInspection => "bi-circle",
+        MaintenanceType.BrakeInspection => "bi-disc",
+        MaintenanceType.GeneralCheckup => "bi-clipboard-check",
+        MaintenanceType.AirFilterReplacement => "bi-wind",
+        _ => "bi-wrench-adjustable"
+    };
+
+    string ScheduleLine(MaintenanceDueItem item)
+    {
+        var lastDone = item.LastCompletedDate?.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture);
+        return string.IsNullOrEmpty(lastDone)
+            ? $"{item.ScheduleLabel}, last done: —"
+            : $"{item.ScheduleLabel}, last done: {lastDone}";
+    }
+
+    var history = Model.BookingHistory;
+    var historySort = Context.Request.Query["historySort"].ToString();
+    history = historySort switch
+    {
+        "Name" => history.OrderBy(h => h.CustomerName).ToList(),
+        "Date" => history.OrderByDescending(h => h.SortDate).ToList(),
+        "BookingId" => history.OrderBy(h => h.RentalId).ToList(),
+        _ => history
+    };
+
+    string historySortName = historySort switch
+    {
+        "Name" => "Full Name",
+        "Date" => "Trip Dates",
+        "BookingId" => "Booking ID",
+        _ => "Sorting by"
+    };
+
+    const int historyPageSize = 10;
+    var historyCount = history.Count;
+    var historyPages = historyCount == 0 ? 1 : (int)Math.Ceiling(historyCount / (double)historyPageSize);
+    var historyStart = historyCount == 0 ? 0 : 1;
+    var historyEnd = Math.Min(historyPageSize, historyCount);
+    var historyPage = history.Take(historyPageSize).ToList();
+
+    var hasImage = !string.IsNullOrEmpty(vehicle?.ImagePath);
+    var description = string.IsNullOrWhiteSpace(vehicle?.Description)
+        ? "No description has been added for this vehicle yet."
+        : vehicle!.Description;
 }
 
-<div class="container-fluid px-4 py-3">
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/vehicle-details.css" asp-append-version="true" />
+}
 
-    <div class="details-page-header">
-        <div class="d-flex align-items-center gap-4 flex-grow-1">
-            <div class="vehicle-details-image">
-                @if (!string.IsNullOrEmpty(Model?.ImagePath))
-                {
-                    <img src="~/images/@Model.ImagePath" alt="@Model.Model" />
-                }
-                else
-                {
-                    <div class="license-preview-placeholder"></div>
-                }
-            </div>
-            <div>
-                <h1 class="vehicle-details-model mb-1">@Model?.Model</h1>
-                <p class="vehicle-details-brand mb-0">@Model?.Brand</p>
-            </div>
+<div class="vehicle-details-page">
+    <div class="vehicle-details-hero">
+        <div class="vehicle-details-photo">
+            @if (hasImage)
+            {
+                <img src="~/images/@vehicle!.ImagePath" alt="@vehicle.Model" />
+            }
+            else
+            {
+                <i class="bi bi-car-front-fill" aria-hidden="true"></i>
+            }
         </div>
-        <div class="details-page-actions">
-            <a asp-action="Index" class="btn btn-page-back">Back</a>
-            <a asp-action="Edit" asp-route-id="@Model?.VehicleId" asp-route-returnUrl="@detailsReturnUrl" class="btn btn-page-primary">Edit Vehicle Information</a>
+
+        <div class="vehicle-details-hero-body">
+            <div class="vehicle-details-actions">
+                <a asp-action="Index" class="btn vehicle-details-btn-back">Back</a>
+                <a asp-action="Edit" asp-route-id="@vehicle?.VehicleId" asp-route-returnUrl="@detailsReturnUrl" class="btn vehicle-details-btn-edit">Edit Vehicle Information</a>
+            </div>
+
+            <h1 class="vehicle-details-model">@(vehicle?.Model ?? "—")</h1>
+            <span class="vehicle-details-brand">@(vehicle?.Brand ?? "—")</span>
+
+            <div class="vehicle-details-tiles">
+                <div class="vehicle-detail-tile">
+                    <span class="vehicle-detail-tile-icon"><i class="bi bi-123"></i></span>
+                    <div>
+                        <span class="vehicle-detail-tile-label">Plate Number</span>
+                        <span class="vehicle-detail-tile-value text-uppercase">@(vehicle?.PlateNumber ?? "—")</span>
+                    </div>
+                </div>
+                <div class="vehicle-detail-tile">
+                    <span class="vehicle-detail-tile-icon"><i class="bi bi-car-front-fill"></i></span>
+                    <div>
+                        <span class="vehicle-detail-tile-label">Type</span>
+                        <span class="vehicle-detail-tile-value">@(vehicle != null ? VehicleTypes.Display(vehicle.Type) : "—")</span>
+                    </div>
+                </div>
+                <div class="vehicle-detail-tile">
+                    <span class="vehicle-detail-tile-icon">
+                        <span class="vehicle-status-dot @StatusDotClass(vehicle?.Status ?? VehicleStatus.Unavailable)"></span>
+                    </span>
+                    <div>
+                        <span class="vehicle-detail-tile-label">Status</span>
+                        <span class="vehicle-detail-tile-value">@StatusLabel(vehicle?.Status ?? VehicleStatus.Unavailable)</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <ul class="nav nav-tabs vehicle-details-tabs mb-4" role="tablist">
+    <ul class="nav nav-tabs vehicle-details-tabs" id="vehicleDetailTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" type="button" role="tab" aria-selected="true">Information</button>
+            <button class="nav-link active" id="information-tab" data-bs-toggle="tab" data-bs-target="#information-pane" type="button" role="tab" aria-selected="true">Information</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-selected="false">Documents</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance-pane" type="button" role="tab" aria-selected="false">Maintenance</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab" aria-selected="false">History</button>
         </li>
     </ul>
 
-    <div class="row g-4">
-        <div class="col-md-6">
-            <div class="vehicle-info-card shadow-sm">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-car-front fs-5 text-secondary"></i>
-                    <h6 class="fw-bold mb-0 text-dark">Vehicle Details</h6>
+    <div class="tab-content" id="vehicleDetailTabsContent">
+        <div class="tab-pane fade show active" id="information-pane" role="tabpanel" aria-labelledby="information-tab">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="vehicle-info-card">
+                        <div class="vehicle-info-card-head">
+                            <span class="vehicle-info-card-icon"><i class="bi bi-car-front-fill"></i></span>
+                            <h6 class="vehicle-info-card-title">Vehicle Information</h6>
+                        </div>
+                        <p class="vehicle-info-description">@description</p>
+                        <div class="vehicle-info-grid">
+                            <div>
+                                <span class="vehicle-info-field-label">Color</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-palette-fill"></i></span>
+                                    <span>@(vehicle?.Color ?? "—")</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="vehicle-info-field-label">Seating Capacity</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+                                    <span>@(vehicle?.PassengersCount ?? 0) seats</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="vehicle-info-field-label">Model</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-tag-fill"></i></span>
+                                    <span>@(vehicle?.Model ?? "—")</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="vehicle-info-field-label">Type</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-car-front"></i></span>
+                                    <span>@(vehicle != null ? VehicleTypes.Display(vehicle.Type) : "—")</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <hr class="wizard-section-divider" />
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Color</span>
-                    <span class="vehicle-info-value">@Model?.Color</span>
-                </div>
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Type</span>
-                    <span class="vehicle-info-value">@Model?.Type</span>
-                </div>
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Plate Number</span>
-                    <span class="vehicle-info-value font-monospace text-uppercase">@Model?.PlateNumber</span>
-                </div>
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Status</span>
-                    <span class="vehicle-info-value">@Model?.Status</span>
-                </div>
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Base Price</span>
-                    <span class="vehicle-info-value">₱@Model?.BasePrice.ToString("N0")</span>
-                </div>
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Succeeding Fee</span>
-                    <span class="vehicle-info-value">₱@Model?.SucceedingFee.ToString("N0")/hr</span>
-                </div>
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Passengers Count</span>
-                    <span class="vehicle-info-value">@Model?.PassengersCount</span>
-                </div>
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Description</span>
-                    <span class="vehicle-info-value">@(string.IsNullOrWhiteSpace(Model?.Description) ? "—" : Model.Description)</span>
+                <div class="col-lg-6">
+                    <div class="vehicle-info-card">
+                        <div class="vehicle-info-card-head">
+                            <span class="vehicle-info-card-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                            <h6 class="vehicle-info-card-title">Additional Information</h6>
+                        </div>
+                        <div class="vehicle-info-grid">
+                            <div>
+                                <span class="vehicle-info-field-label">Odometer (km)</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-speedometer2"></i></span>
+                                    <span>@(vehicle?.Odometer.ToString("N0") ?? "0") km</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="vehicle-info-field-label">Registration Date</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-calendar3"></i></span>
+                                    <span>@(vehicle?.RegistrationDate.ToString("MMMM d, yyyy") ?? "—")</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="vehicle-info-field-label">Registration Expiry Date</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-flag-fill"></i></span>
+                                    <span>@(vehicle?.RegistrationExpiry.ToString("MMMM d, yyyy") ?? "—")</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="vehicle-info-field-label">Base Price</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-currency-dollar"></i></span>
+                                    <span>₱@(vehicle?.BasePrice.ToString("N0") ?? "0")</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="vehicle-info-field-label">Succeeding Fee</span>
+                                <div class="vehicle-info-field-value">
+                                    <span class="vehicle-info-value-icon"><i class="bi bi-clock-fill"></i></span>
+                                    <span>₱@(vehicle?.SucceedingFee.ToString("N0") ?? "0")/hr</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="vehicle-info-card shadow-sm">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-card-text fs-5 text-secondary"></i>
-                    <h6 class="fw-bold mb-0 text-dark">Vehicle Registration Details</h6>
+
+        <div class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab">
+            <div class="vehicle-section-head">
+                <div>
+                    <h2 class="vehicle-section-title">Vehicle Documents</h2>
+                    <p class="vehicle-section-desc">View and manage all documents related to this vehicle.</p>
                 </div>
-                <hr class="wizard-section-divider" />
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Valid from</span>
-                    <span class="vehicle-info-value">@registrationFrom</span>
+                <a asp-action="Edit" asp-route-id="@vehicle?.VehicleId" asp-route-returnUrl="@detailsReturnUrl" class="btn vehicle-section-btn">
+                    <i class="bi bi-upload"></i> Upload Document
+                </a>
+            </div>
+
+            @if (hasImage)
+            {
+                <div class="vehicle-doc-grid">
+                    <div class="vehicle-doc-card">
+                        <div class="vehicle-doc-card-top">
+                            <h3 class="vehicle-doc-title">Vehicle Photo</h3>
+                        </div>
+                        <div class="vehicle-doc-meta">Image</div>
+                        <div class="vehicle-doc-uploaded">Current fleet photo on file</div>
+                        <a href="~/images/@vehicle!.ImagePath" target="_blank" rel="noopener" class="vehicle-doc-download">Download</a>
+                    </div>
                 </div>
-                <div class="vehicle-info-row">
-                    <span class="vehicle-info-label">Valid until</span>
-                    <span class="vehicle-info-value">@registrationTo</span>
+            }
+            else
+            {
+                <div class="vehicle-empty">
+                    <i class="bi bi-file-earmark-text"></i>
+                    No documents uploaded for this vehicle yet.
+                </div>
+            }
+
+            <div class="vehicle-info-banner">
+                <i class="bi bi-info-circle-fill"></i>
+                <p>Keep vehicle documents up to date and ensure they are valid. Expired documents may affect availability.</p>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="maintenance-pane" role="tabpanel" aria-labelledby="maintenance-tab">
+            <div class="vehicle-section-head">
+                <h2 class="vehicle-section-title">Maintenance Schedule Overview</h2>
+                @if (Model.MaintenanceItems.Any())
+                {
+                    <a asp-controller="Maintenance" asp-action="Index" class="btn vehicle-section-btn-outline">View Full Schedule</a>
+                }
+                else
+                {
+                    <a asp-controller="Maintenance" asp-action="Setup" asp-route-vehicleId="@vehicle?.VehicleId" class="btn vehicle-section-btn-outline">Set Up Schedule</a>
+                }
+            </div>
+
+            @if (Model.MaintenanceItems.Any())
+            {
+                <div class="table-responsive vehicle-maint-table">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Checkup</th>
+                                <th>Schedule</th>
+                                <th>Next Due</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.MaintenanceItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="vehicle-checkup-cell">
+                                            <span class="vehicle-checkup-icon"><i class="bi @CheckupIcon(item.Type)"></i></span>
+                                            <span>@EnumLabel(item.Type)</span>
+                                        </div>
+                                    </td>
+                                    <td class="vehicle-maint-schedule">@ScheduleLine(item)</td>
+                                    <td>@(item.NextDueDate?.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture) ?? item.DueLabel)</td>
+                                    <td><span class="@DueStatusClass(item.DueKind)">@EnumLabel(item.DueKind)</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="vehicle-empty">
+                    <i class="bi bi-wrench-adjustable"></i>
+                    No maintenance schedule has been set up for this vehicle yet.
+                </div>
+            }
+        </div>
+
+        <div class="tab-pane fade" id="history-pane" role="tabpanel" aria-labelledby="history-tab">
+            <div class="vehicle-section-head">
+                <h2 class="vehicle-section-title">Booking History</h2>
+                <div class="vehicle-history-toolbar">
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter" type="button" data-bs-toggle="dropdown">
+                            @historySortName
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="?historySort=BookingId#history">Booking ID</a></li>
+                            <li><a class="dropdown-item" href="?historySort=Name#history">Full Name</a></li>
+                            <li><a class="dropdown-item" href="?historySort=Date#history">Trip Dates</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
+
+            @if (historyPage.Any())
+            {
+                <div class="table-responsive vehicle-history-table">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Full Name</th>
+                                <th>Trip Dates</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in historyPage)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.BookingLabel</td>
+                                    <td>@item.CustomerName</td>
+                                    <td>@item.TripDates</td>
+                                    <td>@item.Duration</td>
+                                    <td><span class="pms-status @item.StatusClass">@item.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="vehicle-history-pagination">
+                        <span>@historyStart-@historyEnd of @historyCount</span>
+                        <span>1/@historyPages</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="vehicle-empty">
+                    <i class="bi bi-clock-history"></i>
+                    No booking history recorded for this vehicle yet.
+                </div>
+            }
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var hash = (window.location.hash || '').replace('#', '');
+            var tabId = hash === 'history' ? 'history-tab'
+                : hash === 'documents' ? 'documents-tab'
+                : hash === 'maintenance' ? 'maintenance-tab'
+                : null;
+            if (!tabId) return;
+            var trigger = document.getElementById(tabId);
+            if (trigger && window.bootstrap) {
+                bootstrap.Tab.getOrCreateInstance(trigger).show();
+            }
+        });
+    </script>
+}

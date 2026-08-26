@@ -9,10 +9,13 @@
             "Dashboard" => "Dashboard",
             "Drivers" => "Driver Management",
             "Vehicles" => "Vehicle Management",
-            "Rentals" => "Booking Management",
+            "Rentals" => "Inquiries Management",
             "Transit" => "Transit Management",
-            "Customers" => "Customer Management",
+            "Customers" => "User Management",
             "Admins" => "Admin Management",
+            "Maintenance" => "Vehicle Maintenance",
+            "Incidents" => "Incident Reports",
+            "SystemLogs" => "Activity Logs",
             _ => null
         };
     }
@@ -29,6 +32,9 @@
             "Transit" => Url.Action("Index", "Transits"),
             "Customers" => Url.Action("Index", "Customers"),
             "Admins" => Url.Action("Index", "Admins"),
+            "Maintenance" => Url.Action("Index", "Maintenance"),
+            "Incidents" => Url.Action("Index", "Incidents"),
+            "SystemLogs" => Url.Action("Index", "SystemLogs"),
             _ => null
         };
     }

@@ -1,4 +1,4 @@
-﻿@model EasyRent_Checking.Models.Vehicle
+@model EasyRent_Checking.Models.Vehicle
 
 @{
     Layout = "_LayoutAdminDashboard";
@@ -15,11 +15,15 @@
     }
 
     bool hasVehicleImage = !string.IsNullOrEmpty(Model?.ImagePath);
-    string vehicleFileName = GetDisplayFileName(Model?.ImagePath, "No vehicle image");
+    string vehicleFileName = GetDisplayFileName(Model?.ImagePath, "vehicle_image.png");
     string? backUrl = ViewData["ReturnUrl"]?.ToString();
 }
 
-<div class="wizard-max-wrapper py-3">
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/vehicle-create.css" asp-append-version="true" />
+}
+
+<div class="wizard-max-wrapper vehicle-create-wizard py-3">
     <form asp-action="Edit" enctype="multipart/form-data" id="editVehicleForm">
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
         <input type="hidden" asp-for="VehicleId" />
@@ -29,149 +33,150 @@
             <input type="hidden" name="returnUrl" value="@backUrl" />
         }
 
-        <div class="text-start mb-4">
-            <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Edit Details</h5>
-            <p class="text-muted small">Update the vehicle information and uploaded image.</p>
+        <div class="text-start mb-2">
+            <h5 class="vehicle-wizard-heading">Edit Vehicle Details</h5>
+            <p class="vehicle-wizard-subheading">Update the vehicle information and uploaded image.</p>
         </div>
 
-        <div class="form-container-card p-4 mb-4 shadow-sm">
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-car-front fs-5 text-secondary"></i>
-                <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Information</h6>
+        <div class="vehicle-wizard-card">
+            <div class="vehicle-wizard-section-head">
+                <span class="vehicle-wizard-section-icon"><i class="bi bi-car-front-fill"></i></span>
+                <h6 class="vehicle-wizard-section-title">Vehicle Information</h6>
             </div>
-            <hr class="wizard-section-divider" />
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label asp-for="Brand" class="form-label fw-semibold small text-secondary mb-1">Brand</label>
-                    <input asp-for="Brand" class="form-control form-control-thin shadow-sm" placeholder="e.g. Mercedes-Benz" />
+                    <label asp-for="Brand" class="vehicle-wizard-label">Brand</label>
+                    <input asp-for="Brand" class="form-control vehicle-wizard-input" placeholder="e.g. Mercedes-Benz" />
                     <span asp-validation-for="Brand" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Model" class="form-label fw-semibold small text-secondary mb-1">Model</label>
-                    <input asp-for="Model" class="form-control form-control-thin shadow-sm" placeholder="e.g. Sprinter 2500" />
+                    <label asp-for="Model" class="vehicle-wizard-label">Model</label>
+                    <input asp-for="Model" class="form-control vehicle-wizard-input" placeholder="e.g. Sprinter 2500" />
                     <span asp-validation-for="Model" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Color" class="form-label fw-semibold small text-secondary mb-1">Color</label>
-                    <input asp-for="Color" class="form-control form-control-thin shadow-sm" placeholder="e.g. Blue" />
+                    <label asp-for="Color" class="vehicle-wizard-label">Color</label>
+                    <input asp-for="Color" class="form-control vehicle-wizard-input" placeholder="e.g. Blue" />
                     <span asp-validation-for="Color" class="text-danger small mt-1 d-block"></span>
                 </div>
+                    <div class="col-md-6">
+                        <partial name="_VehicleTypeField" />
+                    </div>
                 <div class="col-md-6">
-                    <label asp-for="Type" class="form-label fw-semibold small text-secondary mb-1">Type</label>
-                    <select asp-for="Type" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
-                    <span asp-validation-for="Type" class="text-danger small mt-1 d-block"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="PlateNumber" class="form-label fw-semibold small text-secondary mb-1">Plate Number</label>
-                    <input asp-for="PlateNumber" class="form-control form-control-thin shadow-sm text-uppercase font-monospace" placeholder="e.g. GAP 4821" />
+                    <label asp-for="PlateNumber" class="vehicle-wizard-label">Plate Number</label>
+                    <input asp-for="PlateNumber" class="form-control vehicle-wizard-input text-uppercase font-monospace" placeholder="e.g. GAP 4821" />
                     <span asp-validation-for="PlateNumber" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Status" class="form-label fw-semibold small text-secondary mb-1">Status</label>
-                    <select asp-for="Status" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
+                    <label asp-for="Status" class="vehicle-wizard-label">Status</label>
+                    <select asp-for="Status" class="form-select vehicle-wizard-input" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
                     <span asp-validation-for="Status" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="RegistrationDate" class="form-label fw-semibold small text-secondary mb-1">Registration Date</label>
-                    <input asp-for="RegistrationDate" id="input-RegistrationDate" type="date" class="form-control form-control-thin shadow-sm" value="@Model?.RegistrationDate.ToString("yyyy-MM-dd")" />
+                    <label asp-for="RegistrationDate" class="vehicle-wizard-label">Registration Date</label>
+                    <div class="vehicle-date-input-wrap">
+                        <input asp-for="RegistrationDate" id="input-RegistrationDate" type="date" class="form-control vehicle-wizard-input" value="@Model?.RegistrationDate.ToString("yyyy-MM-dd")" />
+                        <i class="bi bi-calendar3 vehicle-date-icon" aria-hidden="true"></i>
+                    </div>
                     <span asp-validation-for="RegistrationDate" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="RegistrationExpiry" class="form-label fw-semibold small text-secondary mb-1">Registration Expiry Date</label>
-                    <input asp-for="RegistrationExpiry" id="input-RegistrationExpiry" type="date" class="form-control form-control-thin shadow-sm" value="@Model?.RegistrationExpiry.ToString("yyyy-MM-dd")" />
+                    <label asp-for="RegistrationExpiry" class="vehicle-wizard-label">Registration Expiry Date</label>
+                    <div class="vehicle-date-input-wrap">
+                        <input asp-for="RegistrationExpiry" id="input-RegistrationExpiry" type="date" class="form-control vehicle-wizard-input" value="@Model?.RegistrationExpiry.ToString("yyyy-MM-dd")" />
+                        <i class="bi bi-calendar3 vehicle-date-icon" aria-hidden="true"></i>
+                    </div>
                     <span asp-validation-for="RegistrationExpiry" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="BasePrice" class="form-label fw-semibold small text-secondary mb-1">Base Price</label>
-                    <div class="input-group shadow-sm">
-                        <span class="input-group-text form-control-thin">₱</span>
-                        <input asp-for="BasePrice" class="form-control form-control-thin" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
+                    <label asp-for="Odometer" class="vehicle-wizard-label">Odometer (km)</label>
+                    <div class="input-group vehicle-input-suffix">
+                        <input asp-for="Odometer" class="form-control vehicle-wizard-input" type="number" min="0" step="1" />
+                        <span class="input-group-text">km</span>
+                    </div>
+                    <span asp-validation-for="Odometer" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PassengersCount" class="vehicle-wizard-label">Passengers Count</label>
+                    <input asp-for="PassengersCount" class="form-control vehicle-wizard-input" type="number" min="1" max="50" placeholder="e.g. 6" />
+                    <span asp-validation-for="PassengersCount" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="BasePrice" class="vehicle-wizard-label">Base Price</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₱</span>
+                        <input asp-for="BasePrice" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
                     </div>
                     <span asp-validation-for="BasePrice" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="SucceedingFee" class="form-label fw-semibold small text-secondary mb-1">Succeeding Fee</label>
-                    <div class="input-group shadow-sm">
-                        <span class="input-group-text form-control-thin">₱</span>
-                        <input asp-for="SucceedingFee" class="form-control form-control-thin" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
+                    <label asp-for="SucceedingFee" class="vehicle-wizard-label">Succeeding Fee</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₱</span>
+                        <input asp-for="SucceedingFee" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
                     </div>
                     <span class="small text-muted mt-1 d-block">Per hour after the first 8 hours</span>
                     <span asp-validation-for="SucceedingFee" class="text-danger small mt-1 d-block"></span>
                 </div>
-                <div class="col-md-6">
-                    <label asp-for="PassengersCount" class="form-label fw-semibold small text-secondary mb-1">Passengers Count</label>
-                    <input asp-for="PassengersCount" class="form-control form-control-thin shadow-sm" type="number" min="1" max="50" placeholder="e.g. 6" />
-                    <span asp-validation-for="PassengersCount" class="text-danger small mt-1 d-block"></span>
-                </div>
                 <div class="col-12">
-                    <label asp-for="Description" class="form-label fw-semibold small text-secondary mb-1">Description</label>
-                    <textarea asp-for="Description" class="form-control form-control-thin shadow-sm" rows="4" placeholder="Describe the vehicle features, condition, or rental notes"></textarea>
+                    <label asp-for="Description" class="vehicle-wizard-label">Description</label>
+                    <textarea asp-for="Description" class="form-control vehicle-wizard-input" rows="4" placeholder="Describe the vehicle features, condition, or rental notes"></textarea>
                     <span asp-validation-for="Description" class="text-danger small mt-1 d-block"></span>
                 </div>
             </div>
         </div>
 
-        <div class="form-container-card p-4 mb-4 shadow-sm">
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
-                <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Image</h6>
+        <div class="vehicle-wizard-card">
+            <div class="vehicle-wizard-section-head">
+                <span class="vehicle-wizard-section-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                <h6 class="vehicle-wizard-section-title">Vehicle Image Upload</h6>
             </div>
-            <hr class="wizard-section-divider" />
 
-            <div class="row g-4 justify-content-center">
-                <div class="col-md-6">
-                    <div class="text-center fw-semibold small text-secondary mb-2">Vehicle Image</div>
+            <div id="vehicle-image-upload-zone" class="license-upload-zone @(hasVehicleImage ? "d-none" : "")">
+                <div>
+                    <i class="bi bi-cloud-arrow-up fs-3 d-block mb-2"></i>
+                    <span class="d-block upload-main-text mb-1">Drag &amp; drop or click to upload</span>
+                    <span class="d-block upload-sub-text">PNG, JPG, or JPEG (max 5MB)</span>
+                </div>
+                <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg" onchange="updateFileFeedback(this)" />
+            </div>
 
-                    <div id="vehicle-image-upload-zone" class="license-upload-zone @(hasVehicleImage ? "d-none" : "")">
-                        <div>
-                            <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
-                            <span class="d-block small fw-bold text-dark mb-1">Drag & drop image scan or <span class="text-decoration-underline">click to browse</span></span>
-                            <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
-                        </div>
-                        <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFileFeedback(this)" />
-                    </div>
-
-                    <div id="vehicle-image-preview-state" class="@(hasVehicleImage ? "" : "d-none")">
-                        <div class="edit-license-preview-wrap">
-                            <div class="license-preview-box edit-clickable" id="vehicle-image-preview-box" title="Click to replace image" onclick="document.getElementById('input-File').click()">
-                                @if (hasVehicleImage)
-                                {
-                                    <img id="vehicle-preview-img" src="~/images/@Model.ImagePath" alt="Vehicle image preview" />
-                                    <div id="vehicle-preview-placeholder" class="license-preview-placeholder d-none"></div>
-                                }
-                                else
-                                {
-                                    <img id="vehicle-preview-img" class="d-none" alt="Vehicle image preview" />
-                                    <div id="vehicle-preview-placeholder" class="license-preview-placeholder"></div>
-                                }
-                            </div>
-                            <button type="button" class="edit-license-remove-btn" onclick="clearFileSelection()" aria-label="Remove vehicle image">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                            <span id="vehicle-image-edit-filename" class="small text-muted font-monospace text-center d-block mt-2">@vehicleFileName</span>
-                        </div>
-                    </div>
+            <div id="vehicle-image-preview-state" class="@(hasVehicleImage ? "" : "d-none")">
+                <div class="vehicle-image-preview-box" id="vehicle-image-preview-box" title="Click to replace image">
+                    @if (hasVehicleImage)
+                    {
+                        <img id="vehicle-preview-img" src="~/images/@Model!.ImagePath" alt="Vehicle image preview" />
+                    }
+                    else
+                    {
+                        <img id="vehicle-preview-img" class="d-none" alt="Vehicle image preview" />
+                    }
+                </div>
+                <div id="vehicle-image-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between">
+                    <span id="feedback-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">@vehicleFileName</span>
+                    <button type="button" class="vehicle-image-remove-btn" onclick="clearFileSelection()">Remove</button>
                 </div>
             </div>
         </div>
 
-        <div class="page-action-bar">
+        <div class="vehicle-wizard-actions">
             @if (!string.IsNullOrEmpty(backUrl))
             {
-                <a href="@backUrl" class="btn btn-page-back">Back</a>
+                <a href="@backUrl" class="btn vehicle-wizard-btn-back">Cancel</a>
             }
             else
             {
-                <button type="button" class="btn btn-page-back" onclick="window.history.back()">Back</button>
+                <a asp-action="Index" class="btn vehicle-wizard-btn-back">Cancel</a>
             }
-            <button type="submit" class="btn btn-page-primary">Continue</button>
+            <button type="submit" class="btn vehicle-wizard-btn-next">Save Changes</button>
         </div>
     </form>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/vehicle-type-field.js" asp-append-version="true"></script>
 
     <script>
         let imageCleared = false;
@@ -201,13 +206,12 @@
             const uploadZone = document.getElementById('vehicle-image-upload-zone');
             const previewState = document.getElementById('vehicle-image-preview-state');
             const previewImg = document.getElementById('vehicle-preview-img');
-            const previewPlaceholder = document.getElementById('vehicle-preview-placeholder');
-            const editFilename = document.getElementById('vehicle-image-edit-filename');
+            const nameSpan = document.getElementById('feedback-filename');
 
             if (input.files && input.files.length > 0) {
                 imageCleared = false;
                 const file = input.files[0];
-                editFilename.innerText = file.name;
+                nameSpan.innerText = file.name;
                 uploadZone.classList.add('d-none');
                 previewState.classList.remove('d-none');
 
@@ -216,13 +220,11 @@
                     reader.onload = function (e) {
                         previewImg.src = e.target.result;
                         previewImg.classList.remove('d-none');
-                        previewPlaceholder.classList.add('d-none');
                     };
                     reader.readAsDataURL(file);
                 } else {
-                    previewImg.classList.add('d-none');
                     previewImg.src = '';
-                    previewPlaceholder.classList.remove('d-none');
+                    previewImg.classList.add('d-none');
                 }
             }
         }
@@ -233,8 +235,7 @@
             document.getElementById('vehicle-image-preview-state').classList.add('d-none');
             document.getElementById('vehicle-preview-img').src = '';
             document.getElementById('vehicle-preview-img').classList.add('d-none');
-            document.getElementById('vehicle-preview-placeholder').classList.remove('d-none');
-            document.getElementById('vehicle-image-edit-filename').innerText = '';
+            document.getElementById('feedback-filename').innerText = '';
             imageCleared = true;
         }
 
@@ -247,7 +248,7 @@
                 zone.addEventListener(eventName, function (event) {
                     event.preventDefault();
                     event.stopPropagation();
-                    zone.style.backgroundColor = '#e9e9e9';
+                    zone.style.backgroundColor = '#eef2ff';
                 });
             });
 
@@ -274,6 +275,9 @@
             document.getElementById('input-RegistrationDate').addEventListener('change', setExpiryOneYearAfterRegistration);
             document.getElementById('input-RegistrationDate').addEventListener('input', setExpiryOneYearAfterRegistration);
             setupImageDragDrop();
+            document.getElementById('vehicle-image-preview-box').addEventListener('click', function () {
+                document.getElementById('input-File').click();
+            });
         });
     </script>
 }

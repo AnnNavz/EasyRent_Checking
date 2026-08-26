@@ -1,4 +1,5 @@
 @model EasyRent_Checking.ViewModels.RentalInputModel
+@using EasyRent_Checking.Models
 @using System.Globalization
 @{
     var totalFare = ViewData["TotalFare"] as decimal? ?? 0m;
@@ -8,12 +9,21 @@
     var paymentTypeFromStep = ViewData["PaymentTypeFromStep"] as int? ?? 2;
     var paymentTypeBackStep = ViewData["PaymentTypeBackStep"] as int? ?? 1;
     var paymentTypeBackUrl = ViewData["PaymentTypeBackUrl"] as string;
+    var showPayLater = ViewData["ShowPayLaterOption"] as bool? == true;
+    var reserveWindowDays = RentalRules.ReservePaymentWindowDays;
+
+    var initialChoice = showPayLater && Model.RentalOption == RentalOption.Reserve
+        ? "Reserve"
+        : (string.Equals(Model.PaymentType, "Partial Payment", StringComparison.OrdinalIgnoreCase) ? "Partial" : "Full");
+    var selectedType = initialChoice == "Reserve"
+        ? ""
+        : (initialChoice == "Partial" ? "Partial Payment" : "Full Payment");
 
     string FormatPeso(decimal amount) =>
         "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
 }
 
-<input type="hidden" asp-for="PaymentType" id="input-PaymentType" />
+<input type="hidden" asp-for="PaymentType" id="input-PaymentType" value="@selectedType" />
 <input type="hidden" asp-for="TotalAmount" id="input-TotalAmount" value="@totalFare.ToString(CultureInfo.InvariantCulture)" />
 
 <div class="payment-type-block"
@@ -24,32 +34,42 @@
 
     <h1 class="payment-type-title">Type of Payment</h1>
     <p class="payment-type-subtitle">
-        Choose your preferred payment option to submit with your booking request.
+        Choose full payment, Partial Payment@(showPayLater ? ", or PayLater" : "") to continue.
     </p>
 
-    <div class="d-flex flex-column gap-3 mb-1">
-        <button type="button" class="payment-option-card" data-payment-type="Partial Payment" id="optionPartial">
+    <div class="payment-options-panel">
+        <button type="button"
+                class="payment-option-card @(initialChoice == "Partial" ? "is-selected" : "")"
+                data-pay-option="Partial"
+                data-payment-type="Partial Payment"
+                id="optionPartial">
             <div class="payment-option-icon"><i class="bi bi-percent"></i></div>
             <div class="payment-option-body">
                 <div class="payment-option-title">Partial Payment</div>
                 <div class="payment-option-desc">Pay a deposit percentage to secure your slot.</div>
                 <div class="payment-option-amount">
-                    @FormatPeso(depositAmount) <span>initial deposit (@depositPercent.ToString("0.##")%)</span>
+                    <span id="optionPartialAmount">@FormatPeso(depositAmount)</span>
+                    <span>initial deposit (<span id="optionPartialPercent">@depositPercent.ToString("0.##")</span>%)</span>
                 </div>
                 <div class="payment-option-note">
-                    Remaining @FormatPeso(remainingAmount) to be paid on-site to the driver.
+                    Remaining <span id="optionPartialRemaining">@FormatPeso(remainingAmount)</span> to be paid on-site to the driver.
                 </div>
             </div>
             <span class="payment-option-radio" aria-hidden="true"></span>
         </button>
 
-        <button type="button" class="payment-option-card" data-payment-type="Full Payment" id="optionFull">
+        <button type="button"
+                class="payment-option-card @(initialChoice == "Full" ? "is-selected" : "")"
+                data-pay-option="Full"
+                data-payment-type="Full Payment"
+                id="optionFull">
             <div class="payment-option-icon"><i class="bi bi-coin"></i></div>
             <div class="payment-option-body">
                 <div class="payment-option-title">Full Payment</div>
-                <div class="payment-option-desc">Pay 100% of base fare for a hassle-free trip.</div>
+                <div class="payment-option-desc">Pay 100% of base fare online or walk-in for a hassle-free trip.</div>
                 <div class="payment-option-amount">
-                    @FormatPeso(totalFare) <span>total base fare</span>
+                    <span id="optionFullAmount">@FormatPeso(totalFare)</span>
+                    <span>total base fare</span>
                 </div>
                 <div class="payment-option-note">
                     Balance = ₱0.00 (Note: Exceeding hours are separate).
@@ -57,12 +77,42 @@
             </div>
             <span class="payment-option-radio" aria-hidden="true"></span>
         </button>
+
+        @if (showPayLater)
+        {
+            <button type="button"
+                    class="payment-option-card @(initialChoice == "Reserve" ? "is-selected" : "")"
+                    data-pay-option="Reserve"
+                    data-payment-type=""
+                    id="optionPayLater">
+                <div class="payment-option-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="payment-option-body">
+                    <div class="payment-option-title">Pay Later</div>
+                    <div class="payment-option-desc">Pay 100% when you arrive on the venue.</div>
+                    <div class="payment-option-amount">
+                        @FormatPeso(0) <span>due online today</span>
+                    </div>
+                    <div class="payment-option-note">
+                        Hold the vehicle for @reserveWindowDays days — pay on arrival or from Transactions &amp; Rentals before it expires.
+                    </div>
+                </div>
+                <span class="payment-option-radio" aria-hidden="true"></span>
+            </button>
+        }
     </div>
 
-    <div class="payment-method-panel mt-4">
+    @if (showPayLater)
+    {
+        <div class="alert alert-warning border-0 shadow-sm mt-3 mb-0 @(initialChoice == "Reserve" ? "" : "d-none")" id="payLaterNotice" role="status">
+            <strong>Pay later hold:</strong> no payment is collected now. The customer must pay within
+            @reserveWindowDays days or this hold expires automatically.
+        </div>
+    }
+
+    <div class="payment-method-panel mt-4 @(initialChoice == "Reserve" ? "d-none" : "")" id="acceptedMethodsPanel">
         <div class="payment-method-title">
             <i class="bi bi-credit-card-2-front"></i>
-            <span>Accepted Payment Methods</span>
+            <span>Payment Method</span>
         </div>
 
         <div class="payment-method-info-grid">
@@ -71,7 +121,7 @@
                     <img src="~/images/System Images/GcashImage.jpg" alt="GCash" class="payment-method-info-logo" />
                     <div>
                         <div class="payment-method-info-name">GCash</div>
-                        <div class="payment-method-info-channel">Mobile Wallet / QR</div>
+                        <div class="payment-method-info-channel">QR only</div>
                     </div>
                 </div>
                 <p class="payment-method-info-desc">Scan GCash QR code and send the exact amount.</p>
@@ -86,7 +136,7 @@
                     <img src="~/images/System Images/BDOimage.png" alt="BDO" class="payment-method-info-logo" />
                     <div>
                         <div class="payment-method-info-name">BDO</div>
-                        <div class="payment-method-info-channel">Bank Transfer / QR</div>
+                        <div class="payment-method-info-channel">QR only</div>
                     </div>
                 </div>
                 <p class="payment-method-info-desc">Scan QR code or bank transfer via BDO online banking.</p>
@@ -113,17 +163,17 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center gap-2 mt-4 mb-2">
+    <div class="rent-step-actions rent-step-actions--split payment-type-actions">
         @if (!string.IsNullOrEmpty(paymentTypeBackUrl))
         {
-            <a href="@paymentTypeBackUrl" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3">Back</a>
+            <a href="@paymentTypeBackUrl" class="rent-btn-cancel">Back</a>
         }
         else
         {
-            <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3" data-wizard-back="@paymentTypeBackStep">Back</button>
+            <button type="button" class="rent-btn-cancel" data-wizard-back="@paymentTypeBackStep">Back</button>
         }
-        <button type="button" class="btn btn-request-reservation px-4 py-2 fw-bold rounded-3 shadow-sm" data-wizard-next="@paymentTypeFromStep">
-            Continue
+        <button type="button" class="rent-btn-continue" data-wizard-next="@paymentTypeFromStep" id="paymentTypeContinueBtn">
+            @(initialChoice == "Reserve" ? "Continue to Summary" : "Continue to Payment Method")
         </button>
     </div>
 </div>

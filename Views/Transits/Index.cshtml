@@ -199,14 +199,18 @@
                             </td>
                             <td class="text-center">
                                 <div class="dropdown">
-                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport">
-                                        <i class="bi bi-three-dots fs-5"></i>
+                                    <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Transit actions">
+                                        <i class="bi bi-three-dots"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                         <li><a class="dropdown-item" asp-action="Details" asp-route-transitid="@item.TransitID"><i class="bi bi-info-circle me-2"></i> Details</a></li>
                                         <li><a class="dropdown-item" asp-controller="Rentals" asp-action="Details" asp-route-id="@item.RentalID"><i class="bi bi-bookmark me-2"></i> Rental</a></li>
                                         <li><hr class="dropdown-menu-divider"></li>
-                                        <li><a class="dropdown-item text-danger" asp-action="Delete" asp-route-transitid="@item.TransitID"><i class="bi bi-trash me-2"></i> Delete</a></li>
+                                        <li>
+                                            <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.TransitID', '@bookingLabel')">
+                                                <i class="bi bi-trash me-2"></i> Delete
+                                            </button>
+                                        </li>
                                     </ul>
                                 </div>
                             </td>
@@ -227,3 +231,12 @@
     </div>
     <partial name="_AdminPagination" />
 </div>
+
+@{
+    ViewData["DeleteModalId"] = "transitDeletePopup";
+    ViewData["DeleteHiddenInputId"] = "popupTransitId";
+    ViewData["DeleteHiddenInputName"] = "transitid";
+    ViewData["DeleteMessageId"] = "deletePopupMessage";
+    ViewData["DeleteEntityLabel"] = "trip";
+}
+<partial name="_DeleteConfirmModal" />

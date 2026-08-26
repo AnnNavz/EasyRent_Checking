@@ -1,0 +1,258 @@
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Privacy Policy";
+
+    var sections = new (string Id, string Title)[]
+    {
+        ("collect", "Information We Collect"),
+        ("use", "How We Use Your Information"),
+        ("unnecessary", "Information We Do Not Collect Unnecessarily"),
+        ("protect", "How We Protect Your Information"),
+        ("sharing", "Sharing of Information"),
+        ("account", "Your Account and Personal Information"),
+        ("retention", "Retention of Information"),
+        ("children", "Children’s Privacy"),
+        ("rights", "Data Privacy Rights"),
+        ("changes", "Changes to this Privacy Policy")
+    };
+}
+
+<div class="client-home privacy-page">
+    <section class="privacy-hero">
+        <span class="privacy-hero-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+        <h1>Privacy Policy</h1>
+        <p>At EasyRent (Trust Rent a Car), we value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect your information when you use our website and services.</p>
+        <p class="privacy-hero-date">Effective Date: August 2026</p>
+        <span class="how-hero-rule"></span>
+    </section>
+
+    <section class="privacy-body">
+        <div class="home-wrap privacy-shell">
+            <nav class="privacy-nav" aria-label="Privacy policy sections">
+                @foreach (var item in sections)
+                {
+                    <a href="#@item.Id" class="@(item.Id == "collect" ? "is-active" : null)" data-privacy-section="@item.Id">@item.Title</a>
+                }
+            </nav>
+
+            <div class="privacy-content">
+                <article class="privacy-panel" id="collect">
+                    <p>When you use EasyRent, we may collect information necessary to provide and manage your vehicle rental services.</p>
+
+                    <h2>A. Account Information</h2>
+                    <p>When you create an EasyRent account, we may collect:</p>
+                    <ul>
+                        <li>Full name</li>
+                        <li>Email address</li>
+                        <li>Contact number</li>
+                        <li>Password</li>
+                        <li>Account credentials and security-related information</li>
+                    </ul>
+                    <p>This information allows us to create and maintain your customer account and provide access to your rental records.</p>
+
+                    <h2>B. Identification Information</h2>
+                    <p>For rental verification, EasyRent may require valid identification information. Depending on the requirements of the rental transaction, this may include:</p>
+                    <ul>
+                        <li>Type of valid ID</li>
+                        <li>Identification details</li>
+                        <li>Uploaded identification documents or images</li>
+                    </ul>
+                    <p>Identification information is used to verify the customer's identity and eligibility for the rental transaction.</p>
+
+                    <h2>C. Rental and Booking Information</h2>
+                    <p>When you search for or book a vehicle, we may collect information such as:</p>
+                    <ul>
+                        <li>Selected vehicle</li>
+                        <li>Passenger capacity</li>
+                        <li>Pick-up date</li>
+                        <li>Drop-off date</li>
+                        <li>Rental details</li>
+                        <li>Assigned driver information</li>
+                        <li>Booking or transaction reference</li>
+                        <li>Rental status</li>
+                        <li>Other information necessary to process your reservation</li>
+                    </ul>
+                    <p>Because EasyRent provides driver-assisted vehicle rentals, driver information may also be associated with your rental transaction when applicable.</p>
+
+                    <h2>D. Payment and Transaction Information</h2>
+                    <p>When you make a payment or have a rental transaction with EasyRent, the system may record information such as:</p>
+                    <ul>
+                        <li>Payment method</li>
+                        <li>Amount paid</li>
+                        <li>Payment status</li>
+                        <li>Payment date</li>
+                        <li>Remaining or outstanding balance</li>
+                        <li>Transaction history</li>
+                    </ul>
+                    <p>EasyRent uses this information to process and track your rental payments and account balance.</p>
+
+                    <h2>E. Ratings and Reviews</h2>
+                    <p>After completing a rental, you may voluntarily submit ratings, reviews, comments, or feedback about:</p>
+                    <ul>
+                        <li>The vehicle</li>
+                        <li>Vehicle comfort, performance, and safety</li>
+                        <li>The assigned driver</li>
+                        <li>Professionalism</li>
+                        <li>Driving</li>
+                        <li>Courtesy</li>
+                        <li>Your overall rental experience</li>
+                    </ul>
+                    <p>Your feedback helps EasyRent evaluate and improve its rental services.</p>
+
+                    <h2>F. Account and Security Information</h2>
+                    <p>When you use features such as My Profile, Change Password, and Security &amp; Privacy, EasyRent may process information necessary to:</p>
+                    <ul>
+                        <li>Update your account details</li>
+                        <li>Change your password</li>
+                        <li>Protect your account</li>
+                        <li>Manage security settings</li>
+                        <li>Maintain the security of your account</li>
+                    </ul>
+                </article>
+
+                <article class="privacy-panel" id="use" hidden>
+                    <p>EasyRent uses the information collected through the client-side system for legitimate rental and service-related purposes, including:</p>
+
+                    <h2>Rental and Booking Management</h2>
+                    <p>To process vehicle searches, reservations, rental transactions, pick-up and drop-off arrangements, and driver-assisted services.</p>
+
+                    <h2>Identity Verification</h2>
+                    <p>To verify the identity and eligibility of customers before providing rental services.</p>
+
+                    <h2>Payment Management</h2>
+                    <p>To record payments, balances, transaction history, and other information necessary to manage your rental account.</p>
+
+                    <h2>Customer Support</h2>
+                    <p>To respond to questions, concerns, requests, and other communications regarding your rental.</p>
+
+                    <h2>Service Improvement</h2>
+                    <p>To evaluate customer ratings, reviews, and feedback and improve the quality of EasyRent's vehicles and services.</p>
+
+                    <h2>Account Security</h2>
+                    <p>To protect customer accounts, prevent unauthorized access, and maintain the security of the EasyRent system.</p>
+
+                    <h2>Legal and Operational Requirements</h2>
+                    <p>To maintain records and comply with applicable legal, regulatory, and legitimate business requirements.</p>
+                </article>
+
+                <article class="privacy-panel" id="unnecessary" hidden>
+                    <p>EasyRent follows the principle of collecting only information that is reasonably necessary for providing its vehicle rental services.</p>
+                    <p>Information provided through the system should only be used for its intended rental, account, payment, verification, security, or service-improvement purpose.</p>
+                </article>
+
+                <article class="privacy-panel" id="protect" hidden>
+                    <p>EasyRent takes reasonable measures to protect customer information against unauthorized access, alteration, disclosure, or misuse.</p>
+                    <p>These measures may include:</p>
+                    <ul>
+                        <li>Account authentication</li>
+                        <li>Password protection</li>
+                        <li>Access controls</li>
+                        <li>Restricted access to customer information</li>
+                        <li>Secure handling of identification and rental information</li>
+                        <li>Security monitoring and maintenance of the system</li>
+                    </ul>
+                    <p>Customers are also responsible for keeping their account credentials confidential and should not share their password with other individuals.</p>
+                </article>
+
+                <article class="privacy-panel" id="sharing" hidden>
+                    <p>EasyRent does not disclose customer information unnecessarily. Personal information may only be accessed or disclosed when reasonably necessary to:</p>
+                    <ul>
+                        <li>Process and fulfill a rental transaction</li>
+                        <li>Verify a customer's identity</li>
+                        <li>Provide the requested rental service</li>
+                        <li>Process or record a payment</li>
+                        <li>Provide customer support</li>
+                        <li>Maintain system security</li>
+                        <li>Comply with applicable laws or lawful requests</li>
+                    </ul>
+                    <p>Where information must be shared with a service provider or authorized party to perform a necessary service, EasyRent should limit the information shared to what is reasonably required for that purpose.</p>
+                </article>
+
+                <article class="privacy-panel" id="account" hidden>
+                    <p>As an EasyRent customer, you may access and update certain information associated with your account through Account Settings.</p>
+                    <p>The available account features may include:</p>
+                    <ul>
+                        <li><strong>My Profile</strong> – review and update personal information</li>
+                        <li><strong>Saved Vehicle</strong> – view preferred vehicle to rent.</li>
+                        <li><strong>Change Password</strong> – change your account password</li>
+                        <li><strong>Security &amp; Privacy</strong> – manage available account security settings</li>
+                        <li><strong>Transactions &amp; Rentals</strong> – view rental activity and history</li>
+                        <li><strong>Payments &amp; Balance</strong> – view payment and balance information</li>
+                    </ul>
+                    <p>If you believe that information associated with your account is incorrect, you may contact EasyRent for assistance.</p>
+                </article>
+
+                <article class="privacy-panel" id="retention" hidden>
+                    <p>EasyRent may retain customer information for as long as reasonably necessary to:</p>
+                    <ul>
+                        <li>Complete and document rental transactions</li>
+                        <li>Maintain customer account records</li>
+                        <li>Track payment and rental history</li>
+                        <li>Resolve disputes or customer concerns</li>
+                        <li>Maintain system security</li>
+                        <li>Fulfill legitimate business or legal requirements</li>
+                    </ul>
+                    <p>When information is no longer reasonably required, it should be securely deleted, disposed of, or anonymized in accordance with applicable requirements and EasyRent's retention practices.</p>
+                </article>
+
+                <article class="privacy-panel" id="children" hidden>
+                    <p>EasyRent's vehicle rental services are intended for individuals who are legally eligible to enter into a rental transaction.</p>
+                    <p>EasyRent does not knowingly request or collect personal information from children for the purpose of independently creating rental accounts or completing rental transactions.</p>
+                </article>
+
+                <article class="privacy-panel" id="rights" hidden>
+                    <p>Subject to applicable laws and regulations, customers may have rights regarding their personal information, including the right to:</p>
+                    <ul>
+                        <li>Know what personal information is being collected and processed</li>
+                        <li>Request access to their personal information</li>
+                        <li>Request correction of inaccurate or incomplete information</li>
+                        <li>Request deletion or disposal where legally applicable</li>
+                        <li>Object to certain forms of processing where legally applicable</li>
+                        <li>Withdraw consent where processing is based on consent</li>
+                        <li>Raise a concern regarding the handling of their personal information</li>
+                    </ul>
+                    <p>Requests may be submitted through EasyRent's available customer support channels.</p>
+                </article>
+
+                <article class="privacy-panel" id="changes" hidden>
+                    <p>EasyRent may update this Privacy Policy when necessary to reflect changes to the system, rental services, legal requirements, or data-processing practices.</p>
+                    <p>When significant changes are made, the updated policy should be made available through the EasyRent website.</p>
+                    <p>The Effective Date at the beginning of this policy indicates when the current version took effect.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const links = document.querySelectorAll("[data-privacy-section]");
+            const panels = document.querySelectorAll(".privacy-panel");
+
+            function showSection(id) {
+                const target = document.getElementById(id);
+                if (!target) return;
+
+                links.forEach(function (link) {
+                    link.classList.toggle("is-active", link.getAttribute("data-privacy-section") === id);
+                });
+                panels.forEach(function (panel) {
+                    panel.hidden = panel.id !== id;
+                });
+            }
+
+            links.forEach(function (link) {
+                link.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    const id = link.getAttribute("data-privacy-section");
+                    showSection(id);
+                    history.replaceState(null, "", "#" + id);
+                });
+            });
+
+            const initial = (location.hash || "#collect").replace("#", "");
+            showSection(initial);
+        })();
+    </script>
+}

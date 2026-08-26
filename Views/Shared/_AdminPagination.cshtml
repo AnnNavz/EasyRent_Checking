@@ -10,6 +10,8 @@
     var searchString = ViewData["CurrentSearch"]?.ToString();
     var sortBy = ViewData["CurrentSort"]?.ToString();
     var currentFilter = ViewData["CurrentFilter"]?.ToString();
+    var currentTab = ViewData["CurrentTab"]?.ToString();
+    var actionFilter = ViewData["CurrentAction"]?.ToString();
 
     var hasPrevious = pageIndex > 1;
     var hasNext = pageIndex < totalPages;
@@ -25,6 +27,8 @@
                asp-route-searchString="@searchString"
                asp-route-sortBy="@sortBy"
                asp-route-currentFilter="@currentFilter"
+               asp-route-tab="@currentTab"
+               asp-route-actionFilter="@actionFilter"
                class="btn btn-link text-decoration-none text-secondary p-0 border-0"
                aria-label="Previous page">
                 <i class="bi bi-chevron-left"></i>
@@ -46,6 +50,8 @@
                asp-route-searchString="@searchString"
                asp-route-sortBy="@sortBy"
                asp-route-currentFilter="@currentFilter"
+               asp-route-tab="@currentTab"
+               asp-route-actionFilter="@actionFilter"
                class="btn btn-link text-decoration-none text-secondary p-0 border-0"
                aria-label="Next page">
                 <i class="bi bi-chevron-right"></i>

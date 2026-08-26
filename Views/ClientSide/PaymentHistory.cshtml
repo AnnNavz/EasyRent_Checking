@@ -1,0 +1,73 @@
+@model EasyRent_Checking.ViewModels.ClientPaymentHistoryViewModel
+@using System.Globalization
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Payments & Balance";
+    ViewData["HubActive"] = "payments";
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+
+    string FormatPeso(decimal amount) =>
+        "₱" + Math.Max(0, amount).ToString("N2", ph);
+}
+
+<div class="client-page account-hub is-wide-main my-bookings-page payment-history-page">
+    <partial name="_AccountHubNav" />
+
+    <section class="account-hub-main">
+    <div class="my-bookings-header">
+        <div>
+            <h1 class="my-bookings-title">Payments &amp; Balance</h1>
+            <p class="my-bookings-subtitle">See what you have paid and what is still due on your rentals.</p>
+        </div>
+    </div>
+
+    <div class="payment-history-kpis">
+        <article class="payment-history-kpi">
+            <span>Total paid</span>
+            <strong>@FormatPeso(Model.TotalPaid)</strong>
+            <small>@(Model.PaymentCount == 1 ? "1 payment" : $"{Model.PaymentCount} payments")</small>
+        </article>
+        <article class="payment-history-kpi @(Model.OutstandingBalance > 0 ? "is-due" : "")">
+            <span>Outstanding balance</span>
+            <strong>@FormatPeso(Model.OutstandingBalance)</strong>
+            <small>@(Model.OutstandingBalance > 0 ? "Due on remaining rentals" : "All active rentals are settled")</small>
+        </article>
+    </div>
+
+    @if (Model.Payments.Count > 0)
+    {
+        <div class="payment-history-list">
+            @foreach (var entry in Model.Payments)
+            {
+                <article class="payment-history-row">
+                    <div class="payment-history-main">
+                        <h2>@entry.VehicleTitle</h2>
+                        <p>@entry.BookingLabel · @entry.PaymentType</p>
+                    </div>
+                    <div class="payment-history-meta">
+                        <span>@entry.PaymentMethod</span>
+                        <span>@entry.PaymentDate.ToString("MMM d, yyyy h:mm tt", ph)</span>
+                        @if (!string.IsNullOrWhiteSpace(entry.TransactionReference))
+                        {
+                            <span>Ref @entry.TransactionReference</span>
+                        }
+                    </div>
+                    <div class="payment-history-amount">
+                        <strong>@FormatPeso(entry.AmountPaid)</strong>
+                        <a asp-action="MyBookingDetails" asp-route-id="@entry.RentalId">View booking</a>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="my-bookings-empty">
+            <i class="bi bi-receipt" aria-hidden="true"></i>
+            <p>No payments yet.</p>
+            <a asp-action="Browse" class="my-booking-btn-primary">Book a Vehicle</a>
+        </div>
+    }
+    </section>
+</div>

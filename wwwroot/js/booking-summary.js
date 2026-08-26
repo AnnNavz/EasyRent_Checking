@@ -33,6 +33,28 @@
         return hour12 + ':' + m + suffix;
     }
 
+    function formatPaymentDateTime(value) {
+        if (!value) return '—';
+        var raw = String(value).trim();
+        var datePart = '';
+        var timePart = '';
+        if (raw.indexOf('T') >= 0) {
+            var bits = raw.split('T');
+            datePart = bits[0] || '';
+            timePart = (bits[1] || '').slice(0, 5);
+        } else if (raw.indexOf(' ') >= 0) {
+            var parts = raw.split(' ');
+            datePart = parts[0] || '';
+            timePart = (parts[1] || '').slice(0, 5);
+        } else {
+            datePart = raw;
+        }
+        var dateLabel = formatDisplayDate(datePart);
+        var timeLabel = formatDisplayTime(timePart);
+        if (dateLabel && timeLabel) return dateLabel + ' • ' + timeLabel;
+        return dateLabel || timeLabel || '—';
+    }
+
     function calcHours(pickupDate, pickupTime, returnDate, returnTime) {
         if (!pickupDate || !returnDate) return 0;
         var start = new Date(pickupDate + 'T' + (pickupTime || '00:00'));
@@ -70,6 +92,58 @@
         reader.readAsDataURL(file);
     }
 
+    function setIdCardPreview(options) {
+        var card = document.getElementById(options.cardId);
+        var link = document.getElementById(options.linkId);
+        var img = document.getElementById(options.imgId);
+        var nameEl = document.getElementById(options.nameId);
+        if (!card || !link || !img) return false;
+
+        var src = options.src || '';
+        var fileName = options.fileName || '';
+        if (!src) {
+            card.classList.add('d-none');
+            img.removeAttribute('src');
+            link.href = '#';
+            link.classList.add('d-none');
+            if (nameEl) nameEl.textContent = '';
+            return false;
+        }
+
+        card.classList.remove('d-none');
+        img.src = src;
+        link.href = src;
+        link.classList.remove('d-none');
+        if (nameEl) nameEl.textContent = fileName || '';
+        return true;
+    }
+
+    function loadIdCardFile(file, options) {
+        if (!file || !(file.type && file.type.indexOf('image/') === 0)) {
+            setIdCardPreview({
+                cardId: options.cardId,
+                linkId: options.linkId,
+                imgId: options.imgId,
+                nameId: options.nameId,
+                src: null,
+                fileName: ''
+            });
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            setIdCardPreview({
+                cardId: options.cardId,
+                linkId: options.linkId,
+                imgId: options.imgId,
+                nameId: options.nameId,
+                src: e.target.result,
+                fileName: file.name || ''
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
     function populateBookingSummary(data) {
         var now = data.bookingDate || new Date();
         var bookingLabel = formatDisplayDate(
@@ -95,7 +169,7 @@
         text('summaryPickupLocation', data.pickupLocation);
         text('summaryDropoffLocation', data.dropoffLocation);
         text('summaryPassengers', data.passengerCount ? (data.passengerCount + (Number(data.passengerCount) === 1 ? ' Passenger' : ' Passengers')) : '—');
-        text('summaryDiscount', hasDiscount ? 'Senior Citizen (10% off)' : 'No');
+        text('summaryDiscount', hasDiscount ? 'Yes' : 'No');
         text('summaryVehicleName', data.vehicleName);
         text('summaryVehicleType', data.vehicleType);
         text('summaryPickupDateTime', (data.pickupDate ? formatDisplayDate(data.pickupDate) : '—') + (data.pickupTime ? ' • ' + formatDisplayTime(data.pickupTime) : ''));
@@ -116,25 +190,97 @@
         text('summaryDiscountAmount', '-' + formatPeso(discountAmount));
         text('summaryTotalCost', formatPeso(total));
 
-        // Discount / Senior ID preview
+        // Discount / Senior ID previews (front + back)
+        var idSection = document.getElementById('summaryDiscountIdSection');
+        var idFallback = document.getElementById('summaryValidIdFallback');
         var discountFileInput = document.getElementById('input-DiscountFile');
+        var discountBackInput = document.getElementById('input-DiscountBackFile');
         var discountFile = (discountFileInput && discountFileInput.files && discountFileInput.files[0])
             ? discountFileInput.files[0]
             : null;
+        var discountBackFile = (discountBackInput && discountBackInput.files && discountBackInput.files[0])
+            ? discountBackInput.files[0]
+            : null;
+
         if (hasDiscount) {
+            if (idSection) idSection.classList.remove('d-none');
+            if (idFallback) idFallback.classList.add('d-none');
+
             if (discountFile) {
-                text('summaryValidId', discountFile.name);
-                loadFilePreview(discountFile, 'summaryDiscountPreviewWrap', 'summaryDiscountPreviewImg', 'summaryDiscountPreviewLink');
+                loadIdCardFile(discountFile, {
+                    cardId: 'summaryDiscountFrontCard',
+                    linkId: 'summaryDiscountPreviewLink',
+                    imgId: 'summaryDiscountPreviewImg',
+                    nameId: 'summaryDiscountFrontName'
+                });
             } else if (data.discountImageUrl) {
-                text('summaryValidId', data.discountFileName || 'ID on file');
-                setPreviewImage('summaryDiscountPreviewWrap', 'summaryDiscountPreviewImg', 'summaryDiscountPreviewLink', data.discountImageUrl);
+                setIdCardPreview({
+                    cardId: 'summaryDiscountFrontCard',
+                    linkId: 'summaryDiscountPreviewLink',
+                    imgId: 'summaryDiscountPreviewImg',
+                    nameId: 'summaryDiscountFrontName',
+                    src: data.discountImageUrl,
+                    fileName: data.discountFileName || ''
+                });
             } else {
-                text('summaryValidId', data.discountFileName || 'ID uploaded');
-                setPreviewImage('summaryDiscountPreviewWrap', 'summaryDiscountPreviewImg', 'summaryDiscountPreviewLink', null);
+                setIdCardPreview({
+                    cardId: 'summaryDiscountFrontCard',
+                    linkId: 'summaryDiscountPreviewLink',
+                    imgId: 'summaryDiscountPreviewImg',
+                    nameId: 'summaryDiscountFrontName',
+                    src: null
+                });
+                if (idFallback) {
+                    idFallback.textContent = data.discountFileName || 'ID uploaded';
+                    idFallback.classList.remove('d-none');
+                }
+            }
+
+            if (discountBackFile) {
+                loadIdCardFile(discountBackFile, {
+                    cardId: 'summaryDiscountBackCard',
+                    linkId: 'summaryDiscountBackPreviewLink',
+                    imgId: 'summaryDiscountBackPreviewImg',
+                    nameId: 'summaryDiscountBackName'
+                });
+            } else if (data.discountBackImageUrl) {
+                setIdCardPreview({
+                    cardId: 'summaryDiscountBackCard',
+                    linkId: 'summaryDiscountBackPreviewLink',
+                    imgId: 'summaryDiscountBackPreviewImg',
+                    nameId: 'summaryDiscountBackName',
+                    src: data.discountBackImageUrl,
+                    fileName: data.discountBackFileName || ''
+                });
+            } else {
+                setIdCardPreview({
+                    cardId: 'summaryDiscountBackCard',
+                    linkId: 'summaryDiscountBackPreviewLink',
+                    imgId: 'summaryDiscountBackPreviewImg',
+                    nameId: 'summaryDiscountBackName',
+                    src: null
+                });
             }
         } else {
-            text('summaryValidId', 'Not required');
-            setPreviewImage('summaryDiscountPreviewWrap', 'summaryDiscountPreviewImg', 'summaryDiscountPreviewLink', null);
+            if (idSection) idSection.classList.add('d-none');
+            setIdCardPreview({
+                cardId: 'summaryDiscountFrontCard',
+                linkId: 'summaryDiscountPreviewLink',
+                imgId: 'summaryDiscountPreviewImg',
+                nameId: 'summaryDiscountFrontName',
+                src: null
+            });
+            setIdCardPreview({
+                cardId: 'summaryDiscountBackCard',
+                linkId: 'summaryDiscountBackPreviewLink',
+                imgId: 'summaryDiscountBackPreviewImg',
+                nameId: 'summaryDiscountBackName',
+                src: null
+            });
+            if (idFallback) {
+                idFallback.textContent = 'Not required';
+                idFallback.classList.remove('d-none');
+            }
         }
 
         // Receipt preview (cashless payments)
@@ -144,21 +290,24 @@
             ? receiptFileInput.files[0]
             : null;
         var paymentMethod = data.paymentMethod || '';
-        var showReceipt = receiptSection && paymentMethod && paymentMethod !== 'Walk-in' && (receiptFile || data.receiptImageUrl);
+        var hasReceipt = !!(receiptFile || data.receiptImageUrl);
+        var isWalkIn = paymentMethod === 'Walk-in';
 
         if (receiptSection) {
-            receiptSection.hidden = !showReceipt;
-            if (showReceipt) {
-                if (receiptFile) {
-                    text('summaryReceiptName', receiptFile.name);
-                    loadFilePreview(receiptFile, 'summaryReceiptPreviewWrap', 'summaryReceiptPreviewImg', 'summaryReceiptPreviewLink');
-                } else {
-                    text('summaryReceiptName', data.receiptFileName || 'Receipt on file');
-                    setPreviewImage('summaryReceiptPreviewWrap', 'summaryReceiptPreviewImg', 'summaryReceiptPreviewLink', data.receiptImageUrl || null);
-                }
+            // Keep proof section visible for pay-now; hide image when missing / walk-in.
+            receiptSection.hidden = false;
+            if (!isWalkIn && receiptFile) {
+                text('summaryReceiptName', receiptFile.name);
+                loadFilePreview(receiptFile, 'summaryReceiptPreviewWrap', 'summaryReceiptPreviewImg', 'summaryReceiptPreviewLink');
+                document.getElementById('summaryReceiptName')?.classList.add('d-none');
+            } else if (!isWalkIn && data.receiptImageUrl) {
+                text('summaryReceiptName', data.receiptFileName || 'Receipt on file');
+                setPreviewImage('summaryReceiptPreviewWrap', 'summaryReceiptPreviewImg', 'summaryReceiptPreviewLink', data.receiptImageUrl);
+                document.getElementById('summaryReceiptName')?.classList.add('d-none');
             } else {
-                text('summaryReceiptName', '—');
+                text('summaryReceiptName', isWalkIn ? 'Not required for walk-in' : (hasReceipt ? '—' : 'No screenshot uploaded'));
                 setPreviewImage('summaryReceiptPreviewWrap', 'summaryReceiptPreviewImg', 'summaryReceiptPreviewLink', null);
+                document.getElementById('summaryReceiptName')?.classList.remove('d-none');
             }
         }
 
@@ -166,6 +315,8 @@
         if (data.paymentMethod != null) text('summaryPaymentMethod', data.paymentMethod);
         if (data.amountPaid != null) text('summaryAmountPaid', formatPeso(data.amountPaid));
         if (data.accountName != null) text('summaryPaymentAccount', data.accountName || '—');
+        if (data.transactionReference != null) text('summaryTransactionReference', data.transactionReference || '—');
+        text('summaryPaymentDateTime', formatPaymentDateTime(data.paymentDate));
     }
 
     function initBookingWizard(options) {
@@ -326,51 +477,68 @@
         return { setStep: setStep, populateBookingSummary: populateBookingSummary, getCurrentStep: function () { return currentStep; } };
     }
 
+    function clearImagePreview(imgEl) {
+        if (!imgEl) return;
+        imgEl.removeAttribute('src');
+        imgEl.alt = '';
+        imgEl.classList.add('d-none');
+    }
+
+    function showImagePreview(file, imgEl) {
+        if (!imgEl) return;
+        if (!file || !(file.type && file.type.indexOf('image/') === 0)) {
+            clearImagePreview(imgEl);
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            imgEl.src = e.target.result;
+            imgEl.alt = file.name;
+            imgEl.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    }
+
     function initReceiptUpload() {
         var fileInput = document.getElementById('input-ReceiptFile');
         var emptyState = document.getElementById('receiptUploadEmpty');
+        var zone = document.getElementById('receiptUploadZone');
         var previewState = document.getElementById('receiptUploadPreview');
+        var previewBox = document.getElementById('receiptPreviewBox');
         var previewImg = document.getElementById('receiptPreviewImg');
-        var previewPlaceholder = document.getElementById('receiptPreviewPlaceholder');
         var filenameLabel = document.getElementById('receiptFilename');
         var removeBtn = document.getElementById('receiptRemoveBtn');
-        if (!fileInput || !emptyState || !previewState) return;
+        if (!fileInput || !previewState) return;
 
         function clearReceipt() {
             fileInput.value = '';
-            if (previewImg) {
-                previewImg.src = '';
-                previewImg.classList.add('d-none');
-            }
-            if (previewPlaceholder) previewPlaceholder.classList.remove('d-none');
+            clearImagePreview(previewImg);
             if (filenameLabel) filenameLabel.textContent = '';
-            emptyState.classList.remove('d-none');
+            if (emptyState) emptyState.classList.remove('d-none');
+            if (zone) zone.classList.remove('d-none');
             previewState.classList.remove('is-visible');
         }
 
         function showReceipt(file) {
             if (!file) return;
             if (filenameLabel) filenameLabel.textContent = file.name;
-            emptyState.classList.add('d-none');
+            if (zone) zone.classList.add('d-none');
+            if (emptyState) emptyState.classList.add('d-none');
             previewState.classList.add('is-visible');
-            if (file.type && file.type.indexOf('image/') === 0 && previewImg) {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    previewImg.src = e.target.result;
-                    previewImg.classList.remove('d-none');
-                    if (previewPlaceholder) previewPlaceholder.classList.add('d-none');
-                };
-                reader.readAsDataURL(file);
-            } else if (previewImg) {
-                previewImg.classList.add('d-none');
-                if (previewPlaceholder) previewPlaceholder.classList.remove('d-none');
-            }
+            showImagePreview(file, previewImg);
         }
 
         fileInput.addEventListener('change', function () {
             if (fileInput.files && fileInput.files[0]) showReceipt(fileInput.files[0]);
             else clearReceipt();
         });
+
+        if (previewBox) {
+            previewBox.addEventListener('click', function () {
+                fileInput.click();
+            });
+        }
 
         if (removeBtn) {
             removeBtn.addEventListener('click', function (e) {
@@ -385,6 +553,8 @@
         populate: populateBookingSummary,
         initWizard: initBookingWizard,
         initReceiptUpload: initReceiptUpload,
+        showImagePreview: showImagePreview,
+        clearImagePreview: clearImagePreview,
         calcHours: calcHours,
         formatPeso: formatPeso
     };

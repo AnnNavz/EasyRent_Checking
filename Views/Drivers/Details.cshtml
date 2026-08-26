@@ -1,311 +1,112 @@
-﻿@model EasyRent_Checking.Models.Driver
+@model EasyRent_Checking.ViewModels.DriverDetailsViewModel
+@using System.Globalization
+@using EasyRent_Checking.Services
 
 @{
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "View Details";
     ViewData["ActivePage"] = "Drivers";
 
-    // Split Name for the wireframe First/Last Name UI structure safely
-    string firstName = "—";
-    string lastName = "—";
-    if (Model != null && !string.IsNullOrEmpty(Model.Name))
+    var driver = Model.Driver;
+    string address = driver?.Address ?? "—";
+    string licenseNo = driver?.LicenseNo ?? "—";
+    string expiryText = driver != null ? driver.ExpiryDate.ToString("MMMM dd, yyyy") : "—";
+
+    int daysLeft = 0;
+    bool hasValidLicense = false;
+    if (driver != null)
     {
-        var nameParts = Model.Name.Trim().Split(' ', 2);
-        firstName = nameParts[0];
-        if (nameParts.Length > 1)
-        {
-            lastName = nameParts[1];
-        }
+        DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+        daysLeft = driver.ExpiryDate.DayNumber - today.DayNumber;
+        hasValidLicense = daysLeft > 0;
     }
 
-    // Safe property extraction to completely avoid display formatting errors
-    string contactNo = Model?.ContactNo ?? "—";
-    string address = Model?.Address ?? "—";
-    string licenseNo = Model?.LicenseNo ?? "—";
-    string expiryText = Model != null ? Model.ExpiryDate.ToString("MMMM dd, yyyy") : "—";
+    bool isEmployed = driver?.IsActive ?? false;
+    string statusText = daysLeft > 0 ? $"valid for {daysLeft} days" : "Expired";
+    string driverStatusLabel = !isEmployed
+        ? "Deactivated"
+        : hasValidLicense
+            ? "Active Driver"
+            : "License Expired";
+    bool showInactiveBadge = !isEmployed || !hasValidLicense;
 
-    string GetDocumentFileName(string? path, string fallback)
+    string detailsReturnUrl = Url.Action("Details", new { id = driver?.DriverId }) ?? "";
+
+    string FormatPhoneDisplay(string? phone)
     {
-        if (string.IsNullOrEmpty(path))
+        if (string.IsNullOrWhiteSpace(phone))
         {
-            return fallback;
+            return "—";
         }
 
-        var separatorIndex = path.IndexOf('_');
-        return separatorIndex >= 0 && separatorIndex < path.Length - 1
-            ? path[(separatorIndex + 1)..]
-            : path;
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        if (digits.Length == 11 && digits.StartsWith("09"))
+        {
+            return $"{digits[..2]} {digits[2..5]} {digits[5..9]} {digits[9..]}";
+        }
+
+        return phone;
     }
 
-    string frontLicenseFileName = GetDocumentFileName(Model?.FrontLicenseImagePath, "No front license");
-    string backLicenseFileName = GetDocumentFileName(Model?.BackLicenseImagePath, "No back license");
-    string detailsReturnUrl = Url.Action("Details", new { id = Model?.DriverId }) ?? "";
+    string profileSubtitle = driver != null
+        ? $"Added {driver.CreatedAt.ToLocalTime():MMMM yyyy}"
+        : "Driver Profile";
+    string displayPhone = FormatPhoneDisplay(driver?.ContactNo);
+
+    string GetInitials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return "?";
+        }
+
+        if (parts.Length == 1)
+        {
+            return parts[0][..1].ToUpperInvariant();
+        }
+
+        return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant();
+    }
+
+    var reviewCount = Model.ReviewCount;
+    var averageRating = reviewCount > 0 ? Model.OverallTen / 2.0 : 0d;
+    var filledStars = reviewCount == 0 ? 0 : (int)Math.Round(averageRating, MidpointRounding.AwayFromZero);
 }
 
-<style>
-    /* Profile Header Styling */
-    .profile-header-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 2rem;
-        padding: 0 1rem;
-    }
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/driver-details.css" asp-append-version="true" />
+}
 
-    .profile-avatar-circle {
-        width: 140px;
-        height: 140px;
-        background-color: #c4c4c4;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
-
-        .profile-avatar-circle img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-    .profile-info-block {
-        flex-grow: 1;
-        padding-left: 2rem;
-    }
-
-    .profile-name-text {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #222222;
-        margin-bottom: 0.25rem;
-    }
-
-    .profile-meta-text {
-        font-size: 1.1rem;
-        color: #666666;
-    }
-
-    /* Header Control Buttons */
-    .btn-wireframe-back {
-        background-color: #ffffff !important;
-        color: #333333 !important;
-        border: 1px solid #999999 !important;
-        border-radius: 8px !important;
-        padding: 0.5rem 2rem;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-        .btn-wireframe-back:hover {
-            background-color: #f5f5f5 !important;
-        }
-
-    .btn-wireframe-black-edit {
-        background-color: #000000 !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 0.5rem 1.5rem;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-        .btn-wireframe-black-edit:hover {
-            opacity: 0.9;
-            color: #ffffff !important;
-        }
-
-    /* Nav Tabs Underlines to match image_d058bc.png */
-    .custom-nav-tabs {
-        border-bottom: 1px solid #cccccc !important;
-        margin-bottom: 2rem;
-        padding-left: 1rem;
-    }
-
-        .custom-nav-tabs .nav-link {
-            border: none !important;
-            color: #666666 !important;
-            font-weight: 600;
-            font-size: 1.1rem;
-            padding: 0.5rem 2rem !important;
-            background: transparent !important;
-            position: relative;
-        }
-
-            .custom-nav-tabs .nav-link.active {
-                color: #000000 !important;
-            }
-
-                .custom-nav-tabs .nav-link.active::after {
-                    content: '';
-                    position: absolute;
-                    bottom: -2px;
-                    left: 1.5rem;
-                    right: 1.5rem;
-                    height: 4px;
-                    background-color: #000000;
-                    border-radius: 2px;
-                }
-
-    /* Activity Timeline Log Blocks */
-    .timeline-title-bar {
-        font-size: 0.9rem;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        color: #444444;
-        border-left: 4px solid #000000;
-        padding-left: 0.75rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .history-log-card {
-        background-color: #e5e5e5;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.25rem;
-        border: none;
-    }
-
-    .log-timestamp {
-        font-size: 0.85rem;
-        color: #888888;
-        margin-bottom: 0.4rem;
-    }
-
-    .log-heading {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #222222;
-        margin-bottom: 0.4rem;
-    }
-
-    .log-description {
-        font-size: 0.95rem;
-        color: #555555;
-        line-height: 1.4;
-        margin-bottom: 0;
-    }
-
-    .btn-load-older {
-        background-color: #ffffff !important;
-        color: #333333 !important;
-        border: 1px solid #333333 !important;
-        border-radius: 10px !important;
-        width: 100%;
-        padding: 0.75rem;
-        font-weight: 600;
-        margin-top: 1rem;
-    }
-
-    /* Right Sidebar Badge Widget */
-    .license-expiry-sidebar-card {
-        background-color: #4a4a4a;
-        color: #ffffff;
-        border-radius: 12px;
-        padding: 2rem 1.5rem;
-    }
-
-    .sidebar-widget-label {
-        font-size: 1.1rem;
-        font-weight: 600;
-        opacity: 0.9;
-        margin-bottom: 1.5rem;
-    }
-
-    .sidebar-widget-date {
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin-bottom: 0.75rem;
-    }
-
-    .badge-valid-status {
-        background-color: rgba(255, 255, 255, 0.25);
-        color: #ffffff;
-        padding: 0.4rem 1rem;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        display: inline-block;
-        margin-bottom: 2rem;
-    }
-
-    .btn-export-pdf-outline {
-        background-color: transparent !important;
-        color: #ffffff !important;
-        border: 1px solid #ffffff !important;
-        border-radius: 8px !important;
-        width: 100%;
-        padding: 0.6rem;
-        font-weight: 500;
-        font-size: 0.9rem;
-    }
-
-    /* Documents Clean Layout Configuration (image_d058bc.png) */
-    .documents-clean-container {
-        max-width: 1000px;
-        padding: 0.5rem 1rem;
-    }
-
-    .wireframe-section-title {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #333333;
-        margin-bottom: 0.4rem;
-    }
-
-    .wireframe-divider-line {
-        border-top: 1px solid #e0e0e0 !important;
-        margin-top: 0.25rem;
-        margin-bottom: 1.75rem;
-        opacity: 1;
-    }
-
-    .wireframe-field-label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #666666;
-        margin-bottom: 0.5rem;
-    }
-
-    .wireframe-static-value {
-        background-color: #f6f6f6 !important;
-        border: 1px solid #e2e2e2 !important;
-        border-radius: 8px !important;
-        padding: 0.75rem 1rem !important;
-        color: #111111 !important;
-        font-weight: 500;
-        min-height: 48px;
-        display: flex;
-        align-items: center;
-    }
-</style>
-
-<div class="container-fluid px-4 py-3">
-
-    <div class="details-page-header">
-        <div class="d-flex align-items-center gap-4 flex-grow-1">
-            <div class="profile-avatar-circle shadow-sm">
-                @if (Model != null && !string.IsNullOrEmpty(Model.ImagePath))
+<div class="driver-details-page">
+    <div class="driver-details-header">
+        <div class="driver-details-profile">
+            <div class="driver-details-avatar">
+                @if (driver != null && !string.IsNullOrEmpty(driver.ImagePath))
                 {
-                    <img src="~/images/@Model.ImagePath" alt="@Model.Name" />
+                    <img src="~/images/@driver.ImagePath" alt="@driver.Name" />
                 }
                 else
                 {
-                    <i class="bi bi-person text-secondary" style="font-size: 4rem;"></i>
+                    <i class="bi bi-person-fill"></i>
                 }
             </div>
             <div>
-                <h1 class="profile-name-text mb-1">@(Model?.Name ?? "Jane Doe")</h1>
-                <span class="profile-meta-text">Verified Driver Directory Account</span>
+                <h1 class="driver-details-name">@(driver?.Name ?? "Jane Doe")</h1>
+                <span class="driver-details-subtitle">@profileSubtitle</span>
+                <span class="driver-status-badge @(showInactiveBadge ? "is-inactive" : "")">
+                    <span class="driver-status-dot"></span>
+                    @driverStatusLabel
+                </span>
             </div>
         </div>
-        <div class="details-page-actions">
-            <a asp-action="Index" class="btn btn-page-back">Back</a>
-            <a asp-action="Edit" asp-route-id="@Model?.DriverId" asp-route-returnUrl="@detailsReturnUrl" class="btn btn-page-primary">Edit Driver's Profile</a>
+        <div class="driver-details-actions">
+            <a asp-action="Index" class="btn driver-details-btn-back">Back</a>
+            <a asp-action="Edit" asp-route-id="@driver?.DriverId" asp-route-returnUrl="@detailsReturnUrl" class="btn driver-details-btn-edit">Edit Driver's Profile</a>
         </div>
     </div>
 
-    <ul class="nav nav-tabs vehicle-details-tabs mb-4" id="driverDetailTabs" role="tablist">
+    <ul class="nav nav-tabs driver-details-tabs" id="driverDetailTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="information-tab" data-bs-toggle="tab" data-bs-target="#information-pane" type="button" role="tab" aria-selected="true">Information</button>
         </li>
@@ -313,139 +114,372 @@
             <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab" aria-selected="false">History</button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-pane" type="button" role="tab" aria-selected="false">Reviews</button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-selected="false">Documents</button>
         </li>
     </ul>
 
     <div class="tab-content" id="driverDetailTabsContent">
-
         <div class="tab-pane fade show active" id="information-pane" role="tabpanel" aria-labelledby="information-tab">
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="vehicle-info-card shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-person fs-5 text-secondary"></i>
-                            <h6 class="fw-bold mb-0 text-dark">Personal Information</h6>
+            <div class="row g-4 driver-info-cards-row">
+                <div class="col-lg-6">
+                    <div class="driver-info-card">
+                        <div class="driver-info-card-head">
+                            <span class="driver-info-card-icon"><i class="bi bi-person-fill"></i></span>
+                            <h6 class="driver-info-card-title">Personal Information</h6>
                         </div>
-                        <hr class="wizard-section-divider" />
-                        <div class="vehicle-info-row">
-                            <span class="vehicle-info-label">Phone Number</span>
-                            <span class="vehicle-info-value">@contactNo</span>
-                        </div>
-                        <div class="vehicle-info-row">
-                            <span class="vehicle-info-label">Address</span>
-                            <span class="vehicle-info-value text-end" style="max-width: 60%;">@address</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="vehicle-info-card shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-card-text fs-5 text-secondary"></i>
-                            <h6 class="fw-bold mb-0 text-dark">License</h6>
-                        </div>
-                        <hr class="wizard-section-divider" />
-                        <div class="vehicle-info-row">
-                            <span class="vehicle-info-label">License Number</span>
-                            <span class="vehicle-info-value font-monospace">@licenseNo</span>
-                        </div>
-                        <div class="vehicle-info-row">
-                            <span class="vehicle-info-label">Expiration Date</span>
-                            <span class="vehicle-info-value">@expiryText</span>
+                        <div class="driver-info-stack">
+                            <div class="driver-info-field">
+                                <span class="driver-info-field-label">Phone Number</span>
+                                <div class="driver-info-field-value">
+                                    <span class="driver-info-value-icon"><i class="bi bi-telephone-fill"></i></span>
+                                    <span>@displayPhone</span>
+                                </div>
+                            </div>
+                            <div class="driver-info-field">
+                                <span class="driver-info-field-label">Address</span>
+                                <div class="driver-info-field-value">
+                                    <span class="driver-info-value-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                                    <span>@address</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div class="col-lg-6">
+                    <div class="driver-info-card">
+                        <div class="driver-info-card-head">
+                            <span class="driver-info-card-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                            <h6 class="driver-info-card-title">License</h6>
+                        </div>
+                        <div class="driver-info-stack">
+                            <div class="driver-info-field">
+                                <span class="driver-info-field-label">License Number</span>
+                                <div class="driver-info-field-value">
+                                    <span class="driver-info-value-icon"><i class="bi bi-123"></i></span>
+                                    <span class="font-monospace">@licenseNo</span>
+                                </div>
+                            </div>
+                            <div class="driver-info-field">
+                                <span class="driver-info-field-label">License Expiry Date</span>
+                                <div class="driver-info-field-value">
+                                    <span class="driver-info-value-icon"><i class="bi bi-calendar3"></i></span>
+                                    <span>@expiryText</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="driver-info-review-banner">
+                <i class="bi bi-info-circle-fill"></i>
+                <p>Review the driver information above. You can update their details by clicking <strong>Edit Driver's Profile</strong>.</p>
             </div>
         </div>
 
         <div class="tab-pane fade" id="history-pane" role="tabpanel" aria-labelledby="history-tab">
             <div class="row g-4">
                 <div class="col-lg-8">
-                    <div class="timeline-title-bar">ACTIVITY TIMELINE</div>
+                    <div class="driver-timeline-section-title">ACTIVITY TIMELINE</div>
 
-                    <div class="history-log-card shadow-sm">
-                        <div class="log-timestamp">August 20, 2026 | 12:00 AM</div>
-                        <div class="log-heading">Rent Trip Successful : #FL-882</div>
-                        <p class="log-description">Successful trip to Boljoon, Cebu for the first day and Alegria, Cebu for the second day of the reservation.</p>
-                    </div>
+                    @if (Model.ActivityHistory.Any())
+                    {
+                        <div class="driver-timeline">
+                            @for (var i = 0; i < Model.ActivityHistory.Count; i++)
+                            {
+                                var item = Model.ActivityHistory[i];
+                                var isPrimary = i == 0;
+                                <div class="driver-timeline-item">
+                                    <div class="driver-timeline-marker @(isPrimary ? "is-primary" : "")"><i class="bi bi-check-lg"></i></div>
+                                    <div class="driver-timeline-card">
+                                        <div class="driver-timeline-time">@item.OccurredAt.ToString("MMMM dd, yyyy | h:mm tt")</div>
+                                        <div class="driver-timeline-title">@item.Title</div>
+                                        <p class="driver-timeline-desc">@item.Description</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="driver-timeline-empty text-center py-4 text-muted">
+                            <i class="bi bi-clock-history fs-3 d-block mb-2 opacity-50"></i>
+                            No trip history recorded for this driver yet.
+                        </div>
+                    }
 
-                    <div class="history-log-card shadow-sm">
-                        <div class="log-timestamp">December 25, 2026 | 12:00 AM</div>
-                        <div class="log-heading">Rent Trip Successful : #FL-883</div>
-                        <p class="log-description">Successful trip to Dalaguete City for a business trip and team building event for one day.</p>
-                    </div>
-
-                    <button type="button" class="btn btn-load-older shadow-sm">Load Older Logs</button>
+                    @if (Model.ActivityHistory.Any())
+                    {
+                        <button type="button" class="btn driver-load-older-btn">
+                            <i class="bi bi-arrow-clockwise"></i> Load Older Logs
+                        </button>
+                    }
                 </div>
 
                 <div class="col-lg-4">
-                    <div class="license-expiry-sidebar-card shadow">
-                        <div class="sidebar-widget-label">License Expiry</div>
-                        <div class="sidebar-widget-date">@expiryText</div>
-
-                        @{
-                            int daysLeft = 365;
-                            if (Model != null)
-                            {
-                                DateOnly today = DateOnly.FromDateTime(DateTime.Today);
-                                daysLeft = Model.ExpiryDate.DayNumber - today.DayNumber;
-                            }
-                            string statusText = daysLeft > 0 ? $"valid for {daysLeft} days" : "Expired";
-                        }
-                        <div class="badge-valid-status">@statusText</div>
-
-                        <button type="button" class="btn btn-export-pdf-outline" onclick="window.print()">Export PDF profile</button>
+                    <div class="driver-license-expiry-card">
+                        <div class="driver-license-expiry-head">
+                            <i class="bi bi-calendar3"></i>
+                            <span>License Expiry</span>
+                        </div>
+                        <div class="driver-license-expiry-date">@expiryText</div>
+                        <span class="driver-license-expiry-badge @(hasValidLicense ? "is-valid" : "is-expired")">@statusText</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="reviews-pane" role="tabpanel" aria-labelledby="reviews-tab">
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <div class="driver-info-card driver-ratings-card">
+                        <div class="driver-info-card-head">
+                            <span class="driver-info-card-icon"><i class="bi bi-star-fill"></i></span>
+                            <h6 class="driver-info-card-title">Performance Ratings</h6>
+                        </div>
+
+                        @if (reviewCount > 0)
+                        {
+                            <div class="driver-reviews-summary-score">
+                                <span class="driver-reviews-avg">@averageRating.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                <div class="driver-reviews-summary-stars" aria-hidden="true">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi @(i <= filledStars ? "bi-star-fill" : "bi-star")"></i>
+                                    }
+                                </div>
+                                <span class="driver-reviews-summary-count">Based on @reviewCount verified @(reviewCount == 1 ? "review" : "reviews")</span>
+                            </div>
+
+                            <div class="driver-rating-bars">
+                                <div class="driver-rating-row">
+                                    <span>Professionalism</span>
+                                    <div class="driver-rating-track">
+                                        <div class="driver-rating-fill" style="width: @(RatingScale.FillPercentFromTen(Model.ProfessionalismTen).ToString(CultureInfo.InvariantCulture))%"></div>
+                                    </div>
+                                    <span class="driver-rating-score">@Model.ProfessionalismTen.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                </div>
+                                <div class="driver-rating-row">
+                                    <span>Driving</span>
+                                    <div class="driver-rating-track">
+                                        <div class="driver-rating-fill" style="width: @(RatingScale.FillPercentFromTen(Model.DrivingTen).ToString(CultureInfo.InvariantCulture))%"></div>
+                                    </div>
+                                    <span class="driver-rating-score">@Model.DrivingTen.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                </div>
+                                <div class="driver-rating-row">
+                                    <span>Courtesy</span>
+                                    <div class="driver-rating-track">
+                                        <div class="driver-rating-fill" style="width: @(RatingScale.FillPercentFromTen(Model.CourtesyTen).ToString(CultureInfo.InvariantCulture))%"></div>
+                                    </div>
+                                    <span class="driver-rating-score">@Model.CourtesyTen.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="driver-rating-empty">No customer reviews yet. Ratings appear here after completed trips are reviewed.</p>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="driver-reviews-section-title">CUSTOMER REVIEWS</div>
+
+                    @if (Model.Reviews.Any())
+                    {
+                        <div class="driver-reviews-list">
+                            @foreach (var review in Model.Reviews)
+                            {
+                                <article class="driver-review-card">
+                                    <div class="driver-review-head">
+                                        <span class="driver-review-avatar" aria-hidden="true">@GetInitials(review.CustomerName)</span>
+                                        <div class="driver-review-meta">
+                                            <span class="driver-review-name">@review.CustomerName</span>
+                                            <span class="driver-review-date">@review.CreatedAt.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)</span>
+                                        </div>
+                                        <div class="driver-review-stars" aria-label="@review.OverallStars out of 5 stars">
+                                            @for (var i = 1; i <= 5; i++)
+                                            {
+                                                <i class="bi @(i <= review.OverallStars ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="driver-review-categories">
+                                        <span>Professionalism: @review.Professionalism/5</span>
+                                        <span>Driving: @review.Driving/5</span>
+                                        <span>Courtesy: @review.Courtesy/5</span>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                    {
+                                        <p class="driver-review-comment">@review.Comment</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="driver-review-comment is-muted">No written comment.</p>
+                                    }
+                                </article>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="driver-reviews-empty">
+                            <i class="bi bi-chat-square-text"></i>
+                            <p>No customer reviews for this driver yet.</p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
 
         <div class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab">
-            <div class="documents-clean-container">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="driver-doc-card shadow-sm">
-                            <div class="driver-doc-preview">
-                                @if (!string.IsNullOrEmpty(Model?.FrontLicenseImagePath))
-                                {
-                                    <img src="~/images/@Model.FrontLicenseImagePath" alt="Front license" />
-                                }
-                                else
-                                {
-                                    <div class="license-preview-placeholder"></div>
-                                }
-                            </div>
-                            <div class="driver-doc-footer">
-                                <span class="driver-doc-filename">@frontLicenseFileName</span>
-                                <button type="button" class="btn btn-link p-0 text-secondary" aria-label="Front license options">
-                                    <i class="bi bi-three-dots"></i>
-                                </button>
-                            </div>
+            @{
+                var documents = Model.Documents;
+                var documentCount = documents.Count;
+                var documentPageSize = 10;
+                var documentTotalPages = documentCount == 0 ? 1 : (int)Math.Ceiling(documentCount / (double)documentPageSize);
+                var documentStart = documentCount == 0 ? 0 : 1;
+                var documentEnd = documentCount;
+            }
+
+            <div class="driver-documents-panel">
+                <div class="driver-documents-panel-head">
+                    <div class="driver-documents-panel-intro">
+                        <span class="driver-documents-panel-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                        <div>
+                            <h6 class="driver-documents-panel-title">Documents</h6>
+                            <p class="driver-documents-panel-desc">View and manage driver's uploaded documents.</p>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="driver-doc-card shadow-sm">
-                            <div class="driver-doc-preview">
-                                @if (!string.IsNullOrEmpty(Model?.BackLicenseImagePath))
-                                {
-                                    <img src="~/images/@Model.BackLicenseImagePath" alt="Back license" />
-                                }
-                                else
-                                {
-                                    <div class="license-preview-placeholder"></div>
-                                }
-                            </div>
-                            <div class="driver-doc-footer">
-                                <span class="driver-doc-filename">@backLicenseFileName</span>
-                                <button type="button" class="btn btn-link p-0 text-secondary" aria-label="Back license options">
-                                    <i class="bi bi-three-dots"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <a asp-action="Edit" asp-route-id="@driver?.DriverId" asp-route-returnUrl="@detailsReturnUrl" class="btn driver-documents-upload-btn">
+                        <i class="bi bi-upload"></i> Upload Document
+                    </a>
                 </div>
+
+                @if (documents.Any())
+                {
+                    <div class="table-responsive driver-documents-table-wrap">
+                        <table class="table driver-documents-table mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Document Name</th>
+                                    <th>Type</th>
+                                    <th>Upload Date</th>
+                                    <th>Status</th>
+                                    <th class="text-end" style="width: 60px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var document in documents)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="driver-document-name-cell">
+                                                <div class="driver-document-thumb">
+                                                    @if (!string.IsNullOrEmpty(document.ImagePath))
+                                                    {
+                                                        <img src="~/images/@document.ImagePath" alt="@document.DisplayName" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-file-earmark-image"></i>
+                                                    }
+                                                </div>
+                                                <div class="driver-document-name-meta">
+                                                    <span class="driver-document-display-name">@document.DisplayName</span>
+                                                    <span class="driver-document-file-name">@document.FileName</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="driver-document-type-badge">@document.TypeLabel</span>
+                                        </td>
+                                        <td>@document.UploadedAt.ToString("MMMM dd, yyyy h:mmtt", CultureInfo.InvariantCulture)</td>
+                                        <td>
+                                            @if (document.IsVerified)
+                                            {
+                                                <span class="driver-document-status-badge is-verified">
+                                                    <span class="driver-document-status-dot"></span>
+                                                    Verified
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="driver-document-status-badge is-pending">
+                                                    <span class="driver-document-status-dot"></span>
+                                                    Pending
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-link p-0 text-secondary" aria-label="@document.DisplayName options">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="driver-documents-pagination">
+                        <div class="driver-documents-pagination-range">@documentStart-@documentEnd of @documentCount</div>
+                        <div class="driver-documents-pagination-nav">
+                            <button type="button" class="btn btn-link p-0 text-secondary disabled opacity-50" disabled aria-label="Previous page">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span>1/@documentTotalPages</span>
+                            <button type="button" class="btn btn-link p-0 text-secondary disabled opacity-50" disabled aria-label="Next page">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="driver-documents-empty">
+                        <i class="bi bi-folder2-open"></i>
+                        <p>No documents uploaded for this driver yet.</p>
+                        <a asp-action="Edit" asp-route-id="@driver?.DriverId" asp-route-returnUrl="@detailsReturnUrl" class="btn driver-documents-upload-btn">
+                            <i class="bi bi-upload"></i> Upload Document
+                        </a>
+                    </div>
+                }
             </div>
         </div>
-
     </div>
+
+    @if (driver != null)
+    {
+        <div class="driver-details-status-footer">
+            <div class="driver-details-status-footer-text">
+                <h6 class="driver-details-status-footer-title">Account Status</h6>
+                <p class="mb-0">
+                    @if (isEmployed)
+                    {
+                        @:Deactivating removes this driver from trip assignment. Their profile and history stay saved.
+                    }
+                    else
+                    {
+                        @:This driver is currently deactivated and cannot be assigned to new trips.
+                    }
+                </p>
+            </div>
+            <form asp-action="ToggleActive" asp-route-id="@driver.DriverId" method="post" class="driver-details-status-footer-action"
+                  data-confirm="@(isEmployed ? "Deactivate this driver?" : "Reactivate this driver?")"
+                  data-confirm-text="@(isEmployed ? "They will no longer appear in trip assignment. Their profile and history stay saved." : "They will be available for trip assignment again.")"
+                  data-confirm-button="@(isEmployed ? "Deactivate Driver" : "Activate Driver")"
+                  data-confirm-tone="@(isEmployed ? "danger" : "approve")"
+                  data-confirm-icon="@(isEmployed ? "bi-slash-circle" : "bi-check-circle")"
+                  data-confirm-submit-icon="@(isEmployed ? "bi-slash-circle" : "bi-check-lg")">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn @(isEmployed ? "driver-details-btn-deactivate" : "driver-details-btn-activate")">
+                    @(isEmployed ? "Deactivate Driver" : "Activate Driver")
+                </button>
+            </form>
+        </div>
+    }
 </div>

@@ -1,0 +1,124 @@
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "About Us";
+    ViewData["ActiveNav"] = "AboutUs";
+}
+
+<div class="client-home about-page">
+    <section class="about-hero">
+        <div class="about-hero-inner">
+            <div class="about-hero-copy">
+                <h1>About Trust Rent A Car</h1>
+                <p>Renting with EasyRent is quick, easy, and hassle-free. Just follow these simple steps and you’re ready to go!</p>
+                <span class="how-hero-rule"></span>
+            </div>
+            <div class="about-hero-photo">
+                <img src="~/images/System Images/homebanner2.png" alt="EasyRent vehicle" asp-append-version="true" />
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section">
+        <div class="home-wrap">
+            <h2 class="about-section-title">What We Offer</h2>
+            <div class="about-offer-grid">
+                <article class="about-offer-card">
+                    <span class="about-offer-icon" aria-hidden="true"><i class="bi bi-calendar2-check"></i></span>
+                    <h3>Seamless Booking</h3>
+                    <p>Book online in a few steps. Our staff reviews each request so your rental is confirmed with care.</p>
+                </article>
+                <article class="about-offer-card">
+                    <span class="about-offer-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+                    <h3>Verified Security</h3>
+                    <p>Customer identification and a one-time document review help keep accounts verified and bookings safe.</p>
+                </article>
+                <article class="about-offer-card">
+                    <span class="about-offer-icon" aria-hidden="true"><i class="bi bi-car-front"></i></span>
+                    <h3>Fleet Variety</h3>
+                    <p>Options ranging from compact sedans for daily commutes to spacious SUVs for group travel.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section about-section-tight">
+        <div class="home-wrap">
+            <div class="about-project">
+                <span class="about-project-icon" aria-hidden="true">
+                    <i class="bi bi-gear-wide-connected"></i>
+                </span>
+                <div>
+                    <h2>About the Development Project</h2>
+                    <p>EasyRent is an academic Capstone project built to digitize Trust Rent A Car’s rental workflows—from online booking and identity verification to fleet operations and trip tracking.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section">
+        <div class="home-wrap">
+            <h2 class="about-section-title">Development Team</h2>
+            <div class="about-team-grid">
+                <article class="about-team-card">
+                    <img src="~/images/System Images/progmer.jpg" alt="Ann Shirley A. Navasca" asp-append-version="true" />
+                    <small>Programmer</small>
+                    <h3>Ann Shirley A. Navasca</h3>
+                </article>
+                <article class="about-team-card">
+                    <img src="~/images/System Images/sysana.png" alt="Rheaniele C. Abad" asp-append-version="true" />
+                    <small>System Analyst</small>
+                    <h3>Rheaniele C. Abad</h3>
+                </article>
+                <article class="about-team-card">
+                    <img src="~/images/System Images/designer.png" alt="Karmelie Ann S. Canasa" asp-append-version="true" />
+                    <small>User Interface</small>
+                    <h3>Karmelie Ann S. Canasa</h3>
+                </article>
+                <article class="about-team-card">
+                    <img src="~/images/System Images/datb.jpg" alt="Marven James Y. Bas" asp-append-version="true" />
+                    <small>Database</small>
+                    <h3>Marven James Y. Bas</h3>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section">
+        <div class="home-wrap">
+            <h2 class="about-section-title">Who We Serve</h2>
+            <div class="about-serve">
+                <div>
+                    <i class="bi bi-briefcase" aria-hidden="true"></i>
+                    <span>Business Travelers</span>
+                </div>
+                <div>
+                    <i class="bi bi-person" aria-hidden="true"></i>
+                    <span>Tourists &amp; Explorers</span>
+                </div>
+                <div>
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <span>Families &amp; Groups</span>
+                </div>
+                <div>
+                    <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    <span>Events &amp; Occasions</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section about-cta-section">
+        <div class="home-wrap">
+            <div class="home-cta">
+                <div class="home-cta-copy">
+                    <h2>Why Choose EasyRent?</h2>
+                    <p>Book your ride now and experience convenience on the road.</p>
+                </div>
+                <a asp-controller="ClientSide" asp-action="Browse" class="home-btn home-btn-light">
+                    Browse Vehicles
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+</div>

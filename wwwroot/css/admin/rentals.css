@@ -1,0 +1,3266 @@
+/* Rental booking index, walk-in create, summary, and calendar. Loaded when ActivePage is Rentals or Transit. */
+
+.booking-customer-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e5e5e5;
+    color: #333;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.booking-customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.booking-customer-meta,
+.booking-vehicle-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.booking-customer-name,
+.booking-vehicle-name {
+    font-weight: 700;
+    color: #111;
+}
+
+.booking-customer-phone,
+.booking-vehicle-type {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.booking-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-width: 88px;
+    text-align: center;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.booking-status-pending {
+    background: #fff4e5;
+    color: #b54708;
+}
+
+.booking-status-approved {
+    background: #eaf9eb;
+    color: #32b935;
+}
+
+.booking-status-cancelled {
+    background: #fdeceb;
+    color: #c21f00;
+}
+
+.booking-status-expired {
+    background: #ececec;
+    color: #667085;
+}
+
+.trip-status-scheduled,
+.trip-status-in-transit,
+.trip-status-completed {
+    background: #ececec;
+    color: #555;
+}
+
+.trip-status-delayed {
+    background: #f5e8d0;
+    color: #8a6a2f;
+}
+
+.trip-status-cancelled {
+    background: #fdeceb;
+    color: #c21f00;
+}
+
+.payment-paid-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.payment-paid-label.is-unpaid {
+    color: #555;
+}
+
+.payment-paid-label.is-paid {
+    color: #32b935;
+}
+
+/* --- Admin booking create (walk-in reservation) --- */
+.admin-booking-create.wizard-max-wrapper,
+.wizard-max-wrapper.admin-booking-create {
+    max-width: 980px;
+}
+
+.admin-booking-create {
+    max-width: 980px;
+}
+
+.admin-booking-stepper {
+    --step-circle-size: 36px;
+    --step-line-gap: 8px;
+    --step-line-color: #d0d5dd;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto 2.25rem;
+}
+
+.admin-booking-stepper .step-circle {
+    width: 36px;
+    height: 36px;
+    font-weight: 700;
+}
+
+.admin-booking-stepper .step-label {
+    max-width: 110px;
+    line-height: 1.2;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.admin-booking-stepper .step-node.active .step-circle {
+    color: #fff;
+}
+
+.admin-booking-create.wizard-max-wrapper,
+.admin-booking-create {
+    max-width: 1100px;
+}
+
+/* --- Admin create step 1 (match client rent-step cards) --- */
+.admin-booking-create .admin-create-step1-intro {
+    margin-bottom: 1.35rem;
+}
+
+.admin-booking-create .admin-create-step1-title {
+    margin: 0 0 0.35rem;
+    font-family: var(--font-title, 'Roboto', sans-serif);
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #1E296A;
+}
+
+.admin-booking-create .admin-create-step1-subtitle {
+    margin: 0;
+    font-size: 0.86rem;
+    color: #6b7385;
+}
+
+.admin-booking-create .rent-step-card {
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    padding: 1.25rem 1.3rem 1.35rem;
+    margin-bottom: 1.15rem;
+}
+
+.admin-booking-create .rent-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.05rem;
+}
+
+.admin-booking-create .rent-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e8eef7;
+    color: #1E3A8A;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.admin-booking-create .rent-card-head h2 {
+    margin: 0;
+    font-family: var(--font-title, 'Roboto', sans-serif);
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #1E296A;
+}
+
+.admin-booking-create .rent-card-hint {
+    margin: -0.35rem 0 1rem;
+    font-size: 0.78rem;
+    color: #6b7385;
+}
+
+.admin-booking-create .rent-field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1E296A;
+    margin-bottom: 0.35rem;
+}
+
+.admin-booking-create .rent-field-input,
+.admin-booking-create .form-select.rent-field-input {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #e4e8f0;
+    border-radius: 12px;
+    background: #f4f6fb;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.86rem;
+    color: #1A2B4C;
+    box-shadow: none;
+}
+
+.admin-booking-create .form-select.rent-field-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234A5568' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.9rem center;
+    background-size: 12px 12px;
+    padding-right: 2.4rem;
+    appearance: none;
+}
+
+.admin-booking-create .rent-field-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.admin-booking-create .rent-field-input:focus,
+.admin-booking-create .form-select.rent-field-input:focus {
+    outline: none;
+    border-color: #b7c4de;
+    box-shadow: 0 0 0 3px rgba(26, 43, 93, 0.08);
+    background-color: #fff;
+}
+
+.admin-booking-create .rent-field-help {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    color: #8b95a8;
+}
+
+.admin-booking-create .rent-step-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin: 0.25rem 0 0.5rem;
+}
+
+.admin-booking-create .rent-btn-cancel,
+.admin-booking-create .rent-btn-continue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.admin-booking-create .rent-btn-cancel {
+    background: #fff;
+    border: 1.5px solid #1E3A8A;
+    color: #1E3A8A;
+}
+
+.admin-booking-create .rent-btn-cancel:hover {
+    background: #f4f6fb;
+    color: #1E3A8A;
+}
+
+.admin-booking-create .rent-btn-continue {
+    border: 0;
+    background: #1E3A8A;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(26, 43, 93, 0.18);
+}
+
+.admin-booking-create .rent-btn-continue:hover {
+    background: #16307a;
+    color: #fff;
+}
+
+.admin-booking-create .airbnb-date-fields-side .rent-field-label {
+    margin-top: 0.15rem;
+}
+
+/* --- Booking summary step --- */
+.booking-summary-card .wizard-section-divider {
+    margin-top: 0.35rem;
+}
+
+.booking-details-panel {
+    border: 1px solid #e4e7ec;
+    background: #ffffff;
+    border-radius: 16px;
+}
+
+.booking-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+}
+
+.booking-details-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1E296A;
+    letter-spacing: -0.02em;
+}
+
+.booking-details-title-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #e8eefc;
+    color: #1E3A8A;
+    flex-shrink: 0;
+}
+
+.booking-details-title-icon--round {
+    border-radius: 50%;
+}
+
+.booking-details-title-icon i,
+.booking-details-title i {
+    font-size: 0.95rem;
+    color: inherit;
+}
+
+.booking-summary-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1E296A;
+    background: #ffffff;
+    border: 1.5px solid #1E296A;
+    border-radius: 8px;
+    padding: 0.32rem 0.8rem;
+    line-height: 1.2;
+}
+
+.booking-summary-edit-btn:hover {
+    background: #f5f7ff;
+    color: #15204f;
+    border-color: #15204f;
+}
+
+.booking-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.booking-details-section {
+    padding: 0.85rem 0 0.15rem;
+    border-top: 1px solid #e4e7ec;
+}
+
+.booking-details-section:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.booking-details-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem 2.5rem;
+}
+
+.booking-details-col {
+    min-width: 0;
+}
+
+.booking-details-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0;
+}
+
+.booking-details-divider {
+    height: 1px;
+    background: #e4e7ec;
+    margin: 0.55rem 0 0.35rem;
+}
+
+.booking-details-row-stack {
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+}
+
+.booking-details-row-stack .booking-details-label {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 0.2rem;
+}
+
+.booking-details-row-id:has(#summaryValidIdFallback.d-none) {
+    justify-content: flex-start;
+    padding-bottom: 0.35rem;
+}
+
+.booking-details-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1E296A;
+    flex-shrink: 0;
+}
+
+.booking-details-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1E296A;
+    text-align: right;
+    word-break: break-word;
+}
+
+.booking-details-value-with-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+}
+
+.booking-details-value-with-icon i {
+    font-size: 0.95rem;
+    color: #1E296A;
+}
+
+.booking-details-file {
+    font-weight: 600;
+    color: #333;
+}
+
+.booking-summary-doc-preview {
+    margin-top: 0.55rem;
+    width: 100%;
+}
+
+.booking-summary-doc-preview a {
+    display: inline-block;
+    max-width: 100%;
+}
+
+.booking-summary-doc-preview img {
+    display: block;
+    max-width: 220px;
+    max-height: 160px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid #cfcfcf;
+    background: #fff;
+}
+
+.booking-details-value-strong {
+    font-weight: 800;
+}
+
+.booking-summary-receipt-section {
+    margin-top: 0.15rem;
+    padding-top: 0;
+    border-top: none;
+}
+
+.booking-summary-receipt-label {
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.booking-summary-receipt-section .booking-details-file {
+    display: block;
+    text-align: left;
+    margin-bottom: 0.55rem;
+}
+
+.booking-summary-receipt-frame {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: #f3f4f6;
+    border-radius: 14px;
+    padding: 1.15rem 1rem;
+    margin-top: 0.15rem;
+}
+
+.booking-summary-receipt-frame.d-none {
+    display: none !important;
+}
+
+.booking-summary-receipt-link {
+    display: block;
+    max-width: 280px;
+    width: 100%;
+}
+
+.booking-summary-receipt-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.booking-payment-panel .booking-payment-total-amount {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -0.02em;
+}
+
+.booking-details-panel .booking-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    justify-content: center;
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.booking-details-panel .booking-status-badge.booking-status-pending {
+    background: #fff1e0;
+    color: #e07a1f;
+    border: 1px solid #f0c49a;
+}
+
+.booking-details-panel .booking-status-badge i {
+    font-size: 0.78rem;
+}
+
+.booking-details-section-notes {
+    padding: 0.85rem 0 0;
+    border-top: 1px solid #e4e7ec;
+    margin-top: 0.55rem;
+}
+
+.booking-details-section-notes .booking-details-label {
+    display: block;
+    margin-bottom: 0.45rem;
+}
+
+.booking-summary-notes {
+    background: #f3f4f6;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #1E296A;
+    min-height: 72px;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 767.98px) {
+    .booking-details-columns {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .booking-details-row {
+        align-items: flex-start;
+    }
+
+    .booking-details-label {
+        max-width: 48%;
+    }
+}
+
+.booking-payment-panel {
+    border: 1px solid #e4e7ec;
+    background: #ffffff;
+    border-radius: 16px;
+}
+
+.booking-payment-txn-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+}
+
+.booking-payment-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7.25rem 8.75rem;
+    column-gap: 1.25rem;
+    row-gap: 0.75rem;
+    align-items: center;
+}
+
+.booking-payment-line {
+    grid-column: 1 / 3;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7.25rem;
+    column-gap: 1.25rem;
+    align-items: center;
+}
+
+.booking-payment-label {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.booking-payment-amount {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #222;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.booking-payment-status {
+    grid-column: 3;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    justify-self: start;
+}
+
+.booking-payment-status-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #6f6f6f;
+}
+
+.booking-payment-status-spacer {
+    grid-column: 3;
+}
+
+.booking-payment-panel .booking-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 92px;
+    justify-content: center;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #cfcfcf;
+    color: #333;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.booking-payment-panel .booking-status-badge i {
+    font-size: 0.75rem;
+}
+
+.booking-payment-total {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7.25rem 8.75rem;
+    column-gap: 1.25rem;
+    align-items: center;
+    margin-top: 0.95rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid #9a9a9a;
+}
+
+.booking-payment-total-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4a4a4a;
+}
+
+.booking-payment-total-amount {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #111;
+    text-align: right;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+@media (max-width: 767.98px) {
+    .booking-payment-grid,
+    .booking-payment-total {
+        grid-template-columns: minmax(0, 1fr) 6.5rem;
+        column-gap: 0.85rem;
+    }
+
+    .booking-payment-line {
+        grid-column: 1 / -1;
+        grid-template-columns: minmax(0, 1fr) 6.5rem;
+        column-gap: 0.85rem;
+    }
+
+    .booking-payment-status {
+        grid-column: 1 / -1;
+        grid-row: auto;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.55rem;
+        order: -1;
+    }
+
+    .booking-payment-status-spacer {
+        display: none;
+    }
+
+    .booking-payment-total-amount {
+        font-size: 1.35rem;
+    }
+}
+
+.admin-booking-create .admin-discount-preview {
+    position: relative;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 1.25rem 1rem 0.85rem;
+    max-width: 100%;
+}
+
+.admin-booking-create .admin-discount-preview .license-preview-box {
+    background: transparent;
+    border: none;
+    min-height: 160px;
+    height: 180px;
+    margin-bottom: 0;
+}
+
+.admin-booking-create .admin-discount-preview .edit-license-remove-btn {
+    top: 10px;
+    right: 10px;
+}
+
+/* Walk-in reservation calendar — match design mock (wide, not tall) */
+.admin-booking-create .airbnb-cal-card {
+    width: 100%;
+    max-width: none;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: none;
+    border: 1px solid #e8ecf3;
+    padding: 1.35rem 1.75rem 1.15rem;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.admin-booking-create .airbnb-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0 0.15rem;
+}
+
+.admin-booking-create .airbnb-cal-month {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #222;
+    letter-spacing: -0.2px;
+}
+
+.admin-booking-create .airbnb-cal-nav {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid #cfcfcf;
+    background: #fff;
+    color: #333;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-booking-create .airbnb-cal-nav:hover {
+    background: #f5f5f5;
+    border-color: #bbb;
+}
+
+.admin-booking-create .airbnb-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.45rem;
+}
+
+.admin-booking-create .airbnb-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    column-gap: 6px;
+    row-gap: 8px;
+    margin-bottom: 1rem;
+}
+
+.admin-booking-create .airbnb-cal-cell {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: 100%;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.admin-booking-create .airbnb-cal-cell.is-empty {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Fill column width so range reads as a wide continuous bar */
+.admin-booking-create .airbnb-cal-day {
+    width: 100%;
+    max-width: none;
+    height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+    background: transparent;
+}
+
+.admin-booking-create .airbnb-cal-cell.is-available:hover .airbnb-cal-day {
+    background: #f0f0f0;
+}
+
+/* Soft blue bar for days between pick-up and return */
+.admin-booking-create .airbnb-cal-cell.in-range .airbnb-cal-day {
+    background: #90caf9;
+    color: #0d47a1;
+    box-shadow: none;
+}
+
+/* Stronger blue for pick-up / return endpoints */
+.admin-booking-create .airbnb-cal-cell.is-selected .airbnb-cal-day,
+.admin-booking-create .airbnb-cal-cell.is-single .airbnb-cal-day {
+    background: #1976d2;
+    color: #fff;
+    box-shadow: 0 1px 3px rgba(25, 118, 210, 0.35);
+}
+
+/* Past days: grey text only, not selectable */
+.admin-booking-create .airbnb-cal-cell.is-past,
+.admin-booking-create .airbnb-cal-cell.is-past:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.admin-booking-create .airbnb-cal-cell.is-past .airbnb-cal-day {
+    color: #bdbdbd !important;
+    background: transparent !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+}
+
+/* Rented days: red highlight, not selectable */
+.admin-booking-create .airbnb-cal-cell.is-rented,
+.admin-booking-create .airbnb-cal-cell.is-rented:disabled,
+.admin-booking-create .airbnb-cal-cell.is-unavailable,
+.admin-booking-create .airbnb-cal-cell.is-unavailable:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 1 !important;
+}
+
+.admin-booking-create .airbnb-cal-cell.is-rented .airbnb-cal-day,
+.admin-booking-create .airbnb-cal-cell.is-rented:disabled .airbnb-cal-day,
+.admin-booking-create .airbnb-cal-cell.is-unavailable .airbnb-cal-day,
+.admin-booking-create .airbnb-cal-cell.is-unavailable:disabled .airbnb-cal-day {
+    color: #fff !important;
+    background: #e53935 !important;
+    text-decoration: none !important;
+    box-shadow: 0 1px 3px rgba(229, 57, 53, 0.35);
+    opacity: 1 !important;
+}
+
+/* Distinct pick-up vs return endpoints */
+.admin-booking-create .airbnb-cal-cell.is-pickup .airbnb-cal-day {
+    background: #1E3A8A !important;
+    color: #fff !important;
+    box-shadow: 0 1px 3px rgba(30, 58, 138, 0.4);
+}
+
+.admin-booking-create .airbnb-cal-cell.is-return .airbnb-cal-day {
+    background: #00897b !important;
+    color: #fff !important;
+    box-shadow: 0 1px 3px rgba(0, 137, 123, 0.4);
+}
+
+.admin-booking-create .airbnb-cal-cell.is-single.is-pickup .airbnb-cal-day,
+.admin-booking-create .airbnb-cal-cell.is-single.is-return .airbnb-cal-day {
+    background: linear-gradient(135deg, #1E3A8A 50%, #00897b 50%) !important;
+    color: #fff !important;
+}
+
+.admin-booking-create .airbnb-cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem 1.35rem;
+    font-size: 0.82rem;
+    color: #666;
+    padding-top: 0.1rem;
+}
+
+.admin-booking-create .airbnb-legend-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 0.35rem;
+    vertical-align: -1px;
+    background: #c8c8c8;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-available {
+    background: #fff;
+    border: 1.5px solid #c8c8c8;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-range {
+    background: #90caf9;
+    border: none;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-selected {
+    background: #1976d2;
+    border: none;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-pickup {
+    background: #1E3A8A;
+    border: none;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-return {
+    background: #00897b;
+    border: none;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-past {
+    background: #bdbdbd;
+    border: none;
+}
+
+.admin-booking-create .airbnb-legend-dot.is-rented,
+.admin-booking-create .airbnb-legend-dot.is-unavailable {
+    background: #e53935;
+    border: none;
+}
+
+.admin-booking-create .airbnb-date-fields {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.admin-booking-create .airbnb-date-field {
+    position: relative;
+    width: 100%;
+}
+
+.admin-booking-create .airbnb-datetime-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.admin-booking-create .airbnb-date-input,
+.admin-booking-create .airbnb-time-input {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #e4e8f0;
+    border-radius: 12px;
+    background: #f4f6fb;
+    padding: 0.65rem 2.6rem 0.65rem 0.9rem;
+    font-size: 0.86rem;
+    color: #1A2B4C;
+    box-shadow: none;
+}
+
+.admin-booking-create .airbnb-date-input {
+    cursor: pointer;
+}
+
+.admin-booking-create .airbnb-time-input {
+    position: relative;
+    padding-right: 2.6rem;
+    cursor: pointer;
+}
+
+.admin-booking-create .airbnb-date-input::placeholder {
+    color: #a0a0a0;
+}
+
+.admin-booking-create .airbnb-date-input:focus,
+.admin-booking-create .airbnb-time-input:focus {
+    outline: none;
+    border-color: #b7c4de;
+    box-shadow: 0 0 0 3px rgba(26, 43, 93, 0.08);
+    background: #fff;
+}
+
+.admin-booking-create .airbnb-date-icon {
+    position: absolute;
+    right: 0.95rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #555;
+    pointer-events: none;
+    font-size: 1rem;
+    z-index: 1;
+}
+
+.admin-booking-create .airbnb-date-input,
+.admin-booking-create .airbnb-time-input {
+    position: relative;
+    cursor: pointer;
+}
+
+.admin-booking-create .airbnb-date-input::-webkit-calendar-picker-indicator,
+.admin-booking-create .airbnb-time-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.admin-booking-create .admin-section-icon {
+    color: #1E3A8A;
+}
+
+.admin-booking-create .airbnb-cal-split .airbnb-cal-card {
+    margin-bottom: 0;
+}
+
+.admin-booking-create .airbnb-date-fields-side {
+    padding-top: 0.25rem;
+}
+
+.admin-booking-create .discount-id-panel {
+    background: #f4f6fb;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+    padding: 1rem;
+    height: 100%;
+}
+
+.admin-booking-create .discount-id-panel-title {
+    text-align: left;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1E296A;
+    margin-bottom: 0.75rem;
+}
+
+.admin-booking-create .discount-id-upload-zone {
+    min-height: 130px;
+}
+
+.admin-booking-create .upload-preview-bar {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    margin-top: 0.65rem;
+    padding: 0.45rem 0.55rem 0.45rem 0.85rem;
+}
+
+.admin-booking-create .upload-preview-remove-btn {
+    border: none;
+    background: transparent;
+    color: #1E3A8A;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+}
+
+.admin-booking-create.wizard-max-wrapper {
+    max-width: 1100px;
+}
+
+.admin-payment-step-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.admin-payment-step-main {
+    min-width: 0;
+    width: 100%;
+}
+
+.admin-payment-step-layout > .admin-trip-summary-sidebar {
+    position: sticky;
+    top: 1rem;
+}
+
+/* Match client trip summary sidebar on admin Payment Type */
+.admin-booking-create .admin-trip-summary-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.admin-booking-create .rent-vehicle-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.95rem;
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    padding: 0.85rem 1rem;
+}
+
+.admin-booking-create .rent-vehicle-preview-image {
+    width: 96px;
+    height: 72px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #eef1f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9aa3b5;
+    font-size: 1.45rem;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.admin-booking-create .rent-vehicle-preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.admin-booking-create .rent-vehicle-preview-image .admin-rental-summary-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+    background: transparent;
+    font-size: 1.45rem;
+}
+
+.admin-booking-create .rent-vehicle-preview-meta strong {
+    display: block;
+    color: #1E296A;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.admin-booking-create .rent-vehicle-preview-meta p {
+    margin: 0.2rem 0 0;
+    color: #6b7385;
+    font-size: 0.78rem;
+}
+
+.admin-booking-create .rent-trip-card {
+    background: #fff;
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    padding: 1.15rem 1.2rem 1.2rem;
+}
+
+.admin-booking-create .rent-trip-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 0.42rem 0;
+    border: none;
+}
+
+.admin-booking-create .rent-trip-row span {
+    color: #4d5d86;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.admin-booking-create .rent-trip-row strong {
+    color: #2b3344;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.admin-booking-create .rent-trip-row--total {
+    margin-top: 0.45rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid #e4e8f0;
+}
+
+.admin-booking-create .rent-trip-row--total span {
+    color: #4d5d86;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.admin-booking-create .rent-trip-row--total strong {
+    color: #1E296A;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.admin-booking-create .rent-trip-box {
+    margin-top: 0.85rem;
+    padding: 0.75rem 0.9rem 0.7rem;
+    background: #fff;
+    border: 1px solid #d8deea;
+    border-radius: 12px;
+}
+
+.admin-booking-create .rent-trip-box .rent-trip-row {
+    padding: 0.28rem 0;
+}
+
+.admin-booking-create .rent-trip-box .rent-trip-row--total {
+    margin-top: 0.35rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid #e4e8f0;
+}
+
+.admin-booking-create .rent-balance-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+    padding: 0;
+    background: none;
+    color: #6b7a99;
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.admin-booking-create .rent-balance-note i {
+    color: #4d7cc7;
+    font-size: 0.95rem;
+    margin-top: 0.05rem;
+    flex-shrink: 0;
+}
+
+.remaining-balance-card,
+.admin-booking-create .remaining-balance-card {
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    padding: 1rem 1.05rem 1.05rem;
+}
+
+.remaining-balance-row,
+.admin-booking-create .remaining-balance-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.remaining-balance-row span,
+.admin-booking-create .remaining-balance-row span {
+    color: #1E296A;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.remaining-balance-row strong,
+.admin-booking-create .remaining-balance-row strong {
+    color: #1E296A;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.remaining-balance-note-box,
+.admin-booking-create .remaining-balance-note-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    background: #f3f4f6;
+    border-radius: 12px;
+    padding: 0.7rem 0.8rem;
+    color: #1E296A;
+    font-size: 0.76rem;
+    line-height: 1.4;
+}
+
+.remaining-balance-note-box i,
+.admin-booking-create .remaining-balance-note-box i {
+    color: #3b82f6;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+
+.payment-reminders-sidebar-card,
+.admin-booking-create .payment-reminders-sidebar-card {
+    background: #eef2ff;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    padding: 1rem 1.05rem 1.05rem;
+}
+
+.payment-reminders-sidebar-title,
+.admin-booking-create .payment-reminders-sidebar-title {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #1E296A;
+    font-size: 0.95rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+}
+
+.payment-reminders-sidebar-icon,
+.admin-booking-create .payment-reminders-sidebar-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #1E296A;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-style: italic;
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.payment-reminders-sidebar-card ul,
+.admin-booking-create .payment-reminders-sidebar-card ul {
+    margin: 0;
+    padding-left: 1.15rem;
+    color: #1E296A;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.payment-reminders-sidebar-card li + li,
+.admin-booking-create .payment-reminders-sidebar-card li + li {
+    margin-top: 0.45rem;
+}
+
+.payment-reminders-sidebar-card li::marker,
+.admin-booking-create .payment-reminders-sidebar-card li::marker {
+    color: #1E296A;
+}
+
+/* Payment Details (step 3) — match client cards */
+.admin-booking-create .payment-details-step .rent-step-card {
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    padding: 1.25rem 1.3rem 1.35rem;
+    margin-bottom: 1.15rem;
+}
+
+.admin-booking-create .payment-details-step .payment-type-title,
+.admin-booking-create .payment-details-step .payment-step2-heading {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #1E296A;
+    letter-spacing: 0;
+}
+
+.admin-booking-create .payment-details-step .rent-card-hint {
+    margin: 0.15rem 0 1rem;
+    font-size: 0.78rem;
+    color: #6b7385;
+}
+
+.admin-booking-create .payment-details-step .rent-field-label,
+.admin-booking-create .payment-details-step .payment-field-label {
+    color: #1E296A;
+    font-weight: 700;
+}
+
+.admin-booking-create .payment-details-step .rent-field-input,
+.admin-booking-create .payment-details-step .payment-field-input {
+    background: #f4f6fb;
+    border: 1px solid #e4e8f0;
+    border-radius: 12px;
+    box-shadow: none;
+    color: #1A2B4C;
+}
+
+.admin-booking-create .payment-details-step .rent-field-input:focus,
+.admin-booking-create .payment-details-step .payment-field-input:focus {
+    outline: none;
+    border-color: #b7c4de;
+    box-shadow: 0 0 0 3px rgba(30, 41, 106, 0.08);
+    background: #fff;
+}
+
+.admin-booking-create .rent-date-field {
+    position: relative;
+}
+
+.admin-booking-create .rent-date-field .rent-field-input,
+.admin-booking-create .rent-date-field .payment-field-input {
+    padding-right: 2.4rem;
+}
+
+.admin-booking-create .rent-date-field > i {
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #1E296A;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.admin-booking-create .rent-date-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.admin-booking-create .payment-details-step .rent-btn-cancel,
+.admin-booking-create .payment-details-step .rent-btn-continue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.admin-booking-create .payment-details-step .rent-btn-cancel {
+    background: #fff;
+    border: 1.5px solid #1E296A;
+    color: #1E296A;
+}
+
+.admin-booking-create .payment-details-step .rent-btn-continue {
+    border: 0;
+    background: #1E296A;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(30, 41, 106, 0.18);
+}
+
+.admin-payment-details-sidebar {
+    position: sticky;
+    top: 1rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    z-index: 1;
+}
+
+.admin-rental-summary-card {
+    background: #ffffff;
+    border: 1px solid #e8ecf3;
+    border-radius: 16px;
+    padding: 1rem 1rem 1.15rem;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    position: relative;
+    z-index: 0;
+}
+
+.admin-rental-summary-image {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #eef1f6;
+    margin-bottom: 0.95rem;
+    position: relative;
+}
+
+.admin-rental-summary-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-rental-summary-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8a8a8a;
+    font-size: 2rem;
+}
+
+.admin-rental-summary-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin-bottom: 0.95rem;
+}
+
+.admin-rental-summary-type {
+    display: inline-flex;
+    align-items: center;
+    background: #eef0f4;
+    color: #5b6578;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.admin-rental-summary-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1E296A;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.admin-rental-summary-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin: 0 0 1rem;
+}
+
+.admin-rental-summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+}
+
+.admin-rental-summary-row span {
+    color: #6b7385;
+}
+
+.admin-rental-summary-row strong {
+    color: #1A2B4C;
+    font-weight: 700;
+    text-align: right;
+}
+
+.admin-rental-summary-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #1E296A;
+    padding: 0.85rem 0 0;
+    border-top: 1px solid #e4e8f0;
+    margin-bottom: 0.95rem;
+}
+
+.admin-rental-summary-price strong {
+    font-size: 1.15rem;
+    color: #1E296A;
+}
+
+.admin-rental-summary-secure {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+    color: #3d4a66;
+    line-height: 1.4;
+    background: #eef4ff;
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+}
+
+.admin-rental-summary-secure i {
+    color: #1E296A;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+
+.admin-payment-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.65rem 0;
+    border-top: 1px solid #d0d0d0;
+}
+
+.admin-payment-total-row {
+    margin-top: 0.25rem;
+    padding-top: 0.45rem;
+    border-top: 1px dashed #c8c8c8;
+}
+
+.admin-payment-total-row span,
+.admin-payment-total-row strong {
+    font-weight: 800;
+    color: #111;
+}
+
+.admin-payment-balance-box {
+    margin-top: 0.75rem;
+    background: #e8f1ff;
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+}
+
+.admin-payment-balance-note {
+    margin-top: 0.45rem;
+    font-size: 0.72rem;
+    color: #1E3A8A;
+    line-height: 1.35;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.admin-payment-balance-note i {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.admin-booking-create .booking-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.admin-booking-create .booking-payment-txn-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+}
+
+.admin-booking-create .booking-summary-receipt-frame img {
+    max-width: 100%;
+}
+
+.admin-payment-reminders-card {
+    background: #e8f1ff;
+    border-radius: 14px;
+    padding: 1rem 1.05rem;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+}
+
+.admin-payment-reminders-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #1E3A8A;
+    margin-bottom: 0.55rem;
+}
+
+.admin-payment-reminders-card ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: #344054;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.admin-payment-reminders-card li + li {
+    margin-top: 0.35rem;
+}
+
+.admin-payment-summary-card {
+    margin-bottom: 0;
+}
+
+.admin-payment-details-sidebar .admin-rental-summary-card.mb-3 {
+    margin-bottom: 0 !important;
+}
+
+.booking-summary-id-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    width: 100%;
+    margin-top: 0.35rem;
+}
+
+.booking-summary-id-card {
+    width: 100%;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 14px;
+    padding: 0.9rem 1rem 1rem;
+}
+
+.booking-summary-id-label {
+    display: block;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1E296A;
+    margin-bottom: 0.65rem;
+}
+
+.booking-summary-id-thumb {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto 0.55rem;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #e8eaef;
+}
+
+.booking-summary-id-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.booking-summary-id-name {
+    display: block;
+    font-size: 0.78rem;
+    color: #667085;
+    word-break: break-all;
+    text-align: left;
+}
+
+.booking-summary-receipt-preview {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: #f3f4f6;
+    border-radius: 14px;
+    padding: 1.15rem 1rem;
+    margin-top: 0.5rem;
+}
+
+.booking-summary-receipt-preview img {
+    width: 100%;
+    max-width: 280px;
+    max-height: 420px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: none;
+    background: #fff;
+}
+
+.booking-details-title > i {
+    color: #1E3A8A;
+}
+
+.booking-summary-next-card {
+    background: #eef2f8;
+    border: none;
+    border-radius: 18px;
+    padding: 1.25rem 1.35rem 1.35rem;
+    box-shadow: none;
+}
+
+#clientTripSummarySidebar .booking-summary-next-card {
+    margin-top: 0.9rem;
+}
+
+.booking-summary-next-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1E296A;
+    margin-bottom: 1.15rem;
+    letter-spacing: -0.02em;
+}
+
+.booking-summary-next-title i {
+    font-size: 1.15rem;
+    color: #1E296A;
+}
+
+.booking-summary-next-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.05rem;
+}
+
+.booking-summary-next-list li {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+}
+
+.booking-summary-next-step {
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 999px;
+    border: 1.5px solid #1E296A;
+    background: transparent;
+    color: #1E296A;
+    font-size: 0.78rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 0.05rem;
+}
+
+.booking-summary-next-step.is-current {
+    background: #1E296A;
+    border-color: #1E296A;
+    color: #ffffff;
+}
+
+.booking-summary-next-body {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.booking-summary-next-body strong {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #1E296A;
+    margin-bottom: 0.2rem;
+}
+
+.booking-summary-next-body p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #5b6578;
+}
+
+.admin-create-complete-page {
+    max-width: 560px;
+    margin: 3.5rem auto 4rem;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.admin-create-complete-icon {
+    width: 132px;
+    height: 132px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-create-complete-icon .admin-success-check-img {
+    width: 132px;
+    height: 132px;
+}
+
+.admin-create-complete-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #1f2937;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.75rem;
+    line-height: 1.35;
+}
+
+.admin-create-complete-text {
+    color: #98a2b3;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin: 0 auto 1.85rem;
+    max-width: 28rem;
+}
+
+.admin-create-complete-text strong {
+    color: #1E296A;
+    font-weight: 700;
+}
+
+.admin-create-complete-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.admin-create-complete-primary,
+.admin-create-complete-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 46px;
+    padding: 0.7rem 1.35rem !important;
+    border-radius: 10px !important;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.admin-create-complete-primary {
+    background: #1E296A !important;
+    border: 1.5px solid #1E296A !important;
+    color: #fff !important;
+}
+
+.admin-create-complete-primary i {
+    font-size: 1rem;
+    line-height: 1;
+    margin: 0;
+}
+
+.admin-create-complete-primary:hover {
+    background: #162154 !important;
+    border-color: #162154 !important;
+    color: #fff !important;
+}
+
+.admin-create-complete-secondary {
+    background: #fff !important;
+    border: 1.5px solid #c5cad3 !important;
+    color: #1E296A !important;
+}
+
+.admin-create-complete-secondary i {
+    font-size: 1rem;
+    line-height: 1;
+    margin: 0;
+}
+
+.admin-create-complete-secondary:hover {
+    background: #f4f6fb !important;
+    border-color: #1E296A !important;
+    color: #1E296A !important;
+}
+
+@media (max-width: 575.98px) {
+    .admin-create-complete-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .admin-create-complete-primary,
+    .admin-create-complete-secondary {
+        width: 100%;
+    }
+}
+
+/* --- Add rental wizard: white / navy theme (matches mockups) --- */
+.admin-booking-create .form-container-card,
+.admin-booking-create .booking-summary-card {
+    background: #ffffff !important;
+    border: 1px solid #e4e7ec;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.admin-booking-create .step-node {
+    background: transparent;
+}
+
+.admin-booking-create .step-circle {
+    color: #1E296A;
+}
+
+.admin-booking-create .step-node.active .step-circle,
+.admin-booking-create .step-node.completed .step-circle {
+    color: #ffffff;
+}
+
+.admin-booking-create .step-label {
+    color: #667085;
+    font-weight: 600;
+}
+
+.admin-booking-create .step-node.active .step-label,
+.admin-booking-create .step-node.completed .step-label {
+    color: #1E3A8A;
+}
+
+.admin-booking-create .license-upload-zone,
+.admin-booking-create .discount-id-upload-zone {
+    background: #f4f6fb !important;
+    border: 1.5px dashed #1E3A8A !important;
+    border-radius: 12px;
+    color: #1A2B4C;
+}
+
+.admin-booking-create .license-upload-zone:hover,
+.admin-booking-create .discount-id-upload-zone:hover {
+    background: #eef2f9 !important;
+    border-color: #16307a !important;
+}
+
+.admin-booking-create .airbnb-cal-card {
+    background: #ffffff;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+}
+
+.admin-booking-create .airbnb-date-input,
+.admin-booking-create .airbnb-time-input {
+    background: #f4f6fb;
+    border-color: #e4e8f0;
+}
+
+.admin-booking-create .form-control-thin:focus,
+.admin-booking-create .form-select:focus {
+    border-color: #1E3A8A !important;
+    box-shadow: 0 0 0 0.15rem rgba(30, 58, 138, 0.12) !important;
+}
+
+.admin-booking-create .payment-option-card {
+    background: #f4f6fb;
+    border: 1.5px solid #e4e8f0;
+}
+
+.admin-booking-create .payment-option-card:hover {
+    background: #eef2f8;
+}
+
+.admin-booking-create .payment-option-card.is-selected {
+    background: #eef2ff;
+    border-color: #1E296A;
+    box-shadow: 0 2px 10px rgba(30, 41, 106, 0.12);
+}
+
+.admin-booking-create .payment-option-icon {
+    background: #1E296A;
+}
+
+.admin-booking-create .payment-step2-card {
+    background: #ffffff;
+    border: 1px solid #e8ecf3;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+}
+
+.admin-booking-create .payment-step2-heading i {
+    color: #1E296A;
+}
+
+.admin-booking-create .payment-method-tab {
+    background: #f4f6fb;
+    border: 1.5px solid #e4e8f0;
+    border-radius: 12px;
+}
+
+.admin-booking-create .payment-method-tab:hover {
+    background: #eef2f8;
+}
+
+.admin-booking-create .payment-method-tab.is-selected {
+    background: #e8f1fb;
+    border-color: #1E296A;
+}
+
+.admin-booking-create .payment-method-row {
+    background: #f8fafc;
+    border: 1.5px solid #e4e7ec;
+}
+
+.admin-booking-create .payment-method-row:hover {
+    background: #f2f4f7;
+}
+
+.admin-booking-create .payment-method-row.is-selected {
+    background: #eef2ff;
+    border-color: #1E296A;
+}
+
+.admin-booking-create .payment-channel-panel {
+    background: #f4f6fb;
+    border: 1.5px dashed #c5cde0;
+    border-radius: 14px;
+}
+
+.admin-booking-create .payment-upload-zone {
+    background: #f4f6fb;
+    border: 1.5px dashed #1E296A;
+}
+
+.admin-booking-create .payment-upload-zone:hover {
+    background: #eef2f9;
+    border-color: #162154;
+}
+
+.admin-booking-create .payment-upload-preview.is-visible {
+    background: #f2f4f7;
+}
+
+.admin-booking-create .payment-reminders {
+    background: #eef4ff;
+    border: 1px solid #c7d7fe;
+    border-radius: 12px;
+}
+
+.admin-booking-create .admin-rental-summary-card {
+    background: #ffffff;
+    border: 1px solid #e8ecf3;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+}
+
+.admin-booking-create .admin-rental-summary-image {
+    background: #eef1f6;
+}
+
+.admin-booking-create .admin-payment-balance-box,
+.admin-booking-create .admin-payment-reminders-card {
+    background: #eef4ff;
+}
+
+.admin-booking-create .booking-summary-edit-btn {
+    background: #ffffff;
+    border-color: #1E296A;
+    color: #1E296A;
+}
+
+.admin-booking-create .booking-summary-id-card {
+    background: #f3f4f6;
+    border-color: transparent;
+}
+
+.admin-booking-create .booking-details-section {
+    border-top-color: #e4e7ec;
+}
+
+.admin-booking-create .admin-summary-sidebar {
+    position: sticky;
+    top: 1rem;
+}
+
+.admin-booking-create #reservationStep4 .rent-btn-cancel,
+.admin-booking-create #reservationStep4 .rent-btn-continue,
+.admin-booking-create .booking-summary-card ~ .rent-step-actions .rent-btn-cancel,
+.admin-booking-create .booking-summary-card ~ .rent-step-actions .rent-btn-continue,
+.admin-booking-create .payment-type-actions .rent-btn-cancel,
+.admin-booking-create .payment-type-actions .rent-btn-continue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.admin-booking-create .payment-type-actions .rent-btn-cancel,
+.admin-booking-create #reservationStep4 .rent-btn-cancel {
+    background: #fff;
+    border: 1.5px solid #1E296A;
+    color: #1E296A;
+}
+
+.admin-booking-create .payment-type-actions .rent-btn-continue,
+.admin-booking-create #reservationStep4 .rent-btn-continue {
+    border: 0;
+    background: #1E296A;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(30, 41, 106, 0.18);
+}
+
+.admin-booking-create .form-container-card.booking-summary-card {
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+}
+
+.admin-booking-create .payment-method-panel {
+    background: #ffffff;
+    border: 1px solid #e4e7ec;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.admin-booking-create .payment-method-info-row,
+.admin-booking-create .payment-method-info-card {
+    background: #f8fafc;
+    border: 1px solid #e4e7ec;
+}
+
+
+@media (max-width: 991.98px) {
+    .admin-payment-step-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-payment-details-sidebar {
+        position: static;
+        order: -1;
+    }
+
+    .admin-rental-summary-card {
+        position: static;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .admin-booking-create .airbnb-cal-card {
+        padding: 1.1rem 0.9rem 1rem;
+        border-radius: 16px;
+    }
+
+    .admin-booking-create .airbnb-cal-cell {
+        height: 38px;
+    }
+
+    .admin-booking-create .airbnb-cal-day {
+        height: 34px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+}
+
+.admin-booking-create .license-preview-box {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.admin-booking-create .license-preview-box img {
+    width: 100%;
+    height: 100%;
+    min-height: 150px;
+    object-fit: contain;
+}
+
+.admin-booking-create .license-preview-box:hover {
+    border-color: #93c5fd;
+}
+
+/* --- Inquiries index page (mockup layout) --- */
+.inquiries-index-page {
+    background-color: #ffffff;
+}
+
+.inquiries-index-page .inquiry-metric-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    min-height: 110px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.inquiries-index-page .inquiry-metric-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #1a3275;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.inquiries-index-page .inquiry-metric-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.inquiries-index-page .inquiry-metric-label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #667085;
+    margin-bottom: 0.15rem;
+}
+
+.inquiries-index-page .inquiry-metric-value {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a3275;
+    line-height: 1.1;
+}
+
+.inquiries-index-page .inquiry-metric-trend {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.inquiries-index-page .inquiry-metric-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    background: #ecfdf3;
+    color: #027a48;
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.inquiries-index-page .inquiry-metric-badge.is-down {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.inquiries-index-page .inquiry-metric-badge i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.inquiries-index-page .inquiry-metric-compare {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.68rem;
+    color: #98a2b3;
+    font-weight: 500;
+}
+
+.inquiries-index-page .inquiry-index-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 0.85rem 1rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.inquiries-index-page .inquiry-index-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.inquiries-index-page .inquiry-index-toolbar-search {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 220px;
+}
+
+.inquiries-index-page .inquiry-index-search-icon,
+.inquiries-index-page .inquiry-index-mic-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667085;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.inquiries-index-page .inquiry-index-search-icon {
+    left: 0.95rem;
+}
+
+.inquiries-index-page .inquiry-index-mic-icon {
+    right: 0.95rem;
+}
+
+.inquiries-index-page .inquiry-index-search-input {
+    height: 42px;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: #ffffff !important;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    font-size: 0.85rem;
+    color: #344054;
+}
+
+.inquiries-index-page .inquiry-index-search-input:focus {
+    border-color: #1a3275;
+    box-shadow: 0 0 0 0.15rem rgba(26, 50, 117, 0.12);
+}
+
+.inquiries-index-page .inquiry-index-search-clear {
+    position: absolute;
+    right: 2.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667085;
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.inquiries-index-page .inquiry-index-add-btn {
+    background: #1a3275 !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.inquiries-index-page .inquiry-index-add-btn:hover {
+    background: #12234f !important;
+    color: #ffffff !important;
+}
+
+.inquiries-index-page .index-table-panel {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.inquiries-index-page .index-table-panel .admin-table thead th {
+    background: #eef1f6;
+    color: #344054;
+    font-weight: 700;
+    border-bottom: 1px solid #d8dde6;
+    border-top: 1px solid #d8dde6;
+    border-right: 1px solid #d8dde6;
+}
+
+.inquiries-index-page .index-table-panel .admin-table thead th:first-child {
+    border-left: 1px solid #d8dde6;
+    border-top-left-radius: 12px;
+}
+
+.inquiries-index-page .index-table-panel .admin-table thead th:last-child {
+    border-top-right-radius: 12px;
+    border-right: 1px solid #d8dde6;
+}
+
+.inquiries-index-page .index-table-panel .admin-table tbody td {
+    background: #ffffff;
+}
+
+@media (max-width: 767.98px) {
+    .inquiries-index-page .inquiry-metric-card {
+        flex-wrap: wrap;
+    }
+
+    .inquiries-index-page .inquiry-metric-trend {
+        width: 100%;
+        text-align: left;
+        padding-left: calc(52px + 1rem);
+    }
+}
+
+/* --- Rental Details page (mock redesign) --- */
+.reservation-details-page .reservation-details-id-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.06);
+    padding: 0.85rem 1.2rem;
+    width: 100%;
+}
+
+.reservation-details-page .reservation-details-side-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    width: 100%;
+    margin-left: 0;
+}
+
+.reservation-details-page .reservation-details-id-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.reservation-details-page .reservation-view-id-label {
+    color: #8a93a6;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+.reservation-details-page .reservation-view-id {
+    color: #1E296A;
+    font-size: 1.65rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+}
+
+.reservation-details-page .booking-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.reservation-details-page .booking-status-pending {
+    background: #fff1e7;
+    color: #c2410c;
+}
+
+.reservation-details-page .booking-status-approved {
+    background: #eaf9eb;
+    color: #32b935;
+}
+
+.reservation-details-page .booking-status-cancelled {
+    background: #fdeceb;
+    color: #c21f00;
+}
+
+.reservation-details-page .booking-status-expired {
+    background: #ececec;
+    color: #667085;
+}
+
+/* Override admin.css so side actions stay right-aligned */
+.reservation-details-page .details-page-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    width: 100%;
+    margin-left: 0;
+    margin-bottom: 0;
+}
+
+.reservation-details-page .btn-page-back {
+    background: #fff !important;
+    border: 1.5px solid #1f2937 !important;
+    color: #1f2937 !important;
+    border-radius: 10px !important;
+    font-weight: 700;
+    padding: 0.6rem 1.35rem !important;
+    line-height: 1.2;
+}
+
+.reservation-details-page .btn-reservation-edit {
+    background: #1E296A !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    font-weight: 700;
+    padding: 0.6rem 1.35rem !important;
+    line-height: 1.2;
+}
+
+@media (max-width: 991.98px) {
+    .reservation-details-page .reservation-details-side-actions {
+        justify-content: flex-start;
+        margin-bottom: 0.75rem;
+    }
+}
+
+.reservation-details-page .reservation-view-card,
+.reservation-details-page .reservation-view-side-card {
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    padding: 1.25rem 1.3rem 1.35rem;
+}
+
+.reservation-details-page .reservation-view-people,
+.reservation-details-page .reservation-view-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 1.5rem;
+    align-items: start;
+}
+
+.reservation-details-page .reservation-view-people {
+    row-gap: 0;
+    margin-bottom: 0;
+    padding-bottom: 1.15rem;
+    border-bottom: 1px solid #e8ecf3;
+}
+
+.reservation-details-page .reservation-view-facts {
+    row-gap: 1.05rem;
+}
+
+.reservation-details-page .reservation-view-people + .reservation-view-facts {
+    margin-top: 1.15rem;
+}
+
+.reservation-details-page .reservation-view-person,
+.reservation-details-page .reservation-view-vehicle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    width: 100%;
+}
+
+.reservation-details-page .reservation-view-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #e8eef7;
+    border: none;
+    color: #1E296A;
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.reservation-details-page .reservation-view-vehicle {
+    background: #fff;
+    border: 1px solid #dfe5ef;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(26, 43, 93, 0.05);
+    padding: 0.75rem 0.9rem;
+    justify-self: stretch;
+    box-sizing: border-box;
+}
+
+.reservation-details-page .reservation-view-vehicle-thumb {
+    width: 64px;
+    height: 48px;
+    border-radius: 10px;
+    background: #f4f6fb;
+    border: 1px solid #e4e8f0;
+    color: #9aa3b5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.reservation-details-page .reservation-view-vehicle-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.reservation-details-page .reservation-view-person-name,
+.reservation-details-page .reservation-view-vehicle-name {
+    color: #1E296A;
+    font-weight: 800;
+    font-size: 1.02rem;
+}
+
+.reservation-details-page .reservation-view-person-meta,
+.reservation-details-page .reservation-view-vehicle-type,
+.reservation-details-page .reservation-view-vehicle-label {
+    color: #6b7385;
+    font-size: 0.78rem;
+}
+
+.reservation-details-page .reservation-view-vehicle-label {
+    font-weight: 600;
+    margin-bottom: 0.1rem;
+}
+
+.reservation-details-page .reservation-view-fact {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    min-width: 0;
+}
+
+.reservation-details-page .reservation-view-fact-icon,
+.reservation-details-page .reservation-view-section-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #e8eef7;
+    color: #1E296A;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+}
+
+.reservation-details-page .reservation-view-label {
+    display: block;
+    color: #6b7385;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.reservation-details-page .reservation-view-value {
+    display: block;
+    color: #1A2B4C;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.reservation-details-page .reservation-view-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #1E296A;
+    font-size: 1.02rem;
+    font-weight: 800;
+    margin-bottom: 1.1rem;
+}
+
+.reservation-details-page .reservation-view-info-icon {
+    color: #3b82f6;
+    margin-left: 0.25rem;
+}
+
+.reservation-details-page .reservation-view-inline-link {
+    margin-left: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1E296A;
+}
+
+.reservation-details-page .reservation-id-docs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+}
+
+.reservation-details-page .reservation-id-doc-card {
+    background: #f4f6fb;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+    padding: 0.85rem;
+    text-align: center;
+}
+
+.reservation-details-page .reservation-id-doc-label {
+    display: block;
+    color: #1E296A;
+    font-size: 0.88rem;
+    font-weight: 800;
+    margin-bottom: 0.55rem;
+}
+
+.reservation-details-page .reservation-id-doc-frame {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.55rem;
+}
+
+.reservation-details-page .reservation-id-doc-frame img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+}
+
+.reservation-details-page .reservation-id-doc-frame .reservation-view-placeholder {
+    color: #9aa3b5;
+    font-size: 2rem;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reservation-details-page .reservation-id-doc-name {
+    display: block;
+    color: #6b7385;
+    font-size: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.reservation-details-page .reservation-view-notes-title {
+    display: block;
+    color: #1E296A;
+    font-size: 0.92rem;
+    font-weight: 800;
+    margin-bottom: 0.45rem;
+}
+
+.reservation-details-page .reservation-view-notes {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #4b5563;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.reservation-details-page .reservation-finance-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.reservation-details-page .reservation-finance-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #4b5563;
+    font-size: 0.88rem;
+}
+
+.reservation-details-page .reservation-finance-line strong {
+    color: #1A2B4C;
+    font-weight: 700;
+}
+
+.reservation-details-page .reservation-finance-line.is-discount strong {
+    color: #15803d;
+}
+
+.reservation-details-page .reservation-finance-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-top: 0.95rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid #e4e8f0;
+    color: #1E296A;
+    font-weight: 800;
+}
+
+.reservation-details-page .reservation-finance-total strong {
+    font-size: 1.35rem;
+    color: #1E296A;
+}
+
+.reservation-details-page .reservation-payment-submitted {
+    margin-top: 1rem;
+    background: #eef2ff;
+    border-radius: 14px;
+    padding: 1rem 1.05rem;
+}
+
+.reservation-details-page .reservation-payment-method-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.85rem;
+}
+
+.reservation-details-page .reservation-payment-method-logo,
+.reservation-details-page .reservation-payment-method-fallback {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #fff;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.reservation-details-page .reservation-payment-method-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #1E296A;
+    border: 1px solid #e4e8f0;
+}
+
+.reservation-details-page .reservation-payment-method-value {
+    color: #1E296A;
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.reservation-details-page .reservation-payment-method-label {
+    color: #6b7385;
+    font-size: 0.75rem;
+}
+
+.reservation-details-page .reservation-payment-submitted-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.reservation-details-page .reservation-payment-submitted-meta > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.84rem;
+}
+
+.reservation-details-page .reservation-payment-submitted-meta span {
+    color: #6b7385;
+}
+
+.reservation-details-page .reservation-payment-submitted-meta strong {
+    color: #1A2B4C;
+    font-weight: 700;
+    text-align: right;
+}
+
+.reservation-details-page .reservation-payment-timestamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.reservation-details-page .reservation-payment-timestamp i {
+    color: #1E296A;
+}
+
+.reservation-details-page .reservation-receipt-frame {
+    background: #f4f6fb;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+    padding: 0.85rem;
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reservation-details-page .reservation-receipt-frame img {
+    max-width: 100%;
+    max-height: 420px;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+.reservation-details-page .reservation-receipt-empty {
+    text-align: center;
+    color: #6b7385;
+}
+
+.reservation-details-page .reservation-receipt-empty i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.reservation-details-page .reservation-verify-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-top: 0.9rem;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 12px;
+    padding: 0.8rem 0.9rem;
+    color: #1E296A;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.reservation-details-page .reservation-verify-hint-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #1E296A;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-style: italic;
+    font-family: Georgia, "Times New Roman", serif;
+    flex-shrink: 0;
+}
+
+.reservation-details-page .reservation-view-side-title {
+    color: #1E296A;
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: 0.95rem;
+}
+
+.reservation-details-page .reservation-view-audit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+}
+
+.reservation-details-page .reservation-view-audit-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-size: 0.84rem;
+    color: #4b5563;
+    font-weight: 600;
+}
+
+.reservation-details-page .reservation-view-audit-item strong {
+    color: #1A2B4C;
+    font-weight: 700;
+}
+
+.reservation-details-page .reservation-view-audit-item.is-danger {
+    color: #c21f00;
+}
+
+.reservation-details-page .reservation-btn-approve {
+    background: #32b935 !important;
+    border-radius: 10px !important;
+    padding: 0.8rem 1rem !important;
+}
+
+.reservation-details-page .reservation-btn-approve:hover {
+    background: #2aa12e !important;
+}
+
+.reservation-details-page .reservation-btn-reject {
+    background: #c21f00 !important;
+    border-radius: 10px !important;
+    padding: 0.8rem 1rem !important;
+}
+
+.reservation-details-page .reservation-btn-reject:hover {
+    background: #a81b00 !important;
+}
+
+.reservation-details-page .reservation-btn-payment {
+    background: #1E296A !important;
+    border-radius: 10px !important;
+}
+
+.reservation-details-page .reservation-payment-status-text {
+    color: #1E296A;
+}
+
+@media (max-width: 991.98px) {
+    .reservation-details-page .reservation-view-people,
+    .reservation-details-page .reservation-view-facts,
+    .reservation-details-page .reservation-id-docs {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Edit Booking page --- */
+.admin-booking-edit .admin-booking-edit-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.admin-booking-edit .reservation-details-id-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.06);
+    padding: 0.85rem 1.2rem;
+    flex: 1 1 auto;
+    min-width: min(100%, 280px);
+}
+
+.admin-booking-edit .reservation-details-id-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.admin-booking-edit .reservation-view-id-label {
+    color: #8a93a6;
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.admin-booking-edit .reservation-view-id {
+    color: #1E296A;
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+}
+
+.admin-booking-edit .booking-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.admin-booking-edit .booking-status-pending {
+    background: #fff1e7;
+    color: #c2410c;
+}
+
+.admin-booking-edit .booking-status-approved {
+    background: #eaf9eb;
+    color: #32b935;
+}
+
+.admin-booking-edit .booking-status-cancelled {
+    background: #fdeceb;
+    color: #c21f00;
+}
+
+.admin-booking-edit .booking-status-expired {
+    background: #ececec;
+    color: #667085;
+}
+
+.admin-booking-edit .btn-page-back {
+    background: #fff !important;
+    border: 1.5px solid #1f2937 !important;
+    color: #1f2937 !important;
+    border-radius: 10px !important;
+    font-weight: 700;
+    padding: 0.6rem 1.35rem !important;
+    line-height: 1.2;
+}
+
+.admin-booking-edit .rent-date-field {
+    position: relative;
+}
+
+.admin-booking-edit .rent-date-field .rent-field-input {
+    padding-right: 2.5rem;
+}
+
+.admin-booking-edit .rent-date-field > i {
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8b95a8;
+    pointer-events: none;
+    font-size: 0.95rem;
+}
+
+.admin-booking-edit .rent-date-field input[type="date"]::-webkit-calendar-picker-indicator,
+.admin-booking-edit .rent-date-field input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    width: 2.5rem;
+    height: 100%;
+    cursor: pointer;
+}
+
+.admin-booking-edit .admin-booking-edit-payment-card .payment-type-title {
+    color: #1E296A;
+}
+
+.admin-booking-edit .admin-booking-edit-payment-card .rent-step-card {
+    box-shadow: none;
+    border: 1px solid #e8ecf3;
+    margin-bottom: 1rem;
+}
+
+.admin-booking-edit .admin-booking-edit-payment-card .payment-type-actions,
+.admin-booking-edit .admin-booking-edit-payment-card [data-wizard-next],
+.admin-booking-edit .admin-booking-edit-payment-card [data-wizard-back] {
+    display: none !important;
+}
+
+.admin-booking-edit .admin-booking-edit-existing-media {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.admin-booking-edit .admin-booking-edit-existing-media img {
+    max-width: min(100%, 280px);
+    border-radius: 12px;
+    border: 1px solid #e4e8f0;
+    background: #f8fafc;
+}
+
+.admin-booking-edit .admin-booking-edit-existing-media span {
+    font-size: 0.78rem;
+    color: #6b7385;
+    font-weight: 600;
+}
+
+

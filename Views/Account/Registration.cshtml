@@ -2,22 +2,21 @@
 @using EasyRent_Checking.Models
 
 @{
-    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
     ViewData["Title"] = "Create Account";
-    ViewData["HideSignIn"] = true;
 }
 
-<div class="auth-page">
+<div class="auth-page auth-page-login auth-page-register">
     <div class="auth-register-header">
-        <div class="auth-card-brand">
+        <div class="auth-card-brand auth-card-brand-login">
             <img src="~/images/System Images/EasyRentLogo.png" alt="EasyRent" class="client-brand-logo-img" asp-append-version="true" />
             <span class="client-brand-name">EasyRent</span>
         </div>
-        <h1 class="auth-title">Create Your Account</h1>
-        <p class="auth-subtitle">Join us today and start your journey.</p>
+        <h1 class="auth-page-title">Create Your Account</h1>
+        <p class="auth-subtitle auth-page-subtitle">Join us today and start your journey.</p>
     </div>
 
-    <div class="auth-card auth-card-register">
+    <div class="auth-card auth-card-register auth-card-mockup">
         @if (ViewData["LoginReminder"] != null)
         {
             <div class="auth-reminder" role="status">
@@ -25,67 +24,71 @@
                 <p>@ViewData["LoginReminder"]</p>
             </div>
         }
-        <form asp-controller="Account" asp-action="Registration" method="post" enctype="multipart/form-data" class="auth-form" novalidate>
+
+        <form asp-controller="Account" asp-action="Registration" method="post" enctype="multipart/form-data" class="auth-form auth-form-login" novalidate>
             <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
             <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
             <div class="auth-field">
-                <label asp-for="FullName" class="auth-label">Full Name</label>
+                <label asp-for="FullName" class="auth-label auth-label-login">Full Name</label>
                 <div class="auth-input-wrap">
-                    <i class="bi bi-person auth-input-icon"></i>
-                    <input asp-for="FullName" class="auth-input" placeholder="John Doe" autocomplete="name" />
+                    <i class="bi bi-person auth-input-icon auth-input-icon-login"></i>
+                    <input asp-for="FullName" class="auth-input auth-input-login" placeholder="John Doe" autocomplete="name" />
                 </div>
                 <span asp-validation-for="FullName" class="text-danger small"></span>
             </div>
 
             <div class="auth-grid-2">
                 <div class="auth-field">
-                    <label asp-for="ContactNumber" class="auth-label">Contact Number</label>
+                    <label asp-for="ContactNumber" class="auth-label auth-label-login">Contact Number</label>
                     <div class="auth-input-wrap">
-                        <i class="bi bi-telephone auth-input-icon"></i>
-                        <input asp-for="ContactNumber" class="auth-input" placeholder="+63 9xx xxx xxxx" autocomplete="tel" />
+                        <i class="bi bi-telephone auth-input-icon auth-input-icon-login"></i>
+                        <input asp-for="ContactNumber" class="auth-input auth-input-login" placeholder="09123456789 or +639123456789" autocomplete="tel" />
                     </div>
                     <span asp-validation-for="ContactNumber" class="text-danger small"></span>
                 </div>
                 <div class="auth-field">
-                    <label asp-for="Email" class="auth-label">Email Address</label>
+                    <label asp-for="Email" class="auth-label auth-label-login">Email Address</label>
                     <div class="auth-input-wrap">
-                        <i class="bi bi-envelope auth-input-icon"></i>
-                        <input asp-for="Email" class="auth-input" placeholder="name@example.com" autocomplete="email" />
+                        <i class="bi bi-envelope auth-input-icon auth-input-icon-login"></i>
+                        <input asp-for="Email" class="auth-input auth-input-login" placeholder="name@example.com" autocomplete="email" />
                     </div>
                     <span asp-validation-for="Email" class="text-danger small"></span>
                 </div>
             </div>
 
-            <div class="auth-grid-2">
-                <div class="auth-field">
-                    <label asp-for="Password" class="auth-label">Password</label>
-                    <div class="auth-input-wrap">
-                        <i class="bi bi-lock auth-input-icon"></i>
-                        <input asp-for="Password" class="auth-input auth-password-input" type="password" placeholder="**********" autocomplete="new-password" />
-                        <button type="button" class="auth-password-toggle" aria-label="Show password">
-                            <i class="bi bi-eye"></i>
-                        </button>
+            <div class="auth-password-block">
+                <p class="auth-password-hint">Must be at least 8 characters and include a number.</p>
+                <div class="auth-grid-2">
+                    <div class="auth-field">
+                        <label asp-for="Password" class="auth-label auth-label-login">Password</label>
+                        <div class="auth-input-wrap">
+                            <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                            <input asp-for="Password" class="auth-input auth-input-login auth-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                            <button type="button" class="auth-password-toggle" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
                     </div>
-                    <span asp-validation-for="Password" class="text-danger small"></span>
-                </div>
-                <div class="auth-field">
-                    <label asp-for="ConfirmPassword" class="auth-label">Confirm Password</label>
-                    <div class="auth-input-wrap">
-                        <i class="bi bi-lock auth-input-icon"></i>
-                        <input asp-for="ConfirmPassword" class="auth-input auth-password-input" type="password" placeholder="**********" autocomplete="new-password" />
-                        <button type="button" class="auth-password-toggle" aria-label="Show password">
-                            <i class="bi bi-eye"></i>
-                        </button>
+                    <div class="auth-field">
+                        <label asp-for="ConfirmPassword" class="auth-label auth-label-login">Confirm Password</label>
+                        <div class="auth-input-wrap">
+                            <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                            <input asp-for="ConfirmPassword" class="auth-input auth-input-login auth-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                            <button type="button" class="auth-password-toggle" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                     </div>
-                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                 </div>
             </div>
 
             <div class="auth-field">
-                <label asp-for="ValidIDtype" class="auth-label">Choose what type of valid IDs</label>
+                <label asp-for="ValidIDtype" class="auth-label auth-label-login">Choose what type of valid IDs</label>
                 <div class="auth-select-wrap">
-                    <select asp-for="ValidIDtype" id="input-ValidIDtype" class="auth-select">
+                    <select asp-for="ValidIDtype" id="input-ValidIDtype" class="auth-select auth-select-login">
                         <option value="">Select ID type</option>
                         <option value="@nameof(ValidIDtype.NationalID)">National ID</option>
                         <option value="@nameof(ValidIDtype.Passport)">Passport</option>
@@ -93,46 +96,71 @@
                         <option value="@nameof(ValidIDtype.DriverLicense)">Driver License</option>
                         <option value="@nameof(ValidIDtype.VotersID)">Voters ID</option>
                     </select>
-                    <i class="bi bi-chevron-down auth-select-chevron"></i>
+                    <i class="bi bi-chevron-down auth-select-chevron auth-select-chevron-login"></i>
                 </div>
                 <span asp-validation-for="ValidIDtype" class="text-danger small"></span>
             </div>
 
-            <div id="validIdUploadSection" class="auth-upload-section d-none">
-                <label class="auth-label" for="input-ValidIDFile">Upload Valid ID Picture</label>
-                <div id="valid-id-upload-zone" class="auth-upload-zone">
-                    <div>
-                        <i class="bi bi-cloud-upload auth-upload-icon"></i>
-                        <span class="auth-upload-title">Upload your valid ID or <span class="text-decoration-underline">click to browse</span></span>
-                        <span class="auth-upload-hint">PNG, JPG (MAX 5MB)</span>
+            <div id="validIdUploadSection" class="auth-upload-section @(string.IsNullOrWhiteSpace(Model.ValidIDtype) ? "d-none" : "")">
+                <div class="auth-id-upload-grid">
+                    <div class="auth-id-upload-panel">
+                        <label class="auth-label auth-label-login" for="input-FrontValidIDFile">Front</label>
+                        <div id="valid-id-front-upload-zone" class="auth-upload-zone auth-upload-zone-login">
+                            <div>
+                                <i class="bi bi-person-vcard auth-upload-icon"></i>
+                                <span class="auth-upload-title">Drag &amp; drop or click to upload</span>
+                                <span class="auth-upload-hint">PNG, JPG, JPEG (max 5MB)</span>
+                            </div>
+                            <input asp-for="FrontValidIDImageFile" id="input-FrontValidIDFile" type="file" class="auth-file-input" accept=".png,.jpg,.jpeg" />
+                        </div>
+                        <div id="valid-id-front-preview-state" class="d-none auth-upload-preview">
+                            <div class="auth-preview-box" title="Click to replace image" onclick="document.getElementById('input-FrontValidIDFile').click()">
+                                <img id="valid-id-front-preview-img" alt="Front of valid ID" />
+                            </div>
+                            <div class="auth-upload-file-row">
+                                <span id="valid-id-front-filename" class="auth-upload-filename"></span>
+                                <button type="button" class="auth-upload-remove" id="valid-id-front-remove-btn">Remove</button>
+                            </div>
+                        </div>
+                        <span asp-validation-for="FrontValidIDImageFile" class="text-danger small"></span>
                     </div>
-                    <input asp-for="ValidIDImageFile" id="input-ValidIDFile" type="file" class="auth-file-input" accept=".png,.jpg,.jpeg" />
-                </div>
-                <div id="valid-id-preview-state" class="d-none auth-upload-preview">
-                    <div class="auth-preview-box">
-                        <img id="valid-id-preview-img" class="d-none" alt="Valid ID preview" />
-                        <div id="valid-id-preview-placeholder" class="auth-preview-placeholder"></div>
-                        <button type="button" class="auth-preview-remove" id="valid-id-remove-btn" aria-label="Remove ID image">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+                    <div class="auth-id-upload-panel">
+                        <label class="auth-label auth-label-login" for="input-BackValidIDFile">Back</label>
+                        <div id="valid-id-back-upload-zone" class="auth-upload-zone auth-upload-zone-login">
+                            <div>
+                                <i class="bi bi-person-vcard auth-upload-icon"></i>
+                                <span class="auth-upload-title">Drag &amp; drop or click to upload</span>
+                                <span class="auth-upload-hint">PNG, JPG, JPEG (max 5MB)</span>
+                            </div>
+                            <input asp-for="BackValidIDImageFile" id="input-BackValidIDFile" type="file" class="auth-file-input" accept=".png,.jpg,.jpeg" />
+                        </div>
+                        <div id="valid-id-back-preview-state" class="d-none auth-upload-preview">
+                            <div class="auth-preview-box" title="Click to replace image" onclick="document.getElementById('input-BackValidIDFile').click()">
+                                <img id="valid-id-back-preview-img" alt="Back of valid ID" />
+                            </div>
+                            <div class="auth-upload-file-row">
+                                <span id="valid-id-back-filename" class="auth-upload-filename"></span>
+                                <button type="button" class="auth-upload-remove" id="valid-id-back-remove-btn">Remove</button>
+                            </div>
+                        </div>
+                        <span asp-validation-for="BackValidIDImageFile" class="text-danger small"></span>
                     </div>
-                    <span id="valid-id-filename" class="auth-upload-filename"></span>
                 </div>
-                <span asp-validation-for="ValidIDImageFile" class="text-danger small"></span>
             </div>
 
-            <label class="auth-check">
+            <label class="auth-check auth-check-login auth-check-terms">
                 <input type="checkbox" name="AgreeTerms" value="true" required />
-                <span>I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy.</strong></span>
+                <span>I agree to the <a href="#" class="auth-inline-link">Terms &amp; Conditions</a> and <a asp-controller="ClientSide" asp-action="PrivacyPolicy" class="auth-inline-link">Privacy Policy</a>.</span>
             </label>
 
-            <button type="submit" class="auth-submit">Create Account</button>
+            <button type="submit" class="auth-submit auth-submit-login">Create Account</button>
         </form>
 
-        <div class="auth-divider"></div>
-        <p class="auth-footer-text">
+        <div class="auth-divider auth-divider-login"></div>
+
+        <p class="auth-footer-text auth-login-footer">
             Already have an account?
-            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="auth-footer-link">Login here</a>
+            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="auth-footer-link auth-footer-link-login">Login here</a>
         </p>
     </div>
 </div>
@@ -155,80 +183,91 @@
         (function () {
             var idTypeSelect = document.getElementById('input-ValidIDtype');
             var uploadSection = document.getElementById('validIdUploadSection');
-            var uploadZone = document.getElementById('valid-id-upload-zone');
-            var fileInput = document.getElementById('input-ValidIDFile');
-            var previewState = document.getElementById('valid-id-preview-state');
-            var previewImg = document.getElementById('valid-id-preview-img');
-            var previewPlaceholder = document.getElementById('valid-id-preview-placeholder');
-            var filenameLabel = document.getElementById('valid-id-filename');
-            var removeBtn = document.getElementById('valid-id-remove-btn');
 
-            function clearFile() {
-                fileInput.value = '';
-                previewImg.src = '';
-                previewImg.classList.add('d-none');
-                previewPlaceholder.classList.remove('d-none');
-                filenameLabel.textContent = '';
-                previewState.classList.add('d-none');
-                uploadZone.classList.remove('d-none');
+            function bindIdUpload(zoneId, inputId, previewId, filenameId, removeId, imageId) {
+                var uploadZone = document.getElementById(zoneId);
+                var fileInput = document.getElementById(inputId);
+                var previewState = document.getElementById(previewId);
+                var filenameLabel = document.getElementById(filenameId);
+                var removeBtn = document.getElementById(removeId);
+                var previewImg = document.getElementById(imageId);
+                if (!uploadZone || !fileInput || !previewState || !filenameLabel || !removeBtn || !previewImg) return;
+
+                function clearFile() {
+                    fileInput.value = '';
+                    filenameLabel.textContent = '';
+                    previewImg.removeAttribute('src');
+                    previewState.classList.add('d-none');
+                    uploadZone.classList.remove('d-none');
+                }
+
+                function showPreview(file) {
+                    if (!file) {
+                        clearFile();
+                        return;
+                    }
+                    filenameLabel.textContent = file.name;
+                    uploadZone.classList.add('d-none');
+                    previewState.classList.remove('d-none');
+                    if (file.type && file.type.startsWith('image/')) {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            previewImg.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+
+                fileInput.addEventListener('change', function () {
+                    showPreview(fileInput.files && fileInput.files[0]);
+                });
+                removeBtn.addEventListener('click', clearFile);
+                uploadZone.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                    uploadZone.classList.add('is-dragover');
+                });
+                uploadZone.addEventListener('dragleave', function () {
+                    uploadZone.classList.remove('is-dragover');
+                });
+                uploadZone.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    uploadZone.classList.remove('is-dragover');
+                    var files = e.dataTransfer && e.dataTransfer.files;
+                    if (!files || !files.length) return;
+                    var dt = new DataTransfer();
+                    dt.items.add(files[0]);
+                    fileInput.files = dt.files;
+                    showPreview(files[0]);
+                });
+
+                return clearFile;
             }
+
+            var clearFront = bindIdUpload(
+                'valid-id-front-upload-zone',
+                'input-FrontValidIDFile',
+                'valid-id-front-preview-state',
+                'valid-id-front-filename',
+                'valid-id-front-remove-btn',
+                'valid-id-front-preview-img');
+            var clearBack = bindIdUpload(
+                'valid-id-back-upload-zone',
+                'input-BackValidIDFile',
+                'valid-id-back-preview-state',
+                'valid-id-back-filename',
+                'valid-id-back-remove-btn',
+                'valid-id-back-preview-img');
 
             function toggleUploadSection() {
                 var hasType = !!idTypeSelect.value;
                 uploadSection.classList.toggle('d-none', !hasType);
                 if (!hasType) {
-                    clearFile();
-                }
-            }
-
-            function showPreview(file) {
-                if (!file) {
-                    clearFile();
-                    return;
-                }
-
-                filenameLabel.textContent = file.name;
-                uploadZone.classList.add('d-none');
-                previewState.classList.remove('d-none');
-
-                if (file.type && file.type.startsWith('image/')) {
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        previewImg.src = e.target.result;
-                        previewImg.classList.remove('d-none');
-                        previewPlaceholder.classList.add('d-none');
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    previewImg.classList.add('d-none');
-                    previewPlaceholder.classList.remove('d-none');
+                    if (clearFront) clearFront();
+                    if (clearBack) clearBack();
                 }
             }
 
             idTypeSelect.addEventListener('change', toggleUploadSection);
-            fileInput.addEventListener('change', function () {
-                showPreview(fileInput.files && fileInput.files[0]);
-            });
-            removeBtn.addEventListener('click', clearFile);
-
-            uploadZone.addEventListener('dragover', function (e) {
-                e.preventDefault();
-                uploadZone.classList.add('is-dragover');
-            });
-            uploadZone.addEventListener('dragleave', function () {
-                uploadZone.classList.remove('is-dragover');
-            });
-            uploadZone.addEventListener('drop', function (e) {
-                e.preventDefault();
-                uploadZone.classList.remove('is-dragover');
-                var files = e.dataTransfer && e.dataTransfer.files;
-                if (!files || !files.length) return;
-                var dt = new DataTransfer();
-                dt.items.add(files[0]);
-                fileInput.files = dt.files;
-                showPreview(files[0]);
-            });
-
             toggleUploadSection();
         })();
     </script>

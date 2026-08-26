@@ -1,0 +1,20 @@
+<aside class="admin-notify-panel" id="adminNotifyPanel" hidden aria-hidden="true" aria-labelledby="adminNotifyTitle">
+    <div class="admin-notify-header">
+        <h2 id="adminNotifyTitle">Notifications</h2>
+        <button type="button" class="admin-notify-close" id="adminNotifyClose" aria-label="Close notifications">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <div class="admin-notify-tabs" role="tablist" aria-label="Notification categories">
+        <button type="button" class="admin-notify-tab is-active" data-notify-tab="all" role="tab" aria-selected="true">All</button>
+        <button type="button" class="admin-notify-tab" data-notify-tab="booking" role="tab" aria-selected="false">Booking</button>
+        <button type="button" class="admin-notify-tab" data-notify-tab="maintenance" role="tab" aria-selected="false">Maintenance</button>
+        <button type="button" class="admin-notify-tab" data-notify-tab="system" role="tab" aria-selected="false">System</button>
+    </div>
+
+    <div class="admin-notify-body" id="adminNotifyBody">
+        <div class="admin-notify-empty">Loading notifications…</div>
+    </div>
+</aside>
+<div class="admin-notify-overlay" id="adminNotifyOverlay" hidden></div>

@@ -4,10 +4,14 @@
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Booking Management";
+    ViewData["Title"] = "Inquiries Management";
     ViewData["ActivePage"] = "Rentals";
-    var paymentsByRental = ViewBag.PaymentsByRentalId as Dictionary<int, Payment>
-        ?? new Dictionary<int, Payment>();
+
+    var totalBookingsChange = ViewData["TotalBookingsChange"] as decimal? ?? 0m;
+    var pendingApprovalsChange = ViewData["PendingApprovalsChange"] as decimal? ?? 0m;
+
+    string FormatTrend(decimal change) =>
+        Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
     string currentSortName = ViewData["CurrentSort"]?.ToString() switch
     {
@@ -23,6 +27,7 @@
         "Pending" => "Pending",
         "Approved" => "Approved",
         "Cancelled" => "Cancelled",
+        "Expired" => "Expired",
         _ => "Filters"
     };
 
@@ -47,74 +52,80 @@
         return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
     }
 
-    string FormatDateRange(DateOnly start, DateOnly end)
+    string FormatDuration(RentalDetails? details)
     {
-        string Month(DateOnly d) => d.ToString("MMM") + ".";
+        if (details == null) return "—";
 
-        if (start == end)
+        var start = details.PickupDate.ToDateTime(details.PickupTime);
+        var end = details.ReturnDate.ToDateTime(details.ReturnTime);
+        var span = end - start;
+        if (span.TotalMinutes <= 0) return "—";
+
+        if (span.TotalHours < 24)
         {
-            return $"{Month(start)} {start.Day} {start.Year}";
+            var hours = Math.Max(1, (int)Math.Round(span.TotalHours));
+            return hours == 1 ? "1 hour" : $"{hours} hours";
         }
 
-        if (start.Year == end.Year && start.Month == end.Month)
-        {
-            return $"{Month(start)} {start.Day} - {end.Day} {end.Year}";
-        }
-
-        if (start.Year == end.Year)
-        {
-            return $"{Month(start)} {start.Day} - {Month(end)} {end.Day} {end.Year}";
-        }
-
-        return $"{Month(start)} {start.Day} {start.Year} - {Month(end)} {end.Day} {end.Year}";
+        var days = Math.Max(1, (int)Math.Round(span.TotalDays));
+        return days == 1 ? "1 day" : $"{days} days";
     }
 
     string StatusBadgeClass(RentalStatus status) => status switch
     {
         RentalStatus.Approved => "booking-status-approved",
         RentalStatus.Cancelled => "booking-status-cancelled",
-        RentalStatus.Expired => "booking-status-cancelled",
+        RentalStatus.Expired => "booking-status-expired",
         _ => "booking-status-pending"
     };
 }
 
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">Total Bookings</span>
-                <div class="metric-value">@(ViewData["TotalBookingsCount"] ?? "0")</div>
+<div class="inquiries-index-page">
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="inquiry-metric-card">
+                <div class="inquiry-metric-icon" aria-hidden="true">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <div class="inquiry-metric-body">
+                    <span class="inquiry-metric-label">Total Bookings</span>
+                    <div class="inquiry-metric-value">@(ViewData["TotalBookingsCount"] ?? "0")</div>
+                </div>
+                <div class="inquiry-metric-trend">
+                    <span class="inquiry-metric-badge @(totalBookingsChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(totalBookingsChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(totalBookingsChange)
+                    </span>
+                    <span class="inquiry-metric-compare">vs last month</span>
+                </div>
             </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+        <div class="col-md-6">
+            <div class="inquiry-metric-card">
+                <div class="inquiry-metric-icon" aria-hidden="true">
+                    <i class="bi bi-clipboard2-pulse"></i>
+                </div>
+                <div class="inquiry-metric-body">
+                    <span class="inquiry-metric-label">Pending Approval</span>
+                    <div class="inquiry-metric-value">@(ViewData["PendingApprovalsCount"] ?? "0")</div>
+                </div>
+                <div class="inquiry-metric-trend">
+                    <span class="inquiry-metric-badge @(pendingApprovalsChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(pendingApprovalsChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(pendingApprovalsChange)
+                    </span>
+                    <span class="inquiry-metric-compare">vs last month</span>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">Pending Approvals</span>
-                <div class="metric-value">@(ViewData["PendingApprovalsCount"] ?? "0")</div>
-            </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">Active Trips</span>
-                <div class="metric-value">@(ViewData["ActiveTripsCount"] ?? "0")</div>
-            </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
-        </div>
-    </div>
-</div>
 
-<form asp-action="Index" method="get" class="w-100">
-    <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
-    <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
+    <form asp-action="Index" method="get" class="w-100">
+        <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+        <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
 
-    <div class="card index-toolbar-card mb-4">
-        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div class="d-flex align-items-center gap-2">
+        <div class="inquiry-index-toolbar mb-4">
+            <div class="inquiry-index-toolbar-filters">
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
@@ -128,6 +139,7 @@
                         <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
                     </ul>
                 </div>
+
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentFilterName
@@ -136,133 +148,125 @@
                         <li><a class="dropdown-item" href="?currentFilter=Pending&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Pending</a></li>
                         <li><a class="dropdown-item" href="?currentFilter=Approved&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Approved</a></li>
                         <li><a class="dropdown-item" href="?currentFilter=Cancelled&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Cancelled</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Expired&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Expired</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
                         <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
                     </ul>
                 </div>
             </div>
 
-            <div class="d-flex align-items-center gap-3 flex-grow-1 flex-sm-grow-0">
-                <div class="position-relative flex-grow-1">
-                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                    <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="form-control ps-5 pe-5 rounded-3 border bg-light text-secondary search-bar-input" placeholder="Search booking entries..." />
-                    <i class="bi bi-mic position-absolute top-50 end-0 translate-middle-y me-3 text-muted" aria-hidden="true"></i>
-                </div>
-
-                <a asp-action="Create" class="btn btn-dark d-flex align-items-center gap-2 px-3 py-2 fw-bold text-nowrap rounded-3 shadow-sm btn-add-driver">
-                    <i class="bi bi-plus-lg"></i> Add Booking
-                </a>
-            </div>
-        </div>
-    </div>
-</form>
-
-<div class="index-table-panel mb-4">
-    <div class="table-responsive">
-        <table class="table admin-table mb-0 align-middle">
-            <thead>
-                <tr>
-                    <th>Booking ID</th>
-                    <th>Customer</th>
-                    <th>Vehicle</th>
-                    <th>Dates</th>
-                    <th>Payment</th>
-                    <th>Status</th>
-                    <th class="text-center" style="width: 60px;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model != null && Model.Any())
+            <div class="inquiry-index-toolbar-search">
+                <i class="bi bi-search inquiry-index-search-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="searchString"
+                       value="@ViewData["CurrentSearch"]"
+                       class="form-control inquiry-index-search-input"
+                       placeholder="Search inquiries..." />
+                <i class="bi bi-mic inquiry-index-mic-icon" aria-hidden="true"></i>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
                 {
-                    @foreach (var item in Model)
+                    <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]"
+                       class="inquiry-index-search-clear"
+                       aria-label="Clear search">&times;</a>
+                }
+            </div>
+
+            <a asp-action="Create" class="btn inquiry-index-add-btn">
+                <i class="bi bi-plus-lg"></i> Add Rental
+            </a>
+        </div>
+    </form>
+
+    <div class="index-table-panel mb-4">
+        <div class="table-responsive">
+            <table class="table admin-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Customer</th>
+                        <th>Vehicle</th>
+                        <th>Dates</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th class="text-center" style="width: 60px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
                     {
-                        var bookingLabel = $"BK-{item.RentalId:D4}";
-                        paymentsByRental.TryGetValue(item.RentalId, out var payment);
-                        <tr>
-                            <td class="fw-semibold text-dark font-monospace">@bookingLabel</td>
-                            <td>
-                                <div class="booking-customer-cell">
-                                    <span class="booking-customer-avatar">@GetInitials(item.CustomerName)</span>
-                                    <div class="booking-customer-meta">
-                                        <span class="booking-customer-name">@item.CustomerName</span>
-                                        <span class="booking-customer-phone">@item.ContactNumber</span>
+                        @foreach (var item in Model)
+                        {
+                            var bookingLabel = $"BK-{item.RentalId:D4}";
+                            <tr>
+                                <td class="fw-semibold text-dark font-monospace">@bookingLabel</td>
+                                <td>
+                                    <div class="booking-customer-cell">
+                                        <span class="booking-customer-avatar">@GetInitials(item.CustomerName)</span>
+                                        <div class="booking-customer-meta">
+                                            <span class="booking-customer-name">@item.CustomerName</span>
+                                            <span class="booking-customer-phone">@item.ContactNumber</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                @if (item.Details?.Vehicle != null)
-                                {
-                                    <div class="booking-vehicle-meta">
+                                </td>
+                                <td>
+                                    @if (item.Details?.Vehicle != null)
+                                    {
                                         <span class="booking-vehicle-name">@item.Details.Vehicle.Brand @item.Details.Vehicle.Model</span>
-                                        <span class="booking-vehicle-type">@item.Details.Vehicle.Type</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Unassigned</span>
+                                    }
+                                </td>
+                                <td>
+                                    @(item.Details != null
+                                        ? AdminDates.FormatRange(item.Details.PickupDate, item.Details.ReturnDate)
+                                        : "—")
+                                </td>
+                                <td>@FormatDuration(item.Details)</td>
+                                <td>
+                                    <span class="booking-status-badge @StatusBadgeClass(item.RentalStatus)">@item.RentalStatus</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Inquiry actions">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                            <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.RentalId" asp-route-returnUrl="@indexReturnUrl"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                            <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.RentalId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                            <li><hr class="dropdown-menu-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.RentalId', '@bookingLabel')">
+                                                    <i class="bi bi-trash me-2"></i> Delete
+                                                </button>
+                                            </li>
+                                        </ul>
                                     </div>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">Unassigned</span>
-                                }
-                            </td>
-                            <td>
-                                @(item.Details != null
-                                    ? FormatDateRange(item.Details.PickupDate, item.Details.ReturnDate)
-                                    : "—")
-                            </td>
-                            <td>
-                                @if (payment != null)
-                                {
-                                    <div class="booking-vehicle-meta">
-                                        <span class="booking-vehicle-name">@payment.PaymentMethod</span>
-                                        <span class="booking-vehicle-type">₱@payment.AmountPaid.ToString("N2", CultureInfo.GetCultureInfo("en-PH")) · @payment.PaymentType</span>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No payment</span>
-                                }
-                            </td>
-                            <td>
-                                <span class="booking-status-badge @StatusBadgeClass(item.RentalStatus)">@item.RentalStatus</span>
-                                <div class="small text-muted mt-1">@item.RentalOption</div>
-                            </td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport">
-                                        <i class="bi bi-three-dots fs-5"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                        <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.RentalId" asp-route-returnUrl="@indexReturnUrl"><i class="bi bi-pencil me-2"></i> Edit</a></li>
-                                        <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.RentalId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
-                                        <li><hr class="dropdown-menu-divider"></li>
-                                        <li>
-                                            <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.RentalId', '@bookingLabel')">
-                                                <i class="bi bi-trash me-2"></i> Delete
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted fw-medium">
+                                <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                No matching inquiries found.
                             </td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted fw-medium">
-                            <i class="bi bi-calendar2-check fs-2 d-block mb-2 text-secondary opacity-50"></i>
-                            No matching bookings located.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AdminPagination" />
     </div>
-    <partial name="_AdminPagination" />
 </div>
 
 @{
     ViewData["DeleteModalId"] = "reservationDeletePopup";
     ViewData["DeleteHiddenInputId"] = "popupRentalId";
     ViewData["DeleteMessageId"] = "deletePopupMessage";
-    ViewData["DeleteEntityLabel"] = "reservation";
+    ViewData["DeleteEntityLabel"] = "rental";
 }
 <partial name="_DeleteConfirmModal" />

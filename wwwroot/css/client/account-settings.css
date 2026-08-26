@@ -1,0 +1,807 @@
+/* Account Settings hub: sidebar, tabs, profile, password, and security. */
+
+.account-hub {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr) 250px;
+    gap: 1.35rem;
+    align-items: start;
+    padding-top: 1.5rem;
+    padding-bottom: 3rem;
+}
+
+.account-hub-nav,
+.account-hub-aside {
+    position: sticky;
+    top: calc(var(--client-topbar-height) + 1rem);
+}
+
+.account-hub-nav {
+    background: #F9FAFF;
+    border-radius: 16px;
+    padding: 1.15rem 0.9rem 1rem;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.account-hub-user {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.15rem 0.45rem 1rem;
+    border-bottom: 1px solid #eef0f4;
+    margin-bottom: 0.65rem;
+}
+
+.account-hub-user-avatar,
+.account-profile-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--client-navy);
+    color: #fff;
+    font-family: var(--font-title);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.account-hub-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 0.85rem;
+}
+
+.account-hub-user-name {
+    margin: 0 0 0.2rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.account-hub-online {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.12rem 0.5rem;
+}
+
+.account-hub-online::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+}
+
+.account-hub-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.account-hub-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.7rem 0.75rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #374151;
+}
+
+.account-hub-link i {
+    margin-top: 0.15rem;
+    font-size: 1.05rem;
+    color: #6b7280;
+}
+
+.account-hub-link strong {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.account-hub-link small {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+.account-hub-link:hover {
+    background: #f8fafc;
+    color: var(--client-navy);
+}
+
+.account-hub.is-wide-main {
+    grid-template-columns: 250px minmax(0, 1fr);
+}
+
+.account-hub.is-booking-details {
+    grid-template-columns: 250px minmax(0, 1.2fr) minmax(280px, 0.88fr);
+    grid-template-areas: "nav main aside";
+}
+
+.account-hub.is-booking-details .account-hub-nav {
+    grid-area: nav;
+}
+
+.account-hub.is-booking-details .account-hub-main {
+    grid-area: main;
+    min-width: 0;
+}
+
+.account-hub.is-booking-details .booking-details-aside {
+    grid-area: aside;
+    min-width: 0;
+}
+
+.account-hub-link.is-active {
+    background: #dae2f2;
+    color: var(--client-navy);
+}
+
+.account-hub-link.is-active i {
+    color: var(--client-navy);
+}
+
+.account-hub-link.is-logout,
+.account-hub-link.is-logout i,
+.account-hub-link.is-logout strong {
+    color: #dc2626;
+}
+
+.account-hub-help {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-top: 1.1rem;
+    padding: 0.85rem 0.8rem;
+    background: #dae2f2;
+    border-radius: 12px;
+}
+
+.account-hub-help i {
+    color: var(--client-navy);
+    font-size: 1.05rem;
+    margin-top: 0.1rem;
+}
+
+.account-hub-help strong {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--client-navy);
+}
+
+.account-hub-help p {
+    margin: 0.15rem 0 0;
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.account-hub-header h1 {
+    margin: 0 0 0.25rem;
+    font-family: var(--font-title);
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--client-navy);
+    letter-spacing: -0.03em;
+}
+
+.account-hub-header p {
+    margin: 0 0 1.1rem;
+    color: #6b7280;
+    font-size: 0.92rem;
+}
+
+.account-hub-tabs {
+    display: flex;
+    gap: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 1.15rem;
+}
+
+.account-hub-tabs a {
+    padding: 0.35rem 0 0.7rem;
+    text-decoration: none;
+    color: #6b7280;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+}
+
+.account-hub-tabs a.is-active {
+    color: var(--client-navy);
+    border-bottom-color: var(--client-navy);
+}
+
+.account-panel {
+    background: #F9FAFF;
+    border-radius: 16px;
+    padding: 1.15rem 1.25rem 0.4rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.account-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.35rem;
+}
+
+.account-panel-head h2,
+.account-mfa-copy h2,
+.account-danger-zone h2,
+.account-danger-card h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.account-panel-head p,
+.account-mfa-copy p,
+.account-danger-zone p,
+.account-danger-card p {
+    margin: 0.2rem 0 0;
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.account-panel-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: var(--client-navy);
+    flex-shrink: 0;
+}
+
+.account-field-row {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr) auto;
+    gap: 0.75rem 1rem;
+    align-items: center;
+    padding: 0.85rem 0;
+    border-top: 1px solid #f1f5f9;
+}
+
+.account-field-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.account-field-value {
+    background: #f3f4f6;
+    border-radius: 10px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.85rem;
+    color: #374151;
+    font-size: 0.88rem;
+}
+
+.account-id-previews {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 0.75rem 1rem;
+    align-items: start;
+    padding: 0.85rem 0 1.1rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.account-id-preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.account-id-preview {
+    margin: 0;
+    background: #f3f4f6;
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 120px;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    flex-direction: column;
+}
+
+.account-id-preview figcaption {
+    padding: 0.4rem 0.65rem 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6b7280;
+}
+
+.account-id-preview a {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+.account-id-preview img {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    object-fit: contain;
+    display: block;
+    padding: 0.35rem 0.5rem 0.55rem;
+}
+
+.account-id-preview-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 0.78rem;
+    padding: 0.75rem;
+}
+
+.account-field-edit {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.account-field-input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    padding: 0 0.85rem;
+    font-size: 0.88rem;
+}
+
+.account-btn-edit,
+.account-btn-save,
+.account-btn-cancel,
+.account-btn-primary,
+.account-btn-danger,
+.account-btn-outline-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0.35rem 0.95rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.account-btn-edit {
+    background: #F9FAFF;
+    border-color: #d1d5db;
+    color: #374151;
+    min-width: 72px;
+}
+
+.account-btn-edit:hover {
+    border-color: var(--client-navy);
+    color: var(--client-navy);
+}
+
+.account-btn-save,
+.account-btn-primary {
+    background: var(--client-navy);
+    color: #fff;
+}
+
+.account-btn-save:hover,
+.account-btn-primary:hover {
+    background: #142d70;
+    color: #fff;
+}
+
+.account-btn-cancel {
+    background: none;
+    color: #6b7280;
+}
+
+.account-btn-outline-danger {
+    background: #F9FAFF;
+    border-color: #f87171;
+    color: #dc2626;
+}
+
+.account-btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+
+.account-btn-danger:hover {
+    background: #b91c1c;
+    color: #fff;
+}
+
+.account-info-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    background: #eef2ff;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    color: #1e3a8a;
+}
+
+.account-info-banner p {
+    margin: 0;
+    font-size: 0.82rem;
+}
+
+.account-identity-actions,
+.account-password-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.5rem 0 1.1rem;
+}
+
+.account-identity-edit {
+    padding-bottom: 0.5rem;
+}
+
+.account-password-panel {
+    padding-bottom: 0.5rem;
+}
+
+.account-password-row {
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr);
+    gap: 0.75rem 1rem;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.account-password-row label {
+    padding-top: 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.account-password-hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.account-mfa-panel {
+    padding-bottom: 1rem;
+}
+
+.account-mfa-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.account-mfa-copy {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.account-mfa-switch {
+    position: relative;
+    cursor: pointer;
+}
+
+.account-mfa-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.account-mfa-slider {
+    display: block;
+    width: 48px;
+    height: 28px;
+    background: #d1d5db;
+    border-radius: 999px;
+    position: relative;
+    transition: background 0.15s ease;
+}
+
+.account-mfa-slider::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: #F9FAFF;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s ease;
+}
+
+.account-mfa-switch:has(input:checked) .account-mfa-slider {
+    background: var(--client-navy);
+}
+
+.account-mfa-switch:has(input:checked) .account-mfa-slider::after {
+    transform: translateX(20px);
+}
+
+.account-mfa-state {
+    margin: 0.65rem 0 0 2.7rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--client-navy);
+}
+
+.account-danger-zone {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 16px;
+    padding: 1.1rem 1.15rem 1.2rem;
+}
+
+.account-danger-zone header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-bottom: 0.9rem;
+}
+
+.account-danger-zone header i {
+    color: #e11d48;
+    font-size: 1.15rem;
+    margin-top: 0.1rem;
+}
+
+.account-danger-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.85rem;
+    align-items: center;
+    background: #F9FAFF;
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.7rem;
+}
+
+.account-danger-card:last-child {
+    margin-bottom: 0;
+}
+
+.account-danger-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #dc2626;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.account-profile-card {
+    background: #F9FAFF;
+    border-radius: 16px;
+    padding: 1.5rem 1.2rem 1.2rem;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.account-profile-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    font-size: 1.7rem;
+    margin: 0 auto 0.85rem;
+}
+
+.account-profile-card h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.account-profile-card dl {
+    margin: 1.15rem 0 0;
+    text-align: left;
+}
+
+.account-profile-card dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    border-top: 1px solid #f1f5f9;
+    font-size: 0.78rem;
+}
+
+.account-profile-card dt {
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.account-profile-card dd {
+    margin: 0;
+    font-weight: 700;
+    color: #111;
+}
+
+body.account-confirm-open .modal-backdrop.show {
+    opacity: 1 !important;
+    background-color: rgba(0, 0, 0, 0.48) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.account-confirm-dialog {
+    max-width: 420px;
+}
+
+.account-confirm-content {
+    background-color: #F9FAFF !important;
+    border: none;
+    border-radius: 18px !important;
+    padding: 2rem 1.75rem 1.75rem;
+    text-align: center;
+}
+
+.account-confirm-icon {
+    width: 72px;
+    height: 72px;
+    background-color: #fdeceb;
+    color: #c21f00;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 1.65rem;
+}
+
+.account-confirm-icon.is-warn {
+    background-color: #fff7e6;
+    color: #b45309;
+}
+
+.account-confirm-title {
+    font-family: var(--font-title);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.45;
+    margin: 0 0 0.65rem;
+    padding: 0 0.25rem;
+}
+
+.account-confirm-text {
+    font-size: 0.82rem;
+    color: #6b7280;
+    line-height: 1.55;
+    margin: 0 0 1.5rem;
+    padding: 0 0.35rem;
+}
+
+.account-confirm-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: 100%;
+}
+
+.account-confirm-submit {
+    background-color: #c21f00 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0.72rem 1rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+.account-confirm-submit:hover {
+    background-color: #a81b00 !important;
+    color: #ffffff !important;
+}
+
+.account-confirm-submit.is-warn {
+    background-color: #b45309 !important;
+}
+
+.account-confirm-submit.is-warn:hover {
+    background-color: #92400e !important;
+}
+
+.account-confirm-cancel {
+    background-color: #F9FAFF !important;
+    color: #111827 !important;
+    border: 1px solid #374151 !important;
+    border-radius: 10px !important;
+    padding: 0.72rem 1rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.account-confirm-cancel:hover {
+    background-color: #f9fafb !important;
+    color: #111827 !important;
+}
+
+@media (max-width: 1199.98px) {
+    .account-hub,
+    .account-hub.is-wide-main {
+        grid-template-columns: 230px minmax(0, 1fr);
+    }
+
+    .account-hub.is-booking-details {
+        grid-template-columns: 230px minmax(0, 1fr);
+        grid-template-areas:
+            "nav main"
+            "nav aside";
+    }
+
+    .account-hub-aside {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .account-hub,
+    .account-hub.is-wide-main,
+    .account-hub.is-booking-details {
+        grid-template-columns: 1fr;
+        grid-template-areas: none;
+    }
+
+    .account-hub.is-booking-details {
+        grid-template-areas:
+            "nav"
+            "main"
+            "aside";
+    }
+
+    .account-hub-nav,
+    .account-hub-aside {
+        position: static;
+    }
+
+    .account-field-row,
+    .account-password-row,
+    .account-danger-card,
+    .account-id-previews {
+        grid-template-columns: 1fr;
+    }
+
+    .account-id-preview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .account-field-edit {
+        flex-wrap: wrap;
+    }
+
+    .account-hub-tabs {
+        gap: 1rem;
+        overflow-x: auto;
+    }
+}

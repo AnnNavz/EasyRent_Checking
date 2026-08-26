@@ -1,17 +1,44 @@
 ﻿@model IEnumerable<EasyRent_Checking.Models.Vehicle>
+@using System.Globalization
 
 @{
-    // Inherit the administrative design system architecture
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "Vehicle Management";
     ViewData["ActivePage"] = "Vehicles";
+
+    var totalVehiclesChange = ViewData["TotalVehiclesChange"] as decimal? ?? 0m;
+    var activeVehiclesChange = ViewData["ActiveVehiclesChange"] as decimal? ?? 0m;
+
+    string FormatTrend(decimal change) =>
+        Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
     string currentSortName = ViewData["CurrentSort"]?.ToString() == "Model" ? "Model" :
                              ViewData["CurrentSort"]?.ToString() == "Brand" ? "Brand" :
                              ViewData["CurrentSort"]?.ToString() == "PlateNumber" ? "Plate Number" : "Sorting by";
 
-    string currentFilterName = ViewData["CurrentFilter"]?.ToString() == "Active" ? "Active" :
-                               ViewData["CurrentFilter"]?.ToString() == "Maintenance" ? "Maintenance" : "Filters";
+    string currentFilterName = ViewData["CurrentFilter"]?.ToString() switch
+    {
+        "Active" => "Active",
+        "Rented" => "Rented",
+        "Maintenance" => "In Maintenance",
+        "Unavailable" => "Unavailable",
+        _ => "Filters"
+    };
+
+    string StatusLabel(VehicleStatus status) => status switch
+    {
+        VehicleStatus.Available => "Active",
+        VehicleStatus.InMaintenance => "In Maintenance",
+        _ => status.ToString()
+    };
+
+    string StatusClass(VehicleStatus status) => status switch
+    {
+        VehicleStatus.Available => "is-active",
+        VehicleStatus.Rented => "is-rented",
+        VehicleStatus.InMaintenance => "is-maintenance",
+        _ => "is-unavailable"
+    };
 
     string indexReturnUrl = Url.Action("Index", new
     {
@@ -22,35 +49,52 @@
     }) ?? "";
 }
 
-<div class="row g-4 mb-4">
-    <div class="col-md-6">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">Active Vehicles</span>
-                <div class="metric-value">@(ViewData["ActiveVehiclesCount"] ?? "0")</div>
+<div class="vehicles-index-page">
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="vehicle-metric-card">
+                <div class="vehicle-metric-icon" aria-hidden="true">
+                    <i class="bi bi-truck-front-fill"></i>
+                </div>
+                <div class="vehicle-metric-body">
+                    <span class="vehicle-metric-label">Total Vehicles</span>
+                    <div class="vehicle-metric-value">@(ViewData["TotalVehiclesCount"] ?? "0")</div>
+                </div>
+                <div class="vehicle-metric-trend">
+                    <span class="vehicle-metric-badge @(totalVehiclesChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(totalVehiclesChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(totalVehiclesChange)
+                    </span>
+                    <span class="vehicle-metric-compare">vs last month</span>
+                </div>
             </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+        <div class="col-md-6">
+            <div class="vehicle-metric-card">
+                <div class="vehicle-metric-icon" aria-hidden="true">
+                    <i class="bi bi-car-front-fill"></i>
+                </div>
+                <div class="vehicle-metric-body">
+                    <span class="vehicle-metric-label">Active Vehicles</span>
+                    <div class="vehicle-metric-value">@(ViewData["ActiveVehiclesCount"] ?? "0")</div>
+                </div>
+                <div class="vehicle-metric-trend">
+                    <span class="vehicle-metric-badge @(activeVehiclesChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(activeVehiclesChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(activeVehiclesChange)
+                    </span>
+                    <span class="vehicle-metric-compare">vs last month</span>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">Total Vehicles</span>
-                <div class="metric-value">@(ViewData["TotalVehiclesCount"] ?? "0")</div>
-            </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
-        </div>
-    </div>
-</div>
 
-<form asp-action="Index" method="get" class="w-100">
-    <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
-    <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
+    <form asp-action="Index" method="get" class="w-100">
+        <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+        <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
 
-    <div class="card index-toolbar-card mb-4">
-        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
-
-            <div class="d-flex align-items-center gap-2">
+        <div class="vehicle-index-toolbar mb-4">
+            <div class="vehicle-index-toolbar-filters">
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
@@ -63,117 +107,124 @@
                         <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
                     </ul>
                 </div>
+
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentFilterName
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="?currentFilter=Active&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Active Only</a></li>
-                        <li><a class="dropdown-item" href="?currentFilter=Maintenance&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Maintenance Only</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Active&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Active</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Rented&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Rented</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Maintenance&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">In Maintenance</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Unavailable&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Unavailable</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
                         <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
                     </ul>
                 </div>
             </div>
 
-            <div class="d-flex align-items-center gap-3 flex-grow-1 flex-sm-grow-0">
-                <div class="position-relative flex-grow-1">
-                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                    <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="form-control ps-5 pe-4 rounded-3 border bg-light text-secondary search-bar-input" placeholder="Search vehicle entries..." />
-                    @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
-                    {
-                        <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]" class="position-absolute top-50 end-0 translate-middle-y me-3 text-secondary text-decoration-none small">✕</a>
-                    }
-                </div>
-
-                <a asp-action="Create" class="btn btn-dark d-flex align-items-center gap-2 px-3 py-2 fw-bold text-nowrap rounded-3 shadow-sm btn-add-driver">
-                    <i class="bi bi-plus-lg"></i> Add Vehicle
-                </a>
-            </div>
-        </div>
-    </div>
-</form>
-
-<div class="index-table-panel mb-4">
-    <div class="table-responsive">
-        <table class="table admin-table mb-0 align-middle">
-            <thead>
-                <tr>
-                    <th>Model</th>
-                    <th>Plate Number</th>
-                    <th>Brand</th>
-                    <th>Color</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Registration Date</th>
-                    <th>Registration Expiry</th>
-                    <th class="text-center" style="width: 60px;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model != null && Model.Any())
+            <div class="vehicle-index-toolbar-search">
+                <i class="bi bi-search vehicle-index-search-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="searchString"
+                       value="@ViewData["CurrentSearch"]"
+                       class="form-control vehicle-index-search-input"
+                       placeholder="Search" />
+                <i class="bi bi-mic vehicle-index-mic-icon" aria-hidden="true"></i>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
                 {
-                    @foreach (var item in Model)
+                    <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]"
+                       class="vehicle-index-search-clear"
+                       aria-label="Clear search">&times;</a>
+                }
+            </div>
+
+            <a asp-action="Create" class="btn vehicle-index-add-btn">
+                <i class="bi bi-plus-lg"></i> Add Vehicle
+            </a>
+        </div>
+    </form>
+
+    <div class="index-table-panel mb-4">
+        <div class="table-responsive">
+            <table class="table admin-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Plate Number</th>
+                        <th>Brand</th>
+                        <th>Color</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Registration Date</th>
+                        <th>Registration Expiry</th>
+                        <th class="text-end" style="width: 60px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="table-vehicle-cell">
+                                        <div class="table-vehicle-thumb">
+                                            @if (!string.IsNullOrEmpty(item.ImagePath))
+                                            {
+                                                <img src="~/images/@item.ImagePath" alt="@item.Model" />
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-car-front-fill" aria-hidden="true"></i>
+                                            }
+                                        </div>
+                                        <span class="table-vehicle-name">@Html.DisplayFor(modelItem => item.Model)</span>
+                                    </div>
+                                </td>
+                                <td class="text-uppercase font-monospace fw-semibold">@Html.DisplayFor(modelItem => item.PlateNumber)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Brand)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Color)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Type)</td>
+                                <td>
+                                    <span class="vehicle-status-badge @StatusClass(item.Status)">@StatusLabel(item.Status)</span>
+                                </td>
+                                <td>@AdminDates.Format(item.RegistrationDate)</td>
+                                <td>@AdminDates.Format(item.RegistrationExpiry)</td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Vehicle actions">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                            <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.VehicleId" asp-route-returnUrl="@indexReturnUrl"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                            <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.VehicleId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                            <li><hr class="dropdown-menu-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.VehicleId', '@item.Model')">
+                                                    <i class="bi bi-trash me-2"></i> Delete
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            <td class="fw-bold text-dark">@Html.DisplayFor(modelItem => item.Model)</td>
-                            <td class="text-uppercase font-monospace text-secondary fw-semibold">@Html.DisplayFor(modelItem => item.PlateNumber)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Brand)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Color)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Type)</td>
-                            <td>
-                                @{
-                                    string statusString = item.Status.ToString() ?? "";
-                                }
-
-                                @if (statusString.Equals("Available", StringComparison.OrdinalIgnoreCase) || statusString.Equals("Active", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    <span class="badge bg-success bg-opacity-10 text-success rounded-2 px-2.5 py-1.5 fw-bold">@statusString</span>
-                                }
-                                else if (statusString.Equals("InMaintenance", StringComparison.OrdinalIgnoreCase) || statusString.Equals("Maintenance", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-2 px-2.5 py-1.5 fw-bold">@statusString</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-2 px-2.5 py-1.5 fw-bold">@statusString</span>
-                                }
-                            </td>
-                            <td>@item.RegistrationDate.ToString("MM-dd-yyyy")</td>
-                            <td>@item.RegistrationExpiry.ToString("MM-dd-yyyy")</td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport">
-                                        <i class="bi bi-three-dots fs-5"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                        <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.VehicleId" asp-route-returnUrl="@indexReturnUrl"><i class="bi bi-pencil me-2"></i> Edit</a></li>
-                                        <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.VehicleId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
-                                        <li><hr class="dropdown-menu-divider"></li>
-                                        <li>
-                                            <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.VehicleId', '@item.Model')">
-                                                <i class="bi bi-trash me-2"></i> Delete
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
+                            <td colspan="9" class="text-center py-5 text-muted fw-medium">
+                                <i class="bi bi-car-front fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                No matching vehicles located in fleet indexes.
                             </td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="9" class="text-center py-5 text-muted fw-medium">
-                            <i class="bi bi-car-front fs-2 d-block mb-2 text-secondary opacity-50"></i>
-                            No matching vehicles located in fleet indexes.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AdminPagination" />
     </div>
-    <partial name="_AdminPagination" />
 </div>
 
 @{

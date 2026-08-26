@@ -1,9 +1,14 @@
 @model EasyRent_Checking.ViewModels.FeedbackInputModel
-@using System.Globalization
 
 @{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
     ViewData["Title"] = "Rate & Review";
+    var vehicleComfort = new StarRatingInputModel { Name = nameof(Model.VehicleComfort), Label = "Comfort", Value = Model.VehicleComfort };
+    var vehiclePerformance = new StarRatingInputModel { Name = nameof(Model.VehiclePerformance), Label = "Performance", Value = Model.VehiclePerformance };
+    var vehicleSafety = new StarRatingInputModel { Name = nameof(Model.VehicleSafety), Label = "Safety", Value = Model.VehicleSafety };
+    var driverProfessionalism = new StarRatingInputModel { Name = nameof(Model.DriverProfessionalism), Label = "Professionalism", Value = Model.DriverProfessionalism };
+    var driverDriving = new StarRatingInputModel { Name = nameof(Model.DriverDriving), Label = "Driving", Value = Model.DriverDriving };
+    var driverCourtesy = new StarRatingInputModel { Name = nameof(Model.DriverCourtesy), Label = "Courtesy", Value = Model.DriverCourtesy };
 }
 
 <div class="client-page rate-trip-page">
@@ -39,28 +44,41 @@
 
         <form asp-action="RateTrip" asp-route-id="@Model.RentalId" method="post" class="rate-trip-form" id="rateTripForm">
             @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="HasDriver" />
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            <div class="rate-trip-stars-block">
-                <label class="rate-trip-label" for="rating-1">Your rating</label>
-                <div class="rate-trip-stars" role="radiogroup" aria-label="Star rating">
-                    @for (var star = 5; star >= 1; star--)
-                    {
-                        var isChecked = Model.Rating == star;
-                        <input type="radio"
-                               name="Rating"
-                               value="@star"
-                               id="rating-@star"
-                               class="rate-trip-star-input"
-                               @(isChecked ? "checked=\"checked\"" : null) />
-                        <label for="rating-@star" class="rate-trip-star-label" title="@star star@(star == 1 ? "" : "s")">
-                            <i class="bi bi-star-fill" aria-hidden="true"></i>
-                            <span class="visually-hidden">@star star@(star == 1 ? "" : "s")</span>
-                        </label>
-                    }
-                </div>
-                <span asp-validation-for="Rating" class="text-danger d-block mt-2"></span>
-            </div>
+            <section class="rate-trip-group">
+                <h2 class="rate-trip-group-title">Rate the vehicle</h2>
+                <p class="rate-trip-group-hint">Comfort, performance, and safety for this trip.</p>
+
+                <partial name="_StarRatingInput" model="vehicleComfort" />
+                <span asp-validation-for="VehicleComfort" class="text-danger rate-trip-category-error"></span>
+
+                <partial name="_StarRatingInput" model="vehiclePerformance" />
+                <span asp-validation-for="VehiclePerformance" class="text-danger rate-trip-category-error"></span>
+
+                <partial name="_StarRatingInput" model="vehicleSafety" />
+                <span asp-validation-for="VehicleSafety" class="text-danger rate-trip-category-error"></span>
+            </section>
+
+            @if (Model.HasDriver)
+            {
+                <section class="rate-trip-group">
+                    <h2 class="rate-trip-group-title">Rate the driver</h2>
+                    <p class="rate-trip-group-hint">
+                        @(string.IsNullOrWhiteSpace(Model.DriverName) ? "How was your driver on this trip?" : $"How was {Model.DriverName} on this trip?")
+                    </p>
+
+                    <partial name="_StarRatingInput" model="driverProfessionalism" />
+                    <span asp-validation-for="DriverProfessionalism" class="text-danger rate-trip-category-error"></span>
+
+                    <partial name="_StarRatingInput" model="driverDriving" />
+                    <span asp-validation-for="DriverDriving" class="text-danger rate-trip-category-error"></span>
+
+                    <partial name="_StarRatingInput" model="driverCourtesy" />
+                    <span asp-validation-for="DriverCourtesy" class="text-danger rate-trip-category-error"></span>
+                </section>
+            }
 
             <div class="rate-trip-comment-block">
                 <label asp-for="Comment" class="rate-trip-label">Comments <span class="rate-trip-optional">(optional)</span></label>

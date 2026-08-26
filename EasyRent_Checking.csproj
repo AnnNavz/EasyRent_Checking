@@ -19,6 +19,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
+    <PackageReference Include="QuestPDF" Version="2025.7.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +27,8 @@
     <Folder Include="wwwroot\images\Drivers\" />
     <Folder Include="wwwroot\images\Vehicles\" />
     <Folder Include="wwwroot\images\Rentals\" />
+    <Folder Include="wwwroot\images\Maintenance\" />
+    <Folder Include="wwwroot\images\Incidents\" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,79 @@
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "How It Works";
+    ViewData["ActiveNav"] = "HowItWorks";
+}
+
+<div class="client-home how-page">
+    <section class="how-hero">
+        <div class="home-wrap">
+            <div class="how-hero-card">
+                <h1>How It Works</h1>
+                <p>Renting with EasyRent is quick, easy, and hassle-free. Just follow these simple steps and you’re ready to go!</p>
+                <span class="how-hero-rule"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-steps">
+        <div class="home-wrap">
+            <p class="how-steps-kicker">Rent in 4 easy steps</p>
+            <ol class="how-timeline">
+                <li>
+                    <span class="how-step-num">1</span>
+                    <span class="how-step-connector"></span>
+                    <span class="how-step-icon"><i class="bi bi-search"></i></span>
+                    <div class="how-step-copy">
+                        <h2>Search Vehicle</h2>
+                        <p>Choose your passenger capacity, select your pick-up and drop-off dates, and browse available vehicles.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="how-step-num">2</span>
+                    <span class="how-step-connector"></span>
+                    <span class="how-step-icon"><i class="bi bi-calendar3"></i></span>
+                    <div class="how-step-copy">
+                        <h2>Rent Online</h2>
+                        <p>Select your preferred vehicle and complete your booking or reservation by providing your details. It only takes a few minutes!</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="how-step-num">3</span>
+                    <span class="how-step-connector"></span>
+                    <span class="how-step-icon"><i class="bi bi-car-front"></i></span>
+                    <div class="how-step-copy">
+                        <h2>Track your status</h2>
+                        <p>Keep on track of your rental status with your scheduled pick-up date. Our team will assist you and get you ready to go.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="how-step-num">4</span>
+                    <span class="how-step-connector"></span>
+                    <span class="how-step-icon"><i class="bi bi-check-circle"></i></span>
+                    <div class="how-step-copy">
+                        <h2>Enjoy your trip</h2>
+                        <p>Enjoy your trip! Your designated driver will assist you throughout your journey. It's that easy.</p>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="how-cta-section">
+        <div class="home-wrap">
+            <div class="how-cta">
+                <div class="how-cta-copy">
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                        <h2>Need help?</h2>
+                        <p>Our staff will assist you every step of the way</p>
+                    </div>
+                </div>
+                <a asp-controller="ClientSide" asp-action="ContactUs" class="home-btn home-btn-light">
+                    Contact Us
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+</div>

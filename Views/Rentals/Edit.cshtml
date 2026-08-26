@@ -6,45 +6,70 @@
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "Edit Booking";
     ViewData["ActivePage"] = "Rentals";
+    ViewData["ShowPayLaterOption"] = true;
+    ViewData["HidePaymentReminders"] = true;
+
     var vehicles = ViewBag.Vehicles as IEnumerable<Vehicle> ?? Enumerable.Empty<Vehicle>();
     var existingReceipt = ViewData["ExistingReceiptPath"] as string;
+    var bookingId = $"BK-{Model.RentalId:D5}";
+    var hasDiscountId = !string.IsNullOrWhiteSpace(Model.DiscountImagePath);
+    var discountFileName = hasDiscountId ? System.IO.Path.GetFileName(Model.DiscountImagePath) : null;
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/payment-wizard.css" asp-append-version="true" />
 }
 
-<div class="container-fluid px-4 py-3">
-    <div class="details-page-actions mb-3">
+<div class="wizard-max-wrapper admin-booking-create admin-booking-edit py-3">
+    <div class="admin-booking-edit-topbar mb-3">
+        <div class="reservation-details-id-card">
+            <div class="reservation-details-id-main">
+                <span class="reservation-view-id-label">Booking ID</span>
+                <h1 class="reservation-view-id mb-0">@bookingId</h1>
+            </div>
+            <span class="booking-status-badge @StatusBadgeClass(Model.RentalStatus)">
+                <i class="bi @StatusIcon(Model.RentalStatus)"></i>@Model.RentalStatus
+            </span>
+        </div>
         <a asp-action="Details" asp-route-id="@Model.RentalId" class="btn btn-page-back">Back</a>
     </div>
 
-    <form asp-action="Edit" enctype="multipart/form-data" id="reservationEditForm">
+    <div class="admin-create-step1-intro">
+        <h1 class="admin-create-step1-title">Edit reservation</h1>
+        <p class="admin-create-step1-subtitle">Update trip details, passenger information, and payment. Changes apply immediately after you save.</p>
+    </div>
+
+    <form asp-action="Edit" enctype="multipart/form-data" id="reservationEditForm" novalidate>
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
         <input type="hidden" asp-for="RentalId" />
         <input type="hidden" asp-for="RentalDetailsID" />
         <input type="hidden" asp-for="DiscountImagePath" />
         <input type="hidden" asp-for="PaymentId" />
 
-        <div class="form-container-card p-4 mb-4 shadow-sm">
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
-                <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Booking Information</h6>
+        <div class="rent-step-card">
+            <div class="rent-card-head">
+                <span class="rent-card-icon"><i class="bi bi-file-earmark-text"></i></span>
+                <h2>Rental Information</h2>
             </div>
-            <hr class="wizard-section-divider" />
 
             <div class="row g-3">
                 <div class="col-12">
-                    <label asp-for="VehicleId" class="form-label fw-semibold small text-secondary mb-1">Vehicle</label>
-                    <select asp-for="VehicleId" id="input-VehicleId" class="form-select form-control-thin shadow-sm">
+                    <label asp-for="VehicleId" class="rent-field-label">Vehicle</label>
+                    <select asp-for="VehicleId" id="input-VehicleId" class="rent-field-input form-select">
                         <option value="">Select vehicle</option>
                         @foreach (var vehicle in vehicles)
                         {
+                            var imageUrl = string.IsNullOrEmpty(vehicle.ImagePath) ? "" : Url.Content($"~/images/{vehicle.ImagePath}");
                             if (Model.VehicleId == vehicle.VehicleId)
                             {
                                 <option value="@vehicle.VehicleId"
+                                        data-capacity="@vehicle.PassengersCount"
                                         data-base-price="@vehicle.BasePrice.ToString(CultureInfo.InvariantCulture)"
                                         data-succeeding-fee="@vehicle.SucceedingFee.ToString(CultureInfo.InvariantCulture)"
+                                        data-brand="@vehicle.Brand"
+                                        data-model="@vehicle.Model"
+                                        data-type="@vehicle.Type"
+                                        data-image="@imageUrl"
                                         selected>
                                     @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
                                 </option>
@@ -52,90 +77,141 @@
                             else
                             {
                                 <option value="@vehicle.VehicleId"
+                                        data-capacity="@vehicle.PassengersCount"
                                         data-base-price="@vehicle.BasePrice.ToString(CultureInfo.InvariantCulture)"
-                                        data-succeeding-fee="@vehicle.SucceedingFee.ToString(CultureInfo.InvariantCulture)">
+                                        data-succeeding-fee="@vehicle.SucceedingFee.ToString(CultureInfo.InvariantCulture)"
+                                        data-brand="@vehicle.Brand"
+                                        data-model="@vehicle.Model"
+                                        data-type="@vehicle.Type"
+                                        data-image="@imageUrl">
                                     @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
                                 </option>
                             }
                         }
                     </select>
-                    <span asp-validation-for="VehicleId" class="text-danger small"></span>
+                    <span asp-validation-for="VehicleId" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="CustomerName" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="CustomerName" class="form-control form-control-thin" />
-                    <span asp-validation-for="CustomerName" class="text-danger small"></span>
+                    <label asp-for="CustomerName" class="rent-field-label">Customer Name</label>
+                    <input asp-for="CustomerName" class="rent-field-input" placeholder="e.g. Jane Doe" />
+                    <span asp-validation-for="CustomerName" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="ContactNumber" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="ContactNumber" class="form-control form-control-thin" />
-                    <span asp-validation-for="ContactNumber" class="text-danger small"></span>
+                    <label asp-for="ContactNumber" class="rent-field-label">Contact Information</label>
+                    <input asp-for="ContactNumber" class="rent-field-input" placeholder="09123456789 or +639123456789" />
+                    <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="PickupLocation" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="PickupLocation" class="form-control form-control-thin" />
-                    <span asp-validation-for="PickupLocation" class="text-danger small"></span>
+                    <label asp-for="PickupLocation" class="rent-field-label">Pick-up Location</label>
+                    <input asp-for="PickupLocation" class="rent-field-input" placeholder="e.g. Mactan International Airport" />
+                    <span asp-validation-for="PickupLocation" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="DropoffLocation" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="DropoffLocation" class="form-control form-control-thin" />
-                    <span asp-validation-for="DropoffLocation" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="PickupDate" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="PickupDate" class="form-control form-control-thin" type="date" />
-                    <span asp-validation-for="PickupDate" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="PickupTime" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="PickupTime" class="form-control form-control-thin" type="time" />
-                    <span asp-validation-for="PickupTime" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="ReturnDate" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="ReturnDate" class="form-control form-control-thin" type="date" />
-                    <span asp-validation-for="ReturnDate" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="ReturnTime" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="ReturnTime" class="form-control form-control-thin" type="time" />
-                    <span asp-validation-for="ReturnTime" class="text-danger small"></span>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="PassengerCount" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="PassengerCount" class="form-control form-control-thin" />
-                    <span asp-validation-for="PassengerCount" class="text-danger small"></span>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Discount" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <select asp-for="Discount" class="form-select form-control-thin" asp-items="Html.GetEnumSelectList<Discount>()"></select>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="RentalOption" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <select asp-for="RentalOption" class="form-select form-control-thin" asp-items="Html.GetEnumSelectList<RentalOption>()"></select>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="RentalStatus" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <select asp-for="RentalStatus" class="form-select form-control-thin" asp-items="Html.GetEnumSelectList<RentalStatus>()"></select>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="DiscountImageFile" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <input asp-for="DiscountImageFile" class="form-control form-control-thin" type="file" accept=".png,.jpg,.jpeg" />
-                    <span asp-validation-for="DiscountImageFile" class="text-danger small"></span>
-                </div>
-                <div class="col-12">
-                    <label asp-for="Notes" class="form-label fw-semibold small text-secondary mb-1"></label>
-                    <textarea asp-for="Notes" class="form-control form-control-thin" rows="3"></textarea>
+                    <label asp-for="DropoffLocation" class="rent-field-label">Drop-off Location</label>
+                    <input asp-for="DropoffLocation" class="rent-field-input" placeholder="e.g. Talisay, Cebu City" />
+                    <span asp-validation-for="DropoffLocation" class="text-danger small mt-1 d-block"></span>
                 </div>
             </div>
         </div>
 
-        <div class="form-container-card p-4 mb-4 shadow-sm">
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-wallet2 fs-5 text-secondary"></i>
-                <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Payment</h6>
+        <div class="rent-step-card">
+            <div class="rent-card-head">
+                <span class="rent-card-icon"><i class="bi bi-calendar3"></i></span>
+                <h2>Pick-up &amp; Return Schedule</h2>
             </div>
-            <hr class="wizard-section-divider" />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="PickupDate" class="rent-field-label">Pick-up Date</label>
+                    <div class="rent-date-field">
+                        <input asp-for="PickupDate" class="rent-field-input" type="date" />
+                        <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    </div>
+                    <span asp-validation-for="PickupDate" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PickupTime" class="rent-field-label">Pick-up Time</label>
+                    <div class="rent-date-field">
+                        <input asp-for="PickupTime" class="rent-field-input" type="time" />
+                        <i class="bi bi-clock" aria-hidden="true"></i>
+                    </div>
+                    <span asp-validation-for="PickupTime" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ReturnDate" class="rent-field-label">Return Date</label>
+                    <div class="rent-date-field">
+                        <input asp-for="ReturnDate" class="rent-field-input" type="date" />
+                        <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    </div>
+                    <span asp-validation-for="ReturnDate" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ReturnTime" class="rent-field-label">Return Time</label>
+                    <div class="rent-date-field">
+                        <input asp-for="ReturnTime" class="rent-field-input" type="time" />
+                        <i class="bi bi-clock" aria-hidden="true"></i>
+                    </div>
+                    <span asp-validation-for="ReturnTime" class="text-danger small mt-1 d-block"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rent-step-card">
+            <div class="rent-card-head">
+                <span class="rent-card-icon"><i class="bi bi-people"></i></span>
+                <h2>Passenger &amp; Discount</h2>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="PassengerCount" class="rent-field-label">Passenger Count</label>
+                    <input asp-for="PassengerCount" class="rent-field-input" />
+                    <span asp-validation-for="PassengerCount" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Discount" class="rent-field-label">Senior/PWD Discount (if applicable)</label>
+                    <select asp-for="Discount" id="input-Discount" class="rent-field-input form-select" asp-items="Html.GetEnumSelectList<Discount>()"></select>
+                    <span class="rent-field-help">10% discount - present valid ID upon booking.</span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="RentalOption" class="rent-field-label">Rental Option</label>
+                    <select asp-for="RentalOption" class="rent-field-input form-select" asp-items="Html.GetEnumSelectList<RentalOption>()"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="RentalStatus" class="rent-field-label">Status</label>
+                    <select asp-for="RentalStatus" class="rent-field-input form-select" asp-items="Html.GetEnumSelectList<RentalStatus>()"></select>
+                </div>
+                <div class="col-12 @(Model.Discount == Discount.Yes ? "" : "d-none")" id="discountUploadSection">
+                    <label asp-for="DiscountImageFile" class="rent-field-label">Discount ID Image</label>
+                    @if (hasDiscountId)
+                    {
+                        <div class="admin-booking-edit-existing-media mb-2">
+                            <img src="~/images/@Model.DiscountImagePath" alt="Current discount ID" />
+                            <span>@discountFileName</span>
+                        </div>
+                    }
+                    <input asp-for="DiscountImageFile" class="rent-field-input" type="file" accept=".png,.jpg,.jpeg" />
+                    <span class="rent-field-help">Upload a new file only if you need to replace the current ID.</span>
+                    <span asp-validation-for="DiscountImageFile" class="text-danger small mt-1 d-block"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rent-step-card">
+            <div class="rent-card-head">
+                <span class="rent-card-icon"><i class="bi bi-file-earmark-plus"></i></span>
+                <h2>Additional Information</h2>
+            </div>
+            <label asp-for="Notes" class="rent-field-label">Special Requests / Notes (Optional)</label>
+            <textarea asp-for="Notes" class="rent-field-input rent-field-textarea" rows="4" placeholder="e.g. Please prepare child seats, need early morning pick-up..."></textarea>
+            <span asp-validation-for="Notes" class="text-danger small mt-1 d-block"></span>
+        </div>
+
+        <div class="rent-step-card admin-booking-edit-payment-card">
+            <div class="rent-card-head">
+                <span class="rent-card-icon"><i class="bi bi-wallet2"></i></span>
+                <h2>Payment</h2>
+            </div>
 
             <partial name="_ClientPaymentMethodStep" model="Model" />
             <div class="mt-3">
@@ -144,19 +220,37 @@
 
             @if (!string.IsNullOrWhiteSpace(existingReceipt))
             {
-                <div class="mt-3">
-                    <span class="small text-muted d-block mb-2">Current receipt on file:</span>
-                    <img src="~/images/@existingReceipt" alt="Current receipt" style="max-width: 280px; border-radius: 8px; border: 1px solid #ddd;" />
+                <div class="admin-booking-edit-existing-media mt-3">
+                    <span class="rent-field-label mb-2">Current receipt on file</span>
+                    <img src="~/images/@existingReceipt" alt="Current receipt" />
                 </div>
             }
         </div>
 
-        <div class="d-flex justify-content-end gap-2 mb-4">
-            <a asp-action="Details" asp-route-id="@Model.RentalId" class="btn btn-light border px-4 py-2 fw-semibold">Cancel</a>
-            <button type="submit" class="btn btn-dark px-4 py-2 fw-bold" style="background-color:#1E3A8A;border-color:#1E3A8A;">Save Booking &amp; Payment</button>
+        <div class="rent-step-actions">
+            <a asp-action="Details" asp-route-id="@Model.RentalId" class="rent-btn-cancel">Cancel</a>
+            <button type="submit" class="rent-btn-continue">Save Booking &amp; Payment</button>
         </div>
     </form>
 </div>
+
+@functions {
+    string StatusBadgeClass(RentalStatus status) => status switch
+    {
+        RentalStatus.Approved => "booking-status-approved",
+        RentalStatus.Cancelled => "booking-status-cancelled",
+        RentalStatus.Expired => "booking-status-expired",
+        _ => "booking-status-pending"
+    };
+
+    string StatusIcon(RentalStatus status) => status switch
+    {
+        RentalStatus.Approved => "bi-check-circle",
+        RentalStatus.Cancelled => "bi-x-circle",
+        RentalStatus.Expired => "bi-hourglass-split",
+        _ => "bi-clock"
+    };
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -164,10 +258,19 @@
     <script>
         (function () {
             BookingSummary.initReceiptUpload();
+
             const paymentTypeInput = document.getElementById('input-PaymentType');
             const paymentMethodInput = document.getElementById('input-PaymentMethod');
-            const amountPaidInput = document.getElementById('input-AmountPaid');
-            const paymentDateInput = document.getElementById('input-PaymentDate');
+            const discountSelect = document.getElementById('input-Discount');
+            const discountSection = document.getElementById('discountUploadSection');
+
+            function syncDiscountSection() {
+                if (!discountSection || !discountSelect) return;
+                discountSection.classList.toggle('d-none', discountSelect.value !== 'Yes');
+            }
+
+            discountSelect?.addEventListener('change', syncDiscountSection);
+            syncDiscountSection();
 
             function setChannelPanel(method) {
                 const isWalkin = method === 'Walk-in';
@@ -188,9 +291,11 @@
                 });
             });
 
-            document.querySelectorAll('.payment-select-card[data-payment-method]').forEach(function (card) {
+            document.querySelectorAll('.payment-select-card[data-payment-method], .payment-method-tab[data-payment-method]').forEach(function (card) {
                 card.addEventListener('click', function () {
-                    document.querySelectorAll('.payment-select-card[data-payment-method]').forEach(function (c) { c.classList.remove('is-selected'); });
+                    document.querySelectorAll('.payment-select-card[data-payment-method], .payment-method-tab[data-payment-method]').forEach(function (c) {
+                        c.classList.remove('is-selected');
+                    });
                     card.classList.add('is-selected');
                     const method = card.getAttribute('data-payment-method') || '';
                     if (paymentMethodInput) paymentMethodInput.value = method;
@@ -198,27 +303,25 @@
                 });
             });
 
-            // Hide wizard nav buttons from payment partials on edit page
             document.querySelectorAll('#reservationEditForm [data-wizard-next], #reservationEditForm [data-wizard-back]').forEach(function (btn) {
                 btn.classList.add('d-none');
             });
+            document.querySelectorAll('#reservationEditForm .payment-type-actions').forEach(function (el) {
+                el.classList.add('d-none');
+            });
 
-            // Preselect saved payment choices
             const type = paymentTypeInput?.value;
             if (type) {
                 document.querySelectorAll('.payment-option-card').forEach(function (card) {
                     card.classList.toggle('is-selected', card.getAttribute('data-payment-type') === type);
                 });
             }
+
             const method = paymentMethodInput?.value || 'Walk-in';
-            document.querySelectorAll('.payment-select-card[data-payment-method]').forEach(function (card) {
+            document.querySelectorAll('.payment-select-card[data-payment-method], .payment-method-tab[data-payment-method]').forEach(function (card) {
                 card.classList.toggle('is-selected', card.getAttribute('data-payment-method') === method);
             });
             setChannelPanel(method);
-
-            if (paymentDateInput && paymentDateInput.value && paymentDateInput.value.indexOf('T') < 0) {
-                // leave as-is; browsers accept datetime-local
-            }
         })();
     </script>
 }

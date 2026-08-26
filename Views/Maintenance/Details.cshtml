@@ -1,0 +1,283 @@
+@model EasyRent_Checking.ViewModels.MaintenancePlanDetailsViewModel
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using System.Reflection
+@using EasyRent_Checking.Models
+@using EasyRent_Checking.Services
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "View Details";
+    ViewData["ActivePage"] = "Maintenance";
+
+    string EnumLabel(Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>()?.GetName();
+        return display ?? value.ToString();
+    }
+
+    string StatusClass(PmsDueKind kind) => kind switch
+    {
+        PmsDueKind.Overdue => "pms-status is-overdue",
+        PmsDueKind.DueNow => "pms-status is-due-now",
+        PmsDueKind.DueSoon => "pms-status is-due-soon",
+        PmsDueKind.InProgress => "pms-status is-progress",
+        _ => "pms-status is-upcoming"
+    };
+
+    string GetDocumentFileName(string? path, string fallback)
+    {
+        if (string.IsNullOrEmpty(path)) return fallback;
+        var separatorIndex = path.IndexOf('_');
+        return separatorIndex >= 0 && separatorIndex < path.Length - 1
+            ? path[(separatorIndex + 1)..]
+            : path;
+    }
+
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+    var vehicleName = $"{Model.Vehicle.Brand} {Model.Vehicle.Model}".Trim();
+    var plate = Model.Vehicle.PlateNumber;
+    var typeLabel = EnumLabel(Model.Plan.Type);
+    var statusLabel = EnumLabel(Model.DueKind);
+    var hasOpenLog = Model.OpenLog != null;
+    var recordId = Model.OpenLog?.MaintenanceLogId ?? Model.Plan.MaintenancePlanId;
+    var idLabel = hasOpenLog ? "Maintenance Log ID" : "Checkup ID";
+    var costText = Model.OpenLog?.Cost != null ? Model.OpenLog.Cost.Value.ToString("C", ph) : "-";
+    var nextDueText = Model.Plan.NextDueDate?.ToString("MMMM d, yyyy")
+        ?? (Model.Plan.NextDueOdometer != null ? $"{Model.Plan.NextDueOdometer.Value:N0} km" : "-");
+    var completedAtText = Model.OpenLog?.CompletedAt?.ToString("MMMM d, yyyy h:mm tt")
+        ?? Model.Plan.LastCompletedDate?.ToString("MMMM d, yyyy")
+        ?? "-";
+    var createdAt = Model.OpenLog?.CreatedAt
+        ?? Model.History.Select(h => (DateTime?)h.CreatedAt).FirstOrDefault();
+}
+
+<div class="pms-details-page">
+    <div class="pms-details-header">
+        <div class="pms-details-id-block">
+            <span class="pms-details-id-label">@idLabel</span>
+            <div class="pms-details-id-row">
+                <h1 class="pms-details-id-value">@recordId.ToString("D8")</h1>
+                <span class="@StatusClass(Model.DueKind)">@statusLabel</span>
+            </div>
+        </div>
+        <div class="pms-details-header-actions">
+            <a asp-action="Index" class="btn pms-details-btn-back">Back</a>
+            <a asp-action="EditSchedule" asp-route-id="@Model.Vehicle.VehicleId" class="btn pms-details-btn-edit">Edit Schedule</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="pms-details-card">
+                <div class="pms-details-vehicle-row">
+                    <div class="pms-details-vehicle-photo">
+                        @if (!string.IsNullOrEmpty(Model.Vehicle.ImagePath))
+                        {
+                            <img src="~/images/@Model.Vehicle.ImagePath" alt="@vehicleName" />
+                        }
+                        else
+                        {
+                            <i class="bi bi-car-front-fill"></i>
+                        }
+                    </div>
+                    <div class="pms-details-vehicle-copy">
+                        <h2>@vehicleName</h2>
+                        <p>@typeLabel</p>
+                    </div>
+                    <div class="pms-details-vehicle-meta">
+                        <div class="pms-details-icon-field">
+                            <span class="pms-details-icon"><i class="bi bi-123"></i></span>
+                            <div>
+                                <span class="pms-details-icon-label">Plate Number</span>
+                                <span class="pms-details-icon-value text-uppercase font-monospace">@plate</span>
+                            </div>
+                        </div>
+                        <div class="pms-details-icon-field">
+                            <span class="pms-details-icon"><i class="bi bi-speedometer2"></i></span>
+                            <div>
+                                <span class="pms-details-icon-label">Current Odometer (km)</span>
+                                <span class="pms-details-icon-value">@Model.Vehicle.Odometer.ToString("N0") km</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pms-details-card">
+                <div class="pms-details-card-head">
+                    <span class="pms-details-icon"><i class="bi bi-car-front-fill"></i></span>
+                    <h3>Work Record</h3>
+                </div>
+                <div class="pms-details-icon-list">
+                    <div class="pms-details-icon-field">
+                        <span class="pms-details-icon"><i class="bi bi-gear"></i></span>
+                        <div>
+                            <span class="pms-details-icon-label">Maintenance Type</span>
+                            <span class="pms-details-icon-value">@typeLabel</span>
+                        </div>
+                    </div>
+                    <div class="pms-details-icon-field">
+                        <span class="pms-details-icon"><i class="bi bi-cash-stack"></i></span>
+                        <div>
+                            <span class="pms-details-icon-label">Cost</span>
+                            <span class="pms-details-icon-value">@costText</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pms-details-card">
+                <div class="pms-details-card-head">
+                    <span class="pms-details-icon"><i class="bi bi-calendar3"></i></span>
+                    <h3>Preventative Schedule</h3>
+                </div>
+                <div class="pms-details-schedule-grid">
+                    <div class="pms-details-icon-field">
+                        <span class="pms-details-icon"><i class="bi bi-calendar-event"></i></span>
+                        <div>
+                            <span class="pms-details-icon-label">Next Due</span>
+                            <span class="pms-details-icon-value">@nextDueText</span>
+                        </div>
+                    </div>
+                    <div class="pms-details-icon-field">
+                        <span class="pms-details-icon"><i class="bi bi-speedometer"></i></span>
+                        <div>
+                            <span class="pms-details-icon-label">Based On</span>
+                            <span class="pms-details-icon-value">@EnumLabel(Model.Plan.Trigger)</span>
+                        </div>
+                    </div>
+                    <div class="pms-details-icon-field">
+                        <span class="pms-details-icon"><i class="bi bi-flag"></i></span>
+                        <div>
+                            <span class="pms-details-icon-label">Completed At</span>
+                            <span class="pms-details-icon-value">@completedAtText</span>
+                        </div>
+                    </div>
+                    <div class="pms-details-icon-field">
+                        <span class="pms-details-icon"><i class="bi bi-arrow-repeat"></i></span>
+                        <div>
+                            <span class="pms-details-icon-label">Interval</span>
+                            <span class="pms-details-icon-value">@Model.ScheduleLabel</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pms-details-banner">
+                <span class="pms-details-banner-icon"><i class="bi bi-info-circle-fill"></i></span>
+                <p>
+                    @if (Model.OpenLog != null)
+                    {
+                        @:This checkup is in progress and the vehicle is In Maintenance. Record the date, odometer, findings, and optional photo when it is finished.
+                    }
+                    else if (Model.DueKind == PmsDueKind.Overdue)
+                    {
+                        @:This checkup is overdue. Start it when the vehicle is pulled from the fleet.
+                    }
+                    else if (Model.DueKind == PmsDueKind.DueNow)
+                    {
+                        @:This checkup is due now. Start it as soon as the vehicle is available.
+                    }
+                    else if (Model.DueKind == PmsDueKind.DueSoon)
+                    {
+                        @:This checkup is due soon. Start it when the vehicle is available.
+                    }
+                    else
+                    {
+                        @:This checkup is not due yet. Start becomes available when it is due soon.
+                    }
+                </p>
+            </div>
+
+            @if (Model.History.Any())
+            {
+                <div class="pms-details-card">
+                    <div class="pms-details-card-head">
+                        <span class="pms-details-icon"><i class="bi bi-clock-history"></i></span>
+                        <h3>Completed History</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table admin-table mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Completed</th>
+                                    <th>Odometer</th>
+                                    <th>Findings</th>
+                                    <th>Cost</th>
+                                    <th>Photo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in Model.History)
+                                {
+                                    <tr>
+                                        <td>@(log.CompletedAt?.ToString("MMMM d, yyyy h:mm tt") ?? "—")</td>
+                                        <td>@(log.Odometer.HasValue ? log.Odometer.Value.ToString("N0") + " km" : "—")</td>
+                                        <td>@(string.IsNullOrWhiteSpace(log.WorkDone) ? "—" : log.WorkDone)</td>
+                                        <td>@(log.Cost.HasValue ? log.Cost.Value.ToString("C", ph) : "—")</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(log.ImagePath))
+                                            {
+                                                <a href="~/images/@log.ImagePath" target="_blank" rel="noopener">@GetDocumentFileName(log.ImagePath, "Photo")</a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-secondary">—</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="pms-details-card pms-details-status-card">
+                <h3 class="pms-details-status-title">Vehicle Status</h3>
+                <p class="pms-details-status-value">@EnumLabel(Model.Vehicle.Status)</p>
+                <div class="pms-details-icon-field">
+                    <span class="pms-details-icon"><i class="bi bi-calendar3"></i></span>
+                    <div>
+                        <span class="pms-details-icon-label">Created At</span>
+                        <span class="pms-details-icon-value">@(createdAt?.ToString("MMMM d, yyyy h:mm tt") ?? "-")</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.OpenLog != null)
+            {
+                <a asp-action="Complete" asp-route-id="@Model.Plan.MaintenancePlanId" class="btn pms-details-btn-primary">Record Work</a>
+                <form asp-action="Cancel" asp-route-id="@Model.Plan.MaintenancePlanId" method="post"
+                      data-confirm="Abort this checkup?"
+                      data-confirm-text="The checkup will stop and the next due date will not change."
+                      data-confirm-button="Abort Operation"
+                      data-confirm-tone="danger"
+                      data-confirm-icon="bi-slash-circle"
+                      data-confirm-submit-icon="bi-x-lg">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn pms-details-btn-abort">Abort Operation</button>
+                </form>
+            }
+            else if (PmsRules.CanStart(Model.DueKind))
+            {
+                <form asp-action="StartWork" asp-route-id="@Model.Plan.MaintenancePlanId" method="post"
+                      data-confirm="Start this checkup?"
+                      data-confirm-text="The vehicle will be marked In Maintenance and unavailable for booking."
+                      data-confirm-button="Start Checkup"
+                      data-confirm-tone="approve">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn pms-details-btn-primary">Start</button>
+                </form>
+            }
+            else
+            {
+                <p class="pms-details-wait-note">Start is available when this checkup is due soon.</p>
+            }
+        </div>
+    </div>
+</div>

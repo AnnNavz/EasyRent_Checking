@@ -1,0 +1,55 @@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    var fullName = ViewData["HubFullName"]?.ToString() ?? "Customer";
+    var initials = ViewData["HubInitials"]?.ToString() ?? "U";
+    var active = ViewData["HubActive"]?.ToString() ?? "";
+}
+
+<aside class="account-hub-nav">
+    <div class="account-hub-user">
+        <div class="account-hub-user-avatar" aria-hidden="true">@initials</div>
+        <div>
+            <p class="account-hub-user-name">@fullName</p>
+            <span class="account-hub-online">Online</span>
+        </div>
+    </div>
+
+    <nav class="account-hub-menu">
+        <a asp-controller="ClientSide" asp-action="MyBookings" class="account-hub-link @(active == "bookings" ? "is-active" : null)">
+            <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+            <span>
+                <strong>Transaction &amp; Rentals</strong>
+                <small>Active and past rentals</small>
+            </span>
+        </a>
+        <a asp-controller="ClientSide" asp-action="PaymentHistory" class="account-hub-link @(active == "payments" ? "is-active" : null)">
+            <i class="bi bi-wallet2" aria-hidden="true"></i>
+            <span>
+                <strong>Payments &amp; Balance</strong>
+                <small>History and remaining balance</small>
+            </span>
+        </a>
+        <a asp-controller="Account" asp-action="Settings" class="account-hub-link @(active == "settings" ? "is-active" : null)">
+            <i class="bi bi-person-gear" aria-hidden="true"></i>
+            <span>
+                <strong>Account Settings</strong>
+                <small>Manage your account</small>
+            </span>
+        </a>
+        <a asp-controller="Account" asp-action="Logout" class="account-hub-link is-logout" data-logout-confirm>
+            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+            <span>
+                <strong>Log out</strong>
+                <small>Sign out from your account</small>
+            </span>
+        </a>
+    </nav>
+
+    <div class="account-hub-help">
+        <i class="bi bi-telephone" aria-hidden="true"></i>
+        <div>
+            <strong>Need help?</strong>
+            <p>Our staff will assist you every step of the way.</p>
+        </div>
+    </div>
+</aside>

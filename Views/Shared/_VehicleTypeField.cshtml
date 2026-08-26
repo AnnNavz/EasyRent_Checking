@@ -1,0 +1,36 @@
+@model EasyRent_Checking.Models.Vehicle
+@using EasyRent_Checking.Models
+@{
+    var options = ViewData["VehicleTypeOptions"] as IList<string> ?? VehicleTypes.Presets.ToList();
+    var current = Model?.Type ?? VehicleTypes.Suv;
+    if (!string.IsNullOrWhiteSpace(current)
+        && !options.Contains(current, StringComparer.OrdinalIgnoreCase))
+    {
+        options = options.Append(current.Trim()).ToList();
+    }
+}
+
+<label asp-for="Type" class="vehicle-wizard-label">Type</label>
+<div class="vehicle-type-row">
+    <select asp-for="Type" id="input-Type" class="form-select vehicle-wizard-input">
+        @foreach (var option in options)
+        {
+            if (string.Equals(current, option, StringComparison.OrdinalIgnoreCase))
+            {
+                <option value="@option" selected>@option</option>
+            }
+            else
+            {
+                <option value="@option">@option</option>
+            }
+        }
+    </select>
+    <button type="button" class="vehicle-type-add-btn" id="btnAddType" aria-label="Add type">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        Add
+    </button>
+</div>
+<div id="customTypeWrap" class="vehicle-type-new d-none">
+    <input id="input-CustomType" class="form-control vehicle-wizard-input" placeholder="New type name" maxlength="30" />
+</div>
+<span asp-validation-for="Type" class="text-danger small mt-1 d-block"></span>

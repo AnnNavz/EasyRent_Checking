@@ -15,7 +15,8 @@ namespace EasyRent_Checking.ViewModels
 
 		[Required(ErrorMessage = "Contact number is required.")]
 		[DataType(DataType.PhoneNumber)]
-		[RegularExpression(@"^(09|\+639)\d{9}$", ErrorMessage = "Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789).")]
+		[StringLength(20, ErrorMessage = "Contact number cannot exceed 20 characters.")]
+		[RegularExpression(FieldRules.PhMobile, ErrorMessage = FieldRules.PhMobileMessage)]
 		[Display(Name = "Contact Number")]
 		public string ContactNumber { get; set; } = string.Empty;
 
@@ -25,7 +26,8 @@ namespace EasyRent_Checking.ViewModels
 		[Display(Name = "Email Address")]
 		public string Email { get; set; } = string.Empty;
 
-		[StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters long.")]
+		[StringLength(100, MinimumLength = 8, ErrorMessage = FieldRules.PasswordLengthMessage)]
+		[RegularExpression(FieldRules.Password, ErrorMessage = FieldRules.PasswordMessage)]
 		[DataType(DataType.Password)]
 		[Display(Name = "Password")]
 		public string? Password { get; set; }
@@ -36,21 +38,34 @@ namespace EasyRent_Checking.ViewModels
 		[Display(Name = "Confirm Password")]
 		public string? ConfirmPassword { get; set; }
 
-		[Required(ErrorMessage = "Valid ID is required.")]
+		[Required(ErrorMessage = "Valid ID type is required.")]
+		[StringLength(30, ErrorMessage = "ID type cannot exceed 30 characters.")]
+		[EnumDataType(typeof(ValidIDtype), ErrorMessage = "Please select a valid ID type.")]
 		[Display(Name = "Choose what type of valid IDs")]
 		public string ValidIDtype { get; set; } = string.Empty;
 
 		[StringLength(255)]
-		[Display(Name = "Valid ID Picture")]
-		public string? ValidIDImagePath { get; set; }
+		[Display(Name = "Front of Valid ID")]
+		public string? FrontValidIDImagePath { get; set; }
+
+		[StringLength(255)]
+		[Display(Name = "Back of Valid ID")]
+		public string? BackValidIDImagePath { get; set; }
 
 		[NotMapped]
-		[Display(Name = "Upload Valid ID Picture")]
-		public IFormFile? ValidIDImageFile { get; set; }
+		[Display(Name = "Upload Front of Valid ID")]
+		public IFormFile? FrontValidIDImageFile { get; set; }
+
+		[NotMapped]
+		[Display(Name = "Upload Back of Valid ID")]
+		public IFormFile? BackValidIDImageFile { get; set; }
 
 		[Required(ErrorMessage = "Status is required.")]
 		[Display(Name = "Status")]
 		public Status Status { get; set; } = Status.Pending;
+
+		[Display(Name = "Email sign-in code")]
+		public bool LoginMfaEnabled { get; set; }
 
 		public static CustomerAccountInputModel FromEntities(User user, CustomerProfile profile)
 		{
@@ -61,8 +76,10 @@ namespace EasyRent_Checking.ViewModels
 				ContactNumber = profile.ContactNumber,
 				Email = user.Email,
 				ValidIDtype = profile.ValidIDtype,
-				ValidIDImagePath = profile.ValidIDImagePath,
-				Status = profile.Status
+				FrontValidIDImagePath = profile.FrontValidIDImagePath,
+				BackValidIDImagePath = profile.BackValidIDImagePath,
+				Status = profile.Status,
+				LoginMfaEnabled = user.LoginMfaEnabled
 			};
 		}
 	}

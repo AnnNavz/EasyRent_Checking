@@ -4,7 +4,7 @@ using EasyRent_Checking.Models;
 
 namespace EasyRent_Checking.ViewModels
 {
-	public class RentalInputModel
+	public class RentalInputModel : IValidatableObject
 	{
 		public int RentalId { get; set; }
 		public int RentalDetailsID { get; set; }
@@ -16,7 +16,8 @@ namespace EasyRent_Checking.ViewModels
 
 		[Required(ErrorMessage = "Contact number is required.")]
 		[DataType(DataType.PhoneNumber)]
-		[RegularExpression(@"^(09|\+639)\d{9}$", ErrorMessage = "Please enter a valid mobile number.")]
+		[StringLength(20, ErrorMessage = "Contact number cannot exceed 20 characters.")]
+		[RegularExpression(FieldRules.PhMobile, ErrorMessage = FieldRules.PhMobileMessage)]
 		[Display(Name = "Contact Number")]
 		public string ContactNumber { get; set; } = string.Empty;
 
@@ -39,12 +40,12 @@ namespace EasyRent_Checking.ViewModels
 		public int VehicleId { get; set; }
 
 		[Required(ErrorMessage = "Pickup location is required.")]
-		[StringLength(200)]
+		[StringLength(200, ErrorMessage = "Pickup location cannot exceed 200 characters.")]
 		[Display(Name = "Pickup Location")]
 		public string PickupLocation { get; set; } = string.Empty;
 
 		[Required(ErrorMessage = "Drop-off location is required.")]
-		[StringLength(200)]
+		[StringLength(200, ErrorMessage = "Drop-off location cannot exceed 200 characters.")]
 		[Display(Name = "Drop-off Location")]
 		public string DropoffLocation { get; set; } = string.Empty;
 
@@ -69,7 +70,7 @@ namespace EasyRent_Checking.ViewModels
 		public TimeOnly ReturnTime { get; set; }
 
 		[Required(ErrorMessage = "Passenger count is required.")]
-		[Range(1, 60)]
+		[Range(1, 60, ErrorMessage = "Passenger count must be between 1 and 60.")]
 		[Display(Name = "Passenger Count")]
 		public int PassengerCount { get; set; } = 1;
 
@@ -87,27 +88,27 @@ namespace EasyRent_Checking.ViewModels
 
 		public int PaymentId { get; set; }
 
-		[StringLength(30)]
+		[StringLength(30, ErrorMessage = "Payment type cannot exceed 30 characters.")]
 		[Display(Name = "Payment Type")]
 		public string? PaymentType { get; set; }
 
-		[StringLength(30)]
+		[StringLength(30, ErrorMessage = "Payment method cannot exceed 30 characters.")]
 		[Display(Name = "Payment Method")]
 		public string? PaymentMethod { get; set; }
 
-		[Range(0, 999999999.99)]
+		[Range(0, 999999999.99, ErrorMessage = "Total amount cannot be negative.")]
 		[Display(Name = "Total Amount")]
 		public decimal TotalAmount { get; set; }
 
-		[Range(0, 999999999.99)]
+		[Range(0, 999999999.99, ErrorMessage = "Amount paid cannot be negative.")]
 		[Display(Name = "Amount Paid")]
 		public decimal AmountPaid { get; set; }
 
-		[StringLength(100)]
+		[StringLength(100, ErrorMessage = "Account name cannot exceed 100 characters.")]
 		[Display(Name = "Account Name")]
 		public string? AccountName { get; set; }
 
-		[StringLength(100)]
+		[StringLength(100, ErrorMessage = "Transaction reference cannot exceed 100 characters.")]
 		[Display(Name = "Transaction Reference")]
 		public string? TransactionReference { get; set; }
 
@@ -120,7 +121,7 @@ namespace EasyRent_Checking.ViewModels
 		[DataType(DataType.Upload)]
 		public IFormFile? ReceiptImageFile { get; set; }
 
-		[StringLength(1000)]
+		[StringLength(1000, ErrorMessage = "Payment notes cannot exceed 1000 characters.")]
 		[Display(Name = "Payment Notes")]
 		public string? PaymentNotes { get; set; }
 
@@ -153,7 +154,9 @@ namespace EasyRent_Checking.ViewModels
 				PaymentId = payment?.PaymentId ?? 0,
 				PaymentType = payment?.PaymentType,
 				PaymentMethod = payment?.PaymentMethod,
-				TotalAmount = payment?.TotalAmount ?? 0m,
+				TotalAmount = rental.TotalAmount > 0
+					? rental.TotalAmount
+					: (payment?.TotalAmount ?? 0m),
 				AmountPaid = payment?.AmountPaid ?? 0m,
 				AccountName = payment?.AccountName,
 				TransactionReference = payment?.TransactionReference,
@@ -183,5 +186,14 @@ namespace EasyRent_Checking.ViewModels
 			details.DiscountImagePath = DiscountImagePath;
 			details.DiscountImageFile = DiscountImageFile;
 		}
+
+		public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+			=> FieldRules.ValidateReturnAfterPickup(
+				PickupDate,
+				PickupTime,
+				ReturnDate,
+				ReturnTime,
+				nameof(ReturnDate),
+				nameof(ReturnTime));
 	}
 }

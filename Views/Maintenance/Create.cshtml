@@ -1,0 +1,432 @@
+@model EasyRent_Checking.Models.MaintenanceLog
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["ActivePage"] = "Maintenance";
+    ViewData["Title"] = "Schedule Work";
+    var isRecord = false;
+}
+
+<div class="wizard-max-wrapper py-3">
+    <div class="step-timeline">
+        <div class="step-node active" id="node-1">
+            <div class="step-circle" id="circle-1">1</div>
+            <div class="step-label">Info</div>
+        </div>
+        <div class="step-node" id="node-2">
+            <div class="step-circle" id="circle-2">2</div>
+            <div class="step-label">Review</div>
+        </div>
+        <div class="step-node" id="node-3">
+            <div class="step-circle" id="circle-3">3</div>
+            <div class="step-label">Complete</div>
+        </div>
+    </div>
+
+    <form asp-action="Create" enctype="multipart/form-data" id="maintenanceWizardForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <div class="wizard-step-panel active" id="stepPanel-1">
+            <div class="text-start mb-4">
+                <h5 class="wizard-page-title fw-bold text-dark mb-1" id="step1-title" style="letter-spacing: -0.3px;">Schedule work</h5>
+                <p class="text-muted small" id="step1-subtitle">Plan a repair or inspection. You will start and record it later from the log.</p>
+            </div>
+
+            <div class="form-container-card p-4 mb-4 shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-tools fs-5 text-secondary"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Maintenance Details</h6>
+                </div>
+                <hr class="wizard-section-divider" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="VehicleId" class="form-label fw-semibold small text-secondary mb-1">Vehicle</label>
+                        <select asp-for="VehicleId" id="input-VehicleId" class="form-select form-control-thin shadow-sm" asp-items="ViewBag.VehicleId">
+                            <option value="">Select vehicle...</option>
+                        </select>
+                        <span asp-validation-for="VehicleId" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Type" class="form-label fw-semibold small text-secondary mb-1">Type</label>
+                        <select asp-for="Type" id="input-Type" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<MaintenanceType>()"></select>
+                        <span asp-validation-for="Type" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ScheduledDate" class="form-label fw-semibold small text-secondary mb-1">@(isRecord ? "Date completed" : "Scheduled Date")</label>
+                        <input asp-for="ScheduledDate" id="input-ScheduledDate" type="date" class="form-control form-control-thin shadow-sm" />
+                        <span asp-validation-for="ScheduledDate" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    @if (isRecord)
+                    {
+                        <div class="col-md-6">
+                            <label asp-for="Cost" class="form-label fw-semibold small text-secondary mb-1">Cost</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text form-control-thin">₱</span>
+                                <input asp-for="Cost" id="input-Cost" class="form-control form-control-thin" type="number" step="0.01" min="0" placeholder="Optional" />
+                            </div>
+                            <span asp-validation-for="Cost" class="text-danger small mt-1 d-block"></span>
+                        </div>
+                    }
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label fw-semibold small text-secondary mb-1">Description</label>
+                        <textarea asp-for="Description" id="input-Description" class="form-control form-control-thin shadow-sm" rows="3" placeholder="@(isRecord ? "Optional notes about this job." : "What is planned for this vehicle?")"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    @if (isRecord)
+                    {
+                        <div class="col-12">
+                            <label asp-for="WorkDone" class="form-label fw-semibold small text-secondary mb-1">Work Done / Findings</label>
+                            <textarea asp-for="WorkDone" id="input-WorkDone" class="form-control form-control-thin shadow-sm" rows="3" placeholder="What was done, or what did the inspection find?"></textarea>
+                            <span asp-validation-for="WorkDone" class="text-danger small mt-1 d-block"></span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (isRecord)
+            {
+                <div class="form-container-card p-4 mb-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-file-earmark-image fs-5 text-secondary"></i>
+                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Photo</h6>
+                    </div>
+                    <hr class="wizard-section-divider" />
+
+                    <div id="maintenance-image-upload-zone" class="license-upload-zone">
+                        <div>
+                            <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
+                            <span class="d-block small fw-bold text-dark mb-1">Drag &amp; drop or <span class="text-decoration-underline">click to browse</span></span>
+                            <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or JPEG</span>
+                        </div>
+                        <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,image/*" onchange="updateFileFeedback(this)" />
+                    </div>
+
+                    <div id="maintenance-image-preview-state" class="d-none">
+                        <div class="license-preview-box" id="maintenance-image-preview-box">
+                            <img id="maintenance-preview-img" class="d-none" alt="Maintenance photo preview" />
+                            <div id="maintenance-preview-placeholder" class="license-preview-placeholder"></div>
+                        </div>
+                        <div id="maintenance-image-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between p-3 mt-2">
+                            <span id="feedback-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">maintenance_photo.png</span>
+                            <button type="button" class="btn btn-link text-dark small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearFileSelection()">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="wizard-step-panel" id="stepPanel-2">
+            <div class="text-start mb-4">
+                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Review &amp; Verify</h5>
+                <p class="text-muted small">Confirm the maintenance details before saving.</p>
+            </div>
+
+            <div class="form-container-card p-4 mb-4 shadow-sm text-dark">
+                <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
+                    <i class="bi bi-tools fs-5"></i>
+                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Maintenance Details</h6>
+                </div>
+                <hr class="wizard-section-divider" />
+                <div class="row g-3 px-1" style="font-size: 0.9rem;">
+                    <div class="col-md-6">
+                        <span class="text-muted d-block small mb-0.5">Vehicle</span>
+                        <span id="review-Vehicle" class="fw-bold text-dark">-</span>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted d-block small mb-0.5">Type</span>
+                        <span id="review-Type" class="fw-bold text-dark">-</span>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted d-block small mb-0.5">Action</span>
+                        <span class="fw-bold text-dark">@(isRecord ? "Record completed work" : "Schedule work")</span>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted d-block small mb-0.5">@(isRecord ? "Date completed" : "Scheduled Date")</span>
+                        <span id="review-ScheduledDate" class="fw-bold text-dark">-</span>
+                    </div>
+                    <div class="col-12">
+                        <span class="text-muted d-block small mb-0.5">Description</span>
+                        <span id="review-Description" class="fw-bold text-dark">-</span>
+                    </div>
+                    @if (isRecord)
+                    {
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small mb-0.5">Cost</span>
+                            <span id="review-Cost" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-12">
+                            <span class="text-muted d-block small mb-0.5">Work Done / Findings</span>
+                            <span id="review-WorkDone" class="fw-bold text-dark">-</span>
+                        </div>
+                    }
+                </div>
+
+                @if (isRecord)
+                {
+                    <div class="mt-4">
+                        <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
+                            <i class="bi bi-file-earmark-image fs-5"></i>
+                            <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Photo</h6>
+                        </div>
+                        <hr class="wizard-section-divider" />
+                        <div class="review-doc-card" style="max-width: 320px;">
+                            <div class="review-doc-preview">
+                                <img id="review-PhotoImg" class="d-none" alt="Maintenance photo" />
+                                <div id="review-PhotoPlaceholder" class="license-preview-placeholder"></div>
+                            </div>
+                            <span id="review-Filename" class="review-doc-filename">No photo chosen</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 align-items-center">
+            <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;" id="btnWizardCancel" onclick="handleCancelClick()">Cancel</button>
+            <button type="button" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;" id="btnWizardNext" onclick="navigateStep(1)">Continue</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let currentStep = 1;
+    let isEditMode = false;
+    const isRecord = @(isRecord ? "true" : "false");
+    const step1Fields = isRecord
+        ? ['VehicleId', 'Type', 'ScheduledDate', 'WorkDone']
+        : ['VehicleId', 'Type', 'ScheduledDate'];
+
+    function selectedText(id) {
+        const el = document.getElementById(id);
+        if (!el || el.selectedIndex < 0) return 'N/A';
+        return el.options[el.selectedIndex].text || 'N/A';
+    }
+
+    function validateStep1() {
+        const form = document.getElementById('maintenanceWizardForm');
+        let valid = true;
+        let firstInvalid = null;
+
+        if (typeof jQuery !== 'undefined' && jQuery.fn.validate) {
+            const validator = jQuery(form).validate();
+            step1Fields.forEach(function (name) {
+                const el = form.querySelector('[name="' + name + '"]');
+                if (el && !validator.element(el)) {
+                    valid = false;
+                    if (!firstInvalid) firstInvalid = el;
+                }
+            });
+        } else {
+            step1Fields.forEach(function (name) {
+                const el = form.querySelector('[name="' + name + '"]');
+                if (!el) return;
+                const value = el.type === 'select-one' ? el.value : el.value.trim();
+                if (value === '') {
+                    valid = false;
+                    el.classList.add('input-validation-error');
+                    if (!firstInvalid) firstInvalid = el;
+                } else {
+                    el.classList.remove('input-validation-error');
+                }
+            });
+        }
+
+        if (!valid && firstInvalid) firstInvalid.focus();
+        return valid;
+    }
+
+    function navigateStep(direction) {
+        if (direction === 1 && isEditMode) {
+            if (!validateStep1()) return;
+            closeEditMode(true);
+            return;
+        }
+
+        if (direction === 1 && currentStep === 2) {
+            document.getElementById('maintenanceWizardForm').submit();
+            return;
+        }
+
+        if (direction === 1 && currentStep === 1 && !validateStep1()) {
+            return;
+        }
+
+        if (direction === 1 && currentStep === 1) {
+            compileReviewSummary();
+        }
+
+        setActiveStep(direction === 1 ? currentStep + 1 : currentStep - 1);
+    }
+
+    function setActiveStep(targetStep) {
+        document.getElementById('stepPanel-1').classList.remove('active');
+        document.getElementById('stepPanel-2').classList.remove('active');
+
+        currentStep = targetStep;
+        isEditMode = false;
+        resetStep1Header();
+        document.getElementById('stepPanel-' + currentStep).classList.add('active');
+
+        for (let i = 1; i <= 3; i++) {
+            const node = document.getElementById('node-' + i);
+            if (!node) continue;
+            node.classList.toggle('active', i === currentStep);
+            node.classList.toggle('completed', i < currentStep);
+        }
+
+        updateWizardButtons();
+    }
+
+    function openEditMode() {
+        isEditMode = true;
+        document.getElementById('stepPanel-2').classList.remove('active');
+        document.getElementById('stepPanel-1').classList.add('active');
+        document.getElementById('step1-title').innerText = 'Edit Details';
+        document.getElementById('step1-subtitle').innerText = 'Update the maintenance information before confirming.';
+        setTopbarTitle('Edit Details');
+        updateWizardButtons();
+    }
+
+    function closeEditMode(refreshReview) {
+        isEditMode = false;
+        document.getElementById('stepPanel-1').classList.remove('active');
+        document.getElementById('stepPanel-2').classList.add('active');
+        resetStep1Header();
+        setTopbarTitle(isRecord ? 'Record Work' : 'Schedule Work');
+        if (refreshReview) compileReviewSummary();
+        updateWizardButtons();
+    }
+
+    function resetStep1Header() {
+        document.getElementById('step1-title').innerText = isRecord ? 'Record completed work' : 'Schedule work';
+        document.getElementById('step1-subtitle').innerText = isRecord
+            ? 'Log a repair or inspection that is already finished.'
+            : 'Plan a repair or inspection. You will start and record it later from the log.';
+    }
+
+    function setTopbarTitle(title) {
+        const breadcrumbCurrent = document.querySelector('.topbar-breadcrumb-current');
+        if (breadcrumbCurrent) breadcrumbCurrent.innerText = title;
+    }
+
+    function updateWizardButtons() {
+        const cancelBtn = document.getElementById('btnWizardCancel');
+        const nextBtn = document.getElementById('btnWizardNext');
+        if (isEditMode || currentStep === 1) {
+            cancelBtn.innerText = currentStep === 1 && !isEditMode ? 'Cancel' : 'Back';
+            nextBtn.innerText = 'Continue';
+        } else if (currentStep === 2) {
+            cancelBtn.innerText = 'Edit Details';
+            nextBtn.innerText = 'Confirm';
+        }
+    }
+
+    function handleCancelClick() {
+        if (isEditMode) {
+            closeEditMode(true);
+            return;
+        }
+        if (currentStep === 1) {
+            window.location.href = '@Url.Action("Index")';
+        } else {
+            openEditMode();
+        }
+    }
+
+    function updateFileFeedback(input) {
+        const uploadZone = document.getElementById('maintenance-image-upload-zone');
+        const previewState = document.getElementById('maintenance-image-preview-state');
+        const nameSpan = document.getElementById('feedback-filename');
+        const previewImg = document.getElementById('maintenance-preview-img');
+        const previewPlaceholder = document.getElementById('maintenance-preview-placeholder');
+
+        if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            nameSpan.innerText = file.name;
+            uploadZone.classList.add('d-none');
+            previewState.classList.remove('d-none');
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    previewPlaceholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImg.classList.add('d-none');
+                previewImg.src = '';
+                previewPlaceholder.classList.remove('d-none');
+            }
+        }
+    }
+
+    function clearFileSelection() {
+        const fileInput = document.getElementById('input-File');
+        const uploadZone = document.getElementById('maintenance-image-upload-zone');
+        const previewState = document.getElementById('maintenance-image-preview-state');
+        const previewImg = document.getElementById('maintenance-preview-img');
+        const previewPlaceholder = document.getElementById('maintenance-preview-placeholder');
+
+        fileInput.value = '';
+        uploadZone.classList.remove('d-none');
+        previewState.classList.add('d-none');
+        previewImg.src = '';
+        previewImg.classList.add('d-none');
+        previewPlaceholder.classList.remove('d-none');
+    }
+
+    function compileReviewSummary() {
+        document.getElementById('review-Vehicle').innerText = selectedText('input-VehicleId');
+        document.getElementById('review-Type').innerText = selectedText('input-Type');
+
+        const dateVal = document.getElementById('input-ScheduledDate').value;
+        if (dateVal) {
+            const parts = dateVal.split('-');
+            const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            document.getElementById('review-ScheduledDate').innerText = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        } else {
+            document.getElementById('review-ScheduledDate').innerText = 'N/A';
+        }
+
+        const costEl = document.getElementById('input-Cost');
+        const costVal = costEl ? costEl.value : '';
+        const reviewCost = document.getElementById('review-Cost');
+        if (reviewCost) {
+            reviewCost.innerText = costVal ? ('₱' + Number(costVal).toLocaleString('en-PH', { minimumFractionDigits: 2 })) : '—';
+        }
+        document.getElementById('review-Description').innerText = document.getElementById('input-Description').value.trim() || '—';
+        const workDoneEl = document.getElementById('input-WorkDone');
+        const reviewWorkDone = document.getElementById('review-WorkDone');
+        if (reviewWorkDone) {
+            reviewWorkDone.innerText = workDoneEl && workDoneEl.value.trim() ? workDoneEl.value.trim() : '—';
+        }
+
+        const fileInput = document.getElementById('input-File');
+        const previewImg = document.getElementById('maintenance-preview-img');
+        const reviewImg = document.getElementById('review-PhotoImg');
+        const reviewPlaceholder = document.getElementById('review-PhotoPlaceholder');
+        const reviewName = document.getElementById('review-Filename');
+        if (!reviewImg) {
+            return;
+        }
+
+        if (previewImg && previewImg.src && !previewImg.classList.contains('d-none')) {
+            reviewImg.src = previewImg.src;
+            reviewImg.classList.remove('d-none');
+            reviewPlaceholder.classList.add('d-none');
+            reviewName.innerText = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0].name : 'maintenance_photo.png';
+        } else {
+            reviewImg.classList.add('d-none');
+            reviewImg.src = '';
+            reviewPlaceholder.classList.remove('d-none');
+            reviewName.innerText = 'No photo chosen';
+        }
+    }
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,4 +1,5 @@
-﻿@using System.Globalization
+﻿@model EasyRent_Checking.ViewModels.DashboardViewModel
+@using System.Globalization
 @using System.Text.Json
 @{
     Layout = "_LayoutAdminDashboard";
@@ -7,84 +8,94 @@
     ViewData["SectionTitle"] = "Dashboard";
 
     var ph = CultureInfo.GetCultureInfo("en-PH");
-    var monthlyRevenue = ViewData["MonthlyRevenue"] as decimal? ?? 0m;
-    var revenueChange = ViewData["MonthlyRevenueChange"] as decimal? ?? 0m;
-    var activeTrips = ViewData["ActiveTrips"] as int? ?? 0;
-    var activeTripsChange = ViewData["ActiveTripsChange"] as decimal? ?? 0m;
-    var bookingRequests = ViewData["BookingRequests"] as int? ?? 0;
-    var bookingRequestsChange = ViewData["BookingRequestsChange"] as decimal? ?? 0m;
-    var fleetRented = ViewData["FleetRented"] as int? ?? 0;
-    var fleetAvailable = ViewData["FleetAvailable"] as int? ?? 0;
-    var fleetMaintenance = ViewData["FleetMaintenance"] as int? ?? 0;
-    var totalFleet = ViewData["TotalFleet"] as int? ?? 0;
-
-    var trendLabels = ViewBag.TrendLabels as IList<string> ?? Array.Empty<string>();
-    var trendValues = ViewBag.TrendValues as IList<int> ?? Array.Empty<int>();
-    var fleetTypeLabels = ViewBag.FleetTypeLabels as string[] ?? Array.Empty<string>();
-    var fleetTypeValues = ViewBag.FleetTypeValues as int[] ?? Array.Empty<int>();
+    var hour = DateTime.Now.Hour;
+    var greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    var fullName = User.Identity?.Name?.Trim();
+    var greetingName = string.IsNullOrWhiteSpace(fullName)
+        ? "Admin"
+        : (fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0]);
+    var incidentWindow = Model.Period == "month" ? "This month" : "This week";
 
     string FormatChange(decimal change) =>
-        (change >= 0 ? "↑ " : "↓ ") + Math.Abs(change).ToString("0.#", CultureInfo.InvariantCulture) + "% vs last month";
+        (change >= 0 ? "↑ " : "↓ ") + Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "% vs last month";
+
+    var costLabels = Model.MaintenanceCosts.Select(c => c.Label).ToList();
+    var costValues = Model.MaintenanceCosts.Select(c => c.Amount).ToList();
+    var costColors = Model.MaintenanceCosts.Select(c => c.Color).ToList();
 }
 
 <div class="admin-dashboard">
-    <div class="row g-4 mb-4">
-        <div class="col-lg-4">
-            <div class="dash-kpi-stack">
-                <div class="dash-kpi-card">
-                    <div class="dash-kpi-icon"><i class="bi bi-wallet2"></i></div>
-                    <div class="dash-kpi-body">
-                        <span class="dash-kpi-label">Monthly Revenue</span>
-                        <div class="dash-kpi-value">₱@monthlyRevenue.ToString("N2", ph)</div>
-                    </div>
-                    <span class="dash-kpi-badge @(revenueChange >= 0 ? "is-up" : "is-down")">@FormatChange(revenueChange)</span>
-                </div>
-
-                <div class="dash-kpi-card">
-                    <div class="dash-kpi-icon"><i class="bi bi-geo-alt"></i></div>
-                    <div class="dash-kpi-body">
-                        <span class="dash-kpi-label">Active Trips</span>
-                        <div class="dash-kpi-value">@activeTrips</div>
-                    </div>
-                    <span class="dash-kpi-badge @(activeTripsChange >= 0 ? "is-up" : "is-down")">@FormatChange(activeTripsChange)</span>
-                </div>
-
-                <div class="dash-kpi-card">
-                    <div class="dash-kpi-icon"><i class="bi bi-file-earmark-text"></i></div>
-                    <div class="dash-kpi-body">
-                        <span class="dash-kpi-label">Booking Requests</span>
-                        <div class="dash-kpi-value">@bookingRequests</div>
-                    </div>
-                    <span class="dash-kpi-badge @(bookingRequestsChange >= 0 ? "is-up" : "is-down")">@FormatChange(bookingRequestsChange)</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-8">
-            <div class="dash-panel h-100">
-                <div class="dash-panel-header">
-                    <h2 class="dash-panel-title">Booking Trends</h2>
-                    <span class="dash-panel-subtitle">Last 7 days</span>
-                </div>
-                <div class="dash-chart-wrap">
-                    <canvas id="bookingTrendsChart"></canvas>
-                </div>
-            </div>
+    <div class="dash-toolbar">
+        <div class="dropdown">
+            <button class="dash-range-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                <span>@Model.RangeLabel</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item @(Model.Period == "week" ? "active" : "")" href="?period=week">This Week</a></li>
+                <li><a class="dropdown-item @(Model.Period == "month" ? "active" : "")" href="?period=month">This Month</a></li>
+            </ul>
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-6">
+    <section class="dash-hero">
+        <div class="dash-hero-copy">
+            <h1>@greeting, @greetingName!</h1>
+            <p>Here’s what’s happening with your fleet today. Stay on top of inquiries, maintenance, and accidents.</p>
+        </div>
+        <div class="dash-hero-art">
+            <img src="~/images/System Images/adminbanner.png" alt="" asp-append-version="true" />
+        </div>
+    </section>
+
+    <div class="dash-kpi-row">
+        <div class="dash-kpi-card">
+            <div class="dash-kpi-icon"><i class="bi bi-wallet2"></i></div>
+            <div class="dash-kpi-body">
+                <span class="dash-kpi-label">Revenue</span>
+                <div class="dash-kpi-value">₱@Model.MonthlyRevenue.ToString("N2", ph)</div>
+            </div>
+            <span class="dash-kpi-badge @(Model.RevenueChange >= 0 ? "is-up" : "is-down")">@FormatChange(Model.RevenueChange)</span>
+        </div>
+
+        <div class="dash-kpi-card">
+            <div class="dash-kpi-icon"><i class="bi bi-geo-alt"></i></div>
+            <div class="dash-kpi-body">
+                <span class="dash-kpi-label">Active Trips</span>
+                <div class="dash-kpi-value">@Model.ActiveTrips</div>
+            </div>
+            <span class="dash-kpi-badge @(Model.ActiveTripsChange >= 0 ? "is-up" : "is-down")">@FormatChange(Model.ActiveTripsChange)</span>
+        </div>
+
+        <div class="dash-kpi-card">
+            <div class="dash-kpi-icon"><i class="bi bi-clipboard-check"></i></div>
+            <div class="dash-kpi-body">
+                <span class="dash-kpi-label">Booking Requests</span>
+                <div class="dash-kpi-value">@Model.BookingRequests</div>
+            </div>
+            <span class="dash-kpi-badge @(Model.BookingRequestsChange >= 0 ? "is-up" : "is-down")">@FormatChange(Model.BookingRequestsChange)</span>
+        </div>
+
+        <div class="dash-kpi-card">
+            <div class="dash-kpi-icon"><i class="bi bi-calendar3"></i></div>
+            <div class="dash-kpi-body">
+                <span class="dash-kpi-label">Total Bookings</span>
+                <div class="dash-kpi-value">@Model.TotalBookings</div>
+            </div>
+            <span class="dash-kpi-badge @(Model.TotalBookingsChange >= 0 ? "is-up" : "is-down")">@FormatChange(Model.TotalBookingsChange)</span>
+        </div>
+    </div>
+
+    <section class="dash-reports">
+        <h2 class="dash-section-title">Reports Overview</h2>
+        <div class="dash-reports-grid">
             <div class="dash-panel">
-                <div class="dash-panel-header">
-                    <h2 class="dash-panel-title">Fleet Status</h2>
-                    <span class="dash-panel-subtitle">Fleet status overview</span>
-                </div>
-                <div class="dash-donut-layout">
+                <h3 class="dash-panel-title">Fleet Status</h3>
+                <div class="dash-donut-row">
                     <div class="dash-donut-chart-wrap">
                         <canvas id="fleetStatusChart"></canvas>
                         <div class="dash-donut-center">
-                            <strong>@totalFleet.ToString("N0")</strong>
+                            <strong>@Model.TotalFleet.ToString("N0")</strong>
                             <span>Total Fleet</span>
                         </div>
                     </div>
@@ -92,87 +103,108 @@
                         <div class="dash-legend-item">
                             <span class="dash-legend-dot is-rented"></span>
                             <span>Rented</span>
-                            <strong>@fleetRented.ToString("N0")</strong>
+                            <strong>@Model.FleetRented.ToString("N0")</strong>
                         </div>
                         <div class="dash-legend-item">
                             <span class="dash-legend-dot is-available"></span>
                             <span>Available</span>
-                            <strong>@fleetAvailable.ToString("N0")</strong>
+                            <strong>@Model.FleetAvailable.ToString("N0")</strong>
                         </div>
                         <div class="dash-legend-item">
                             <span class="dash-legend-dot is-maintenance"></span>
                             <span>Maintenance</span>
-                            <strong>@fleetMaintenance.ToString("N0")</strong>
+                            <strong>@Model.FleetMaintenance.ToString("N0")</strong>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-lg-6">
             <div class="dash-panel">
-                <div class="dash-panel-header">
-                    <h2 class="dash-panel-title">Fleets</h2>
-                    <span class="dash-panel-subtitle">Vehicles by type</span>
-                </div>
+                <h3 class="dash-panel-title">Fleets</h3>
                 <div class="dash-chart-wrap dash-chart-wrap--bars">
                     <canvas id="fleetTypesChart"></canvas>
                 </div>
             </div>
+
+            <div class="dash-panel">
+                <h3 class="dash-panel-title">Maintenance Cost</h3>
+                <div class="dash-donut-row">
+                    <div class="dash-donut-chart-wrap">
+                        <canvas id="maintenanceCostChart"></canvas>
+                        <div class="dash-donut-center">
+                            <strong>₱@Model.MaintenanceCostTotal.ToString("N2", ph)</strong>
+                            <span>This Month</span>
+                        </div>
+                    </div>
+                    <div class="dash-donut-legend">
+                        @foreach (var slice in Model.MaintenanceCosts)
+                        {
+                            <div class="dash-legend-item">
+                                <span class="dash-legend-dot" style="background:@slice.Color"></span>
+                                <span>@slice.Label</span>
+                                <strong>@slice.Percent.ToString("0")%</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <section class="dash-incidents">
+        <div class="dash-incidents-heading">
+            <span class="dash-incidents-icon" aria-hidden="true">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </span>
+            <h2>Incident Reports</h2>
+        </div>
+
+        <div class="dash-incidents-stats">
+            <div class="dash-incidents-stat">
+                <span class="dash-incidents-stat-label">New Reports</span>
+                <strong>@Model.IncidentNew</strong>
+                <small>@incidentWindow</small>
+            </div>
+            <div class="dash-incidents-stat">
+                <span class="dash-incidents-stat-label">In Progress</span>
+                <strong>@Model.IncidentInProgress</strong>
+                <small>@incidentWindow</small>
+            </div>
+            <div class="dash-incidents-stat">
+                <span class="dash-incidents-stat-label">Closed</span>
+                <strong>@Model.IncidentClosed</strong>
+                <small>@incidentWindow</small>
+            </div>
+        </div>
+
+        <a class="dash-incidents-cta" asp-controller="Incidents" asp-action="Index">View Reports</a>
+    </section>
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
         (function () {
-            const navy = '#1E3A8A';
+            const navy = '#1A2B56';
             const teal = '#0F766E';
             const amber = '#F5B301';
-            const grid = '#E6E8EE';
+            const grid = '#EEF0F4';
+            const tick = '#6B7280';
 
-            const trendLabels = @Html.Raw(JsonSerializer.Serialize(trendLabels));
-            const trendValues = @Html.Raw(JsonSerializer.Serialize(trendValues));
-            const fleetTypeLabels = @Html.Raw(JsonSerializer.Serialize(fleetTypeLabels));
-            const fleetTypeValues = @Html.Raw(JsonSerializer.Serialize(fleetTypeValues));
+            const fleetTypeLabels = @Html.Raw(JsonSerializer.Serialize(Model.FleetTypeLabels));
+            const fleetTypeValues = @Html.Raw(JsonSerializer.Serialize(Model.FleetTypeValues));
+            const costLabels = @Html.Raw(JsonSerializer.Serialize(costLabels));
+            const costValues = @Html.Raw(JsonSerializer.Serialize(costValues));
+            const costColors = @Html.Raw(JsonSerializer.Serialize(costColors));
 
-            const trendsCtx = document.getElementById('bookingTrendsChart');
-            if (trendsCtx) {
-                new Chart(trendsCtx, {
-                    type: 'line',
-                    data: {
-                        labels: trendLabels,
-                        datasets: [{
-                            data: trendValues,
-                            borderColor: navy,
-                            backgroundColor: (ctx) => {
-                                const { chart } = ctx;
-                                const { ctx: c, chartArea } = chart;
-                                if (!chartArea) return 'rgba(30,58,138,0.12)';
-                                const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                                g.addColorStop(0, 'rgba(30,58,138,0.28)');
-                                g.addColorStop(1, 'rgba(30,58,138,0.02)');
-                                return g;
-                            },
-                            fill: true,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointBackgroundColor: navy,
-                            borderWidth: 2.5
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { grid: { display: false }, ticks: { color: '#6B7280', font: { weight: '600' } } },
-                            y: { beginAtZero: true, grid: { color: grid }, ticks: { color: '#6B7280', precision: 0 } }
-                        }
-                    }
-                });
-            }
+            const chartFont = { family: 'Poppins, sans-serif', size: 11, weight: '600' };
+
+            const donutOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: { legend: { display: false } }
+            };
 
             const fleetCtx = document.getElementById('fleetStatusChart');
             if (fleetCtx) {
@@ -181,18 +213,34 @@
                     data: {
                         labels: ['Rented', 'Available', 'Maintenance'],
                         datasets: [{
-                            data: [@fleetRented, @fleetAvailable, @fleetMaintenance],
+                            data: [@Model.FleetRented, @Model.FleetAvailable, @Model.FleetMaintenance],
                             backgroundColor: [navy, teal, amber],
-                            borderWidth: 0,
+                            borderWidth: 5,
+                            borderColor: '#fff',
                             hoverOffset: 4
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '68%',
-                        plugins: { legend: { display: false } }
-                    }
+                    options: donutOptions
+                });
+            }
+
+            const costCtx = document.getElementById('maintenanceCostChart');
+            if (costCtx) {
+                const values = costValues.some(v => v > 0) ? costValues : [1];
+                const colors = costValues.some(v => v > 0) ? costColors : ['#E5E7EB'];
+                new Chart(costCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: costLabels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: colors,
+                            borderWidth: 5,
+                            borderColor: '#fff',
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: donutOptions
                 });
             }
 
@@ -209,12 +257,13 @@
                                 const { ctx: c, chartArea } = chart;
                                 if (!chartArea) return navy;
                                 const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                                g.addColorStop(0, '#1E3A8A');
-                                g.addColorStop(1, '#5B7CDE');
+                                g.addColorStop(0, '#1A2B56');
+                                g.addColorStop(1, '#93B4F5');
                                 return g;
                             },
-                            borderRadius: 6,
-                            maxBarThickness: 42
+                            borderRadius: 8,
+                            borderSkipped: false,
+                            maxBarThickness: 38
                         }]
                     },
                     options: {
@@ -222,8 +271,8 @@
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            x: { grid: { display: false }, ticks: { color: '#6B7280', font: { weight: '600' } } },
-                            y: { beginAtZero: true, grid: { color: grid }, ticks: { color: '#6B7280', precision: 0 } }
+                            x: { grid: { display: false }, ticks: { color: tick, font: chartFont } },
+                            y: { beginAtZero: true, grid: { color: grid }, ticks: { color: tick, precision: 0, font: chartFont } }
                         }
                     }
                 });

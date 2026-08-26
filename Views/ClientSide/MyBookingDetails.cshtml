@@ -1,29 +1,45 @@
 @model EasyRent_Checking.Models.Rental
 @using EasyRent_Checking.Models
+@using EasyRent_Checking.Services
 @using System.Globalization
 
 @{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
     ViewData["Title"] = "Booking Details";
+    ViewData["HubActive"] = "bookings";
 
     var details = Model.Details;
     var vehicle = details?.Vehicle;
     var payment = ViewData["LatestPayment"] as Payment;
+    var paymentSummary = ViewData["PaymentSummary"] as BookingPaymentSummary
+        ?? new BookingPaymentSummary();
     var transit = ViewData["Transit"] as Transit;
     var feedback = ViewData["Feedback"] as Feedback;
     var canRate = ViewData["CanRate"] as bool? == true;
+    var canCancel = ViewData["CanCancel"] as bool? == true;
     var bookingLabel = $"BK-{Model.RentalId:D5}";
-    var vehicleTitle = vehicle != null ? $"{vehicle.Model} {vehicle.Brand}".Trim() : "your vehicle";
+    var vehicleTitle = vehicle?.Model ?? "your vehicle";
+    var vehicleSpec = vehicle != null
+        ? $"{VehicleTypes.DisplayUpper(vehicle.Type)} • {vehicle.PassengersCount} seater"
+        : "—";
 
     var isCancelled = Model.RentalStatus == RentalStatus.Cancelled;
     var isExpired = Model.RentalStatus == RentalStatus.Expired;
     var isApproved = Model.RentalStatus == RentalStatus.Approved;
-    var isPending = Model.RentalStatus == RentalStatus.Pending;
-    var isUnpaidReserve = Model.RentalOption == RentalOption.Reserve && isPending && payment == null;
+    var isUnpaidReserve = Model.RentalOption == RentalOption.Reserve && Model.RentalStatus == RentalStatus.Pending && payment == null;
     var hasDriver = transit?.DriverID != null && transit.Driver != null;
     var tripStarted = transit != null && transit.TripStatus is TripStatus.InTransit or TripStatus.Completed;
+    var isInTransit = transit?.TripStatus == TripStatus.InTransit;
+    var tripCompleted = transit?.TripStatus == TripStatus.Completed;
+    var recordedCancelFee = Model.CancellationFee ?? 0m;
+    var fare = vehicle != null && details != null
+        ? RentalFareCalculator.Calculate(vehicle, details)
+        : (RentalFareBreakdown?)null;
+    var hasSeniorDiscount = details?.Discount == Discount.Yes;
 
-    // Combined booking+payment request → admin confirm → transit
+    string FormatPeso(decimal amount) =>
+        "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
+
     string step1 = isExpired ? "cancelled" : (isUnpaidReserve ? "active" : "completed");
     string step2 = isCancelled || isExpired
         ? "cancelled"
@@ -47,15 +63,17 @@
     else if (isCancelled)
     {
         heroTitle = "Booking Cancelled";
-        heroText = $"Your booking request for the {vehicleTitle} was cancelled.";
+        heroText = recordedCancelFee > 0
+            ? $"Your booking for the {vehicleTitle} was cancelled. A {FormatPeso(recordedCancelFee)} cancellation fee applies because the vehicle was already out in transit."
+            : $"Your booking request for the {vehicleTitle} was cancelled at no charge.";
         heroIconClass = "bi-x-circle";
         heroTone = "is-cancelled";
     }
-    else if (tripStarted && transit!.TripStatus == TripStatus.Completed)
+    else if (tripStarted && tripCompleted)
     {
         heroTitle = "Trip Completed";
-        heroText = $"Your trip with the {vehicleTitle} has been completed. Thank you for choosing EasyRent.";
-        heroIconClass = "bi-check-circle";
+        heroText = $"Thank you for riding with EasyRent. We hope you enjoyed your trip with the {vehicleTitle}.";
+        heroIconClass = "bi-check-lg";
         heroTone = "is-success";
     }
     else if (tripStarted)
@@ -76,7 +94,7 @@
     {
         heroTitle = "Booking Confirmed";
         heroText = "Admin confirmed your booking and payment. Your trip is being prepared for dispatch.";
-        heroIconClass = "bi-check-circle";
+        heroIconClass = "bi-check-lg";
         heroTone = "is-success";
     }
     else if (isUnpaidReserve)
@@ -107,18 +125,10 @@
         _ => "Pending"
     };
 
-    string StatusIcon = Model.RentalStatus switch
-    {
-        RentalStatus.Approved => "bi-check-circle",
-        RentalStatus.Cancelled => "bi-x-circle",
-        RentalStatus.Expired => "bi-hourglass-bottom",
-        _ => "bi-clock"
-    };
-
     string FormatDateTime(DateOnly? date, TimeOnly? time)
     {
         if (date == null || time == null) return "—";
-        return $"{date.Value.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)} • {time.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+        return $"{date.Value.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)} • {time.Value.ToString("h:mmtt", CultureInfo.InvariantCulture)}";
     }
 
     string FormatDuration()
@@ -130,34 +140,55 @@
         return hours == 1 ? "1 hour" : $"{hours} hours";
     }
 
-    string FormatPeso(decimal amount) =>
-        "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
+    string? MethodLogo(string? method) => method switch
+    {
+        "GCash" => Url.Content("~/images/System Images/GcashImage.jpg"),
+        "BDO" => Url.Content("~/images/System Images/BDOimage.png"),
+        _ => null
+    };
+
+    var paymentTypeLabel = payment?.PaymentType
+        ?? (isUnpaidReserve ? "Unpaid" : "Full Payment");
+    var paymentLineAmount = payment != null
+        ? payment.AmountPaid
+        : fare?.BasePackageAmount ?? paymentSummary.TotalFare;
+    var remainingDue = isCancelled || isExpired ? 0m : paymentSummary.RemainingBalance;
 }
 
-<div class="client-page booking-details-page">
-    @if (TempData["RateTripSuccess"] != null)
-    {
-        <div class="alert alert-success rate-trip-alert" role="status">@TempData["RateTripSuccess"]</div>
-    }
-    @if (TempData["RateTripInfo"] != null)
-    {
-        <div class="alert alert-info rate-trip-alert" role="status">@TempData["RateTripInfo"]</div>
-    }
-    @if (TempData["RateTripError"] != null)
-    {
-        <div class="alert alert-warning rate-trip-alert" role="status">@TempData["RateTripError"]</div>
-    }
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
-    }
+<div class="client-page account-hub is-booking-details booking-details-page">
+    <partial name="_AccountHubNav" />
 
-    <a asp-action="MyBookings" class="booking-details-back">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i>
-        Back to Transactions &amp; Rentals
-    </a>
+    <section class="account-hub-main">
+        @if (TempData["RateTripSuccess"] != null)
+        {
+            <div class="alert alert-success rate-trip-alert" role="status">@TempData["RateTripSuccess"]</div>
+        }
+        @if (TempData["RateTripInfo"] != null)
+        {
+            <div class="alert alert-info rate-trip-alert" role="status">@TempData["RateTripInfo"]</div>
+        }
+        @if (TempData["RateTripError"] != null)
+        {
+            <div class="alert alert-warning rate-trip-alert" role="status">@TempData["RateTripError"]</div>
+        }
+        @if (TempData["CancelError"] != null)
+        {
+            <div class="alert alert-warning rate-trip-alert" role="alert">@TempData["CancelError"]</div>
+        }
+        @if (TempData["RentalError"] != null)
+        {
+            <div class="alert alert-warning rate-trip-alert" role="alert">@TempData["RentalError"]</div>
+        }
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+        }
 
-    <div class="booking-details-layout">
+        <a asp-action="MyBookings" class="booking-details-back">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            Back to Transaction &amp; Rentals
+        </a>
+
         <section class="booking-progress-card">
             <div class="booking-progress-hero @heroTone">
                 <div class="booking-progress-hero-icon" aria-hidden="true">
@@ -165,37 +196,7 @@
                 </div>
                 <h1 class="booking-progress-hero-title">@heroTitle</h1>
                 <p class="booking-progress-hero-text">@heroText</p>
-                @if (isUnpaidReserve)
-                {
-                    <a asp-action="PayRental" asp-route-id="@Model.RentalId" class="btn btn-light fw-semibold mt-3">
-                        <i class="bi bi-credit-card-2-front me-1"></i> Pay Now
-                    </a>
-                }
-                else if (canRate)
-                {
-                    <a asp-action="RateTrip" asp-route-id="@Model.RentalId" class="btn btn-light fw-semibold mt-3">
-                        <i class="bi bi-star me-1"></i> Rate &amp; Review
-                    </a>
-                }
             </div>
-
-            @if (feedback != null)
-            {
-                <div class="booking-feedback-panel">
-                    <h2 class="booking-feedback-title">Your review</h2>
-                    <div class="booking-feedback-stars" aria-label="@feedback.Rating out of 5 stars">
-                        @for (var i = 1; i <= 5; i++)
-                        {
-                            <i class="bi @(i <= feedback.Rating ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
-                        }
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(feedback.Comment))
-                    {
-                        <p class="booking-feedback-comment">@feedback.Comment</p>
-                    }
-                    <p class="booking-feedback-date">Submitted @feedback.CreatedAt.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)</p>
-                </div>
-            }
 
             <ol class="booking-progress-steps">
                 <li class="booking-progress-step is-@step1">
@@ -214,19 +215,10 @@
                         }
                     </div>
                     <div class="booking-progress-body">
-                        <h2>@(Model.RentalOption == RentalOption.Reserve ? "Rental Hold" : "Booking & Payment Submitted")</h2>
-                        <p>
-                            @(isUnpaidReserve
-                                ? $"Vehicle is held. Complete payment by {Model.PaymentDueAt:MMM d, yyyy h:mm tt}."
-                                : Model.RentalOption == RentalOption.Reserve
-                                    ? "You reserved the vehicle and submitted payment for staff review."
-                                    : "You submitted your rental details together with your payment information for staff review.")
-                        </p>
+                        <h2>@(isUnpaidReserve ? "Rental Hold" : "Booking Payment Submitted")</h2>
                         @if (payment != null)
                         {
-                            <span class="booking-progress-state">
-                                @payment.PaymentType via @payment.PaymentMethod · @FormatPeso(payment.AmountPaid)
-                            </span>
+                            <span class="booking-progress-state">@payment.PaymentType via @payment.PaymentMethod • @FormatPeso(payment.AmountPaid)</span>
                         }
                         else if (isUnpaidReserve)
                         {
@@ -238,7 +230,7 @@
                         }
                         else
                         {
-                            <span class="booking-progress-state">Completed</span>
+                            <span class="booking-progress-state">Submitted</span>
                         }
                     </div>
                 </li>
@@ -260,10 +252,9 @@
                     </div>
                     <div class="booking-progress-body">
                         <h2>Admin Confirmation</h2>
-                        <p>Our staff reviews your booking and payment, then confirms to move your request into transit.</p>
                         @if (step2 == "completed")
                         {
-                            <span class="booking-progress-state">Confirmed@(payment != null ? " · Payment recorded" : "")</span>
+                            <span class="booking-progress-state">Confirmed@(payment != null ? " • Payment Recorded" : "")</span>
                         }
                         else if (step2 == "cancelled")
                         {
@@ -288,8 +279,7 @@
                         }
                     </div>
                     <div class="booking-progress-body">
-                        <h2>Driver Assignment &amp; Dispatch</h2>
-                        <p>After confirmation, a driver is assigned and your trip log starts here.</p>
+                        <h2>Driver Assigned &amp; Dispatch</h2>
                         @if (step3 == "completed")
                         {
                             <span class="booking-progress-state">Driver: @transit!.Driver!.Name</span>
@@ -305,39 +295,137 @@
                     </div>
                 </li>
             </ol>
-        </section>
 
-        <aside class="booking-summary-card">
-            <div class="booking-summary-top">
-                <span class="booking-summary-id">Booking ID: @bookingLabel</span>
-                <span class="booking-summary-status is-@Model.RentalStatus.ToString().ToLowerInvariant()">
-                    <i class="bi @StatusIcon" aria-hidden="true"></i>
-                    @StatusLabel
-                </span>
-            </div>
+            @if (feedback != null)
+            {
+                <div class="booking-feedback-panel">
+                    <h2 class="booking-feedback-title">Your review</h2>
 
-            <div class="booking-summary-vehicle">
-                <div class="booking-summary-thumb" aria-hidden="true">
-                    @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
+                    <div class="booking-feedback-group">
+                        <h3 class="booking-feedback-group-title">Vehicle</h3>
+                        <div class="booking-feedback-category">
+                            <span>Comfort</span>
+                            <div class="booking-feedback-stars" aria-label="@feedback.VehicleComfort out of 5 stars">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= feedback.VehicleComfort ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                }
+                            </div>
+                        </div>
+                        <div class="booking-feedback-category">
+                            <span>Performance</span>
+                            <div class="booking-feedback-stars" aria-label="@feedback.VehiclePerformance out of 5 stars">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= feedback.VehiclePerformance ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                }
+                            </div>
+                        </div>
+                        <div class="booking-feedback-category">
+                            <span>Safety</span>
+                            <div class="booking-feedback-stars" aria-label="@feedback.VehicleSafety out of 5 stars">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= feedback.VehicleSafety ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (feedback.HasDriverRatings)
                     {
-                        <img src="~/images/@vehicle.ImagePath" alt="@vehicleTitle" />
+                        <div class="booking-feedback-group">
+                            <h3 class="booking-feedback-group-title">Driver</h3>
+                            <div class="booking-feedback-category">
+                                <span>Professionalism</span>
+                                <div class="booking-feedback-stars" aria-label="@feedback.DriverProfessionalism out of 5 stars">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi @(i <= feedback.DriverProfessionalism ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                    }
+                                </div>
+                            </div>
+                            <div class="booking-feedback-category">
+                                <span>Driving</span>
+                                <div class="booking-feedback-stars" aria-label="@feedback.DriverDriving out of 5 stars">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi @(i <= feedback.DriverDriving ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                    }
+                                </div>
+                            </div>
+                            <div class="booking-feedback-category">
+                                <span>Courtesy</span>
+                                <div class="booking-feedback-stars" aria-label="@feedback.DriverCourtesy out of 5 stars">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi @(i <= feedback.DriverCourtesy ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                    }
+                                </div>
+                            </div>
+                        </div>
                     }
+
+                    @if (!string.IsNullOrWhiteSpace(feedback.Comment))
+                    {
+                        <p class="booking-feedback-comment">@feedback.Comment</p>
+                    }
+                    <p class="booking-feedback-date">Submitted @feedback.CreatedAt.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)</p>
                 </div>
-                @if (vehicle != null)
+            }
+
+            @if (isUnpaidReserve)
+            {
+                <a asp-action="PayRental" asp-route-id="@Model.RentalId" class="booking-details-cta">
+                    Pay Now
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+            }
+            else if (canRate)
+            {
+                <a asp-action="RateTrip" asp-route-id="@Model.RentalId" class="booking-details-cta">
+                    <i class="bi bi-star" aria-hidden="true"></i>
+                    Rate &amp; Review
+                </a>
+            }
+
+            @if (canCancel)
+            {
+                <button type="button"
+                        class="booking-cancel-trigger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#cancelBookingModal">
+                    Cancel Booking
+                </button>
+            }
+        </section>
+    </section>
+
+    <aside class="booking-details-aside">
+        <div class="booking-side-card booking-side-vehicle">
+            <div class="booking-side-thumb" aria-hidden="true">
+                @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
                 {
-                    <span class="booking-summary-type">@vehicle.Type</span>
-                    <h2 class="booking-summary-name">@vehicleTitle</h2>
-                }
-                else
-                {
-                    <h2 class="booking-summary-name">Vehicle unavailable</h2>
+                    <img src="~/images/@vehicle.ImagePath" alt="@vehicleTitle" />
                 }
             </div>
+            <h2>@vehicleTitle</h2>
+            <p>@vehicleSpec</p>
+        </div>
 
+        <div class="booking-side-card">
             <dl class="booking-summary-list">
                 <div class="booking-summary-row">
+                    <dt>Booking ID</dt>
+                    <dd>@bookingLabel</dd>
+                </div>
+                <div class="booking-summary-row">
+                    <dt>Status</dt>
+                    <dd class="booking-side-status is-@Model.RentalStatus.ToString().ToLowerInvariant()">@StatusLabel</dd>
+                </div>
+                <div class="booking-summary-row">
                     <dt>Passengers</dt>
-                    <dd>@(details?.PassengerCount.ToString() ?? "—") Persons</dd>
+                    <dd>@(details == null ? "—" : details.PassengerCount == 1 ? "1 Person" : $"{details.PassengerCount} Persons")</dd>
                 </div>
                 <div class="booking-summary-row">
                     <dt>Pick-up Date</dt>
@@ -360,6 +448,111 @@
                     <dd>@(details?.DropoffLocation ?? "—")</dd>
                 </div>
             </dl>
-        </aside>
-    </div>
+        </div>
+
+        <div class="booking-side-card">
+            @if (payment != null)
+            {
+                var logo = MethodLogo(payment.PaymentMethod);
+                <div class="booking-pay-method">
+                    @if (!string.IsNullOrEmpty(logo))
+                    {
+                        <img src="@logo" alt="@payment.PaymentMethod" />
+                    }
+                    else
+                    {
+                        <span class="booking-pay-method-fallback" aria-hidden="true"><i class="bi bi-shop"></i></span>
+                    }
+                    <div>
+                        <strong>@payment.PaymentDate.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)</strong>
+                        <span>@(string.IsNullOrWhiteSpace(payment.TransactionReference) ? payment.PaymentMethod : $"Ref {payment.TransactionReference}")</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="booking-pay-method">
+                    <span class="booking-pay-method-fallback" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
+                    <div>
+                        <strong>No payment yet</strong>
+                        <span>@(isUnpaidReserve ? "Complete payment to keep this hold." : "Payment has not been recorded.")</span>
+                    </div>
+                </div>
+            }
+
+            <dl class="booking-pay-lines">
+                <div class="booking-summary-row">
+                    <dt>@paymentTypeLabel</dt>
+                    <dd>@FormatPeso(paymentLineAmount)</dd>
+                </div>
+                @if (fare != null && fare.Value.SucceedingHours > 0 && fare.Value.SucceedingFeeTotal > 0)
+                {
+                    <div class="booking-summary-row">
+                        <dt>Exceeding Hour(@(fare.Value.SucceedingHours) @(fare.Value.SucceedingHours == 1 ? "hr" : "hrs"))</dt>
+                        <dd>@FormatPeso(fare.Value.SucceedingFeeTotal)</dd>
+                    </div>
+                }
+                @if (hasSeniorDiscount)
+                {
+                    <div class="booking-summary-row">
+                        <dt>Senior Citizen Discount</dt>
+                        <dd>10%</dd>
+                    </div>
+                }
+                @if (isCancelled && recordedCancelFee > 0)
+                {
+                    <div class="booking-summary-row">
+                        <dt>Cancellation fee</dt>
+                        <dd>@FormatPeso(recordedCancelFee)</dd>
+                    </div>
+                }
+                else if (remainingDue > 0)
+                {
+                    <div class="booking-summary-row">
+                        <dt>Remaining balance</dt>
+                        <dd class="booking-side-due">@FormatPeso(remainingDue)</dd>
+                    </div>
+                }
+            </dl>
+
+            <div class="booking-pay-total">
+                <span>Total Amount</span>
+                <strong>@FormatPeso(paymentSummary.TotalFare)</strong>
+            </div>
+        </div>
+    </aside>
 </div>
+
+@if (canCancel)
+{
+    <div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-labelledby="cancelBookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h2 class="modal-title fs-5 fw-bold" id="cancelBookingModalLabel">Cancel booking?</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    @if (isInTransit)
+                    {
+                        <p class="mb-2">The vehicle is currently <strong>out in transit</strong>.</p>
+                        <p class="mb-0">Cancelling now requires a <strong>@FormatPeso(RentalRules.CancellationFeeWhenInTransit)</strong> fee. Please settle this with EasyRent after confirming.</p>
+                    }
+                    else
+                    {
+                        <p class="mb-0">This cancellation is <strong>free</strong> because the vehicle is not out in transit yet.</p>
+                    }
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Keep Booking</button>
+                    <form asp-action="CancelBooking" asp-route-id="@Model.RentalId" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">
+                            @(isInTransit ? "Cancel &amp; Accept Fee" : "Confirm Cancel")
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}

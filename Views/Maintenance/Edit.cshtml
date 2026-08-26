@@ -1,0 +1,174 @@
+@model EasyRent_Checking.Models.MaintenanceLog
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Edit Details";
+    ViewData["ActivePage"] = "Maintenance";
+
+    string GetDisplayFileName(string? path, string fallback)
+    {
+        if (string.IsNullOrEmpty(path)) return fallback;
+        var separatorIndex = path.IndexOf('_');
+        return separatorIndex >= 0 && separatorIndex < path.Length - 1
+            ? path[(separatorIndex + 1)..]
+            : path;
+    }
+
+    bool hasPhoto = !string.IsNullOrEmpty(Model?.ImagePath);
+    string photoFileName = GetDisplayFileName(Model?.ImagePath, "maintenance_photo.png");
+    string? backUrl = ViewData["ReturnUrl"]?.ToString();
+}
+
+<div class="wizard-max-wrapper py-3">
+    <form asp-action="Edit" enctype="multipart/form-data" id="editMaintenanceForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+        <input type="hidden" asp-for="MaintenanceLogId" />
+        <input type="hidden" asp-for="ImagePath" />
+        @if (!string.IsNullOrEmpty(backUrl))
+        {
+            <input type="hidden" name="returnUrl" value="@backUrl" />
+        }
+
+        <div class="text-start mb-4">
+            <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Edit Maintenance Log</h5>
+            <p class="text-muted small">Update the work details, status, and photo.</p>
+        </div>
+
+        <div class="form-container-card p-4 mb-4 shadow-sm">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-tools fs-5 text-secondary"></i>
+                <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Maintenance Details</h6>
+            </div>
+            <hr class="wizard-section-divider" />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="VehicleId" class="form-label fw-semibold small text-secondary mb-1">Vehicle</label>
+                    <select asp-for="VehicleId" class="form-select form-control-thin shadow-sm" asp-items="ViewBag.VehicleId">
+                        <option value="">Select vehicle...</option>
+                    </select>
+                    <span asp-validation-for="VehicleId" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Type" class="form-label fw-semibold small text-secondary mb-1">Type</label>
+                    <select asp-for="Type" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<MaintenanceType>()"></select>
+                    <span asp-validation-for="Type" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ScheduledDate" class="form-label fw-semibold small text-secondary mb-1">Scheduled Date</label>
+                    <input asp-for="ScheduledDate" type="date" class="form-control form-control-thin shadow-sm" />
+                    <span asp-validation-for="ScheduledDate" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Cost" class="form-label fw-semibold small text-secondary mb-1">Cost</label>
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text form-control-thin">₱</span>
+                        <input asp-for="Cost" class="form-control form-control-thin" type="number" step="0.01" min="0" placeholder="Optional" />
+                    </div>
+                    <span asp-validation-for="Cost" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label fw-semibold small text-secondary mb-1">Description</label>
+                    <textarea asp-for="Description" class="form-control form-control-thin shadow-sm" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="WorkDone" class="form-label fw-semibold small text-secondary mb-1">Work Done / Findings</label>
+                    <textarea asp-for="WorkDone" class="form-control form-control-thin shadow-sm" rows="3"></textarea>
+                    <span asp-validation-for="WorkDone" class="text-danger small mt-1 d-block"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-container-card p-4 mb-4 shadow-sm">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-file-earmark-image fs-5 text-secondary"></i>
+                <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Photo</h6>
+            </div>
+            <hr class="wizard-section-divider" />
+
+            <div id="maintenance-image-upload-zone" class="license-upload-zone @(hasPhoto ? "d-none" : "")">
+                <div>
+                    <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
+                    <span class="d-block small fw-bold text-dark mb-1">Drag &amp; drop or <span class="text-decoration-underline">click to browse</span></span>
+                    <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or JPEG</span>
+                </div>
+                <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,image/*" onchange="updateFileFeedback(this)" />
+            </div>
+
+            <div id="maintenance-image-preview-state" class="@(hasPhoto ? "" : "d-none")">
+                <div class="license-preview-box" id="maintenance-image-preview-box" title="Click to replace image" onclick="document.getElementById('input-File').click()">
+                    @if (hasPhoto)
+                    {
+                        <img id="maintenance-preview-img" src="~/images/@Model!.ImagePath" alt="Maintenance photo preview" />
+                        <div id="maintenance-preview-placeholder" class="license-preview-placeholder d-none"></div>
+                    }
+                    else
+                    {
+                        <img id="maintenance-preview-img" class="d-none" alt="Maintenance photo preview" />
+                        <div id="maintenance-preview-placeholder" class="license-preview-placeholder"></div>
+                    }
+                </div>
+                <div class="upload-preview-bar d-flex align-items-center justify-content-between p-3 mt-2">
+                    <span id="feedback-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">@photoFileName</span>
+                    <button type="button" class="btn btn-link text-dark small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearFileSelection()">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 align-items-center">
+            <a href="@(string.IsNullOrEmpty(backUrl) ? Url.Action("Index") : backUrl)" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;">Cancel</a>
+            <button type="submit" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;">Save Changes</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function updateFileFeedback(input) {
+        const uploadZone = document.getElementById('maintenance-image-upload-zone');
+        const previewState = document.getElementById('maintenance-image-preview-state');
+        const nameSpan = document.getElementById('feedback-filename');
+        const previewImg = document.getElementById('maintenance-preview-img');
+        const previewPlaceholder = document.getElementById('maintenance-preview-placeholder');
+        const imagePath = document.querySelector('[name="ImagePath"]');
+
+        if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            nameSpan.innerText = file.name;
+            uploadZone.classList.add('d-none');
+            previewState.classList.remove('d-none');
+            if (imagePath) imagePath.value = file.name;
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    previewPlaceholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+
+    function clearFileSelection() {
+        const fileInput = document.getElementById('input-File');
+        const uploadZone = document.getElementById('maintenance-image-upload-zone');
+        const previewState = document.getElementById('maintenance-image-preview-state');
+        const previewImg = document.getElementById('maintenance-preview-img');
+        const previewPlaceholder = document.getElementById('maintenance-preview-placeholder');
+        const imagePath = document.querySelector('[name="ImagePath"]');
+
+        fileInput.value = '';
+        if (imagePath) imagePath.value = '';
+        uploadZone.classList.remove('d-none');
+        previewState.classList.add('d-none');
+        previewImg.src = '';
+        previewImg.classList.add('d-none');
+        previewPlaceholder.classList.remove('d-none');
+    }
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

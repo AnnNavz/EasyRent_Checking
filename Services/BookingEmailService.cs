@@ -8,15 +8,18 @@ namespace EasyRent_Checking.Services
 	{
 		private readonly EasyRent_CheckingContext _context;
 		private readonly IEmailSender _emailSender;
+		private readonly ReceiptPdfService _receiptPdfService;
 		private readonly ILogger<BookingEmailService> _logger;
 
 		public BookingEmailService(
 			EasyRent_CheckingContext context,
 			IEmailSender emailSender,
+			ReceiptPdfService receiptPdfService,
 			ILogger<BookingEmailService> logger)
 		{
 			_context = context;
 			_emailSender = emailSender;
+			_receiptPdfService = receiptPdfService;
 			_logger = logger;
 		}
 
@@ -31,16 +34,52 @@ namespace EasyRent_Checking.Services
 				return;
 			}
 
-			var bookingLabel = $"BK-{rental.RentalId:D6}";
+			details ??= rental.Details;
+			if (details != null && details.Vehicle == null && details.VehicleId > 0)
+			{
+				details.Vehicle = await _context.Vehicles
+					.AsNoTracking()
+					.FirstOrDefaultAsync(v => v.VehicleId == details.VehicleId);
+			}
+
+			var payment = await _context.Payments
+				.AsNoTracking()
+				.Where(p => p.RentalId == rental.RentalId)
+				.OrderByDescending(p => p.PaymentId)
+				.FirstOrDefaultAsync();
+
+			var bookingLabel = $"BK-{rental.RentalId:D5}";
 			var tripLines = FormatTripLines(details);
+			var paymentLines = FormatPaymentLines(payment);
 			var body = $"""
 				<p>Hi {rental.CustomerName},</p>
 				<p>Your EasyRent booking <strong>{bookingLabel}</strong> has been confirmed.</p>
 				{tripLines}
+				{paymentLines}
+				<p>Your official payment receipt is attached as a PDF.</p>
 				<p>We look forward to serving you.</p>
 				""";
 
-			await TrySendAsync(email, $"Booking {bookingLabel} confirmed", body, rental.RentalId);
+			EmailAttachment[]? attachments = null;
+			try
+			{
+				var pdfBytes = _receiptPdfService.Generate(rental, details, payment, details?.Vehicle);
+				attachments =
+				[
+					new EmailAttachment
+					{
+						FileName = $"EasyRent-Receipt-{bookingLabel}.pdf",
+						Content = pdfBytes,
+						ContentType = "application/pdf"
+					}
+				];
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Failed to generate receipt PDF for rental {RentalId}", rental.RentalId);
+			}
+
+			await TrySendAsync(email, $"Booking {bookingLabel} confirmed — receipt attached", body, rental.RentalId, attachments);
 		}
 
 		public async Task SendTripStartedAsync(Rental rental, RentalDetails? details)
@@ -54,7 +93,7 @@ namespace EasyRent_Checking.Services
 				return;
 			}
 
-			var bookingLabel = $"BK-{rental.RentalId:D6}";
+			var bookingLabel = $"BK-{rental.RentalId:D5}";
 			var tripLines = FormatTripLines(details);
 			var body = $"""
 				<p>Hi {rental.CustomerName},</p>
@@ -107,11 +146,16 @@ namespace EasyRent_Checking.Services
 				.FirstOrDefaultAsync();
 		}
 
-		private async Task TrySendAsync(string toEmail, string subject, string htmlBody, int relatedId)
+		private async Task TrySendAsync(
+			string toEmail,
+			string subject,
+			string htmlBody,
+			int relatedId,
+			IEnumerable<EmailAttachment>? attachments = null)
 		{
 			try
 			{
-				await _emailSender.SendAsync(toEmail, subject, htmlBody);
+				await _emailSender.SendAsync(toEmail, subject, htmlBody, attachments);
 			}
 			catch (Exception ex)
 			{
@@ -128,8 +172,24 @@ namespace EasyRent_Checking.Services
 
 			return $"""
 				<ul>
-					<li><strong>Pickup:</strong> {details.PickupLocation} — {details.PickupDate:MMM d, yyyy} {details.PickupTime:HH:mm}</li>
-					<li><strong>Drop-off:</strong> {details.DropoffLocation} — {details.ReturnDate:MMM d, yyyy} {details.ReturnTime:HH:mm}</li>
+					<li><strong>Pickup:</strong> {details.PickupLocation} — {details.PickupDate:MMM d, yyyy} {details.PickupTime:h:mm tt}</li>
+					<li><strong>Drop-off:</strong> {details.DropoffLocation} — {details.ReturnDate:MMM d, yyyy} {details.ReturnTime:h:mm tt}</li>
+				</ul>
+				""";
+		}
+
+		private static string FormatPaymentLines(Payment? payment)
+		{
+			if (payment == null)
+			{
+				return string.Empty;
+			}
+
+			return $"""
+				<ul>
+					<li><strong>Payment type:</strong> {payment.PaymentType}</li>
+					<li><strong>Method:</strong> {payment.PaymentMethod}</li>
+					<li><strong>Amount paid:</strong> ₱{payment.AmountPaid:N2}</li>
 				</ul>
 				""";
 		}

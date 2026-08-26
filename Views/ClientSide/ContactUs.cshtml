@@ -1,0 +1,103 @@
+@model EasyRent_Checking.ViewModels.ContactUsInputModel
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Contact Us";
+    ViewData["ActiveNav"] = "ContactUs";
+}
+
+<div class="client-home contact-page">
+    <section class="contact-hero">
+        <div class="contact-hero-media">
+            <img src="~/images/System Images/homebanner3.png" alt="" asp-append-version="true" />
+        </div>
+        <div class="contact-hero-copy">
+            <h1>Contact Us</h1>
+            <p>We’re here to help! Get in touch with us for inquiries, reservations, or any assistance you need.</p>
+            <span class="how-hero-rule"></span>
+        </div>
+    </section>
+
+    <section class="contact-section">
+        <div class="home-wrap contact-grid">
+            <article class="contact-card">
+                <header class="contact-card-head">
+                    <span class="contact-card-icon" aria-hidden="true"><i class="bi bi-send"></i></span>
+                    <h2>Send Us a Message</h2>
+                </header>
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+                }
+
+                <form asp-action="ContactUs" method="post" class="contact-form" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <label class="contact-field">
+                        <span>Full Name</span>
+                        <input asp-for="FullName" placeholder="Enter your full name" autocomplete="name" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </label>
+
+                    <label class="contact-field">
+                        <span>Email Address</span>
+                        <input asp-for="Email" placeholder="Enter your email address" autocomplete="email" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </label>
+
+                    <label class="contact-field">
+                        <span>Message</span>
+                        <textarea asp-for="Message" rows="5" placeholder="Type your message here"></textarea>
+                        <span asp-validation-for="Message" class="text-danger small"></span>
+                    </label>
+
+                    <button type="submit" class="home-btn home-btn-primary contact-submit">Send Message</button>
+                </form>
+            </article>
+
+            <article class="contact-card contact-info-card">
+                <header class="contact-card-head">
+                    <span class="contact-card-icon" aria-hidden="true"><i class="bi bi-person-lines-fill"></i></span>
+                    <h2>Contact Information</h2>
+                </header>
+
+                <ul class="contact-info-list">
+                    <li>
+                        <strong>Phone Number</strong>
+                        <div class="contact-info-row">
+                            <span class="contact-info-icon" aria-hidden="true"><i class="bi bi-telephone"></i></span>
+                            <p>+63 963 6902 998</p>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Email Address</strong>
+                        <div class="contact-info-row">
+                            <span class="contact-info-icon" aria-hidden="true"><i class="bi bi-at"></i></span>
+                            <p><a href="mailto:ccs.capstoneabadteam@gmail.com">ccs.capstoneabadteam@gmail.com</a></p>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Address</strong>
+                        <div class="contact-info-row">
+                            <span class="contact-info-icon" aria-hidden="true"><i class="bi bi-geo-alt"></i></span>
+                            <p>Z5-003 Sitio Molila, Upper Mohon, Talisay City, Cebu, Philippines 6045</p>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Hotline</strong>
+                        <div class="contact-info-row">
+                            <span class="contact-info-icon" aria-hidden="true"><i class="bi bi-phone"></i></span>
+                            <p>(02) 8911-5061 to 65 local 100 (02) 8911-1406</p>
+                        </div>
+                    </li>
+                </ul>
+            </article>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+}

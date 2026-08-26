@@ -1,0 +1,43 @@
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Add New Rental";
+    ViewData["ActivePage"] = "Rentals";
+    var rentalId = ViewData["RentalId"] as int? ?? 0;
+    var isPayLater = ViewData["IsPayLater"] as bool? == true;
+}
+
+<div class="admin-create-complete-page">
+    <div class="admin-create-complete-icon" aria-hidden="true">
+        <partial name="_SuccessCheckIcon" />
+    </div>
+
+    <h1 class="admin-create-complete-title">
+        @(isPayLater
+            ? "You have successfully completed your rental hold."
+            : "You have successfully completed your renting.")
+    </h1>
+
+    <p class="admin-create-complete-text">
+        @if (isPayLater)
+        {
+            <strong>Hold confirmed.</strong>
+            <span> The vehicle is reserved. You can review this rental anytime from Inquiries Management.</span>
+        }
+        else
+        {
+            <strong>Rent saved.</strong>
+            <span> The walk-in rental has been recorded. Review the details or add another rental when you’re ready.</span>
+        }
+    </p>
+
+    <div class="admin-create-complete-actions">
+        <a asp-action="Details" asp-route-id="@rentalId" class="btn admin-create-complete-primary">
+            <span>View Rental Details</span>
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+        <a asp-action="Create" class="btn admin-create-complete-secondary">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            <span>Add Another Rent</span>
+        </a>
+    </div>
+</div>

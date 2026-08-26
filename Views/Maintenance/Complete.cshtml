@@ -1,0 +1,465 @@
+@model EasyRent_Checking.Models.MaintenanceLog
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using System.Reflection
+@using EasyRent_Checking.Models
+@using EasyRent_Checking.Services
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Record Checkup";
+    ViewData["ActivePage"] = "Maintenance";
+
+    string EnumLabel(Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>()?.GetName();
+        return display ?? value.ToString();
+    }
+
+    var plan = Model.Plan;
+    var vehicle = Model.Vehicle;
+    var planId = Model.MaintenancePlanId ?? 0;
+    var checkupName = EnumLabel(Model.Type);
+    var vehicleName = vehicle != null ? $"{vehicle.Brand} {vehicle.Model}".Trim() : "Vehicle";
+    var plate = vehicle?.PlateNumber ?? "—";
+    var scheduleLabel = plan != null ? PmsRules.FormatSchedule(plan) : "—";
+    var nextDueLabel = plan?.NextDueDate?.ToString("MMM d, yyyy")
+        ?? (plan?.NextDueOdometer != null ? $"{plan.NextDueOdometer.Value:N0} km" : "—");
+    var previewNextDue = DateTime.Now;
+    if (plan?.IntervalMonths is int intervalMonths && intervalMonths > 0)
+    {
+        previewNextDue = previewNextDue.AddMonths(intervalMonths);
+    }
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+}
+
+<div class="wizard-max-wrapper pms-record-wizard py-3">
+    <div class="step-timeline">
+        <div class="step-node active" id="node-1">
+            <div class="step-circle" id="circle-1">1</div>
+            <div class="step-label">Record</div>
+        </div>
+        <div class="step-node" id="node-2">
+            <div class="step-circle" id="circle-2">2</div>
+            <div class="step-label">Review</div>
+        </div>
+        <div class="step-node" id="node-3">
+            <div class="step-circle" id="circle-3">3</div>
+            <div class="step-label">Complete</div>
+        </div>
+    </div>
+
+    <form asp-action="Complete" asp-route-id="@planId" method="post" enctype="multipart/form-data" id="recordCheckupForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="MaintenanceLogId" />
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="wizard-step-panel active" id="stepPanel-1">
+                    <div class="pms-record-heading">
+                        <h5>Record Checkup</h5>
+                        <p>
+                            Save this findings for <strong>@checkupName</strong> on <strong>@vehicleName</strong>.
+                            Completing it sets the next due date from the PMS interval and returns the vehicle to Available if no other checkup is open.
+                        </p>
+                    </div>
+
+                    <div class="pms-record-card">
+                        <div class="mb-3">
+                            <label asp-for="Odometer" class="pms-record-label">Odometer (km)</label>
+                            <div class="input-group pms-record-input-group">
+                                <input asp-for="Odometer"
+                                       id="input-Odometer"
+                                       class="form-control pms-record-input"
+                                       type="number"
+                                       min="0"
+                                       step="1"
+                                       placeholder="Current vehicle reading" />
+                                <span class="input-group-text pms-record-suffix">km</span>
+                            </div>
+                            <span asp-validation-for="Odometer" class="text-danger small mt-1 d-block"></span>
+                        </div>
+                        <div>
+                            <label asp-for="WorkDone" class="pms-record-label">Findings</label>
+                            <textarea asp-for="WorkDone"
+                                      id="input-WorkDone"
+                                      class="form-control pms-record-input"
+                                      rows="5"
+                                      placeholder="What did the inspection find, or what was replaced?"></textarea>
+                            <span asp-validation-for="WorkDone" class="text-danger small mt-1 d-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="pms-record-card">
+                        <div class="mb-3">
+                            <label asp-for="Cost" class="pms-record-label">Cost (₱)</label>
+                            <input asp-for="Cost"
+                                   id="input-Cost"
+                                   class="form-control pms-record-input"
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="Optional" />
+                            <span asp-validation-for="Cost" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ImageFile" class="pms-record-label">Upload Photo (Optional)</label>
+                            <div id="maintenance-image-upload-zone" class="license-upload-zone pms-record-upload">
+                                <div>
+                                    <i class="bi bi-cloud-arrow-up fs-3 d-block mb-2"></i>
+                                    <span class="d-block upload-main-text mb-1">Drag &amp; drop or click to upload</span>
+                                    <span class="d-block upload-sub-text">PNG, JPG, or JPEG (max)</span>
+                                </div>
+                                <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,image/*" onchange="updateFileFeedback(this)" />
+                            </div>
+                            <div id="maintenance-image-preview-state" class="d-none">
+                                <div class="pms-record-filebar">
+                                    <span id="feedback-filename" class="filename">maintenance_photo.png</span>
+                                    <button type="button" class="pms-record-remove" onclick="clearFileSelection()">Remove</button>
+                                </div>
+                            </div>
+                            <span asp-validation-for="ImageFile" class="text-danger small mt-1 d-block"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-step-panel" id="stepPanel-2">
+                    <div class="pms-record-card">
+                        <div class="pms-record-review-head">
+                            <span class="pms-side-card-icon"><i class="bi bi-clipboard-check"></i></span>
+                            <button type="button" class="pms-record-edit-btn" onclick="setActiveStep(1)">Edit <i class="bi bi-pencil"></i></button>
+                        </div>
+                        <dl class="pms-review-dl">
+                            <div>
+                                <dt>Odometer (km)</dt>
+                                <dd id="review-Odometer">—</dd>
+                            </div>
+                            <div>
+                                <dt>Findings</dt>
+                                <dd id="review-WorkDone">—</dd>
+                            </div>
+                            <div>
+                                <dt>Cost (₱)</dt>
+                                <dd id="review-Cost" class="is-cost">—</dd>
+                            </div>
+                            <div>
+                                <dt>Photo</dt>
+                                <dd id="review-Filename">No uploaded pictures</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div class="pms-record-card">
+                        <div class="pms-record-review-head">
+                            <span class="pms-side-card-icon"><i class="bi bi-calendar3"></i></span>
+                        </div>
+                        <dl class="pms-review-dl">
+                            <div>
+                                <dt>PMS Interval</dt>
+                                <dd>@scheduleLabel</dd>
+                            </div>
+                            <div>
+                                <dt>Next due date</dt>
+                                <dd>
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <i class="bi bi-calendar3 text-secondary"></i>
+                                        <span id="review-NextDue">@previewNextDue.ToString("MMM d, yyyy h:mm tt")</span>
+                                    </span>
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div class="pms-review-actions">
+                        <button type="button" class="btn pms-record-btn-cancel" onclick="setActiveStep(1)">Edit Details</button>
+                        <button type="button" class="btn pms-record-btn-proceed" onclick="navigateStep(1)">Confirm</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4" id="recordSidebar">
+                <div class="pms-side-card">
+                    <div class="pms-side-card-head">
+                        <span class="pms-side-card-icon"><i class="bi bi-car-front-fill"></i></span>
+                        <h6>Vehicle Information</h6>
+                    </div>
+                    @if (vehicle != null)
+                    {
+                        <div class="pms-side-vehicle-identity">
+                            <div class="pms-side-vehicle-thumb">
+                                @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+                                {
+                                    <img src="~/images/@vehicle.ImagePath" alt="@vehicleName" />
+                                }
+                                else
+                                {
+                                    <i class="bi bi-car-front-fill"></i>
+                                }
+                            </div>
+                            <div>
+                                <div class="pms-side-vehicle-name">@vehicleName</div>
+                                <div class="pms-side-vehicle-type">@VehicleTypes.Display(vehicle.Type)</div>
+                            </div>
+                        </div>
+                        <dl class="pms-side-dl">
+                            <div>
+                                <dt>Plate Number</dt>
+                                <dd class="text-uppercase font-monospace">@plate</dd>
+                            </div>
+                            <div>
+                                <dt>Current Odometer</dt>
+                                <dd>@vehicle.Odometer.ToString("N0")</dd>
+                            </div>
+                            <div>
+                                <dt>Status</dt>
+                                <dd><span class="pms-status is-progress">@EnumLabel(vehicle.Status)</span></dd>
+                            </div>
+                        </dl>
+                    }
+                </div>
+
+                <div class="pms-side-card">
+                    <div class="pms-side-card-head">
+                        <span class="pms-side-card-icon"><i class="bi bi-tools"></i></span>
+                        <h6>Checkup Information</h6>
+                    </div>
+                    <dl class="pms-side-dl">
+                        <div>
+                            <dt>Checkup Type</dt>
+                            <dd>@checkupName</dd>
+                        </div>
+                        <div>
+                            <dt>PMS Interval</dt>
+                            <dd>@scheduleLabel</dd>
+                        </div>
+                        <div>
+                            <dt>Next Due</dt>
+                            <dd>
+                                <span class="d-inline-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar3 text-secondary"></i>
+                                    @nextDueLabel
+                                </span>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <div class="pms-side-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <p id="recordInfoText">Record this checkup will update the odometer and set the next due date based on the PMS interval.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="pms-record-actions" id="recordFooter">
+            <button type="button" class="btn pms-record-btn-cancel" id="btnWizardCancel" onclick="handleCancelClick()">Cancel</button>
+            <button type="button" class="btn pms-record-btn-proceed" id="btnWizardNext" onclick="navigateStep(1)">Proceed</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        let currentStep = 1;
+        let isEditMode = false;
+        const peso = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ph.NumberFormat.CurrencySymbol));
+        const indexUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index") ?? "/Maintenance"));
+        const intervalMonths = @(plan?.IntervalMonths ?? 0);
+        const intervalKm = @(plan?.IntervalKilometers ?? 0);
+
+        function validateStep1() {
+            const form = document.getElementById('recordCheckupForm');
+            const fields = ['Odometer', 'WorkDone'];
+            let valid = true;
+            let firstInvalid = null;
+
+            if (typeof jQuery !== 'undefined' && jQuery.fn.validate) {
+                const validator = jQuery(form).validate();
+                fields.forEach(function (name) {
+                    const el = form.querySelector('[name="' + name + '"]');
+                    if (el && !validator.element(el)) {
+                        valid = false;
+                        if (!firstInvalid) firstInvalid = el;
+                    }
+                });
+            } else {
+                fields.forEach(function (name) {
+                    const el = form.querySelector('[name="' + name + '"]');
+                    if (!el) return;
+                    if (!el.value.trim()) {
+                        valid = false;
+                        el.classList.add('input-validation-error');
+                        if (!firstInvalid) firstInvalid = el;
+                    } else {
+                        el.classList.remove('input-validation-error');
+                    }
+                });
+            }
+
+            if (!valid && firstInvalid) firstInvalid.focus();
+            return valid;
+        }
+
+        function navigateStep(direction) {
+            if (direction === 1 && isEditMode) {
+                if (!validateStep1()) return;
+                closeEditMode(true);
+                return;
+            }
+
+            if (direction === 1 && currentStep === 2) {
+                document.getElementById('recordCheckupForm').submit();
+                return;
+            }
+
+            if (direction === 1 && currentStep === 1 && !validateStep1()) {
+                return;
+            }
+
+            if (direction === 1 && currentStep === 1) {
+                compileReviewSummary();
+            }
+
+            setActiveStep(direction === 1 ? currentStep + 1 : currentStep - 1);
+        }
+
+        function setActiveStep(targetStep) {
+            document.getElementById('stepPanel-1').classList.remove('active');
+            document.getElementById('stepPanel-2').classList.remove('active');
+            currentStep = targetStep;
+            isEditMode = false;
+            document.getElementById('stepPanel-' + currentStep).classList.add('active');
+
+            for (let i = 1; i <= 3; i++) {
+                const node = document.getElementById('node-' + i);
+                const circle = document.getElementById('circle-' + i);
+                if (!node || !circle) continue;
+                node.classList.toggle('active', i === currentStep);
+                node.classList.toggle('completed', i < currentStep);
+                circle.textContent = String(i);
+            }
+
+            const footer = document.getElementById('recordFooter');
+            if (footer) footer.classList.toggle('d-none', currentStep !== 1);
+
+            const infoText = document.getElementById('recordInfoText');
+            if (infoText) {
+                infoText.innerText = currentStep === 2
+                    ? 'Once confirmed, this checkup record will be saved and the odometer will be updated.'
+                    : 'Record this checkup will update the odometer and set the next due date based on the PMS interval.';
+            }
+
+            setTopbarTitle('Record Checkup');
+            updateWizardButtons();
+        }
+
+        function openEditMode() {
+            isEditMode = true;
+            document.getElementById('stepPanel-2').classList.remove('active');
+            document.getElementById('stepPanel-1').classList.add('active');
+            document.getElementById('recordFooter')?.classList.remove('d-none');
+            setTopbarTitle('Record Checkup');
+            updateWizardButtons();
+        }
+
+        function closeEditMode(refreshReview) {
+            isEditMode = false;
+            document.getElementById('stepPanel-1').classList.remove('active');
+            document.getElementById('stepPanel-2').classList.add('active');
+            setTopbarTitle('Record Checkup');
+            if (refreshReview) compileReviewSummary();
+            updateWizardButtons();
+        }
+
+        function setTopbarTitle(title) {
+            const breadcrumbCurrent = document.querySelector('.topbar-breadcrumb-current');
+            if (breadcrumbCurrent) breadcrumbCurrent.innerText = title;
+        }
+
+        function updateWizardButtons() {
+            const cancelBtn = document.getElementById('btnWizardCancel');
+            const nextBtn = document.getElementById('btnWizardNext');
+            if (isEditMode) {
+                cancelBtn.innerText = 'Back';
+                nextBtn.innerText = 'Proceed';
+            } else if (currentStep === 1) {
+                cancelBtn.innerText = 'Cancel';
+                nextBtn.innerText = 'Proceed';
+            } else {
+                cancelBtn.innerText = 'Back';
+                nextBtn.innerText = 'Confirm';
+            }
+        }
+
+        function handleCancelClick() {
+            if (isEditMode) {
+                closeEditMode(false);
+                return;
+            }
+            if (currentStep === 1) {
+                window.location.href = indexUrl;
+                return;
+            }
+            setActiveStep(1);
+        }
+
+        function compileReviewSummary() {
+            const odometer = document.getElementById('input-Odometer').value;
+            document.getElementById('review-Odometer').innerText = odometer
+                ? Number(odometer).toLocaleString() + 'km'
+                : '—';
+
+            const cost = document.getElementById('input-Cost').value;
+            document.getElementById('review-Cost').innerText = cost
+                ? peso + Number(cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                : '—';
+
+            document.getElementById('review-WorkDone').innerText = document.getElementById('input-WorkDone').value.trim() || '—';
+
+            const fileInput = document.getElementById('input-File');
+            document.getElementById('review-Filename').innerText =
+                fileInput.files && fileInput.files.length > 0 ? fileInput.files[0].name : 'No uploaded pictures';
+
+            const nextDue = document.getElementById('review-NextDue');
+            if (nextDue && intervalMonths > 0) {
+                const due = new Date();
+                due.setMonth(due.getMonth() + intervalMonths);
+                nextDue.innerText = due.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+            } else if (nextDue && intervalKm > 0) {
+                const reading = Number(odometer || 0);
+                nextDue.innerText = (reading + intervalKm).toLocaleString() + ' km';
+            }
+        }
+
+        function updateFileFeedback(input) {
+            const uploadZone = document.getElementById('maintenance-image-upload-zone');
+            const previewState = document.getElementById('maintenance-image-preview-state');
+            const nameSpan = document.getElementById('feedback-filename');
+
+            if (input.files && input.files.length > 0) {
+                nameSpan.innerText = input.files[0].name;
+                uploadZone.classList.add('d-none');
+                previewState.classList.remove('d-none');
+            }
+        }
+
+        function clearFileSelection() {
+            const fileInput = document.getElementById('input-File');
+            const uploadZone = document.getElementById('maintenance-image-upload-zone');
+            const previewState = document.getElementById('maintenance-image-preview-state');
+            fileInput.value = '';
+            uploadZone.classList.remove('d-none');
+            previewState.classList.add('d-none');
+        }
+    </script>
+}

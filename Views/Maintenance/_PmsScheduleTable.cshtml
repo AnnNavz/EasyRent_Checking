@@ -1,0 +1,125 @@
+@model List<EasyRent_Checking.ViewModels.MaintenanceScheduleRow>
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+@using EasyRent_Checking.Models
+
+@{
+    var showInclude = ViewData["ShowInclude"] as bool? ?? false;
+
+    string EnumLabel(Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>()?.GetName();
+        return display ?? value.ToString();
+    }
+
+    string CheckupIcon(MaintenanceType type) => type switch
+    {
+        MaintenanceType.OilChange => "bi-droplet-fill",
+        MaintenanceType.TireInspection => "bi-circle",
+        MaintenanceType.BrakeInspection => "bi-disc",
+        MaintenanceType.GeneralCheckup => "bi-clipboard-check",
+        MaintenanceType.AirFilterReplacement => "bi-wind",
+        _ => "bi-wrench-adjustable"
+    };
+}
+
+<div class="pms-setup-items" id="pmsScheduleTable">
+    <div class="pms-setup-items-head @(showInclude ? "" : "is-edit")">
+        @if (showInclude)
+        {
+            <span>Use</span>
+        }
+        <span>Checkup</span>
+        <span>Interval (km)</span>
+        <span></span>
+        <span>Interval (months)</span>
+    </div>
+
+    @for (var i = 0; i < Model.Count; i++)
+    {
+        var isMileage = Model[i].Trigger != PmsTrigger.Time;
+        <div class="pms-setup-item @(showInclude ? "" : "is-edit")" data-pms-row data-type="@((int)Model[i].Type)">
+            @if (showInclude)
+            {
+                <div class="pms-setup-item-use">
+                    <input asp-for="@Model[i].Included" class="form-check-input pms-setup-check" data-included />
+                </div>
+            }
+            else
+            {
+                <input type="hidden" asp-for="@Model[i].Included" />
+            }
+
+            <div class="pms-checkup-cell">
+                <span class="pms-checkup-icon" aria-hidden="true">
+                    <i class="bi @CheckupIcon(Model[i].Type)"></i>
+                </span>
+                <span class="pms-checkup-name">@EnumLabel(Model[i].Type)</span>
+                <input type="hidden" asp-for="@Model[i].MaintenancePlanId" />
+                <input type="hidden" asp-for="@Model[i].Type" />
+                <input type="hidden" asp-for="@Model[i].Trigger" data-trigger />
+            </div>
+
+            <div>
+                <div class="pms-interval-group">
+                    <input asp-for="@Model[i].IntervalKilometers"
+                           class="form-control pms-interval-input @(isMileage ? "is-active" : "is-inactive")"
+                           type="number" min="1" step="1" data-km
+                           placeholder="—" />
+                    <span class="pms-interval-suffix">km</span>
+                </div>
+                <span asp-validation-for="@Model[i].IntervalKilometers" class="text-danger small d-block"></span>
+            </div>
+
+            <div class="pms-setup-item-or">
+                <span class="pms-interval-or">or</span>
+            </div>
+
+            <div>
+                <div class="pms-interval-group">
+                    <input asp-for="@Model[i].IntervalMonths"
+                           class="form-control pms-interval-input @(isMileage ? "is-inactive" : "is-active")"
+                           type="number" min="1" step="1" data-months
+                           placeholder="—" />
+                    <span class="pms-interval-suffix">mo</span>
+                </div>
+                <span asp-validation-for="@Model[i].IntervalMonths" class="text-danger small d-block"></span>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    function syncPmsRow(row) {
+        const trigger = row.querySelector('[data-trigger]');
+        const isMileage = Number(trigger?.value) !== 1;
+        const km = row.querySelector('[data-km]');
+        const months = row.querySelector('[data-months]');
+        km?.classList.toggle('is-active', isMileage);
+        km?.classList.toggle('is-inactive', !isMileage);
+        months?.classList.toggle('is-active', !isMileage);
+        months?.classList.toggle('is-inactive', isMileage);
+        if (isMileage) {
+            if (months) months.value = '';
+        } else if (km) {
+            km.value = '';
+        }
+    }
+
+    function choosePmsTrigger(row, useKm) {
+        const trigger = row.querySelector('[data-trigger]');
+        if (trigger) trigger.value = useKm ? '0' : '1';
+        syncPmsRow(row);
+    }
+
+    document.querySelectorAll('[data-pms-row]').forEach(function (row) {
+        row.querySelector('[data-km]')?.addEventListener('focus', function () {
+            choosePmsTrigger(row, true);
+        });
+        row.querySelector('[data-months]')?.addEventListener('focus', function () {
+            choosePmsTrigger(row, false);
+        });
+        syncPmsRow(row);
+    });
+</script>

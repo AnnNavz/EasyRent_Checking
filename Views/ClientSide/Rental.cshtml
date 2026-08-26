@@ -13,16 +13,22 @@
     ViewData["ActiveNav"] = "Vehicles";
     ViewData["HideReserveButton"] = true;
     ViewData["LiveRateSummary"] = true;
+    ViewData["HidePaymentReminders"] = true;
 
-    string typeLabel = vehicle.Type == VehicleType.Van ? "VAN" : "SUV";
+    string typeLabel = VehicleTypes.DisplayUpper(vehicle.Type);
     string vehicleTitle = $"{vehicle.Model} {vehicle.Brand}";
     string breadcrumbLabel = $"{vehicle.Brand} {vehicle.Model}";
     int capacity = vehicle.PassengersCount;
     int reserveWindowDays = RentalRules.ReservePaymentWindowDays;
+    var pickupDateValue = Model?.PickupDate.Year >= 2000 ? Model.PickupDate.ToString("yyyy-MM-dd") : "";
+    var returnDateValue = Model?.ReturnDate.Year >= 2000 ? Model.ReturnDate.ToString("yyyy-MM-dd") : "";
+    var initialUnavailableDates = ViewData["InitialUnavailableDates"] as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var initialUnavailableJson = System.Text.Json.JsonSerializer.Serialize(initialUnavailableDates);
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/rentals.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/payment-wizard.css" asp-append-version="true" />
     <style>
         .client-reservation-page .admin-booking-create {
@@ -32,10 +38,12 @@
         }
         .client-reservation-page .client-reservation-stepper {
             max-width: 720px;
+            width: 100%;
             margin: 0 auto 1.75rem;
         }
         .client-reservation-page .airbnb-cal-card {
             max-width: 100%;
+            background: #F9FAFF !important;
         }
         .client-reservation-page .airbnb-cal-cell.is-past .airbnb-cal-day {
             color: #bdbdbd !important;
@@ -75,14 +83,21 @@
             background: #00897b;
             border: none;
         }
-        .client-reservation-page .airbnb-legend-dot.is-unavailable,
+        .client-reservation-page .airbnb-legend-dot.is-unavailable {
+            background: #F9FAFF;
+            border: 1.5px solid #c5cde0;
+        }
         .client-reservation-page .airbnb-legend-dot.is-rented {
             background: #e53935;
             border: none;
         }
-        .client-reservation-page .client-details-sidebar .client-rate-summary {
+        .client-reservation-page .airbnb-legend-dot.is-range {
+            background: #bbdefb;
+            border: none;
+        }
+        .client-reservation-page .client-details-sidebar {
             position: sticky;
-            top: 1rem;
+            top: calc(var(--client-topbar-height) + 1rem);
         }
         .client-reservation-page .client-reservation-vehicle-card {
             background: #d9d9d9;
@@ -157,41 +172,47 @@
             <span class="client-details-breadcrumb-sep">&rsaquo;</span>
             <a asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId">@breadcrumbLabel</a>
             <span class="client-details-breadcrumb-sep">&rsaquo;</span>
-            <span class="client-details-breadcrumb-current">Booking</span>
+            <span class="client-details-breadcrumb-current">Rent</span>
         </nav>
-        <a asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId" class="client-btn-back-browse">
+        <a asp-controller="ClientSide" asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId" class="client-btn-back-browse">
             <i class="bi bi-arrow-left"></i>
-            Back to Vehicle Details
+            Back to Browse Details
         </a>
     </div>
 </div>
 
 <div class="client-page client-reservation-page">
+    @* Stepper sits above the 2-column layout so it stays centered on every step. *@
+    <div class="client-reservation-stepper" aria-label="Booking progress">
+        <div class="client-reservation-step active" data-step="1">
+            <span class="client-reservation-step-dot">1</span>
+            <span class="client-reservation-step-label">Info</span>
+        </div>
+        <div class="client-reservation-step-line" aria-hidden="true"></div>
+        <div class="client-reservation-step" data-step="2">
+            <span class="client-reservation-step-dot">2</span>
+            <span class="client-reservation-step-label">Payment Type</span>
+        </div>
+        <div class="client-reservation-step-line" aria-hidden="true"></div>
+        <div class="client-reservation-step" data-step="3" data-pay-now-only="true">
+            <span class="client-reservation-step-dot">3</span>
+            <span class="client-reservation-step-label">Payment Details</span>
+        </div>
+        <div class="client-reservation-step-line" aria-hidden="true"></div>
+        <div class="client-reservation-step" data-step="4">
+            <span class="client-reservation-step-dot">4</span>
+            <span class="client-reservation-step-label">Summary</span>
+        </div>
+        <div class="client-reservation-step-line" aria-hidden="true"></div>
+        <div class="client-reservation-step" data-step="5">
+            <span class="client-reservation-step-dot">5</span>
+            <span class="client-reservation-step-label">Complete</span>
+        </div>
+    </div>
+
     <div class="client-details-layout client-reservation-layout">
         <div class="client-details-main">
             <div class="admin-booking-create">
-                <div class="client-reservation-stepper" aria-label="Booking progress">
-                    <div class="client-reservation-step active" data-step="1">
-                        <span class="client-reservation-step-dot">1</span>
-                        <span class="client-reservation-step-label">Information</span>
-                    </div>
-                    <div class="client-reservation-step-line" aria-hidden="true"></div>
-                    <div class="client-reservation-step" data-step="2">
-                        <span class="client-reservation-step-dot">2</span>
-                        <span class="client-reservation-step-label">Payment<br>Type</span>
-                    </div>
-                    <div class="client-reservation-step-line" aria-hidden="true"></div>
-                    <div class="client-reservation-step" data-step="3" data-pay-now-only="true">
-                        <span class="client-reservation-step-dot">3</span>
-                        <span class="client-reservation-step-label">Payment<br>Details</span>
-                    </div>
-                    <div class="client-reservation-step-line" aria-hidden="true"></div>
-                    <div class="client-reservation-step" data-step="4">
-                        <span class="client-reservation-step-dot">4</span>
-                        <span class="client-reservation-step-label">Summary</span>
-                    </div>
-                </div>
-
                 <form asp-action="Rental" asp-route-id="@vehicle.VehicleId" method="post" enctype="multipart/form-data" id="reservationWizardForm">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
@@ -204,126 +225,103 @@
                     <input type="hidden" asp-for="RentalStatus" value="Pending" />
                     <input type="hidden" asp-for="RentalOption" id="input-RentalOption" value="@Model.RentalOption" />
                     <div class="wizard-step-panel active" id="reservationStep1">
-                    <!-- Vehicle (client-only) -->
-                    <div class="client-reservation-vehicle-card mb-4">
-                        <div class="client-reservation-vehicle-summary">
-                            <div class="client-reservation-vehicle-image">
-                                @if (!string.IsNullOrEmpty(vehicle.ImagePath))
-                                {
-                                    <img src="/images/@vehicle.ImagePath" alt="@vehicleTitle" />
-                                }
-                                else
-                                {
-                                    <div class="client-reservation-vehicle-placeholder">
-                                        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                                            <line x1="0" y1="0" x2="100" y2="100" />
-                                            <line x1="100" y1="0" x2="0" y2="100" />
-                                        </svg>
-                                    </div>
-                                }
-                            </div>
-                            <div class="client-reservation-vehicle-meta">
-                                <span class="client-reservation-type-pill">@typeLabel</span>
-                                <h1 class="client-reservation-vehicle-name">@vehicleTitle</h1>
-                                <p class="client-reservation-vehicle-specs">
-                                    @capacity seats &bull; Full A/C &bull; With Driver &bull; Automatic
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
+                    @{
+                        var lockCustomerFields = ViewData["CustomerFieldsLocked"] as bool? == true;
+                    }
                     <!-- Rental Information -->
-                    <div class="form-container-card p-4 mb-4 shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
-                            <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Rental Information</h6>
+                    <div class="rent-step-card">
+                        <div class="rent-card-head">
+                            <span class="rent-card-icon"><i class="bi bi-file-earmark-text"></i></span>
+                            <h2>Rental Information</h2>
                         </div>
-                        <hr class="wizard-section-divider" />
 
                         <div class="row g-3">
                             <div class="col-md-6">
-                                @{
-                                    var lockCustomerFields = ViewData["CustomerFieldsLocked"] as bool? == true;
-                                }
-                                <label asp-for="CustomerName" class="form-label fw-semibold small text-secondary mb-1">Customer Name</label>
-                                <input asp-for="CustomerName" id="CustomerName" class="form-control form-control-thin shadow-sm" placeholder="e.g. Jane Doe" readonly="@lockCustomerFields" />
+                                <label asp-for="CustomerName" class="rent-field-label">Customer Name</label>
+                                <input asp-for="CustomerName" id="CustomerName" class="rent-field-input" placeholder="e.g. Jane Doe" readonly="@lockCustomerFields" />
                                 <span asp-validation-for="CustomerName" class="text-danger small mt-1 d-block"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="ContactNumber" class="form-label fw-semibold small text-secondary mb-1">Contact Information</label>
-                                <input asp-for="ContactNumber" id="ContactNumber" class="form-control form-control-thin shadow-sm" placeholder="Mobile number or Email" readonly="@lockCustomerFields" />
+                                <label asp-for="ContactNumber" class="rent-field-label">Contact Information</label>
+                                <input asp-for="ContactNumber" id="ContactNumber" class="rent-field-input" placeholder="09123456789 or +639123456789" readonly="@lockCustomerFields" />
                                 <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="PickupLocation" class="form-label fw-semibold small text-secondary mb-1">Pick-up Location</label>
-                                <input asp-for="PickupLocation" id="PickupLocation" class="form-control form-control-thin shadow-sm" placeholder="e.g. Mactan International Airport" />
+                                <label asp-for="PickupLocation" class="rent-field-label">Pick-up Location</label>
+                                <input asp-for="PickupLocation" id="PickupLocation" class="rent-field-input" placeholder="e.g. Mactan International Airport" />
                                 <span asp-validation-for="PickupLocation" class="text-danger small mt-1 d-block"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="DropoffLocation" class="form-label fw-semibold small text-secondary mb-1">Drop-off Location</label>
-                                <input asp-for="DropoffLocation" id="DropoffLocation" class="form-control form-control-thin shadow-sm" placeholder="e.g. Talisay, Cebu City" />
+                                <label asp-for="DropoffLocation" class="rent-field-label">Drop-off Location</label>
+                                <input asp-for="DropoffLocation" id="DropoffLocation" class="rent-field-input" placeholder="e.g. Talisay, Cebu City" />
                                 <span asp-validation-for="DropoffLocation" class="text-danger small mt-1 d-block"></span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Pick-up & Return Date -->
-                    <div class="form-container-card p-4 mb-4 shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <i class="bi bi-calendar3 fs-5 text-dark"></i>
-                            <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Select Pick-up &amp; Return Date</h6>
+                    <div class="rent-step-card">
+                        <div class="rent-card-head">
+                            <span class="rent-card-icon"><i class="bi bi-calendar3"></i></span>
+                            <h2>Select Pick-up &amp; Return Date</h2>
                         </div>
-                        <p class="small text-secondary mb-3">
-                            Click on available date to set your pick-up date, then select your return date.
+                        <p class="rent-card-hint">
+                            Click on available date to set your pick-up date, then select your return date. White = Available and Red = Rented.
                         </p>
 
-                        <div class="airbnb-cal-card mb-4">
-                            <div class="airbnb-cal-header">
-                                <button type="button" class="airbnb-cal-nav" id="calPrev" aria-label="Previous month">
-                                    <i class="bi bi-chevron-left"></i>
-                                </button>
-                                <span class="airbnb-cal-month" id="calMonthLabel">July 2026</span>
-                                <button type="button" class="airbnb-cal-nav" id="calNext" aria-label="Next month">
-                                    <i class="bi bi-chevron-right"></i>
-                                </button>
-                            </div>
-                            <div class="airbnb-cal-weekdays">
-                                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-                            </div>
-                            <div class="airbnb-cal-grid" id="calGrid"></div>
-                            <div class="airbnb-cal-legend">
-                                <span><i class="airbnb-legend-dot is-available"></i>Available</span>
-                                <span><i class="airbnb-legend-dot is-range"></i>Your Range</span>
-                                <span><i class="airbnb-legend-dot is-pickup"></i>Pick-up</span>
-                                <span><i class="airbnb-legend-dot is-return"></i>Return</span>
-                                <span><i class="airbnb-legend-dot is-rented"></i>Rented</span>
-                            </div>
-                        </div>
-
-                        <input type="hidden" asp-for="PickupDate" id="input-PickupDate" />
-                        <input type="hidden" asp-for="ReturnDate" id="input-ReturnDate" />
-
-                        <div class="row g-3 airbnb-date-fields">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-dark mb-1">Pick-up Date &amp; Time</label>
-                                <div class="airbnb-datetime-stack">
-                                    <div class="airbnb-date-field">
-                                        <input type="text" id="pickupDisplay" class="airbnb-date-input" placeholder="mm/dd/yyyy" readonly />
-                                        <i class="bi bi-calendar3 airbnb-date-icon"></i>
+                        <div class="row g-4 airbnb-cal-split align-items-start">
+                            <div class="col-lg-7">
+                                <div class="airbnb-cal-card">
+                                    <div class="airbnb-cal-header">
+                                        <button type="button" class="airbnb-cal-nav" id="calPrev" aria-label="Previous month">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </button>
+                                        <span class="airbnb-cal-month" id="calMonthLabel">July 2026</span>
+                                        <button type="button" class="airbnb-cal-nav" id="calNext" aria-label="Next month">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </button>
                                     </div>
-                                    <input asp-for="PickupTime" id="input-PickupTime" type="time" class="airbnb-time-input" />
+                                    <div class="airbnb-cal-weekdays">
+                                        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                                    </div>
+                                    <div class="airbnb-cal-grid" id="calGrid"></div>
+                                    <div class="airbnb-cal-legend">
+                                        <span><i class="airbnb-legend-dot is-unavailable"></i>Unavailable</span>
+                                        <span><i class="airbnb-legend-dot is-return"></i>Return</span>
+                                        <span><i class="airbnb-legend-dot is-range"></i>Range</span>
+                                        <span><i class="airbnb-legend-dot is-pickup"></i>Selected</span>
+                                        <span><i class="airbnb-legend-dot is-rented"></i>Rented</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 airbnb-date-fields-side">
+                                <input type="hidden" name="PickupDate" id="input-PickupDate" value="@pickupDateValue" />
+                                <input type="hidden" name="ReturnDate" id="input-ReturnDate" value="@returnDateValue" />
+
+                                <label class="rent-field-label">Pick-up Date &amp; Time</label>
+                                <div class="airbnb-datetime-stack mb-3">
+                                    <div class="airbnb-date-field">
+                                        <input type="date" id="pickupDisplay" class="airbnb-date-input" />
+                                        <i class="bi bi-calendar3 airbnb-date-icon" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="airbnb-date-field">
+                                        <input asp-for="PickupTime" id="input-PickupTime" type="time" class="airbnb-time-input" />
+                                        <i class="bi bi-clock airbnb-date-icon"></i>
+                                    </div>
                                 </div>
                                 <span asp-validation-for="PickupDate" class="text-danger small mt-1 d-block"></span>
                                 <span asp-validation-for="PickupTime" class="text-danger small mt-1 d-block"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-dark mb-1">Return Date &amp; Time</label>
+
+                                <label class="rent-field-label">Return Date &amp; Time</label>
                                 <div class="airbnb-datetime-stack">
                                     <div class="airbnb-date-field">
-                                        <input type="text" id="returnDisplay" class="airbnb-date-input" placeholder="mm/dd/yyyy" readonly />
-                                        <i class="bi bi-calendar3 airbnb-date-icon"></i>
+                                        <input type="date" id="returnDisplay" class="airbnb-date-input" />
+                                        <i class="bi bi-calendar3 airbnb-date-icon" aria-hidden="true"></i>
                                     </div>
-                                    <input asp-for="ReturnTime" id="input-ReturnTime" type="time" class="airbnb-time-input" />
+                                    <div class="airbnb-date-field">
+                                        <input asp-for="ReturnTime" id="input-ReturnTime" type="time" class="airbnb-time-input" />
+                                        <i class="bi bi-clock airbnb-date-icon"></i>
+                                    </div>
                                 </div>
                                 <span asp-validation-for="ReturnDate" class="text-danger small mt-1 d-block"></span>
                                 <span asp-validation-for="ReturnTime" class="text-danger small mt-1 d-block"></span>
@@ -331,49 +329,80 @@
                         </div>
                     </div>
 
-                    <!-- Passenger Information -->
-                    <div class="form-container-card p-4 mb-4 shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-people fs-5 text-secondary"></i>
-                            <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Passenger Information</h6>
+                    <!-- Passenger & Discount -->
+                    <div class="rent-step-card">
+                        <div class="rent-card-head">
+                            <span class="rent-card-icon"><i class="bi bi-people"></i></span>
+                            <h2>Passenger &amp; Discount</h2>
                         </div>
-                        <hr class="wizard-section-divider" />
 
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="PassengerCount" class="form-label fw-semibold small text-secondary mb-1">Passenger Count</label>
-                                <input asp-for="PassengerCount" id="input-PassengerCount" type="number" min="1" max="@capacity" class="form-control form-control-thin shadow-sm" placeholder="e.g. 8" />
-                                <span class="small text-muted mt-1 d-block" id="capacityHint">Maximum capacity: @capacity passengers</span>
+                                <label asp-for="PassengerCount" class="rent-field-label">Passenger Count</label>
+                                <select asp-for="PassengerCount" id="input-PassengerCount" class="rent-field-input">
+                                    <option value="">Select Capacity</option>
+                                    @for (var seats = 1; seats <= capacity; seats++)
+                                    {
+                                        <option value="@seats">@seats</option>
+                                    }
+                                </select>
+                                <span class="rent-field-help" id="capacityHint">Maximum capacity: @capacity passengers</span>
                                 <span asp-validation-for="PassengerCount" class="text-danger small mt-1 d-block"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="Discount" class="form-label fw-semibold small text-secondary mb-1">Senior/PWD Discount (if applicable)</label>
-                                <select asp-for="Discount" id="input-Discount" class="form-select form-control-thin shadow-sm">
+                                <label asp-for="Discount" class="rent-field-label">Senior/PWD Discount (if applicable)</label>
+                                <select asp-for="Discount" id="input-Discount" class="rent-field-input">
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
-                                <span class="small text-muted mt-1 d-block">10% discount — present valid ID upon booking.</span>
+                                <span class="rent-field-help">10% discount - present valid ID upon booking.</span>
                                 <span asp-validation-for="Discount" class="text-danger small mt-1 d-block"></span>
                             </div>
                             <div class="col-12 @(Model?.Discount == Discount.Yes ? "" : "d-none")" id="discountUploadSection">
-                                <div id="discount-upload-zone" class="license-upload-zone">
-                                    <div>
-                                        <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
-                                        <span class="d-block small fw-bold text-dark mb-1">Upload Senior/PWD ID or <span class="text-decoration-underline">click to browse</span></span>
-                                        <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG (MAX 5MB)</span>
-                                    </div>
-                                    <input asp-for="DiscountImageFile" id="input-DiscountFile" type="file" class="license-file-input" accept=".png,.jpg,.jpeg" />
-                                </div>
-                                <div id="discount-preview-state" class="d-none mt-2">
-                                    <div class="admin-discount-preview">
-                                        <div class="license-preview-box">
-                                            <img id="discount-preview-img" class="d-none" alt="Discount ID preview" />
-                                            <div id="discount-preview-placeholder" class="license-preview-placeholder"></div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="discount-id-panel">
+                                            <div class="discount-id-panel-title">Front</div>
+                                            <div id="discount-front-upload-zone" class="license-upload-zone discount-id-upload-zone">
+                                                <div>
+                                                    <i class="bi bi-person-vcard fs-3 text-muted d-block mb-2"></i>
+                                                    <span class="d-block small fw-semibold mb-1">Drag &amp; drop or click to upload</span>
+                                                    <span class="d-block text-muted" style="font-size: 0.72rem;">PNG, JPG, or JPEG (max 5MB)</span>
+                                                </div>
+                                                <input asp-for="DiscountImageFile" id="input-DiscountFile" type="file" class="license-file-input" accept=".png,.jpg,.jpeg" />
+                                            </div>
+                                            <div id="discount-front-preview-state" class="d-none">
+                                                <div class="license-preview-box" id="discount-front-preview-box" title="Click to replace image">
+                                                    <img id="discount-front-preview-img" class="d-none" alt="Front ID preview" />
+                                                </div>
+                                                <div class="upload-preview-bar d-flex align-items-center justify-content-between">
+                                                    <span id="discount-front-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;"></span>
+                                                    <button type="button" class="upload-preview-remove-btn" id="discount-front-remove-btn">Remove</button>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <button type="button" class="edit-license-remove-btn" id="discount-remove-btn" aria-label="Remove discount image">
-                                            <i class="bi bi-x-lg"></i>
-                                        </button>
-                                        <span id="discount-filename" class="small text-muted font-monospace text-center d-block mt-2"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="discount-id-panel">
+                                            <div class="discount-id-panel-title">Back</div>
+                                            <div id="discount-back-upload-zone" class="license-upload-zone discount-id-upload-zone">
+                                                <div>
+                                                    <i class="bi bi-person-vcard fs-3 text-muted d-block mb-2"></i>
+                                                    <span class="d-block small fw-semibold mb-1">Drag &amp; drop or click to upload</span>
+                                                    <span class="d-block text-muted" style="font-size: 0.72rem;">PNG, JPG, or JPEG (max 5MB)</span>
+                                                </div>
+                                                <input type="file" id="input-DiscountBackFile" class="license-file-input" accept=".png,.jpg,.jpeg" />
+                                            </div>
+                                            <div id="discount-back-preview-state" class="d-none">
+                                                <div class="license-preview-box" id="discount-back-preview-box" title="Click to replace image">
+                                                    <img id="discount-back-preview-img" class="d-none" alt="Back ID preview" />
+                                                </div>
+                                                <div class="upload-preview-bar d-flex align-items-center justify-content-between">
+                                                    <span id="discount-back-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;"></span>
+                                                    <button type="button" class="upload-preview-remove-btn" id="discount-back-remove-btn">Remove</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <span asp-validation-for="DiscountImageFile" class="text-danger small mt-1 d-block"></span>
@@ -382,22 +411,21 @@
                     </div>
 
                     <!-- Additional Information -->
-                    <div class="form-container-card p-4 mb-4 shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <i class="bi bi-file-earmark-plus fs-5 text-secondary"></i>
-                            <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Additional Information</h6>
+                    <div class="rent-step-card">
+                        <div class="rent-card-head">
+                            <span class="rent-card-icon"><i class="bi bi-file-earmark-plus"></i></span>
+                            <h2>Additional Information</h2>
                         </div>
-                        <hr class="wizard-section-divider" />
 
-                        <label asp-for="Notes" class="form-label fw-semibold small text-secondary mb-1">Special Requests / Notes (Optional)</label>
-                        <textarea asp-for="Notes" id="input-Notes" class="form-control form-control-thin shadow-sm" rows="4" placeholder="e.g. Please prepare child seats, need early morning pick-up, allergic to cigarette smoke..."></textarea>
+                        <label asp-for="Notes" class="rent-field-label">Special Requests/ Notes (Optional)</label>
+                        <textarea asp-for="Notes" id="input-Notes" class="rent-field-input rent-field-textarea" rows="4" placeholder="e.g. Please prepare child seats, need early morning pick-up, allergic to cigarette smoke..."></textarea>
                         <span asp-validation-for="Notes" class="text-danger small mt-1 d-block"></span>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                        <a asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3" style="font-size: 0.9rem;">Back</a>
-                        <button type="button" class="btn btn-request-reservation px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem;" data-wizard-next="1">
-                            Continue
+                    <div class="rent-step-actions">
+                        <a asp-controller="ClientSide" asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId" class="rent-btn-cancel">Cancel</a>
+                        <button type="button" class="rent-btn-continue" data-wizard-next="1">
+                            Continue to Payment Type
                         </button>
                     </div>
                     </div>
@@ -424,89 +452,86 @@
                              data-remaining-amount="@remainingAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)">
 
                             <h1 class="payment-type-title">Type of Payment</h1>
-                            <p class="payment-type-subtitle">
-                                Choose your preferred payment option to confirm your booking.
-                            </p>
+                            <p class="payment-type-subtitle">Choose full payment, Partial Payment, or PayLater to continue.</p>
 
-                            <div class="d-flex flex-column gap-3 mb-1">
-                                <button type="button"
-                                        class="payment-option-card @(initialChoice == "Partial" ? "is-selected" : "")"
-                                        data-pay-option="Partial"
-                                        data-payment-type="Partial Payment"
-                                        id="optionPartial">
-                                    <div class="payment-option-icon"><i class="bi bi-percent"></i></div>
-                                    <div class="payment-option-body">
-                                        <div class="payment-option-title">Partial Payment</div>
-                                        <div class="payment-option-desc">Pay a deposit percentage to secure your slot.</div>
-                                        <div class="payment-option-amount">
-                                            <span id="optionPartialAmount">@FormatPeso(depositAmount)</span>
-                                            <span>initial deposit (<span id="optionPartialPercent">@depositPercent.ToString("0.##")</span>%)</span>
+                            <div class="payment-options-panel">
+                                    <button type="button"
+                                            class="payment-option-card @(initialChoice == "Partial" ? "is-selected" : "")"
+                                            data-pay-option="Partial"
+                                            data-payment-type="Partial Payment"
+                                            id="optionPartial">
+                                        <div class="payment-option-icon"><i class="bi bi-percent"></i></div>
+                                        <div class="payment-option-body">
+                                            <div class="payment-option-title">Partial Payment</div>
+                                            <div class="payment-option-desc">Pay a deposit percentage to secure your slot.</div>
+                                            <div class="payment-option-amount">
+                                                <span id="optionPartialAmount">@FormatPeso(depositAmount)</span>
+                                                <span>initial deposit (<span id="optionPartialPercent">@depositPercent.ToString("0.##")</span>%)</span>
+                                            </div>
+                                            <div class="payment-option-note">
+                                                Remaining <span id="optionPartialRemaining">@FormatPeso(remainingAmount)</span> to be paid on-site to the driver.
+                                            </div>
                                         </div>
-                                        <div class="payment-option-note">
-                                            Remaining <span id="optionPartialRemaining">@FormatPeso(remainingAmount)</span> to be paid on-site to the driver.
-                                        </div>
-                                    </div>
-                                    <span class="payment-option-radio" aria-hidden="true"></span>
-                                </button>
+                                        <span class="payment-option-radio" aria-hidden="true"></span>
+                                    </button>
 
-                                <button type="button"
-                                        class="payment-option-card @(initialChoice == "Full" ? "is-selected" : "")"
-                                        data-pay-option="Full"
-                                        data-payment-type="Full Payment"
-                                        id="optionFull">
-                                    <div class="payment-option-icon"><i class="bi bi-coin"></i></div>
-                                    <div class="payment-option-body">
-                                        <div class="payment-option-title">Full Payment</div>
-                                        <div class="payment-option-desc">Pay 100% of base fare for a hassle-free trip.</div>
-                                        <div class="payment-option-amount">
-                                            <span id="optionFullAmount">@FormatPeso(totalFare)</span>
-                                            <span>total base fare</span>
+                                    <button type="button"
+                                            class="payment-option-card @(initialChoice == "Full" ? "is-selected" : "")"
+                                            data-pay-option="Full"
+                                            data-payment-type="Full Payment"
+                                            id="optionFull">
+                                        <div class="payment-option-icon"><i class="bi bi-coin"></i></div>
+                                        <div class="payment-option-body">
+                                            <div class="payment-option-title">Full Payment</div>
+                                            <div class="payment-option-desc">Pay 100% of base fare online or walk-in for a hassle-free trip.</div>
+                                            <div class="payment-option-amount">
+                                                <span id="optionFullAmount">@FormatPeso(totalFare)</span>
+                                                <span>total base fare</span>
+                                            </div>
+                                            <div class="payment-option-note">
+                                                Balance = ₱0.00 (Note: Exceeding hours are separate).
+                                            </div>
                                         </div>
-                                        <div class="payment-option-note">
-                                            Balance = ₱0.00 (Note: Exceeding hours are separate).
-                                        </div>
-                                    </div>
-                                    <span class="payment-option-radio" aria-hidden="true"></span>
-                                </button>
+                                        <span class="payment-option-radio" aria-hidden="true"></span>
+                                    </button>
 
-                                <button type="button"
-                                        class="payment-option-card @(initialChoice == "Reserve" ? "is-selected" : "")"
-                                        data-pay-option="Reserve"
-                                        data-payment-type=""
-                                        id="optionPayLater">
-                                    <div class="payment-option-icon"><i class="bi bi-calendar-check"></i></div>
-                                    <div class="payment-option-body">
-                                        <div class="payment-option-title">Pay Later</div>
-                                        <div class="payment-option-desc">Pay 100% when you arrive at the venue.</div>
-                                        <div class="payment-option-amount">
-                                            @FormatPeso(0) <span>due online today</span>
+                                    <button type="button"
+                                            class="payment-option-card @(initialChoice == "Reserve" ? "is-selected" : "")"
+                                            data-pay-option="Reserve"
+                                            data-payment-type=""
+                                            id="optionPayLater">
+                                        <div class="payment-option-icon"><i class="bi bi-clock-history"></i></div>
+                                        <div class="payment-option-body">
+                                            <div class="payment-option-title">Pay Later</div>
+                                            <div class="payment-option-desc">Pay 100% when you arrive on the venue.</div>
+                                            <div class="payment-option-amount">
+                                                @FormatPeso(0) <span>due online today</span>
+                                            </div>
+                                            <div class="payment-option-note">
+                                                Hold the vehicle for @reserveWindowDays days — pay on arrival or from Transactions &amp; Rentals before it expires.
+                                            </div>
                                         </div>
-                                        <div class="payment-option-note">
-                                            Hold the vehicle for @reserveWindowDays days — pay on arrival or from Transactions &amp; Rentals before expiry.
-                                        </div>
-                                    </div>
-                                    <span class="payment-option-radio" aria-hidden="true"></span>
-                                </button>
+                                        <span class="payment-option-radio" aria-hidden="true"></span>
+                                    </button>
                             </div>
 
-                            <div class="alert alert-warning border-0 shadow-sm mt-3 mb-0 d-none" id="payLaterNotice" role="status">
-                                <strong>Pay later hold:</strong> no payment is collected online now. You must pay within
-                                @reserveWindowDays days after submitting, or this hold expires automatically.
+                            <div class="rent-pay-later-note d-none mt-3" id="payLaterNotice" role="status">
+                                No payment is collected online now. You must pay within @reserveWindowDays days after submitting, or this hold expires automatically.
                             </div>
 
                             <div class="payment-method-panel mt-4" id="acceptedMethodsPanel">
                                 <div class="payment-method-title">
                                     <i class="bi bi-credit-card-2-front"></i>
-                                    <span>Accepted Payment Methods</span>
+                                    <span>Payment Method</span>
                                 </div>
 
-                                <div class="payment-method-info-grid">
+                                <div class="payment-method-info-grid rent-pay-methods">
                                     <div class="payment-method-info-card">
                                         <div class="payment-method-info-header">
                                             <img src="~/images/System Images/GcashImage.jpg" alt="GCash" class="payment-method-info-logo" />
                                             <div>
                                                 <div class="payment-method-info-name">GCash</div>
-                                                <div class="payment-method-info-channel">Mobile Wallet / QR</div>
+                                                <div class="payment-method-info-channel">QR only</div>
                                             </div>
                                         </div>
                                         <p class="payment-method-info-desc">Scan GCash QR code and send the exact amount.</p>
@@ -521,7 +546,7 @@
                                             <img src="~/images/System Images/BDOimage.png" alt="BDO" class="payment-method-info-logo" />
                                             <div>
                                                 <div class="payment-method-info-name">BDO</div>
-                                                <div class="payment-method-info-channel">Bank Transfer / QR</div>
+                                                <div class="payment-method-info-channel">QR only</div>
                                             </div>
                                         </div>
                                         <p class="payment-method-info-desc">Scan QR code or bank transfer via BDO online banking.</p>
@@ -548,22 +573,25 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center gap-2 mt-4 mb-2">
-                                <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3" data-wizard-back="1">Back</button>
-                                <button type="button" class="btn btn-request-reservation px-4 py-2 fw-bold rounded-3 shadow-sm" data-wizard-next="2" id="paymentOptionContinueBtn">
-                                    Proceed to Payment Details
+                            <div class="rent-step-actions rent-step-actions--split payment-type-actions">
+                                <button type="button" class="rent-btn-cancel" data-wizard-back="1">Back</button>
+                                <button type="button" class="rent-btn-continue" data-wizard-next="2" id="paymentOptionContinueBtn">
+                                    Continue to Payment Method
                                 </button>
                             </div>
                         </div>
                     </div>
 
                     <div class="wizard-step-panel" id="reservationStep3">
+                        @{
+                            ViewData["HidePaymentReminders"] = true;
+                        }
                         <partial name="_ClientPaymentDetailsStep" model="Model" />
                     </div>
 
                     <div class="wizard-step-panel" id="reservationStep4">
                         @{
-                            ViewData["SummaryConfirmLabel"] = "Submit Booking & Payment";
+                            ViewData["SummaryConfirmLabel"] = "Continue";
                             ViewData["SummaryBackStep"] = "3";
                             ViewData["IsReserveFlow"] = false;
                             ViewData["HideSummaryPaymentEdit"] = false;
@@ -575,6 +603,22 @@
         </div>
 
         <aside class="client-details-sidebar" id="clientRateSidebar">
+            <div class="rent-vehicle-preview">
+                <div class="rent-vehicle-preview-image">
+                    @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+                    {
+                        <img src="/images/@vehicle.ImagePath" alt="@vehicleTitle" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-car-front"></i>
+                    }
+                </div>
+                <div class="rent-vehicle-preview-meta">
+                    <strong>@vehicle.Model</strong>
+                    <p>@typeLabel • @capacity seater</p>
+                </div>
+            </div>
             <partial name="_RateSummarySidebar" model="vehicle" />
         </aside>
         <partial name="_BookingTripSummarySidebar" model="vehicle" />
@@ -582,8 +626,10 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/booking-summary.js" asp-append-version="true"></script>
+    <script src="~/js/availability-calendar.js" asp-append-version="true"></script>
     <script>
         (function () {
             const pickupDateInput = document.getElementById('input-PickupDate');
@@ -596,18 +642,19 @@
             const discountSelect = document.getElementById('input-Discount');
             const discountSection = document.getElementById('discountUploadSection');
             const fileInput = document.getElementById('input-DiscountFile');
-            const uploadZone = document.getElementById('discount-upload-zone');
-            const previewState = document.getElementById('discount-preview-state');
-            const previewImg = document.getElementById('discount-preview-img');
-            const previewPlaceholder = document.getElementById('discount-preview-placeholder');
-            const filenameLabel = document.getElementById('discount-filename');
-            const removeBtn = document.getElementById('discount-remove-btn');
-            const calGrid = document.getElementById('calGrid');
-            const calMonthLabel = document.getElementById('calMonthLabel');
-            const calPrev = document.getElementById('calPrev');
-            const calNext = document.getElementById('calNext');
-            const pickupDisplay = document.getElementById('pickupDisplay');
-            const returnDisplay = document.getElementById('returnDisplay');
+            const backFileInput = document.getElementById('input-DiscountBackFile');
+            const frontUploadZone = document.getElementById('discount-front-upload-zone');
+            const backUploadZone = document.getElementById('discount-back-upload-zone');
+            const frontPreviewState = document.getElementById('discount-front-preview-state');
+            const backPreviewState = document.getElementById('discount-back-preview-state');
+            const frontFilenameLabel = document.getElementById('discount-front-filename');
+            const backFilenameLabel = document.getElementById('discount-back-filename');
+            const frontPreviewImg = document.getElementById('discount-front-preview-img');
+            const backPreviewImg = document.getElementById('discount-back-preview-img');
+            const frontPreviewBox = document.getElementById('discount-front-preview-box');
+            const backPreviewBox = document.getElementById('discount-back-preview-box');
+            const frontRemoveBtn = document.getElementById('discount-front-remove-btn');
+            const backRemoveBtn = document.getElementById('discount-back-remove-btn');
             const rateRoot = document.getElementById('rateSummaryRoot');
             const notesInput = document.getElementById('input-Notes');
             const customerNameInput = document.getElementById('CustomerName');
@@ -617,59 +664,7 @@
             const rateSidebar = document.getElementById('clientRateSidebar');
             const tripSidebar = document.getElementById('clientTripSummarySidebar');
             const maxCapacity = @capacity;
-
-            let viewYear, viewMonth, hoverDate = null, selectionPhase = 'start';
-            let unavailableDates = new Set();
-
-            function parseDateInput(value) {
-                if (!value) return null;
-                const parts = value.split('-');
-                if (parts.length !== 3) return null;
-                return new Date(+parts[0], +parts[1] - 1, +parts[2]);
-            }
-            function formatDateInput(date) {
-                return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-            }
-            function formatDisplayDate(date) {
-                if (!date) return '';
-                return String(date.getMonth() + 1).padStart(2, '0') + '/' + String(date.getDate()).padStart(2, '0') + '/' + date.getFullYear();
-            }
-            function startOfDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
-            function sameDay(a, b) { return a && b && startOfDay(a).getTime() === startOfDay(b).getTime(); }
-            function todayKey() { return formatDateInput(new Date()); }
-            function isPast(date) { return formatDateInput(startOfDay(date)) < todayKey(); }
-            function isRented(date) { return !isPast(date) && unavailableDates.has(formatDateInput(startOfDay(date))); }
-            function isBlocked(date) { return isPast(date) || unavailableDates.has(formatDateInput(startOfDay(date))); }
-            function isUnsetDate(date) { return !date || date.getFullYear() < 2000; }
-
-            function rangeHasRented(start, end) {
-                if (!start || !end) return false;
-                let cursor = startOfDay(start), last = startOfDay(end);
-                if (cursor > last) { const t = cursor; cursor = last; last = t; }
-                while (cursor <= last) {
-                    if (isRented(cursor)) return true;
-                    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1);
-                }
-                return false;
-            }
-
-            async function loadAvailability() {
-                unavailableDates = new Set();
-                const vehicleId = vehicleInput.value;
-                if (!vehicleId) { renderCalendar(); return; }
-                try {
-                    const response = await fetch('/Rentals/Availability?vehicleId=' + encodeURIComponent(vehicleId), {
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        (data.unavailableDates || data.UnavailableDates || []).forEach(function (d) {
-                            unavailableDates.add(String(d).substring(0, 10));
-                        });
-                    }
-                } catch (e) { console.warn(e); }
-                renderCalendar();
-            }
+            let calendar;
 
             function formatPeso(amount) {
                 return '₱' + Math.round(amount).toLocaleString('en-PH');
@@ -691,9 +686,17 @@
                 const returnTime = (returnTimeInput && returnTimeInput.value) ? returnTimeInput.value : '00:00';
 
                 if (!pickupDate || !returnDate) {
-                    emptyEl.textContent = 'Select pick-up and return dates to calculate your total.';
-                    emptyEl.classList.remove('d-none');
-                    detailsEl.classList.add('d-none');
+                    emptyEl.classList.add('d-none');
+                    detailsEl.classList.remove('d-none');
+                    document.getElementById('rateEstimateTitle').textContent = 'EXAMPLE: 10-HOUR TRIP';
+                    document.getElementById('rateBaseAmount').textContent = formatPeso(basePrice);
+                    document.getElementById('rateSucceedingRow').classList.remove('d-none');
+                    document.getElementById('rateSucceedingLabel').textContent =
+                        '+2 succeeding hours (' + formatPeso(succeedingFee) + '×2)';
+                    document.getElementById('rateSucceedingAmount').textContent = formatPeso(2 * succeedingFee);
+                    document.getElementById('rateDiscountRow').classList.add('d-none');
+                    document.getElementById('rateTotalLabel').textContent = 'ESTIMATED TOTAL (10 hours)';
+                    document.getElementById('rateTotalAmount').textContent = formatPeso(basePrice + (2 * succeedingFee));
                     return;
                 }
 
@@ -716,6 +719,7 @@
 
                 emptyEl.classList.add('d-none');
                 detailsEl.classList.remove('d-none');
+                document.getElementById('rateEstimateTitle').textContent = 'YOUR TRIP ESTIMATE';
 
                 document.getElementById('rateBaseAmount').textContent = formatPeso(basePrice);
 
@@ -743,180 +747,83 @@
                 document.getElementById('rateTotalAmount').textContent = formatPeso(total);
             }
 
-            function syncDisplays() {
-                pickupDisplay.value = formatDisplayDate(parseDateInput(pickupDateInput.value));
-                returnDisplay.value = formatDisplayDate(parseDateInput(returnDateInput.value));
-                recalculateRate();
-            }
-
             function updateCapacityHint() {
-                capacityHint.textContent = 'Maximum capacity: ' + maxCapacity + ' passengers';
-                passengerInput.max = maxCapacity;
+                if (capacityHint) {
+                    capacityHint.textContent = 'Maximum capacity: ' + maxCapacity + ' passengers';
+                }
             }
 
-            function clearDiscountFile() {
-                fileInput.value = '';
-                previewImg.src = '';
-                previewImg.classList.add('d-none');
-                previewPlaceholder.classList.remove('d-none');
-                filenameLabel.textContent = '';
-                uploadZone.classList.remove('d-none');
-                previewState.classList.add('d-none');
+            function clearFrontDiscountFile() {
+                if (fileInput) fileInput.value = '';
+                if (frontFilenameLabel) frontFilenameLabel.textContent = '';
+                BookingSummary.clearImagePreview(frontPreviewImg);
+                frontUploadZone?.classList.remove('d-none');
+                frontPreviewState?.classList.add('d-none');
+            }
+
+            function clearBackDiscountFile() {
+                if (backFileInput) backFileInput.value = '';
+                if (backFilenameLabel) backFilenameLabel.textContent = '';
+                BookingSummary.clearImagePreview(backPreviewImg);
+                backUploadZone?.classList.remove('d-none');
+                backPreviewState?.classList.add('d-none');
             }
 
             function toggleDiscountUpload() {
                 const isYes = discountSelect.value === 'Yes';
                 discountSection.classList.toggle('d-none', !isYes);
-                if (!isYes) clearDiscountFile();
+                if (!isYes) {
+                    clearFrontDiscountFile();
+                    clearBackDiscountFile();
+                }
                 recalculateRate();
             }
 
-            function showDiscountPreview(file) {
-                if (!file) return;
-                filenameLabel.textContent = file.name;
-                uploadZone.classList.add('d-none');
-                previewState.classList.remove('d-none');
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        previewImg.src = e.target.result;
-                        previewImg.classList.remove('d-none');
-                        previewPlaceholder.classList.add('d-none');
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    previewImg.classList.add('d-none');
-                    previewPlaceholder.classList.remove('d-none');
-                }
+            function showFrontDiscountPreview(file) {
+                if (!file || !frontFilenameLabel) return;
+                frontFilenameLabel.textContent = file.name;
+                BookingSummary.showImagePreview(file, frontPreviewImg);
+                frontUploadZone?.classList.add('d-none');
+                frontPreviewState?.classList.remove('d-none');
             }
 
-            function getPreviewRange() {
-                const pickup = parseDateInput(pickupDateInput.value);
-                const ret = parseDateInput(returnDateInput.value);
-                if (selectionPhase === 'end' && pickup && hoverDate && !isBlocked(hoverDate)) {
-                    const start = hoverDate < pickup ? hoverDate : pickup;
-                    const end = hoverDate < pickup ? pickup : hoverDate;
-                    if (rangeHasRented(start, end)) return { start: pickup, end: pickup };
-                    return { start: start, end: end };
-                }
-                if (pickup && ret) return { start: pickup, end: ret };
-                if (pickup) return { start: pickup, end: pickup };
-                return { start: null, end: null };
+            function showBackDiscountPreview(file) {
+                if (!file || !backFilenameLabel) return;
+                backFilenameLabel.textContent = file.name;
+                BookingSummary.showImagePreview(file, backPreviewImg);
+                backUploadZone?.classList.add('d-none');
+                backPreviewState?.classList.remove('d-none');
             }
 
-            function renderCalendar() {
-                const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-                calMonthLabel.textContent = months[viewMonth] + ' ' + viewYear;
-                calGrid.innerHTML = '';
-                const startWeekday = new Date(viewYear, viewMonth, 1).getDay();
-                const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-                const range = getPreviewRange();
-
-                for (let i = 0; i < startWeekday; i++) {
-                    const empty = document.createElement('div');
-                    empty.className = 'airbnb-cal-cell is-empty';
-                    calGrid.appendChild(empty);
-                }
-
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const date = new Date(viewYear, viewMonth, day);
-                    const cell = document.createElement('button');
-                    cell.type = 'button';
-                    cell.className = 'airbnb-cal-cell';
-                    cell.innerHTML = '<span class="airbnb-cal-day">' + day + '</span>';
-
-                    if (isPast(date)) {
-                        cell.classList.add('is-past');
-                        cell.disabled = true;
-                    } else if (isRented(date)) {
-                        cell.classList.add('is-rented');
-                        cell.disabled = true;
-                        cell.title = 'Vehicle already rented';
-                    } else {
-                        cell.classList.add('is-available');
-                    }
-
-                    if (!cell.disabled && range.start && range.end) {
-                        const t = startOfDay(date).getTime();
-                        const startT = startOfDay(range.start).getTime();
-                        const endT = startOfDay(range.end).getTime();
-                        if (t >= startT && t <= endT) {
-                            cell.classList.add('in-range');
-                            if (t === startT) {
-                                cell.classList.add('is-selected', 'is-pickup');
-                            }
-                            if (t === endT) {
-                                cell.classList.add('is-selected', 'is-return');
-                            }
-                            if (t === startT && t === endT) {
-                                cell.classList.add('is-single');
-                            }
-                        }
-                    }
-
-                    cell.addEventListener('click', function () { if (!cell.disabled) onDayClick(date); });
-                    cell.addEventListener('mouseenter', function () {
-                        if (cell.disabled || selectionPhase !== 'end') return;
-                        if (hoverDate && sameDay(hoverDate, date)) return;
-                        hoverDate = date;
-                        renderCalendar();
+            function bindDiscountUpload(zone, input, onFile) {
+                if (!zone || !input) return;
+                ['dragenter', 'dragover'].forEach(function (evt) {
+                    zone.addEventListener(evt, function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        zone.classList.add('is-dragover');
                     });
-                    calGrid.appendChild(cell);
-                }
-            }
-
-            function onDayClick(date) {
-                const clicked = startOfDay(date);
-                if (isBlocked(clicked)) return;
-                const pickup = parseDateInput(pickupDateInput.value);
-
-                if (selectionPhase === 'start' || !pickup) {
-                    pickupDateInput.value = formatDateInput(clicked);
-                    returnDateInput.value = '';
-                    selectionPhase = 'end';
-                    hoverDate = null;
-                } else {
-                    const start = clicked < startOfDay(pickup) ? clicked : startOfDay(pickup);
-                    const end = clicked < startOfDay(pickup) ? startOfDay(pickup) : clicked;
-                    if (rangeHasRented(start, end)) {
-                        alert('Selected range includes dates when this vehicle is already rented.');
-                        return;
+                });
+                ['dragleave', 'drop'].forEach(function (evt) {
+                    zone.addEventListener(evt, function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        zone.classList.remove('is-dragover');
+                    });
+                });
+                zone.addEventListener('drop', function (e) {
+                    const files = e.dataTransfer.files;
+                    if (files && files.length > 0) {
+                        const dt = new DataTransfer();
+                        dt.items.add(files[0]);
+                        input.files = dt.files;
+                        onFile(files[0]);
                     }
-                    pickupDateInput.value = formatDateInput(start);
-                    returnDateInput.value = formatDateInput(end);
-                    selectionPhase = 'start';
-                    hoverDate = null;
-                }
-                syncDisplays();
-                renderCalendar();
+                });
+                input.addEventListener('change', function () {
+                    if (input.files && input.files[0]) onFile(input.files[0]);
+                });
             }
-
-            function initCalendar() {
-                const pickup = parseDateInput(pickupDateInput.value);
-                const ret = parseDateInput(returnDateInput.value);
-                if (isUnsetDate(pickup)) {
-                    pickupDateInput.value = '';
-                    returnDateInput.value = '';
-                    selectionPhase = 'start';
-                } else if (isUnsetDate(ret)) {
-                    returnDateInput.value = '';
-                    selectionPhase = 'end';
-                } else {
-                    selectionPhase = 'start';
-                }
-                const base = parseDateInput(pickupDateInput.value) || new Date();
-                viewYear = base.getFullYear();
-                viewMonth = base.getMonth();
-                syncDisplays();
-                renderCalendar();
-            }
-
-            calGrid.addEventListener('mouseleave', function () {
-                if (selectionPhase === 'end' && hoverDate) {
-                    hoverDate = null;
-                    renderCalendar();
-                }
-            });
 
             function validateStep1() {
                 if (!customerNameInput.value.trim()) {
@@ -931,8 +838,8 @@
                     alert('Please enter pick-up and drop-off locations.');
                     return false;
                 }
-                const pickup = parseDateInput(pickupDateInput.value);
-                const ret = parseDateInput(returnDateInput.value);
+                const pickup = calendar.parseDate(pickupDateInput.value);
+                const ret = calendar.parseDate(returnDateInput.value);
                 if (!pickup || !ret) {
                     alert('Please select pick-up and return dates on the calendar.');
                     return false;
@@ -941,7 +848,7 @@
                     alert('Return date cannot be earlier than pick-up date.');
                     return false;
                 }
-                if (rangeHasRented(pickup, ret)) {
+                if (calendar.rangeHasRented(pickup, ret)) {
                     alert('Selected range includes dates when this vehicle is already rented.');
                     return false;
                 }
@@ -967,7 +874,7 @@
             const depositAmount = parseFloat(paymentBlock?.dataset.depositAmount || '0');
             const fullAmount = parseFloat(paymentBlock?.dataset.totalFare || totalAmountInput?.value || '0');
 
-            function computeFareTotal() {
+            function fareParts() {
                 const hours = BookingSummary.calcHours(
                     pickupDateInput.value,
                     pickupTimeInput.value,
@@ -977,28 +884,40 @@
                 const basePrice = parseFloat(vehicleInput.dataset.basePrice || '0');
                 const succeedingFee = parseFloat(vehicleInput.dataset.succeedingFee || '0');
                 const succeedingHours = Math.max(0, hours - 8);
-                const subtotal = basePrice + (succeedingHours * succeedingFee);
+                const succeedingAmount = succeedingHours * succeedingFee;
                 const hasDiscount = discountSelect.value === 'Yes';
-                return Math.round((subtotal - (hasDiscount ? subtotal * 0.10 : 0)) * 100) / 100;
+                const subtotal = basePrice + succeedingAmount;
+                const discountAmount = hasDiscount ? subtotal * 0.10 : 0;
+                const total = Math.round((subtotal - discountAmount) * 100) / 100;
+                const percent = parseFloat(paymentBlock?.dataset.depositPercent || '5');
+                // Partial payment = 5% of the total rental amount.
+                const deposit = Math.round((total * (percent / 100)) * 100) / 100;
+                return { hours, succeedingHours, succeedingAmount, discountedBase: total, total, deposit };
+            }
+
+            function computeFareTotal() {
+                return fareParts().total;
             }
 
             function refreshFareTotals() {
-                const total = computeFareTotal();
-                const percent = parseFloat(paymentBlock?.dataset.depositPercent || '5');
-                const deposit = Math.round((total * (percent / 100)) * 100) / 100;
-                if (totalAmountInput) totalAmountInput.value = total.toFixed(2);
+                const parts = fareParts();
+                const dueNow = (paymentTypeInput?.value === 'Partial Payment')
+                    ? parts.deposit
+                    : parts.total;
+                if (totalAmountInput) totalAmountInput.value = parts.total.toFixed(2);
                 if (paymentBlock) {
-                    paymentBlock.dataset.totalFare = String(total);
-                    paymentBlock.dataset.depositAmount = String(deposit);
-                    paymentBlock.dataset.remainingAmount = String(Math.max(0, total - deposit));
+                    paymentBlock.dataset.totalFare = String(parts.total);
+                    paymentBlock.dataset.depositAmount = String(parts.deposit);
+                    paymentBlock.dataset.remainingAmount = String(Math.max(0, parts.total - dueNow));
                 }
+                return parts;
             }
 
             function expectedPayAmount() {
-                refreshFareTotals();
-                const deposit = parseFloat(paymentBlock?.dataset.depositAmount || '0');
-                const total = parseFloat(paymentBlock?.dataset.totalFare || '0');
-                return (paymentTypeInput?.value === 'Partial Payment') ? deposit : total;
+                const parts = refreshFareTotals();
+                return (paymentTypeInput?.value === 'Partial Payment')
+                    ? parts.deposit
+                    : parts.total;
             }
 
             function updatePayNowLabels() {
@@ -1025,9 +944,11 @@
                 });
             }
 
-            document.querySelectorAll('.payment-select-card[data-payment-method]').forEach(function (card) {
+            document.querySelectorAll('.payment-select-card[data-payment-method], .payment-method-row[data-payment-method], .payment-method-tab[data-payment-method]').forEach(function (card) {
                 card.addEventListener('click', function () {
-                    document.querySelectorAll('.payment-select-card[data-payment-method]').forEach(function (c) { c.classList.remove('is-selected'); });
+                    document.querySelectorAll('.payment-select-card[data-payment-method], .payment-method-row[data-payment-method], .payment-method-tab[data-payment-method]').forEach(function (c) {
+                        c.classList.remove('is-selected');
+                    });
                     card.classList.add('is-selected');
                     const method = card.getAttribute('data-payment-method') || '';
                     if (paymentMethodInput) paymentMethodInput.value = method;
@@ -1068,6 +989,7 @@
                     if (el) el.textContent = value;
                 };
 
+                setText('tripSummaryCustomer', (customerNameInput?.value || '').trim() || '—');
                 setText('tripSummaryPickup', pickupDate
                     ? (formatTripDate(pickupDate) + (pickupTime ? ' • ' + formatTripTime(pickupTime) : ''))
                     : '—');
@@ -1076,6 +998,36 @@
                     : '—');
                 setText('tripSummaryDuration', hours === 1 ? '1 hour' : (hours + ' hours'));
                 setText('tripSummaryPassengers', passengers || '—');
+                setText('tripSummaryDiscount', discountSelect?.value === 'Yes' ? 'Senior (10%)' : 'None');
+
+                const choice = getPayOptionChoice();
+                setText('tripSummaryStatus', choice === 'Partial' ? 'Partially Paid' : (choice === 'Reserve' ? 'Unpaid' : 'Fully Paid'));
+
+                const parts = refreshFareTotals();
+                const dueNow = choice === 'Partial'
+                    ? parts.deposit
+                    : parts.total;
+                const remaining = Math.max(0, parts.total - dueNow);
+                const typeAmount = choice === 'Partial' ? parts.deposit : parts.total;
+
+                const breakdown = document.getElementById('tripCostBreakdown');
+                const hoursRow = document.getElementById('tripBreakdownHoursRow');
+                const balanceCard = document.getElementById('tripBalanceCard');
+                const showCosts = breakdown && !breakdown.classList.contains('d-none');
+
+                setText('tripBreakdownTypeLabel', choice === 'Partial' ? 'Partial Payment' : (choice === 'Reserve' ? 'Estimated Total' : 'Full Payment'));
+                setText('tripBreakdownTypeAmount', formatOptionPeso(typeAmount));
+                if (hoursRow) {
+                    hoursRow.classList.toggle('d-none', parts.succeedingHours <= 0);
+                    const extra = parts.succeedingHours;
+                    setText('tripBreakdownHoursLabel', 'Exceeding Hours (' + extra + (extra === 1 ? 'hr' : 'hrs') + ')');
+                    setText('tripBreakdownHoursAmount', formatOptionPeso(parts.succeedingAmount));
+                }
+                setText('tripBreakdownTotal', formatOptionPeso(parts.total));
+                setText('tripBalanceAmount', formatOptionPeso(remaining));
+                if (balanceCard && showCosts) {
+                    balanceCard.classList.toggle('d-none', choice !== 'Partial' || remaining <= 0);
+                }
             }
 
             const rentalOptionInput = document.getElementById('input-RentalOption');
@@ -1099,7 +1051,7 @@
                 refreshFareTotals();
                 const total = parseFloat(paymentBlock?.dataset.totalFare || '0');
                 const deposit = parseFloat(paymentBlock?.dataset.depositAmount || '0');
-                const remaining = Math.max(0, total - deposit);
+                const remaining = parseFloat(paymentBlock?.dataset.remainingAmount || Math.max(0, total - deposit));
                 const percent = paymentBlock?.dataset.depositPercent || '5';
                 const partialAmount = document.getElementById('optionPartialAmount');
                 const partialRemaining = document.getElementById('optionPartialRemaining');
@@ -1121,7 +1073,7 @@
 
                 const continueBtn = document.getElementById('paymentOptionContinueBtn');
                 if (continueBtn) {
-                    continueBtn.textContent = value === 'Reserve' ? 'Continue to Summary' : 'Proceed to Payment Details';
+                    continueBtn.textContent = value === 'Reserve' ? 'Continue to Summary' : 'Continue to Payment Method';
                 }
 
                 if (value === 'Reserve') {
@@ -1135,6 +1087,10 @@
                 document.querySelectorAll('.client-reservation-step[data-pay-now-only="true"]').forEach(function (node) {
                     node.classList.toggle('is-skipped', value === 'Reserve');
                 });
+
+                if (tripSidebar && !tripSidebar.classList.contains('d-none')) {
+                    populateTripSummary();
+                }
             }
 
             function syncPayOptionUI() {
@@ -1167,10 +1123,9 @@
                 document.querySelectorAll('.js-summary-paynow').forEach(function (el) {
                     el.classList.toggle('d-none', payLater);
                 });
+                document.getElementById('summaryFeeGrid')?.classList.toggle('d-none', !payLater);
                 if (confirmBtn) {
-                    confirmBtn.textContent = payLater
-                        ? (confirmBtn.getAttribute('data-label-pay-later') || 'Confirm Hold')
-                        : (confirmBtn.getAttribute('data-label-pay-now') || 'Submit Booking & Payment');
+                    confirmBtn.textContent = payLater ? 'Confirm Hold' : 'Continue';
                 }
             }
 
@@ -1255,7 +1210,9 @@
                     paymentType: payLater ? null : (paymentTypeInput?.value || ''),
                     paymentMethod: payLater ? null : (paymentMethodInput?.value || ''),
                     amountPaid: payLater ? null : parseFloat(amountPaidInput?.value || '0'),
-                    accountName: payLater ? null : (accountNameInput?.value || '')
+                    accountName: payLater ? null : (accountNameInput?.value || ''),
+                    transactionReference: payLater ? null : (document.getElementById('TransactionReference')?.value || ''),
+                    paymentDate: payLater ? null : (paymentDateInput?.value || '')
                 };
             }
 
@@ -1290,18 +1247,41 @@
                         rateSidebar.style.display = step === 1 ? '' : 'none';
                     }
                     if (tripSidebar) {
-                        if (step === 2 || step === 3) {
+                        if (step === 2 || step === 3 || step === 4) {
+                            const breakdown = document.getElementById('tripCostBreakdown');
+                            const balanceCard = document.getElementById('tripBalanceCard');
+                            breakdown?.classList.toggle('d-none', step === 2);
+                            if (step === 2) {
+                                balanceCard?.classList.add('d-none');
+                            }
                             populateTripSummary();
                             tripSidebar.classList.remove('d-none');
                         } else {
                             tripSidebar.classList.add('d-none');
                         }
                     }
+                    document.querySelector('.client-reservation-page')?.classList.toggle('is-payment-type-step', step === 2);
+                    document.getElementById('summaryNextStepsCard')?.classList.toggle('d-none', step !== 4);
+                    document.getElementById('tripPaymentRemindersCard')?.classList.toggle('d-none', step !== 3);
                     if (step === 2) syncPayOptionUI();
                     if (step === 3) {
+                        if (paymentMethodInput && !String(paymentMethodInput.value || '').trim()) {
+                            paymentMethodInput.value = 'GCash';
+                            document.querySelectorAll('.payment-method-tab[data-payment-method]').forEach(function (tab) {
+                                tab.classList.toggle('is-selected', tab.getAttribute('data-payment-method') === 'GCash');
+                            });
+                        } else {
+                            const method = paymentMethodInput?.value || '';
+                            document.querySelectorAll('.payment-method-tab[data-payment-method]').forEach(function (tab) {
+                                tab.classList.toggle('is-selected', tab.getAttribute('data-payment-method') === method);
+                            });
+                        }
                         updatePayNowLabels();
                         setChannelPanel(paymentMethodInput?.value || '');
-                        if (amountPaidInput) amountPaidInput.value = expectedPayAmount().toFixed(2);
+                        // Keep a value the user already typed; only fill when blank.
+                        if (amountPaidInput && !String(amountPaidInput.value || '').trim()) {
+                            amountPaidInput.value = expectedPayAmount().toFixed(2);
+                        }
                     }
                     if (step === 4) {
                         applySummaryMode();
@@ -1319,53 +1299,21 @@
             discountSelect.addEventListener('change', toggleDiscountUpload);
             pickupTimeInput.addEventListener('change', recalculateRate);
             returnTimeInput.addEventListener('change', recalculateRate);
-            fileInput.addEventListener('change', function () {
-                if (fileInput.files && fileInput.files[0]) showDiscountPreview(fileInput.files[0]);
-            });
-            removeBtn.addEventListener('click', clearDiscountFile);
-            calPrev.addEventListener('click', function () {
-                viewMonth -= 1;
-                if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
-                renderCalendar();
-            });
-            calNext.addEventListener('click', function () {
-                viewMonth += 1;
-                if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
-                renderCalendar();
-            });
-            pickupDisplay.addEventListener('click', function () { selectionPhase = 'start'; });
-            returnDisplay.addEventListener('click', function () {
-                if (pickupDateInput.value) selectionPhase = 'end';
-            });
-
-            ['dragenter', 'dragover'].forEach(function (evt) {
-                uploadZone.addEventListener(evt, function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    uploadZone.style.backgroundColor = '#e9e9e9';
-                });
-            });
-            ['dragleave', 'drop'].forEach(function (evt) {
-                uploadZone.addEventListener(evt, function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    uploadZone.style.backgroundColor = '';
-                });
-            });
-            uploadZone.addEventListener('drop', function (e) {
-                const files = e.dataTransfer.files;
-                if (files && files.length > 0) {
-                    const dt = new DataTransfer();
-                    dt.items.add(files[0]);
-                    fileInput.files = dt.files;
-                    showDiscountPreview(files[0]);
-                }
-            });
+            bindDiscountUpload(frontUploadZone, fileInput, showFrontDiscountPreview);
+            bindDiscountUpload(backUploadZone, backFileInput, showBackDiscountPreview);
+            frontRemoveBtn?.addEventListener('click', clearFrontDiscountFile);
+            backRemoveBtn?.addEventListener('click', clearBackDiscountFile);
+            frontPreviewBox?.addEventListener('click', function () { fileInput?.click(); });
+            backPreviewBox?.addEventListener('click', function () { backFileInput?.click(); });
 
             updateCapacityHint();
             toggleDiscountUpload();
-            initCalendar();
-            loadAvailability();
+            calendar = AvailabilityCalendar.init({
+                vehicleInput: vehicleInput,
+                availabilityUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Availability", "ClientSide"))),
+                initialUnavailable: @Html.Raw(initialUnavailableJson),
+                onDatesChange: recalculateRate
+            });
         })();
     </script>
 }

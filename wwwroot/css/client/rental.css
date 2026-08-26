@@ -1,0 +1,2662 @@
+/* Book a Vehicle: rental wizard, payment steps, and booking summary. */
+
+/* --- Rental page --- */
+.client-main:has(.client-reservation-page) {
+    background: #eff5fd;
+}
+
+.client-reservation-page {
+    background: transparent;
+    padding-top: 1.25rem;
+}
+
+.rent-step-card {
+    background: #F9FAFF;
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    padding: 1.25rem 1.3rem 1.35rem;
+    margin-bottom: 1.15rem;
+}
+
+.rent-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.05rem;
+}
+
+.rent-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e8eef7;
+    color: var(--client-navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.rent-card-head h2 {
+    margin: 0;
+    font-family: var(--font-title);
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #1E296A;
+}
+
+.rent-card-hint {
+    margin: -0.35rem 0 1rem;
+    font-size: 0.78rem;
+    color: #6b7385;
+}
+
+.rent-field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1E296A;
+    margin-bottom: 0.35rem;
+}
+
+.rent-field-input,
+.client-reservation-page .airbnb-date-input,
+.client-reservation-page .airbnb-time-input,
+.client-reservation-page .form-select.rent-field-input {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #e4e8f0;
+    border-radius: 12px;
+    background: #f4f6fb;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.86rem;
+    color: var(--client-navy);
+    box-shadow: none;
+}
+
+.client-reservation-page .airbnb-date-input,
+.client-reservation-page .airbnb-time-input {
+    position: relative;
+    padding-right: 2.6rem;
+    cursor: pointer;
+}
+
+.client-reservation-page .airbnb-date-input::-webkit-calendar-picker-indicator,
+.client-reservation-page .airbnb-time-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.rent-field-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.rent-field-input:focus,
+.client-reservation-page .airbnb-date-input:focus,
+.client-reservation-page .airbnb-time-input:focus {
+    outline: none;
+    border-color: #b7c4de;
+    box-shadow: 0 0 0 3px rgba(26, 43, 93, 0.08);
+    background: #F9FAFF;
+}
+
+.rent-field-help {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    color: #8b95a8;
+}
+
+.rent-step-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin: 0.25rem 0 0.5rem;
+}
+
+.rent-step-actions--split {
+    justify-content: flex-end;
+}
+
+.rent-btn-cancel,
+.rent-btn-continue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.rent-btn-cancel {
+    background: #F9FAFF;
+    border: 1.5px solid var(--client-navy);
+    color: var(--client-navy);
+}
+
+.rent-btn-cancel:hover {
+    background: #f4f6fb;
+    color: var(--client-navy);
+}
+
+.rent-btn-continue {
+    border: 0;
+    background: var(--client-navy);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(26, 43, 93, 0.18);
+}
+
+.client-reservation-page .rent-step-actions .rent-btn-cancel {
+    background: #F9FAFF;
+    border: 1.5px solid var(--client-navy);
+    color: var(--client-navy);
+    box-shadow: none;
+}
+
+.client-reservation-page .rent-step-actions .rent-btn-continue {
+    border: 0;
+    background: var(--client-navy);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(26, 43, 93, 0.18);
+}
+
+.rent-vehicle-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.95rem;
+    background: #F9FAFF;
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.rent-vehicle-preview-image {
+    width: 96px;
+    height: 72px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #eef1f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9aa3b5;
+    font-size: 1.45rem;
+    flex-shrink: 0;
+}
+
+.rent-vehicle-preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.rent-vehicle-preview-meta strong {
+    display: block;
+    color: var(--client-navy);
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.rent-vehicle-preview-meta p {
+    margin: 0.2rem 0 0;
+    color: #6b7385;
+    font-size: 0.78rem;
+}
+
+.client-reservation-page .discount-id-panel {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem;
+    height: 100%;
+}
+
+.client-reservation-page .discount-id-panel-title {
+    text-align: center;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1E296A;
+    margin-bottom: 0.75rem;
+}
+
+.client-reservation-page .discount-id-upload-zone {
+    min-height: 130px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f3f4f6;
+    color: #5b6578;
+}
+
+.client-reservation-page .discount-id-upload-zone.is-dragover {
+    background: #eef2ff;
+}
+
+.client-reservation-page .license-preview-box {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    min-height: 150px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.client-reservation-page .license-preview-box img {
+    width: 100%;
+    height: 100%;
+    min-height: 150px;
+    object-fit: contain;
+}
+
+.client-reservation-page .license-preview-box:hover {
+    border-color: #93c5fd;
+}
+
+.client-reservation-page .upload-preview-bar {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    margin-top: 0.65rem;
+    padding: 0.45rem 0.55rem 0.45rem 0.85rem;
+}
+
+.client-reservation-page .upload-preview-remove-btn {
+    border: none;
+    background: transparent;
+    color: var(--client-navy);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+}
+
+.client-reservation-page .client-rate-summary {
+    background: #F9FAFF;
+    border: 1px solid #e8ecf3;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    border-radius: 20px;
+    padding: 1.2rem 1.1rem 1.05rem;
+}
+
+.client-reservation-page .client-rate-summary-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2b3344;
+    margin: 0 0 0.3rem;
+}
+
+.client-reservation-page .client-rate-summary-note {
+    color: #8b95a8;
+    font-size: 0.7rem;
+}
+
+.client-reservation-page .client-rate-summary-note i {
+    color: #22a06b;
+}
+
+.client-reservation-page .client-rate-summary-divider,
+.client-reservation-page .client-rate-card-divider {
+    border-top-color: #e4e8f0;
+    opacity: 1;
+}
+
+.client-reservation-page .client-rate-card--base,
+.client-reservation-page .client-rate-card--succeeding,
+.client-reservation-page .client-rate-example {
+    background: #F9FAFF;
+    border: 1px solid #dce3ef;
+    box-shadow: none;
+}
+
+.client-reservation-page .client-rate-card-label,
+.client-reservation-page .client-rate-card-price,
+.client-reservation-page .client-rate-example-header,
+.client-reservation-page .client-rate-example-total {
+    color: var(--client-navy);
+}
+
+.client-reservation-page .client-rate-card-subtitle,
+.client-reservation-page .client-rate-includes li,
+.client-reservation-page .client-rate-footnote,
+.client-reservation-page .client-rate-example-row,
+.client-reservation-page .client-rate-example-note,
+.client-reservation-page .client-rate-disclaimer {
+    color: #5b6578;
+}
+
+.client-reservation-page .client-rate-card-label .client-rate-card-subtitle {
+    display: inline;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.client-reservation-page .client-rate-card-icon,
+.client-reservation-page .client-rate-includes i,
+.client-reservation-page .client-rate-footnote i,
+.client-reservation-page .client-rate-example-header i,
+.client-reservation-page .client-rate-info-box i,
+.client-reservation-page .client-rate-trust-item i {
+    color: var(--client-navy);
+}
+
+.client-reservation-page .client-rate-card-icon--circle {
+    border-color: var(--client-navy);
+}
+
+.client-reservation-page .client-rate-info-box {
+    border: none;
+    box-shadow: none;
+    color: #3d4a66;
+}
+
+.client-reservation-page .client-rate-info-box--discount {
+    background: #e8f1fb;
+}
+
+.client-reservation-page .client-rate-info-box--payment {
+    background: #eceefe;
+}
+
+.client-reservation-page .client-rate-trust {
+    border-top-color: #e4e8f0;
+}
+
+.client-reservation-page .client-rate-trust-item {
+    color: var(--client-navy);
+}
+
+.client-reservation-page .client-rate-trust-item:not(:last-child) {
+    border-right-color: #e4e8f0;
+}
+
+.client-reservation-page .client-btn-reserve-lg {
+    display: none;
+}
+
+.client-reservation-page .payment-type-title {
+    color: #1E296A;
+}
+
+.client-reservation-page .payment-option-card {
+    background: #f4f6fb;
+    border: 1.5px solid #e4e8f0;
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    box-shadow: none;
+}
+
+.client-reservation-page .payment-option-card:hover {
+    background: #eef2f8;
+}
+
+.client-reservation-page .payment-option-card.is-selected {
+    background: #eef2ff;
+    border-color: #1E296A;
+    box-shadow: 0 2px 10px rgba(30, 41, 106, 0.1);
+}
+
+.client-reservation-page .payment-option-icon {
+    width: 42px;
+    height: 42px;
+    background: #1E296A;
+    color: #fff;
+}
+
+.client-reservation-page .payment-option-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1E296A;
+    margin-bottom: 0.2rem;
+}
+
+.client-reservation-page .payment-option-desc {
+    font-size: 0.8rem;
+    color: #5b6578;
+    margin-bottom: 0.45rem;
+}
+
+.client-reservation-page .payment-option-amount,
+.client-reservation-page .payment-option-amount span:first-child {
+    color: #1E296A;
+    font-size: 0.88rem;
+}
+
+.client-reservation-page .payment-option-amount span {
+    font-weight: 600;
+    color: #5b6578;
+}
+
+.client-reservation-page .payment-option-note {
+    color: #6b7385;
+    font-size: 0.78rem;
+}
+
+.client-reservation-page .payment-option-radio {
+    border-color: #c5cde0;
+}
+
+.client-reservation-page .payment-option-card.is-selected .payment-option-radio {
+    border-color: #1E296A;
+}
+
+.client-reservation-page .payment-option-card.is-selected .payment-option-radio::after {
+    background: #1E296A;
+}
+
+.client-reservation-page .payment-method-title {
+    color: #1E296A;
+}
+
+.client-reservation-page .payment-method-title i {
+    color: #1E296A;
+}
+
+.client-trip-summary-sidebar .rent-trip-box {
+    margin-top: 0.85rem;
+}
+
+.client-reservation-page .rent-vehicle-preview-meta strong {
+    color: #1E296A;
+}
+
+.rent-pay-later-note {
+    margin-top: 0.85rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    background: #e8f1fb;
+    color: #3d4a66;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.rent-pay-methods {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.client-reservation-page .payment-method-info-card {
+    background: #f4f6fb;
+    border: 1px solid #e4e8f0;
+    border-radius: 14px;
+    padding: 0.95rem 0.9rem 0.85rem;
+    pointer-events: none;
+}
+
+.client-reservation-page .payment-method-info-name {
+    color: #1E296A;
+    font-size: 0.9rem;
+}
+
+.client-reservation-page .payment-method-info-channel {
+    color: #6b7385;
+}
+
+.client-reservation-page .payment-method-info-desc {
+    color: #5b6578;
+    font-size: 0.76rem;
+}
+
+.client-reservation-page .payment-method-info-footer {
+    color: #6b7385;
+}
+
+.client-reservation-page .payment-method-info-logo-fallback {
+    background: #F9FAFF;
+    border-color: #dce3ef;
+    color: #1E296A;
+}
+
+@media (max-width: 700px) {
+    .rent-pay-methods {
+        grid-template-columns: 1fr;
+    }
+}
+
+.client-reservation-stepper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    margin: 0 auto 1.75rem;
+    flex-wrap: nowrap;
+    width: 100%;
+    max-width: 720px;
+}
+
+.client-reservation-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    color: #666666;
+    min-width: 72px;
+    flex: 0 0 auto;
+    text-align: center;
+}
+
+.client-reservation-step-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: #8a8a8a;
+}
+
+.client-reservation-step.active {
+    color: var(--client-navy);
+}
+
+.client-reservation-step.active .client-reservation-step-label,
+.client-reservation-step.completed .client-reservation-step-label {
+    color: var(--client-navy);
+}
+
+.client-reservation-step-dot {
+    position: relative;
+    isolation: isolate;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1E296A;
+    line-height: 1;
+}
+
+.client-reservation-step-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("../../images/System%20Images/circletrans.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.client-reservation-step.active .client-reservation-step-dot,
+.client-reservation-step.completed .client-reservation-step-dot {
+    color: #ffffff;
+}
+
+.client-reservation-step.active .client-reservation-step-dot::before,
+.client-reservation-step.completed .client-reservation-step-dot::before {
+    background-image: url("../../images/System%20Images/circlefill.png");
+}
+
+.client-reservation-step.completed {
+    color: #333333;
+}
+
+.client-reservation-step-line {
+    flex: 1 1 28px;
+    max-width: 72px;
+    height: 1.5px;
+    background: #d0d5dd;
+    margin: 14px 0.5rem 0;
+}
+
+.client-reservation-step-line.is-complete {
+    background: var(--client-navy);
+}
+
+.client-reservation-step-dot i {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.client-reservation-layout {
+    align-items: start;
+}
+
+.client-trip-summary {
+    background: #e4e4e4;
+    border-radius: 14px;
+    padding: 1rem 1rem 1.1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: sticky;
+    top: 1rem;
+}
+
+.rent-trip-card {
+    background: #F9FAFF;
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    padding: 1.15rem 1.2rem 1.2rem;
+}
+
+.rent-trip-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 0.42rem 0;
+    border: none;
+}
+
+.rent-trip-row span {
+    color: #4d5d86;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.rent-trip-row strong {
+    color: #2b3344;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.rent-trip-box {
+    margin-top: 0.85rem;
+    padding: 0.75rem 0.9rem 0.7rem;
+    background: #F9FAFF;
+    border: 1px solid #d8deea;
+    border-radius: 12px;
+}
+
+.rent-trip-box .rent-trip-row {
+    padding: 0.28rem 0;
+}
+
+.rent-trip-box .rent-trip-row--total {
+    margin-top: 0.35rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid #e4e8f0;
+}
+
+.rent-trip-row--total span {
+    color: #4d5d86;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.rent-trip-row--total strong {
+    color: var(--client-navy);
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.rent-balance-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+    padding: 0;
+    background: none;
+    color: #6b7a99;
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.rent-balance-note i {
+    color: #4d7cc7;
+    font-size: 0.95rem;
+    margin-top: 0.05rem;
+    flex-shrink: 0;
+}
+
+.client-reservation-page .payment-details-step .payment-type-title,
+.client-reservation-page .payment-details-step .payment-step2-heading {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #1E296A;
+    margin: 0;
+    letter-spacing: 0;
+}
+
+.client-reservation-page .payment-details-step .rent-card-head {
+    margin-bottom: 0.35rem;
+}
+
+.client-reservation-page .payment-method-tabs {
+    gap: 0.65rem;
+}
+
+.client-reservation-page .payment-method-tab {
+    background: #f4f6fb;
+    border: 1.5px solid #e4e8f0;
+    border-radius: 12px;
+    box-shadow: none;
+}
+
+.client-reservation-page .payment-method-tab:hover {
+    background: #eef2f8;
+}
+
+.client-reservation-page .payment-method-tab.is-selected {
+    background: #e8f1fb;
+    border-color: var(--client-navy);
+    box-shadow: none;
+}
+
+.client-reservation-page .payment-method-tab-name {
+    color: var(--client-navy);
+    font-weight: 700;
+}
+
+.client-reservation-page .payment-channel-panel {
+    background: #f4f6fb;
+    border: 1.5px dashed #c5cde0;
+    border-radius: 14px;
+    box-shadow: none;
+}
+
+.client-reservation-page .payment-channel-panel-title {
+    color: var(--client-navy);
+}
+
+.client-reservation-page .payment-channel-details {
+    background: #e8f1fb;
+    max-width: 100%;
+}
+
+.client-reservation-page .payment-channel-detail-row span {
+    color: #5b6578;
+}
+
+.client-reservation-page .payment-channel-detail-row strong {
+    color: var(--client-navy);
+}
+
+.client-reservation-page .payment-reminders {
+    display: none !important;
+}
+
+.client-trip-summary-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.client-trip-summary-sidebar .remaining-balance-card,
+.client-trip-summary-sidebar .payment-reminders-sidebar-card {
+    width: 100%;
+}
+
+.client-reservation-page .payment-step2-card {
+    background: #F9FAFF;
+    border: 1px solid #e8ecf3;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    padding: 1.25rem 1.3rem 1.35rem;
+    margin-bottom: 1.15rem;
+}
+
+.client-reservation-page .payment-details-step .payment-field-label,
+.client-reservation-page .payment-details-step .rent-field-label {
+    color: #1E296A;
+    font-weight: 700;
+}
+
+.client-reservation-page .payment-details-step .payment-field-input,
+.client-reservation-page .payment-details-step .rent-field-input {
+    background: #f4f6fb !important;
+    border: 1px solid #e4e8f0 !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    color: var(--client-navy);
+}
+
+.client-reservation-page .payment-details-step .payment-field-input:focus,
+.client-reservation-page .payment-details-step .rent-field-input:focus {
+    background: #F9FAFF !important;
+    border-color: #b7c4de !important;
+    box-shadow: 0 0 0 3px rgba(26, 43, 93, 0.08) !important;
+}
+
+.client-reservation-page .rent-date-field {
+    position: relative;
+}
+
+.client-reservation-page .rent-date-field .rent-field-input {
+    padding-right: 2.4rem;
+}
+
+.client-reservation-page .rent-date-field i {
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--client-navy);
+    pointer-events: none;
+}
+
+.client-reservation-page .rent-date-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.client-reservation-page .rent-upload-panel {
+    background: #f4f6fb;
+    border: 1px solid #e4e8f0;
+    border-radius: 14px;
+    padding: 0.85rem;
+}
+
+.client-reservation-page .payment-upload-zone {
+    min-height: 148px;
+    border: 1.5px dashed #c5cde0;
+    background: #F9FAFF;
+}
+
+.client-reservation-page .payment-upload-zone:hover,
+.client-reservation-page .payment-upload-zone.is-dragover {
+    background: #eef3fb;
+    border-color: #b7c4de;
+}
+
+.client-reservation-page .payment-upload-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    color: var(--client-navy);
+    font-weight: 600;
+}
+
+.client-reservation-page .payment-upload-empty i {
+    font-size: 1.7rem;
+    color: var(--client-navy);
+    margin-bottom: 0.25rem;
+}
+
+.client-reservation-page .payment-upload-empty span {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #8b95a8;
+}
+
+.client-reservation-page .payment-upload-preview.is-visible {
+    display: block;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    margin-top: 0;
+    padding: 0;
+    min-height: auto;
+}
+
+.client-trip-summary-image {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #d6d6d6;
+    margin-bottom: 0.85rem;
+}
+
+.client-trip-summary-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.client-trip-summary-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 140px;
+    background: #d8d8d8;
+}
+
+.client-trip-summary-placeholder svg {
+    width: 100%;
+    height: 100%;
+    stroke: #9e9e9e;
+    stroke-width: 1.5;
+}
+
+.client-trip-summary-type {
+    display: inline-block;
+    background: #cfcfcf;
+    color: #333;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    margin-bottom: 0.45rem;
+}
+
+.client-trip-summary-name {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #222;
+    margin: 0 0 0.95rem;
+    line-height: 1.15;
+}
+
+.client-trip-summary-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+}
+
+.client-trip-summary-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.84rem;
+}
+
+.client-trip-summary-row span {
+    color: #666;
+    font-weight: 500;
+}
+
+.client-trip-summary-row strong {
+    color: #222;
+    font-weight: 700;
+    text-align: right;
+}
+
+.client-trip-summary-secure {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    background: #d8d8d8;
+    border: 1px solid #8f8f8f;
+    border-radius: 10px;
+    padding: 0.7rem 0.75rem;
+    font-size: 0.74rem;
+    line-height: 1.4;
+    color: #444;
+}
+
+.client-trip-summary-secure i {
+    color: #333;
+    font-size: 0.95rem;
+    margin-top: 0.05rem;
+    flex-shrink: 0;
+}
+
+.client-reservation-card {
+    background: #d9d9d9;
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+    margin-bottom: 0.85rem;
+}
+
+.client-reservation-section-title {
+    font-family: var(--font-title);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0 0 0.85rem;
+}
+
+.client-reservation-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 0.35rem;
+}
+
+.client-reservation-input,
+.client-reservation-textarea {
+    width: 100%;
+    border: 1px solid #4a4a4a;
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.78rem;
+    color: #333333;
+    background: #f2f2f2;
+}
+
+.client-reservation-input:focus,
+.client-reservation-textarea:focus {
+    outline: none;
+    border-color: #2b3e8c;
+    box-shadow: 0 0 0 2px rgba(43, 62, 140, 0.15);
+}
+
+.client-reservation-helper {
+    font-size: 0.65rem;
+    color: #666666;
+    margin: 0.3rem 0 0;
+}
+
+.client-reservation-vehicle-card {
+    background: #d9d9d9;
+    border-radius: 14px;
+    padding: 1.15rem 1.25rem;
+}
+
+.client-reservation-vehicle-summary {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.client-reservation-vehicle-image {
+    width: 150px;
+    aspect-ratio: 4 / 3;
+    border: 1.5px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #ececec;
+}
+
+.client-reservation-vehicle-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.client-reservation-vehicle-placeholder svg {
+    width: 100%;
+    height: 100%;
+    stroke: #333;
+    stroke-width: 0.8;
+}
+
+.client-reservation-vehicle-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.client-reservation-type-pill {
+    display: inline-block;
+    background: #cfcfcf;
+    color: #333;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.22rem 0.7rem;
+    border-radius: 999px;
+}
+
+.client-reservation-vehicle-name {
+    font-family: var(--font-title);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #222;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.client-reservation-vehicle-specs {
+    font-size: 0.82rem;
+    color: #444;
+    margin: 0;
+}
+
+.client-reservation-calendar {
+    background: #f2f2f2;
+    border: 1px solid #4a4a4a;
+    border-radius: 10px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.client-reservation-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #333333;
+}
+
+.client-reservation-calendar-nav {
+    border: none;
+    background: transparent;
+    font-size: 1.25rem;
+    color: #333;
+    line-height: 1;
+    padding: 0 0.35rem;
+    cursor: pointer;
+}
+
+.client-reservation-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 0.35rem;
+}
+
+.client-reservation-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.2rem;
+}
+
+.client-reservation-cal-day {
+    border: none;
+    background: transparent;
+    font-size: 0.72rem;
+    padding: 0.35rem 0;
+    border-radius: 6px;
+    color: #333;
+    cursor: pointer;
+}
+
+.client-reservation-cal-day.is-available:hover {
+    background: #e0e0e0;
+}
+
+.client-reservation-cal-day.is-unavailable {
+    background: #f8d7da;
+    color: #b42318;
+    cursor: not-allowed;
+}
+
+.client-reservation-cal-day.is-pickup {
+    background: #2b3e8c;
+    color: #fff;
+}
+
+.client-reservation-cal-day.is-return {
+    background: #1f7a4d;
+    color: #fff;
+}
+
+.client-reservation-cal-day.is-pickup.is-return {
+    background: linear-gradient(135deg, #2b3e8c 50%, #1f7a4d 50%);
+    color: #fff;
+}
+
+.client-reservation-cal-day.in-range {
+    background: #c5d4f5;
+    color: #243572;
+}
+
+.client-reservation-calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 0.65rem;
+    font-size: 0.62rem;
+    color: #666;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 0.2rem;
+    vertical-align: middle;
+}
+
+.legend-available { background: #f2f2f2; border: 1px solid #999; }
+.legend-pickup { background: #2b3e8c; }
+.legend-return { background: #1f7a4d; }
+.legend-range { background: #c5d4f5; }
+.legend-unavailable { background: #f8d7da; border: 1px solid #f1aeb5; }
+
+.client-reservation-datetime {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.client-reservation-upload {
+    position: relative;
+    border: 1px dashed #4a4a4a;
+    border-radius: 10px;
+    background: #f2f2f2;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-reservation-file-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.client-reservation-upload-placeholder {
+    text-align: center;
+    font-size: 0.72rem;
+    color: #666;
+    pointer-events: none;
+}
+
+.client-reservation-upload-placeholder i {
+    display: block;
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.client-reservation-upload-preview {
+    position: relative;
+    width: 100%;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.client-reservation-upload-preview img {
+    max-width: 100%;
+    max-height: 120px;
+    border-radius: 6px;
+    border: 1px solid #999;
+}
+
+.client-reservation-upload-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: #333;
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.client-reservation-upload-name {
+    display: block;
+    font-size: 0.65rem;
+    color: #666;
+    margin-top: 0.35rem;
+}
+
+.client-reservation-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    padding-bottom: 1rem;
+}
+
+.client-reservation-btn-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.5rem;
+    background: #F9FAFF;
+    border: 1px solid #4a4a4a;
+    border-radius: 8px;
+    color: #333;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.client-reservation-btn-back:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.client-reservation-btn-continue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.25rem;
+    background: #2b3e8c;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.client-reservation-btn-continue:hover {
+    background: #243572;
+    color: #fff;
+    text-decoration: none;
+}
+
+.client-reservation-alert {
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 991.98px) {
+    .client-reservation-stepper {
+        flex-wrap: wrap;
+        row-gap: 0.75rem;
+        justify-content: space-between;
+    }
+
+    .client-reservation-step {
+        min-width: 56px;
+        flex: 1 1 56px;
+    }
+
+    .client-reservation-step-line {
+        display: none;
+    }
+
+    .client-reservation-vehicle-summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .client-reservation-actions,
+    .rent-step-actions {
+        flex-direction: column-reverse;
+    }
+
+    .client-reservation-btn-back,
+    .client-reservation-btn-continue,
+    .rent-btn-cancel,
+    .rent-btn-continue {
+        width: 100%;
+    }
+}
+
+/* --- Payment Details (Step 2) --- */
+.client-payment-page .client-payment-card {
+    background: #d9d9d9;
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+    margin-bottom: 0.85rem;
+}
+
+.client-payment-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-title);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0 0 0.85rem;
+}
+
+.client-payment-section-title i {
+    font-size: 1rem;
+}
+
+.client-payment-line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid #c4c4c4;
+    font-size: 0.78rem;
+    color: #333333;
+}
+
+.client-payment-line:last-of-type {
+    border-bottom: none;
+}
+
+.client-payment-line strong {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+
+.client-payment-line p {
+    margin: 0;
+    font-size: 0.68rem;
+    color: #666666;
+}
+
+.client-payment-line > span {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.client-payment-line.is-discount > span {
+    color: #2b3e8c;
+}
+
+.client-payment-total-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.85rem;
+    padding: 0.75rem 0.85rem;
+    background: #4d4d4d;
+    border-radius: 8px;
+    color: #ffffff;
+}
+
+.client-payment-total-bar strong {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.client-payment-total-bar p {
+    margin: 0.15rem 0 0;
+    font-size: 0.62rem;
+    color: #dddddd;
+}
+
+.client-payment-total-bar > span {
+    font-size: 1.15rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.client-payment-methods {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.client-payment-method {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0.85rem 0.8rem 0.75rem;
+    background: #bbbbbb;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    min-height: 168px;
+}
+
+.client-payment-method.is-display {
+    cursor: default;
+    user-select: none;
+    pointer-events: none;
+}
+
+.client-payment-method:hover {
+    border-color: #999999;
+    transform: translateY(-1px);
+}
+
+.client-payment-method.is-display:hover {
+    border-color: transparent;
+    transform: none;
+}
+
+.client-payment-info-note {
+    margin: 0 0 0.85rem;
+    font-size: 0.85rem;
+    color: #666666;
+}
+
+.client-payment-method.is-selected {
+    border-color: #2b3e8c;
+    box-shadow: 0 4px 10px rgba(43, 62, 140, 0.18);
+    background: #c4c4c4;
+}
+
+.client-payment-method input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.client-payment-method-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #F9FAFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-bottom: 0.55rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.client-payment-method-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.client-payment-method-logo--gcash {
+    color: #007cff;
+    font-size: 1rem;
+}
+
+.client-payment-method-logo--bdo {
+    color: #003d79;
+    font-size: 0.52rem;
+    letter-spacing: -0.02em;
+}
+
+.client-payment-method-logo--walkin {
+    color: #4d4d4d;
+    font-size: 1rem;
+}
+
+.client-payment-method-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.client-payment-method-body strong {
+    font-size: 0.82rem;
+    color: #222222;
+    font-weight: 700;
+}
+
+.client-payment-method-body small {
+    font-size: 0.68rem;
+    color: #444444;
+    font-weight: 600;
+}
+
+.client-payment-method-desc {
+    display: block;
+    font-size: 0.64rem;
+    color: #333333;
+    line-height: 1.45;
+    margin-top: 0.35rem;
+}
+
+.client-payment-method-body em {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-style: normal;
+    font-size: 0.6rem;
+    color: #555555;
+    margin-top: auto;
+    padding-top: 0.65rem;
+}
+
+.client-payment-method-body em i {
+    font-size: 0.72rem;
+}
+
+@media (max-width: 991.98px) {
+    .client-payment-methods {
+        grid-template-columns: 1fr;
+    }
+
+    .client-payment-method {
+        min-height: 0;
+    }
+}
+
+.client-payment-actions {
+    margin-top: 0.25rem;
+}
+
+.client-payment-placeholder-text {
+    font-size: 0.78rem;
+    color: #555555;
+    margin: 0;
+}
+
+/* Booking summary sidebar (payment step) */
+.client-booking-summary {
+    background: #d9d9d9;
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.client-booking-summary-title {
+    font-family: var(--font-title);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0 0 0.85rem;
+}
+
+.client-booking-summary-vehicle {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #c4c4c4;
+}
+
+.client-booking-summary-image {
+    width: 72px;
+    aspect-ratio: 4 / 3;
+    border: 1.5px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f2f2f2;
+}
+
+.client-booking-summary-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.client-booking-summary-image-placeholder svg {
+    width: 100%;
+    height: 100%;
+    stroke: #333;
+    stroke-width: 0.8;
+}
+
+.client-booking-summary-vehicle-name {
+    font-family: var(--font-title);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #333333;
+    margin: 0.15rem 0 0;
+}
+
+.client-booking-summary-list {
+    margin: 0 0 0.85rem;
+}
+
+.client-booking-summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    font-size: 0.72rem;
+}
+
+.client-booking-summary-row dt {
+    color: #666666;
+    font-weight: 600;
+    margin: 0;
+}
+
+.client-booking-summary-row dd {
+    color: #333333;
+    font-weight: 600;
+    text-align: right;
+    margin: 0;
+}
+
+.client-booking-summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 0;
+    border-top: 1px solid #c4c4c4;
+    border-bottom: 1px solid #c4c4c4;
+    font-size: 0.78rem;
+    color: #333333;
+}
+
+.client-booking-summary-total strong {
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.client-booking-summary-secure {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin: 0.85rem 0;
+    padding: 0.65rem 0.75rem;
+    background: #f2f2f2;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    color: #666666;
+}
+
+.client-booking-summary-secure i {
+    color: #2b3e8c;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+
+.client-booking-summary-secure p {
+    margin: 0;
+    line-height: 1.45;
+}
+
+.client-booking-summary-edit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: #F9FAFF;
+    border: 1px solid #4a4a4a;
+    border-radius: 8px;
+    color: #333333;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.client-booking-summary-edit:hover {
+    background: #f5f5f5;
+    color: #333333;
+}
+
+.client-booking-summary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.client-booking-summary-status {
+    color: #2b3e8c !important;
+    font-weight: 700 !important;
+}
+
+/* --- Payment Confirmation (Step 3) --- */
+.client-payment-channel-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+}
+
+.client-payment-channel-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 48px;
+    padding: 0.55rem 0.65rem;
+    background: #bbbbbb;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.client-payment-channel-tab span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #222222;
+    line-height: 1.3;
+}
+
+.client-payment-channel-tab:hover {
+    border-color: #999999;
+}
+
+.client-payment-channel-tab.is-selected {
+    border-color: #2b3e8c;
+    background: #c8c8c8;
+    box-shadow: 0 3px 8px rgba(43, 62, 140, 0.16);
+}
+
+.client-payment-channel-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.client-payment-qr-panel,
+.client-payment-walkin-panel,
+#paymentSubmitSection {
+    display: none;
+}
+
+.client-payment-qr-panel[data-visible="true"],
+.client-payment-walkin-panel[data-visible="true"],
+#paymentSubmitSection[data-visible="true"] {
+    display: block;
+}
+
+.client-payment-qr-panel {
+    display: none;
+    margin-top: 0.35rem;
+    padding: 0.9rem;
+    background: #cfcfcf;
+    border-radius: 10px;
+}
+
+.client-payment-qr-panel[data-visible="true"] {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+}
+
+.client-payment-qr-box {
+    width: 140px;
+    height: 140px;
+    background: #F9FAFF;
+    border-radius: 8px;
+    border: 1px solid #b0b0b0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-payment-qr-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    color: #666666;
+}
+
+.client-payment-qr-placeholder i {
+    font-size: 2.4rem;
+}
+
+.client-payment-qr-placeholder span {
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.client-payment-qr-title {
+    margin: 0 0 0.55rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #222222;
+}
+
+.client-payment-qr-list {
+    margin: 0;
+}
+
+.client-payment-qr-row {
+    display: flex;
+    gap: 0.45rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.74rem;
+}
+
+.client-payment-qr-row dt {
+    margin: 0;
+    color: #555555;
+    font-weight: 600;
+    min-width: 7.5rem;
+}
+
+.client-payment-qr-row dd {
+    margin: 0;
+    color: #222222;
+    font-weight: 700;
+}
+
+.client-payment-qr-amount {
+    color: #2b3e8c !important;
+}
+
+.client-payment-walkin-panel {
+    margin-top: 0.35rem;
+}
+
+.client-payment-walkin-card {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.9rem;
+    background: #cfcfcf;
+    border-radius: 10px;
+}
+
+.client-payment-walkin-card i {
+    font-size: 1.15rem;
+    color: #2b3e8c;
+    margin-top: 0.1rem;
+}
+
+.client-payment-walkin-card strong {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+    color: #222222;
+}
+
+.client-payment-walkin-card p {
+    margin: 0;
+    font-size: 0.72rem;
+    color: #444444;
+    line-height: 1.45;
+}
+
+.client-payment-reminders {
+    margin-top: 1rem;
+    padding: 0.75rem 0.85rem;
+    background: #cfcfcf;
+    border-radius: 8px;
+}
+
+.client-payment-reminders strong {
+    display: block;
+    font-size: 0.75rem;
+    margin-bottom: 0.4rem;
+    color: #222222;
+}
+
+.client-payment-reminders ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.68rem;
+    color: #444444;
+    line-height: 1.5;
+}
+
+.client-booking-complete-card {
+    text-align: left;
+}
+
+.client-booking-complete-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #cfcfcf;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.65rem;
+}
+
+.client-booking-complete-icon i {
+    font-size: 1.35rem;
+    color: #2b3e8c;
+}
+
+.client-booking-complete-list {
+    margin: 1rem 0 0.25rem;
+    padding: 0.75rem 0.85rem;
+    background: #cfcfcf;
+    border-radius: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .client-payment-channel-tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .client-payment-qr-panel[data-visible="true"] {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+}
+
+/* --- Booking Summary (Step 4) --- */
+.client-booking-summary-page .client-summary-card {
+    margin-bottom: 0.85rem;
+}
+
+.client-summary-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.client-summary-card-header .client-payment-section-title {
+    margin-bottom: 0;
+}
+
+.client-summary-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    background: #F9FAFF;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #333333;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.client-summary-edit-btn:hover {
+    color: #1f2d66;
+    border-color: #1f2d66;
+    text-decoration: none;
+}
+
+.client-summary-res-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+}
+
+.client-summary-res-col {
+    margin: 0;
+}
+
+.client-summary-res-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.42rem 0;
+}
+
+.client-summary-res-row dt {
+    flex: 0 0 auto;
+    max-width: 48%;
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #555555;
+    line-height: 1.4;
+}
+
+.client-summary-res-row dd {
+    flex: 1 1 auto;
+    margin: 0;
+    text-align: right;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #222222;
+    line-height: 1.4;
+}
+
+.client-summary-res-divider {
+    height: 1px;
+    background: #c4c4c4;
+    margin: 0.85rem 0;
+}
+
+.client-summary-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: fit-content;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: #b8b8b8;
+    color: #333333;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.client-summary-badge i {
+    font-size: 0.62rem;
+}
+
+.client-summary-passenger-section {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.client-summary-passenger-details {
+    flex: 1 1 auto;
+    margin: 0;
+    min-width: 0;
+}
+
+.client-summary-id-upload {
+    flex: 0 0 auto;
+    margin: 0;
+    text-align: center;
+    max-width: 120px;
+}
+
+.client-summary-id-upload-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #555555;
+}
+
+.client-summary-id-upload-box {
+    width: 100px;
+    height: 72px;
+    margin: 0 auto;
+    border: 1px solid #999999;
+    border-radius: 6px;
+    background: #ececec;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-summary-id-upload-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.client-summary-id-upload figcaption {
+    margin-top: 0.25rem;
+    font-size: 0.62rem;
+    color: #666666;
+    word-break: break-all;
+}
+
+.client-summary-notes-section {
+    margin-top: 0;
+}
+
+.client-summary-notes-label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #333333;
+}
+
+.client-summary-special-notes {
+    padding: 0.65rem 0.75rem;
+    background: #ececec;
+    border: 1px solid #888888;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    color: #333333;
+    line-height: 1.5;
+    min-height: 2.5rem;
+}
+
+.client-summary-status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+}
+
+.client-summary-status-row--payment {
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid #c4c4c4;
+}
+
+.client-summary-status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.client-summary-status-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #666666;
+}
+
+.client-summary-badge--method {
+    background: #e8e8e8;
+}
+
+.client-summary-id-thumb {
+    margin: 0;
+    max-width: 140px;
+}
+
+.client-summary-id-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid #b0b0b0;
+    background: #F9FAFF;
+}
+
+.client-summary-id-thumb figcaption {
+    margin-top: 0.25rem;
+    font-size: 0.62rem;
+    color: #666666;
+    word-break: break-all;
+}
+
+@media (max-width: 767.98px) {
+    .client-summary-res-grid,
+    .client-summary-payment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .client-summary-passenger-section {
+        flex-direction: column;
+    }
+
+    .client-summary-id-upload {
+        align-self: flex-start;
+    }
+}
+
+/* Payment Details card */
+.client-summary-payment-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+    margin-bottom: 0.85rem;
+}
+
+.client-summary-payment-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.client-summary-payment-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.72rem;
+    color: #444444;
+}
+
+.client-summary-payment-row strong {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #222222;
+    white-space: nowrap;
+}
+
+.client-summary-payment-row.is-discount strong {
+    color: #2b3e8c;
+}
+
+.client-summary-payment-meta {
+    margin: 0;
+}
+
+.client-summary-payment-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid #c4c4c4;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #333333;
+}
+
+.client-summary-payment-total strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #111111;
+}
+
+.client-summary-receipt-row dd {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.client-summary-receipt-upload {
+    margin: 0;
+    text-align: right;
+    max-width: 120px;
+}
+
+.client-summary-receipt-upload figcaption {
+    margin-top: 0.25rem;
+    font-size: 0.62rem;
+    font-weight: 400;
+    color: #666666;
+    word-break: break-all;
+}
+
+/* ===== Booking Request Sent (wizard complete) ===== */
+.booking-request-sent-page {
+    max-width: 860px;
+    margin: 1.5rem auto 3rem;
+    padding: 0 1rem 2rem;
+}
+
+.booking-request-sent-card {
+    background: #F9FAFF;
+    border: 1px solid #e4e7ec;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    padding: 2.25rem 2rem 1.85rem;
+}
+
+.booking-request-sent-hero {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.booking-request-sent-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: #ffe8d6;
+    color: #e07a1f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.65rem;
+}
+
+.booking-request-sent-title {
+    margin: 0 0 0.45rem;
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #1E296A;
+    letter-spacing: -0.02em;
+}
+
+.booking-request-sent-subtitle {
+    margin: 0 auto;
+    max-width: 34rem;
+    font-size: 0.95rem;
+    color: #667085;
+    line-height: 1.45;
+}
+
+.booking-request-sent-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    background: #f3f5f9;
+    border: 1px solid #e4e7ec;
+    border-radius: 12px;
+    padding: 1.05rem 1.15rem;
+    margin-bottom: 1.75rem;
+}
+
+.booking-request-sent-summary-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #1E296A;
+    margin-bottom: 0.25rem;
+}
+
+.booking-request-sent-summary-value {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #344054;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.booking-request-timeline {
+    --brs-marker: 2rem;
+    --brs-rail: 2.75rem;
+    list-style: none;
+    margin: 0 0 1.75rem;
+    padding: 0.15rem 0 0;
+    position: relative;
+}
+
+.booking-request-timeline-item {
+    display: grid;
+    grid-template-columns: var(--brs-rail) minmax(0, 1fr);
+    column-gap: 1.15rem;
+    align-items: start;
+    position: relative;
+    padding-bottom: 1.85rem;
+}
+
+.booking-request-timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+/* Vertical step line: from center of this marker down to the next */
+.booking-request-timeline-item:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--brs-rail) / 2);
+    top: var(--brs-marker);
+    bottom: 0;
+    width: 2px;
+    transform: translateX(-50%);
+    background: #d0d5dd;
+    z-index: 0;
+}
+
+.booking-request-timeline-marker {
+    position: relative;
+    z-index: 1;
+    width: var(--brs-marker);
+    height: var(--brs-marker);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: center;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    color: #ffffff;
+    box-shadow: 0 0 0 4px #ffffff;
+}
+
+.booking-request-timeline-item.is-done .booking-request-timeline-marker {
+    background: #1f7a4d;
+}
+
+.booking-request-timeline-item.is-current .booking-request-timeline-marker {
+    background: #e07a1f;
+}
+
+.booking-request-timeline-item.is-pending .booking-request-timeline-marker {
+    background: #c5cad3;
+}
+
+.booking-request-timeline-body {
+    min-width: 0;
+    padding-top: 0.15rem;
+}
+
+.booking-request-timeline-title {
+    margin: 0 0 0.3rem;
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: #1f2937;
+    letter-spacing: -0.01em;
+}
+
+.booking-request-timeline-item.is-done .booking-request-timeline-title {
+    color: #1f7a4d;
+}
+
+.booking-request-timeline-item.is-current .booking-request-timeline-title {
+    color: #e07a1f;
+}
+
+.booking-request-timeline-item.is-pending .booking-request-timeline-title {
+    color: #98a2b3;
+}
+
+.booking-request-timeline-text {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: #667085;
+    max-width: 36rem;
+}
+
+.booking-request-timeline-item.is-pending .booking-request-timeline-text {
+    color: #98a2b3;
+}
+
+.booking-request-timeline-stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.65rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1f7a4d;
+}
+
+.booking-request-timeline-stamp i {
+    font-size: 0.9rem;
+}
+
+.booking-request-step-actions {
+    display: block;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.booking-request-eta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 0 0.9rem;
+    background: #e9ecf5;
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    font-size: 0.84rem;
+    line-height: 1.35;
+    color: #344054;
+}
+
+.booking-request-eta i {
+    color: #e07a1f;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.booking-request-edit-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    margin: 0 !important;
+    background: #1E3A8A !important;
+    border-color: #1E3A8A !important;
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 0.86rem;
+    border-radius: 10px;
+    padding: 0.65rem 1.25rem;
+    box-shadow: 0 4px 10px rgba(30, 58, 138, 0.22);
+}
+
+.booking-request-edit-btn:hover {
+    background: #162e6e !important;
+    border-color: #162e6e !important;
+    color: #fff !important;
+}
+
+.booking-request-next-box {
+    background: #eef2f8;
+    border-radius: 14px;
+    padding: 1.15rem 1.25rem;
+    text-align: center;
+    margin-bottom: 1.35rem;
+}
+
+.booking-request-next-title {
+    margin: 0 0 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #1E296A;
+}
+
+.booking-request-next-text {
+    margin: 0 auto;
+    max-width: 38rem;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: #344054;
+}
+
+.booking-request-sent-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.booking-request-btn-secondary {
+    background: #F9FAFF !important;
+    border: 1.5px solid #1E3A8A !important;
+    color: #1E3A8A !important;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 10px;
+    padding: 0.6rem 1.25rem;
+}
+
+.booking-request-btn-secondary:hover {
+    background: #f5f7ff !important;
+    color: #1E3A8A !important;
+}
+
+.booking-request-btn-primary {
+    background: #1E3A8A !important;
+    border-color: #1E3A8A !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 10px;
+    padding: 0.6rem 1.35rem;
+}
+
+.booking-request-btn-primary:hover {
+    background: #162e6e !important;
+    border-color: #162e6e !important;
+    color: #ffffff !important;
+}
+
+@media (max-width: 767.98px) {
+    .booking-request-sent-card {
+        padding: 1.5rem 1.1rem 1.35rem;
+    }
+
+    .booking-request-sent-summary {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .booking-request-sent-title {
+        font-size: 1.35rem;
+    }
+
+    .booking-request-sent-actions {
+        flex-direction: column;
+    }
+
+    .booking-request-btn-secondary,
+    .booking-request-btn-primary {
+        width: 100%;
+    }
+}
+
+@media (max-width: 520px) {
+    .booking-request-sent-summary {
+        grid-template-columns: 1fr;
+    }
+}
+

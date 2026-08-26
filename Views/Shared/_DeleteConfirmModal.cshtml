@@ -3,25 +3,34 @@
     var hiddenInputId = ViewData["DeleteHiddenInputId"]?.ToString() ?? "popupEntityId";
     var messageId = ViewData["DeleteMessageId"]?.ToString() ?? "deletePopupMessage";
     var entityLabel = ViewData["DeleteEntityLabel"]?.ToString() ?? "item";
+    var entityTypeName = char.ToUpper(entityLabel[0]) + entityLabel[1..];
+    var deleteButtonText = ViewData["DeleteConfirmButtonText"]?.ToString() ?? $"Yes, Delete {entityTypeName}";
+    var hiddenInputName = ViewData["DeleteHiddenInputName"]?.ToString() ?? "id";
 }
 
 <div class="modal fade admin-delete-modal" id="@modalId" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered admin-delete-modal-dialog">
-        <div class="modal-content modal-delete-content text-center shadow-lg">
-            <div class="modal-delete-icon-box shadow-sm">
-                <i class="bi bi-exclamation-triangle fs-2"></i>
+        <div class="modal-content admin-delete-modal-content text-center border-0 shadow-lg">
+            <div class="admin-delete-icon-wrap" aria-hidden="true">
+                <i class="bi bi-trash3"></i>
             </div>
 
-            <p class="text-dark opacity-90 px-2 small mb-4" id="@messageId">
-                Are you sure you want to delete this @entityLabel? This action is permanent and cannot be undone.
+            <h5 class="admin-delete-title" id="@messageId">
+                Are you sure you want to delete <strong>this @entityLabel</strong>?
+            </h5>
+            <p class="admin-delete-subtext">
+                This action cannot be undone. All related data will be permanently removed.
             </p>
 
             <form method="post" asp-action="Delete" asp-controller="@ViewContext.RouteData.Values["controller"]">
-                <input type="hidden" name="id" id="@hiddenInputId" value="" />
+                <input type="hidden" name="@hiddenInputName" id="@hiddenInputId" value="" />
 
-                <div class="d-grid gap-2 mx-auto admin-delete-actions">
-                    <button type="submit" class="btn btn-confirm-delete shadow-sm">Confirm Deletion</button>
-                    <button type="button" class="btn btn-cancel-delete mt-1" data-bs-dismiss="modal">Cancel</button>
+                <div class="admin-delete-actions">
+                    <button type="submit" class="btn admin-delete-btn-confirm w-100">
+                        <i class="bi bi-trash3"></i>
+                        <span>@deleteButtonText</span>
+                    </button>
+                    <button type="button" class="btn admin-delete-btn-cancel w-100" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>
@@ -44,7 +53,7 @@
     function openDeletePopup(entityId, entityName) {
         document.getElementById('@hiddenInputId').value = entityId;
         document.getElementById('@messageId').innerHTML =
-            'Are you sure you want to delete <strong>' + entityName + '</strong>? This action is permanent and cannot be undone.';
+            'Are you sure you want to delete <strong>' + entityName + '</strong>?';
 
         var deleteModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('@modalId'));
         deleteModal.show();

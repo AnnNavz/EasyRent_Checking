@@ -1,0 +1,179 @@
+@model EasyRent_Checking.Models.Rental
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Booking Request Sent";
+    ViewData["ActiveNav"] = "Vehicles";
+
+    var details = Model.Details;
+    var vehicle = details?.Vehicle;
+    string vehicleTitle = vehicle != null ? $"{vehicle.Model} {vehicle.Brand}".Trim() : "Vehicle";
+    string breadcrumbLabel = vehicle != null ? $"{vehicle.Brand} {vehicle.Model}".Trim() : "Vehicle";
+    string bookingId = $"BK-{Model.RentalId:D5}";
+    string destination = details?.DropoffLocation ?? "—";
+    string pickupLabel = details != null
+        ? $"{details.PickupDate.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)} • {FormatTime(details.PickupTime)}"
+        : "—";
+    string returnLabel = details != null
+        ? $"{details.ReturnDate.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)} • {FormatTime(details.ReturnTime)}"
+        : "—";
+    string submittedLabel = $"Completed Today, {DateTime.Now.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+    bool isReserve = Model.RentalOption == RentalOption.Reserve;
+    int? vehicleId = vehicle?.VehicleId;
+}
+
+@functions {
+    static string FormatTime(TimeOnly time)
+    {
+        var h = time.Hour % 12;
+        if (h == 0) h = 12;
+        var suffix = time.Hour >= 12 ? "PM" : "AM";
+        return $"{h}:{time.Minute:D2}{suffix}";
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/client/vehicles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/client/rental.css" asp-append-version="true" />
+}
+
+<div class="client-details-breadcrumb-bar">
+    <div class="client-details-breadcrumb-inner">
+        <nav class="client-details-breadcrumb" aria-label="Breadcrumb">
+            <a asp-action="Homepage"><i class="bi bi-house-door"></i></a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <a asp-action="Browse">Browse Vehicles</a>
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            @if (vehicleId.HasValue)
+            {
+                <a asp-action="VehicleDetails" asp-route-id="@vehicleId">@breadcrumbLabel</a>
+            }
+            else
+            {
+                <span>@breadcrumbLabel</span>
+            }
+            <span class="client-details-breadcrumb-sep">&rsaquo;</span>
+            <span class="client-details-breadcrumb-current">Rent</span>
+        </nav>
+        @if (vehicleId.HasValue)
+        {
+            <a asp-action="VehicleDetails" asp-route-id="@vehicleId" class="client-btn-back-browse">
+                <i class="bi bi-arrow-left"></i>
+                Back to Browse Details
+            </a>
+        }
+    </div>
+</div>
+
+<div class="client-page booking-request-sent-page">
+    <div class="booking-request-sent-card">
+        <div class="booking-request-sent-hero">
+            <div class="booking-request-sent-icon" aria-hidden="true">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <h1 class="booking-request-sent-title">Booking Request Sent</h1>
+            <p class="booking-request-sent-subtitle">
+                Your request for the @vehicleTitle is now being reviewed by our staff.
+            </p>
+        </div>
+
+        <div class="booking-request-sent-summary">
+            <div class="booking-request-sent-summary-item">
+                <span class="booking-request-sent-summary-label">Booking ID</span>
+                <span class="booking-request-sent-summary-value">@bookingId</span>
+            </div>
+            <div class="booking-request-sent-summary-item">
+                <span class="booking-request-sent-summary-label">Destination</span>
+                <span class="booking-request-sent-summary-value">@destination</span>
+            </div>
+            <div class="booking-request-sent-summary-item">
+                <span class="booking-request-sent-summary-label">Pick-up Date &amp; Time</span>
+                <span class="booking-request-sent-summary-value">@pickupLabel</span>
+            </div>
+            <div class="booking-request-sent-summary-item">
+                <span class="booking-request-sent-summary-label">Drop-off Date &amp; Time</span>
+                <span class="booking-request-sent-summary-value">@returnLabel</span>
+            </div>
+        </div>
+
+        <ol class="booking-request-timeline">
+            <li class="booking-request-timeline-item is-done">
+                <span class="booking-request-timeline-marker" aria-hidden="true">
+                    <i class="bi bi-check-lg"></i>
+                </span>
+                <div class="booking-request-timeline-body">
+                    <h2 class="booking-request-timeline-title">Step 1: Customer Booking Request</h2>
+                    <p class="booking-request-timeline-text">
+                        Request submitted with vehicle, pick-up location, destination, and schedule.
+                    </p>
+                    <div class="booking-request-timeline-stamp">
+                        <i class="bi bi-clock-fill"></i>
+                        <span>@submittedLabel</span>
+                    </div>
+                </div>
+            </li>
+
+            <li class="booking-request-timeline-item is-current">
+                <span class="booking-request-timeline-marker" aria-hidden="true">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </span>
+                <div class="booking-request-timeline-body">
+                    <h2 class="booking-request-timeline-title">Step 2: Staff Review &amp; Confirmation</h2>
+                    <p class="booking-request-timeline-text">
+                        Staff is currently checking vehicle and driver availability for your selected date.
+                        You can still change your reservation details while your status has not been approved.
+                    </p>
+                    <div class="booking-request-step-actions">
+                        <div class="booking-request-eta">
+                            <i class="bi bi-clock"></i>
+                            <span>Estimated approval time: <strong>5-20 minutes</strong></span>
+                        </div>
+                        <a asp-action="MyBookingDetails" asp-route-id="@Model.RentalId" class="btn booking-request-edit-btn">
+                            Edit Reservation Details
+                        </a>
+                    </div>
+                </div>
+            </li>
+
+            <li class="booking-request-timeline-item is-pending">
+                <span class="booking-request-timeline-marker" aria-hidden="true">
+                    <i class="bi bi-person-fill"></i>
+                </span>
+                <div class="booking-request-timeline-body">
+                    <h2 class="booking-request-timeline-title">Step 3: Driver Assignment &amp; Dispatch</h2>
+                    <p class="booking-request-timeline-text">
+                        There will be an assigned driver and your trip log starts here.
+                    </p>
+                </div>
+            </li>
+        </ol>
+
+        <div class="booking-request-next-box">
+            <h3 class="booking-request-next-title">NEXT STEP</h3>
+            <p class="booking-request-next-text">
+                @if (isReserve)
+                {
+                    <text>Please stay on this page, check My Bookings for status or check your email. After Staff Approval, a &ldquo;Proceed to Payment&rdquo; button will appear so you can secure your booking.</text>
+                }
+                else
+                {
+                    <text>Please stay on this page, check My Bookings for status or check your email. After Staff Approval, your booking will be confirmed and a driver can be assigned for your trip.</text>
+                }
+            </p>
+        </div>
+
+        <div class="booking-request-sent-actions">
+            @if (vehicleId.HasValue)
+            {
+                <a asp-action="VehicleDetails" asp-route-id="@vehicleId" class="btn booking-request-btn-secondary">
+                    Back to Browse Details
+                </a>
+            }
+            <a asp-action="MyBookings" class="btn booking-request-btn-primary">
+                My Bookings
+            </a>
+        </div>
+    </div>
+</div>

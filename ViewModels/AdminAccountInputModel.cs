@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using EasyRent_Checking.Models;
 
 namespace EasyRent_Checking.ViewModels
 {
@@ -19,7 +20,8 @@ namespace EasyRent_Checking.ViewModels
 		public string Email { get; set; } = string.Empty;
 
 		[Required(ErrorMessage = "Password is required.")]
-		[StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters long.")]
+		[StringLength(100, MinimumLength = 8, ErrorMessage = FieldRules.PasswordLengthMessage)]
+		[RegularExpression(FieldRules.Password, ErrorMessage = FieldRules.PasswordMessage)]
 		[DataType(DataType.Password)]
 		[Display(Name = "Password")]
 		public string Password { get; set; } = string.Empty;

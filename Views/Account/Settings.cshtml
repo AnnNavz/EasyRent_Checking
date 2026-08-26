@@ -1,0 +1,592 @@
+@model EasyRent_Checking.ViewModels.AccountSettingsViewModel
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Account Settings";
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+    var isProfile = Model.Tab == "profile";
+    var isPassword = Model.Tab == "password";
+    var isSecurity = Model.Tab == "security";
+    var editingName = Model.EditField == "name";
+    var editingEmail = Model.EditField == "email";
+    var editingPhone = Model.EditField == "phone";
+    var editingIdentity = Model.EditField == "identity";
+
+    string GetDisplayFileName(string? path, string fallback)
+    {
+        if (string.IsNullOrEmpty(path)) return fallback;
+        var fileName = System.IO.Path.GetFileName(path);
+        var separatorIndex = fileName.IndexOf('_');
+        return separatorIndex >= 0 && separatorIndex < fileName.Length - 1
+            ? fileName[(separatorIndex + 1)..]
+            : fileName;
+    }
+
+    var hasFrontIdImage = !string.IsNullOrEmpty(Model.FrontValidIDImagePath);
+    var hasBackIdImage = !string.IsNullOrEmpty(Model.BackValidIDImagePath);
+    var frontIdFileName = GetDisplayFileName(Model.FrontValidIDImagePath, "front.png");
+    var backIdFileName = GetDisplayFileName(Model.BackValidIDImagePath, "back.png");
+    ViewData["HubFullName"] = Model.FullName;
+    ViewData["HubInitials"] = Model.AvatarInitials;
+    ViewData["HubActive"] = "settings";
+}
+
+<div class="client-page account-hub">
+    <partial name="_AccountHubNav" />
+
+    <section class="account-hub-main">
+        <header class="account-hub-header">
+            <h1>Account Settings</h1>
+            <p>Manage your account information and security.</p>
+        </header>
+
+        <nav class="account-hub-tabs" aria-label="Account settings sections">
+            <a asp-action="Settings" asp-route-tab="profile" class="@(isProfile ? "is-active" : null)">My Profile</a>
+            <a asp-action="Settings" asp-route-tab="password" class="@(isPassword ? "is-active" : null)">Change Password</a>
+            <a asp-action="Settings" asp-route-tab="security" class="@(isSecurity ? "is-active" : null)">Security &amp; Privacy</a>
+        </nav>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger py-2 px-3 mb-3" role="alert">@TempData["ErrorMessage"]</div>
+        }
+
+        @if (isProfile)
+        {
+            <article class="account-panel">
+                <header class="account-panel-head">
+                    <span class="account-panel-icon"><i class="bi bi-person"></i></span>
+                    <h2>Personal Information</h2>
+                </header>
+
+                <div class="account-field-row @(editingName ? "is-editing" : null)">
+                    <span class="account-field-label">Full Name</span>
+                    @if (editingName)
+                    {
+                        <form asp-action="UpdateFullName" method="post" class="account-field-edit">
+                            @Html.AntiForgeryToken()
+                            <input name="fullName" value="@Model.FullName" class="account-field-input" maxlength="100" autocomplete="name" />
+                            <button type="submit" class="account-btn-save">Save</button>
+                            <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="account-field-value">@Model.FullName</div>
+                        <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="name" class="account-btn-edit">Edit</a>
+                    }
+                </div>
+
+                <div class="account-field-row @(editingEmail ? "is-editing" : null)">
+                    <span class="account-field-label">Email Address</span>
+                    @if (editingEmail)
+                    {
+                        <form asp-action="UpdateEmail" method="post" class="account-field-edit">
+                            @Html.AntiForgeryToken()
+                            <input name="email" type="email" value="@Model.Email" class="account-field-input" autocomplete="email" />
+                            <button type="submit" class="account-btn-save">Save</button>
+                            <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="account-field-value">@Model.Email</div>
+                        <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="email" class="account-btn-edit">Edit</a>
+                    }
+                </div>
+
+                <div class="account-field-row @(editingPhone ? "is-editing" : null)">
+                    <span class="account-field-label">Phone Number</span>
+                    @if (editingPhone)
+                    {
+                        <form asp-action="UpdatePhone" method="post" class="account-field-edit">
+                            @Html.AntiForgeryToken()
+                            <input name="contactNumber" value="@Model.ContactNumber" class="account-field-input" placeholder="09123456789 or +639123456789" autocomplete="tel" />
+                            <button type="submit" class="account-btn-save">Save</button>
+                            <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="account-field-value">@Model.ContactNumber</div>
+                        <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="phone" class="account-btn-edit">Edit</a>
+                    }
+                </div>
+            </article>
+
+            <article class="account-panel">
+                <header class="account-panel-head">
+                    <span class="account-panel-icon"><i class="bi bi-person-vcard"></i></span>
+                    <h2>Identity Verification</h2>
+                </header>
+
+                @if (editingIdentity)
+                {
+                    <form asp-action="UpdateIdentity" method="post" enctype="multipart/form-data" class="account-identity-edit">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="frontValidIDImagePath" value="@Model.FrontValidIDImagePath" />
+                        <input type="hidden" name="backValidIDImagePath" value="@Model.BackValidIDImagePath" />
+
+                        <div class="account-field-row is-editing">
+                            <span class="account-field-label">Valid ID Type</span>
+                            <select name="validIDtype" class="account-field-input">
+                                <option value="@nameof(ValidIDtype.NationalID)" selected="@(Model.ValidIDtype == nameof(ValidIDtype.NationalID))">National ID</option>
+                                <option value="@nameof(ValidIDtype.Passport)" selected="@(Model.ValidIDtype == nameof(ValidIDtype.Passport))">Passport</option>
+                                <option value="@nameof(ValidIDtype.UMID)" selected="@(Model.ValidIDtype == nameof(ValidIDtype.UMID))">UMID</option>
+                                <option value="@nameof(ValidIDtype.DriverLicense)" selected="@(Model.ValidIDtype == nameof(ValidIDtype.DriverLicense))">Driver's License</option>
+                                <option value="@nameof(ValidIDtype.VotersID)" selected="@(Model.ValidIDtype == nameof(ValidIDtype.VotersID))">Voter's ID</option>
+                            </select>
+                        </div>
+
+                        <div class="auth-id-upload-grid">
+                            <div class="auth-id-upload-panel">
+                                <label class="auth-label auth-label-login" for="input-FrontValidIDFile">Front</label>
+                                <div id="valid-id-front-upload-zone" class="auth-upload-zone auth-upload-zone-login @(hasFrontIdImage ? "d-none" : "")">
+                                    <div>
+                                        <i class="bi bi-person-vcard auth-upload-icon"></i>
+                                        <span class="auth-upload-title">Drag &amp; drop or click to upload</span>
+                                        <span class="auth-upload-hint">PNG, JPG, JPEG (max 5MB)</span>
+                                    </div>
+                                    <input name="frontValidIDImageFile" id="input-FrontValidIDFile" type="file" class="auth-file-input" accept=".png,.jpg,.jpeg" />
+                                </div>
+                                <div id="valid-id-front-preview-state" class="auth-upload-preview @(hasFrontIdImage ? "" : "d-none")">
+                                    <div class="auth-preview-box" title="Click to replace image" onclick="document.getElementById('input-FrontValidIDFile').click()">
+                                        <img id="valid-id-front-preview-img"
+                                             src="@(hasFrontIdImage ? Url.Content("~/images/" + Model.FrontValidIDImagePath) : null)"
+                                             alt="Front of valid ID" />
+                                    </div>
+                                    <div class="auth-upload-file-row">
+                                        <span id="valid-id-front-filename" class="auth-upload-filename">@frontIdFileName</span>
+                                        <button type="button" class="auth-upload-remove" id="valid-id-front-remove-btn">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="auth-id-upload-panel">
+                                <label class="auth-label auth-label-login" for="input-BackValidIDFile">Back</label>
+                                <div id="valid-id-back-upload-zone" class="auth-upload-zone auth-upload-zone-login @(hasBackIdImage ? "d-none" : "")">
+                                    <div>
+                                        <i class="bi bi-person-vcard auth-upload-icon"></i>
+                                        <span class="auth-upload-title">Drag &amp; drop or click to upload</span>
+                                        <span class="auth-upload-hint">PNG, JPG, JPEG (max 5MB)</span>
+                                    </div>
+                                    <input name="backValidIDImageFile" id="input-BackValidIDFile" type="file" class="auth-file-input" accept=".png,.jpg,.jpeg" />
+                                </div>
+                                <div id="valid-id-back-preview-state" class="auth-upload-preview @(hasBackIdImage ? "" : "d-none")">
+                                    <div class="auth-preview-box" title="Click to replace image" onclick="document.getElementById('input-BackValidIDFile').click()">
+                                        <img id="valid-id-back-preview-img"
+                                             src="@(hasBackIdImage ? Url.Content("~/images/" + Model.BackValidIDImagePath) : null)"
+                                             alt="Back of valid ID" />
+                                    </div>
+                                    <div class="auth-upload-file-row">
+                                        <span id="valid-id-back-filename" class="auth-upload-filename">@backIdFileName</span>
+                                        <button type="button" class="auth-upload-remove" id="valid-id-back-remove-btn">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="account-identity-actions">
+                            <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
+                            <button type="submit" class="account-btn-primary">Save</button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="account-field-row">
+                        <span class="account-field-label">Valid ID Type</span>
+                        <div class="account-field-value">@Model.ValidIdTypeLabel</div>
+                        <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="identity" class="account-btn-edit">Edit</a>
+                    </div>
+                    <div class="account-id-previews">
+                        <span class="account-field-label">Valid ID</span>
+                        <div class="account-id-preview-grid">
+                            <figure class="account-id-preview">
+                                <figcaption>Front</figcaption>
+                                @if (hasFrontIdImage)
+                                {
+                                    <a href="~/images/@Model.FrontValidIDImagePath" target="_blank" rel="noopener">
+                                        <img src="~/images/@Model.FrontValidIDImagePath" alt="Front of valid ID" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="account-id-preview-empty">No front image</span>
+                                }
+                            </figure>
+                            <figure class="account-id-preview">
+                                <figcaption>Back</figcaption>
+                                @if (hasBackIdImage)
+                                {
+                                    <a href="~/images/@Model.BackValidIDImagePath" target="_blank" rel="noopener">
+                                        <img src="~/images/@Model.BackValidIDImagePath" alt="Back of valid ID" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="account-id-preview-empty">No back image</span>
+                                }
+                            </figure>
+                        </div>
+                    </div>
+                }
+            </article>
+
+            <div class="account-info-banner" role="note">
+                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                <p>To update your information, click the Edit button next to each field.</p>
+            </div>
+        }
+
+        @if (isPassword)
+        {
+            <article class="account-panel account-password-panel">
+                <header class="account-panel-head">
+                    <span class="account-panel-icon"><i class="bi bi-shield-lock"></i></span>
+                    <div>
+                        <h2>Change Password</h2>
+                        <p>Update your password to keep your account secure.</p>
+                    </div>
+                </header>
+
+                <form asp-action="ChangePassword" method="post" class="account-password-form" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="account-password-row">
+                        <label asp-for="Password.CurrentPassword">Current Password</label>
+                        <div>
+                            <div class="auth-input-wrap">
+                                <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                                <input asp-for="Password.CurrentPassword" class="auth-input auth-input-login auth-password-input" placeholder="Enter your current password" autocomplete="current-password" />
+                                <button type="button" class="auth-password-toggle" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <span asp-validation-for="Password.CurrentPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="account-password-row">
+                        <label asp-for="Password.NewPassword">New Password</label>
+                        <div>
+                            <div class="auth-input-wrap">
+                                <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                                <input asp-for="Password.NewPassword" class="auth-input auth-input-login auth-password-input" placeholder="Enter your new password" autocomplete="new-password" />
+                                <button type="button" class="auth-password-toggle" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <p class="account-password-hint">Must be at least 8 characters and include a number.</p>
+                            <span asp-validation-for="Password.NewPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="account-password-row">
+                        <label asp-for="Password.ConfirmPassword">Confirm New Password</label>
+                        <div>
+                            <div class="auth-input-wrap">
+                                <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                                <input asp-for="Password.ConfirmPassword" class="auth-input auth-input-login auth-password-input" placeholder="Confirm your new password" autocomplete="new-password" />
+                                <button type="button" class="auth-password-toggle" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <span asp-validation-for="Password.ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="account-password-actions">
+                        <button type="submit" class="account-btn-primary">Update Password</button>
+                    </div>
+                </form>
+            </article>
+        }
+
+        @if (isSecurity)
+        {
+            <article class="account-panel account-mfa-panel">
+                <div class="account-mfa-row">
+                    <div class="account-mfa-copy">
+                        <span class="account-panel-icon"><i class="bi bi-shield-check"></i></span>
+                        <div>
+                            <h2>Email sign-in code</h2>
+                            <p>When this is on, we email a 6-digit code after you enter your password.</p>
+                        </div>
+                    </div>
+                    <form asp-action="UpdateMfa" method="post" id="mfaToggleForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="enabled" id="mfaEnabledInput" value="@(Model.LoginMfaEnabled ? "true" : "false")" />
+                        <label class="account-mfa-switch">
+                            <input type="checkbox" id="mfaToggle" checked="@Model.LoginMfaEnabled" />
+                            <span class="account-mfa-slider" aria-hidden="true"></span>
+                            <span class="visually-hidden">Turn email sign-in code on or off</span>
+                        </label>
+                    </form>
+                </div>
+                <p class="account-mfa-state">@(Model.LoginMfaEnabled ? "On" : "Off")</p>
+            </article>
+
+            <section class="account-danger-zone">
+                <header>
+                    <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+                    <div>
+                        <h2>Danger Zone</h2>
+                        <p>These actions affect access to your account. Deactivate is temporary; delete is permanent.</p>
+                    </div>
+                </header>
+
+                <div class="account-danger-card">
+                    <div class="account-danger-icon" aria-hidden="true"><i class="bi bi-pause-circle"></i></div>
+                    <div>
+                        <h3>Deactivate Account</h3>
+                        <p>Temporarily deactivate your account. You can reactivate it anytime by signing in again.</p>
+                    </div>
+                    <form asp-action="DeactivateAccount" method="post" data-confirm="Deactivate your account?" data-confirm-text="You can sign in again anytime to reactivate it." data-confirm-button="Deactivate" data-confirm-tone="warn" data-confirm-icon="bi-pause-circle" data-confirm-submit-icon="bi-pause-circle">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="account-btn-outline-danger">Deactivate</button>
+                    </form>
+                </div>
+
+                <div class="account-danger-card">
+                    <div class="account-danger-icon" aria-hidden="true"><i class="bi bi-trash3"></i></div>
+                    <div>
+                        <h3>Delete Account</h3>
+                        <p>Permanently delete your account and profile. This cannot be undone.</p>
+                    </div>
+                    <form asp-action="DeleteAccount" method="post" data-confirm="Delete your account?" data-confirm-text="This cannot be undone. Open rentals must be finished or cancelled first." data-confirm-button="Delete Account" data-confirm-tone="danger" data-confirm-icon="bi-trash3" data-confirm-submit-icon="bi-trash3">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="account-btn-danger">Delete Account</button>
+                    </form>
+                </div>
+            </section>
+        }
+    </section>
+
+    <aside class="account-hub-aside">
+        <div class="account-profile-card">
+            <div class="account-profile-avatar" aria-hidden="true">@Model.AvatarInitials</div>
+            <h2>@Model.FullName</h2>
+            <span class="account-hub-online">Online</span>
+            <dl>
+                <div>
+                    <dt>Member since</dt>
+                    <dd>@Model.MemberSince.ToString("MMMM d, yyyy", ph)</dd>
+                </div>
+                <div>
+                    <dt>Total Rentals</dt>
+                    <dd>@Model.TotalRentals</dd>
+                </div>
+                <div>
+                    <dt>Completed Trips</dt>
+                    <dd>@Model.CompletedTrips</dd>
+                </div>
+                <div>
+                    <dt>Outstanding Balance</dt>
+                    <dd>₱@Model.OutstandingBalance.ToString("N2", ph)</dd>
+                </div>
+            </dl>
+        </div>
+    </aside>
+</div>
+
+<div class="modal fade account-confirm-modal" id="accountConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered account-confirm-dialog">
+        <div class="modal-content account-confirm-content text-center border-0 shadow-lg">
+            <div class="account-confirm-icon" id="accountConfirmIconWrap" aria-hidden="true">
+                <i class="bi bi-trash3" id="accountConfirmIcon"></i>
+            </div>
+            <h5 class="account-confirm-title" id="accountConfirmTitle">Are you sure?</h5>
+            <p class="account-confirm-text" id="accountConfirmText"></p>
+            <div class="account-confirm-actions">
+                <button type="button" class="btn account-confirm-submit w-100" id="accountConfirmSubmit">
+                    <i class="bi bi-trash3" id="accountConfirmSubmitIcon"></i>
+                    <span id="accountConfirmSubmitLabel">Confirm</span>
+                </button>
+                <button type="button" class="btn account-confirm-cancel w-100" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.auth-password-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = btn.parentElement.querySelector('.auth-password-input');
+                var icon = btn.querySelector('i');
+                if (!input) return;
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !show);
+                icon.classList.toggle('bi-eye-slash', show);
+            });
+        });
+
+        (function () {
+            var toggle = document.getElementById('mfaToggle');
+            var form = document.getElementById('mfaToggleForm');
+            var hidden = document.getElementById('mfaEnabledInput');
+            if (!toggle || !form || !hidden) return;
+            toggle.addEventListener('change', function () {
+                hidden.value = toggle.checked ? 'true' : 'false';
+                form.submit();
+            });
+        })();
+
+        (function () {
+            var modalEl = document.getElementById('accountConfirmModal');
+            if (!modalEl) return;
+            var titleEl = document.getElementById('accountConfirmTitle');
+            var textEl = document.getElementById('accountConfirmText');
+            var iconWrapEl = document.getElementById('accountConfirmIconWrap');
+            var iconEl = document.getElementById('accountConfirmIcon');
+            var submitBtn = document.getElementById('accountConfirmSubmit');
+            var submitIconEl = document.getElementById('accountConfirmSubmitIcon');
+            var submitLabelEl = document.getElementById('accountConfirmSubmitLabel');
+            var pendingForm = null;
+            var tones = {
+                danger: { icon: 'bi-trash3', submitIcon: 'bi-trash3' },
+                warn: { icon: 'bi-exclamation-circle', submitIcon: 'bi-pause-circle' }
+            };
+
+            modalEl.addEventListener('show.bs.modal', function () {
+                document.body.classList.add('account-confirm-open');
+            });
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                document.body.classList.remove('account-confirm-open');
+                pendingForm = null;
+            });
+
+            function applyTone(tone, iconClass, submitIconClass) {
+                var resolved = tones[tone] || tones.danger;
+                iconWrapEl.classList.remove('is-danger', 'is-warn');
+                iconWrapEl.classList.add('is-' + (tones[tone] ? tone : 'danger'));
+                submitBtn.classList.remove('is-danger', 'is-warn');
+                submitBtn.classList.add('is-' + (tones[tone] ? tone : 'danger'));
+                iconEl.className = 'bi ' + (iconClass || resolved.icon);
+                submitIconEl.className = 'bi ' + (submitIconClass || resolved.submitIcon);
+            }
+
+            submitBtn.addEventListener('click', function () {
+                if (!pendingForm) return;
+                var form = pendingForm;
+                form.setAttribute('data-confirm-accepted', '1');
+                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                else form.submit();
+            });
+
+            document.addEventListener('submit', function (event) {
+                var form = event.target;
+                if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-confirm')) return;
+                if (form.getAttribute('data-confirm-accepted') === '1') {
+                    form.removeAttribute('data-confirm-accepted');
+                    return;
+                }
+                event.preventDefault();
+                pendingForm = form;
+                titleEl.textContent = form.getAttribute('data-confirm') || 'Are you sure?';
+                var detail = form.getAttribute('data-confirm-text') || '';
+                textEl.textContent = detail;
+                textEl.style.display = detail ? '' : 'none';
+                submitLabelEl.textContent = form.getAttribute('data-confirm-button') || 'Confirm';
+                applyTone(
+                    form.getAttribute('data-confirm-tone') || 'danger',
+                    form.getAttribute('data-confirm-icon'),
+                    form.getAttribute('data-confirm-submit-icon')
+                );
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            });
+        })();
+
+        @if (editingIdentity)
+        {
+            <text>
+            (function () {
+                function bindIdUpload(zoneId, inputId, previewId, filenameId, removeId, imageId, originalSrc, originalName) {
+                    var uploadZone = document.getElementById(zoneId);
+                    var fileInput = document.getElementById(inputId);
+                    var previewState = document.getElementById(previewId);
+                    var filenameLabel = document.getElementById(filenameId);
+                    var removeBtn = document.getElementById(removeId);
+                    var previewImg = document.getElementById(imageId);
+                    if (!uploadZone || !fileInput || !previewState || !filenameLabel || !removeBtn || !previewImg) return;
+
+                    function restoreOriginal() {
+                        fileInput.value = '';
+                        if (originalSrc) {
+                            previewImg.src = originalSrc;
+                            filenameLabel.textContent = originalName || '';
+                            previewState.classList.remove('d-none');
+                            uploadZone.classList.add('d-none');
+                        } else {
+                            previewImg.removeAttribute('src');
+                            filenameLabel.textContent = '';
+                            previewState.classList.add('d-none');
+                            uploadZone.classList.remove('d-none');
+                        }
+                    }
+
+                    function showPreview(file) {
+                        if (!file) {
+                            restoreOriginal();
+                            return;
+                        }
+                        filenameLabel.textContent = file.name;
+                        uploadZone.classList.add('d-none');
+                        previewState.classList.remove('d-none');
+                        if (file.type && file.type.startsWith('image/')) {
+                            var reader = new FileReader();
+                            reader.onload = function (e) { previewImg.src = e.target.result; };
+                            reader.readAsDataURL(file);
+                        }
+                    }
+
+                    fileInput.addEventListener('change', function () {
+                        showPreview(fileInput.files && fileInput.files[0]);
+                    });
+                    removeBtn.addEventListener('click', restoreOriginal);
+                    uploadZone.addEventListener('dragover', function (e) {
+                        e.preventDefault();
+                        uploadZone.classList.add('is-dragover');
+                    });
+                    uploadZone.addEventListener('dragleave', function () {
+                        uploadZone.classList.remove('is-dragover');
+                    });
+                    uploadZone.addEventListener('drop', function (e) {
+                        e.preventDefault();
+                        uploadZone.classList.remove('is-dragover');
+                        var files = e.dataTransfer && e.dataTransfer.files;
+                        if (!files || !files.length) return;
+                        var dt = new DataTransfer();
+                        dt.items.add(files[0]);
+                        fileInput.files = dt.files;
+                        showPreview(files[0]);
+                    });
+                }
+
+                bindIdUpload(
+                    'valid-id-front-upload-zone',
+                    'input-FrontValidIDFile',
+                    'valid-id-front-preview-state',
+                    'valid-id-front-filename',
+                    'valid-id-front-remove-btn',
+                    'valid-id-front-preview-img',
+                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(hasFrontIdImage ? Url.Content("~/images/" + Model.FrontValidIDImagePath) : null)),
+                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(frontIdFileName)));
+                bindIdUpload(
+                    'valid-id-back-upload-zone',
+                    'input-BackValidIDFile',
+                    'valid-id-back-preview-state',
+                    'valid-id-back-filename',
+                    'valid-id-back-remove-btn',
+                    'valid-id-back-preview-img',
+                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(hasBackIdImage ? Url.Content("~/images/" + Model.BackValidIDImagePath) : null)),
+                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(backIdFileName)));
+            })();
+            </text>
+        }
+    </script>
+}

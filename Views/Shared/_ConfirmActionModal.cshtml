@@ -1,0 +1,102 @@
+<div class="modal fade admin-delete-modal" id="adminConfirmActionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered admin-delete-modal-dialog">
+        <div class="modal-content admin-delete-modal-content text-center border-0 shadow-lg">
+            <div class="admin-delete-icon-wrap" id="adminConfirmActionIconWrap" aria-hidden="true">
+                <i class="bi bi-exclamation-circle" id="adminConfirmActionIcon"></i>
+            </div>
+
+            <h5 class="admin-delete-title" id="adminConfirmActionTitle">Are you sure?</h5>
+            <p class="admin-delete-subtext" id="adminConfirmActionText"></p>
+
+            <div class="admin-delete-actions">
+                <button type="button" class="btn admin-delete-btn-confirm w-100" id="adminConfirmActionSubmit">
+                    <i class="bi bi-check-lg" id="adminConfirmActionSubmitIcon"></i>
+                    <span id="adminConfirmActionSubmitLabel">Confirm</span>
+                </button>
+                    <button type="button" class="btn admin-delete-btn-cancel w-100" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var modalEl = document.getElementById('adminConfirmActionModal');
+        if (!modalEl) return;
+
+        var titleEl = document.getElementById('adminConfirmActionTitle');
+        var textEl = document.getElementById('adminConfirmActionText');
+        var iconWrapEl = document.getElementById('adminConfirmActionIconWrap');
+        var iconEl = document.getElementById('adminConfirmActionIcon');
+        var submitBtn = document.getElementById('adminConfirmActionSubmit');
+        var submitIconEl = document.getElementById('adminConfirmActionSubmitIcon');
+        var submitLabelEl = document.getElementById('adminConfirmActionSubmitLabel');
+        var pendingForm = null;
+
+        var tones = {
+            approve: { icon: 'bi-check-circle', submitIcon: 'bi-check-lg' },
+            danger: { icon: 'bi-exclamation-triangle', submitIcon: 'bi-trash3' },
+            warn: { icon: 'bi-exclamation-circle', submitIcon: 'bi-check-lg' }
+        };
+
+        modalEl.addEventListener('show.bs.modal', function () {
+            document.body.classList.add('admin-delete-modal-open');
+        });
+        modalEl.addEventListener('shown.bs.modal', function () {
+            submitBtn.focus();
+        });
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            document.body.classList.remove('admin-delete-modal-open');
+            pendingForm = null;
+        });
+
+        function applyTone(tone, iconClass, submitIconClass) {
+            var resolved = tones[tone] || tones.warn;
+            iconWrapEl.classList.remove('is-approve', 'is-danger', 'is-warn');
+            iconWrapEl.classList.add('is-' + (tones[tone] ? tone : 'warn'));
+            submitBtn.classList.remove('is-approve', 'is-danger', 'is-warn');
+            submitBtn.classList.add('is-' + (tones[tone] ? tone : 'warn'));
+            iconEl.className = 'bi ' + (iconClass || resolved.icon);
+            submitIconEl.className = 'bi ' + (submitIconClass || resolved.submitIcon);
+        }
+
+        function openConfirmForForm(form) {
+            pendingForm = form;
+            titleEl.textContent = form.getAttribute('data-confirm') || 'Are you sure?';
+            var detail = form.getAttribute('data-confirm-text') || '';
+            textEl.textContent = detail;
+            textEl.style.display = detail ? '' : 'none';
+            submitLabelEl.textContent = form.getAttribute('data-confirm-button') || 'Confirm';
+            applyTone(
+                form.getAttribute('data-confirm-tone') || 'warn',
+                form.getAttribute('data-confirm-icon'),
+                form.getAttribute('data-confirm-submit-icon')
+            );
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+
+        submitBtn.addEventListener('click', function () {
+            if (!pendingForm) return;
+            var form = pendingForm;
+            form.setAttribute('data-confirm-accepted', '1');
+            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+        });
+
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (!(form instanceof HTMLFormElement)) return;
+            if (!form.hasAttribute('data-confirm')) return;
+            if (form.getAttribute('data-confirm-accepted') === '1') {
+                form.removeAttribute('data-confirm-accepted');
+                return;
+            }
+            event.preventDefault();
+            openConfirmForForm(form);
+        });
+    })();
+</script>

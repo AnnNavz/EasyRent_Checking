@@ -30,8 +30,7 @@
         <div class="client-rate-card-header">
             <div class="client-rate-card-icon"><i class="bi bi-clock"></i></div>
             <div class="client-rate-card-info">
-                <span class="client-rate-card-label">BASE PACKAGE</span>
-                <span class="client-rate-card-subtitle">First 8 hours</span>
+                <span class="client-rate-card-label">BASE PACKAGE <span class="client-rate-card-subtitle">(First 8 hours)</span></span>
             </div>
             <span class="client-rate-card-price">₱@Model.BasePrice.ToString("N0")</span>
         </div>
@@ -48,8 +47,7 @@
         <div class="client-rate-card-header">
             <div class="client-rate-card-icon client-rate-card-icon--circle"><i class="bi bi-plus-lg"></i></div>
             <div class="client-rate-card-info">
-                <span class="client-rate-card-label">SUCCEEDING HOURS</span>
-                <span class="client-rate-card-subtitle">Per hour (after 8 hours)</span>
+                <span class="client-rate-card-label">SUCCEEDING HOURS <span class="client-rate-card-subtitle">(Per hour (after 8 hours))</span></span>
             </div>
             <span class="client-rate-card-price">₱@succeedingRate.ToString("N0")</span>
         </div>
@@ -62,14 +60,14 @@
     <div class="client-rate-example" id="rateSummaryEstimate">
         <div class="client-rate-example-header">
             <i class="bi bi-calculator"></i>
-            <span id="rateEstimateTitle">@(liveRate ? "YOUR TRIP ESTIMATE" : "EXAMPLE: 10-HOUR TRIP")</span>
+            <span id="rateEstimateTitle">EXAMPLE: 10-HOUR TRIP</span>
         </div>
 
-        <p id="rateEstimateEmpty" class="client-rate-example-empty @(liveRate ? "" : "d-none")">
+        <p id="rateEstimateEmpty" class="client-rate-example-empty d-none">
             Select pick-up and return dates to calculate your total.
         </p>
 
-        <div id="rateEstimateDetails" class="@(liveRate ? "d-none" : "")">
+        <div id="rateEstimateDetails">
             <div class="client-rate-example-row">
                 <span id="rateBaseLabel">Base package (8 hrs)</span>
                 <span id="rateBaseAmount">₱@Model.BasePrice.ToString("N0")</span>
@@ -87,17 +85,17 @@
                 <span id="rateTotalLabel">ESTIMATED TOTAL (10 hours)</span>
                 <span id="rateTotalAmount">₱@exampleTotal.ToString("N0")</span>
             </div>
-            <p class="client-rate-example-note">* Excludes fuel for succeeding hours.</p>
+            <p class="client-rate-example-note">* Excludes fuel for succeeding hours. Exact details in your rent form.</p>
         </div>
     </div>
 
-    <div class="client-rate-info-box">
+    <div class="client-rate-info-box client-rate-info-box--discount">
         <i class="bi bi-tag"></i>
-        <p><strong>10% discount</strong> for Senior Citizen's &amp; PWD - present valid ID. Not combinable.</p>
+        <p><strong>10% discount</strong> for Senior Citizen's &amp; PWD - present valid ID upon booking. Not combinable.</p>
     </div>
-    <div class="client-rate-info-box">
+    <div class="client-rate-info-box client-rate-info-box--payment">
         <i class="bi bi-file-earmark-text"></i>
-        <p>After trip details, choose <strong>Pay Now (Full)</strong>, <strong>Pay Deposit</strong>, or <strong>Pay at Venue</strong>.</p>
+        <p>After trip details, choose <strong>Pay Now (Full)</strong>, <strong>Pay Deposit</strong> or <strong>Pay At Office</strong>.</p>
     </div>
 
     @if (!hideReserveButton)
@@ -125,12 +123,12 @@
 
     <div class="client-rate-trust">
         <div class="client-rate-trust-item">
-            <i class="bi bi-shield-lock"></i>
+            <i class="bi bi-lock"></i>
             <span>Secure Checkout</span>
         </div>
         <div class="client-rate-trust-item">
             <i class="bi bi-arrow-counterclockwise"></i>
-            <span>Free Cancel</span>
+            <span>Free Cancel (before pull-out)</span>
         </div>
         <div class="client-rate-trust-item">
             <i class="bi bi-headset"></i>
@@ -139,7 +137,7 @@
     </div>
 
     <p class="client-rate-disclaimer">
-        Free cancellation before vehicle pull-out.
-        <strong>₱2,000 fee</strong> if cancelled less than 24hrs before scheduled pull-out.
+        * Free cancellation only applies while vehicle is still in garage.
+        A <strong>₱2,000 fee</strong> applies if cancelled after pull-out.
     </p>
 </div>

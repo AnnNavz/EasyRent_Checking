@@ -1,31 +1,270 @@
-﻿@{
+@model EasyRent_Checking.ViewModels.HomeViewModel
+@{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
     ViewData["Title"] = "Home";
     ViewData["ActiveNav"] = "Home";
+
+    string VehicleTypeLabel(string type) => string.Equals(type, "VAN", StringComparison.OrdinalIgnoreCase) ? "VAN" : type;
+
+    string Initial(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "C";
+        return char.ToUpperInvariant(name.Trim()[0]).ToString();
+    }
 }
 
-<div class="client-page client-home">
-    <section class="client-hero">
-        <h1>Rent the perfect vehicle with EasyRent</h1>
-        <p>Browse our fleet, compare options, and reserve your ride in minutes.</p>
-        <a asp-controller="ClientSide" asp-action="Browse" class="client-btn-reserve client-hero-cta">
-            Browse Vehicles
-            <i class="bi bi-arrow-right"></i>
-        </a>
+<div class="client-home">
+    <section class="home-hero">
+        <div class="home-hero-media" style="background-image: url('@Url.Content("~/images/System Images/homebanner.png")');"></div>
+        <div class="home-hero-overlay"></div>
+        <div class="home-wrap">
+            <div class="home-hero-content">
+                <span class="home-hero-tag">Reliable, convenient, ready when you are.</span>
+                <h1>Rent a Car, Joy in every trip.</h1>
+                <p>Rent the perfect vehicle for your journey. Simple booking, trusted service.</p>
+                <div class="home-hero-actions">
+                    <a asp-controller="ClientSide" asp-action="Browse" class="home-btn home-btn-primary">
+                        Browse Vehicles
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a asp-controller="ClientSide" asp-action="HowItWorks" class="home-btn home-btn-ghost">
+                        <i class="bi bi-play-circle"></i>
+                        How It Works
+                    </a>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <section id="how-it-works" class="client-info-section">
-        <h2>How It Works</h2>
-        <p>Choose a vehicle, pick your dates, and complete your reservation online.</p>
+    <div class="home-wrap home-search-wrap">
+        <form asp-controller="ClientSide" asp-action="Browse" method="get" class="home-search" id="homeSearchForm">
+            <label class="home-search-field">
+                <span>Passenger Capacity</span>
+                <span class="home-search-control">
+                    <select name="capacity" aria-label="Passenger Capacity">
+                        <option value="">Select Capacity</option>
+                        @foreach (var seats in Model.CapacityOptions)
+                        {
+                            <option value="@seats">@seats seater</option>
+                        }
+                    </select>
+                    <i class="bi bi-chevron-down"></i>
+                </span>
+            </label>
+
+            <label class="home-search-field">
+                <span>Pick-up Date</span>
+                <span class="home-search-control">
+                    <input type="date" name="pickupDate" id="homePickupDate" aria-label="Pick-up Date" />
+                    <i class="bi bi-calendar3"></i>
+                </span>
+            </label>
+
+            <label class="home-search-field">
+                <span>Drop-off Date</span>
+                <span class="home-search-control">
+                    <input type="date" name="returnDate" id="homeDropoffDate" aria-label="Drop-off Date" />
+                    <i class="bi bi-calendar3"></i>
+                </span>
+            </label>
+
+            <button type="submit" class="home-btn home-btn-primary home-search-submit">
+                <i class="bi bi-search"></i>
+                Search Vehicles
+            </button>
+        </form>
+    </div>
+
+    <section id="how-it-works" class="home-section home-features">
+        <div class="home-wrap home-features-grid">
+            <article class="home-feature">
+                <div class="home-feature-icon"><i class="bi bi-clock"></i></div>
+                <h3>Instant Reservations</h3>
+                <p>Browse available vehicles and secure your ride anytime.</p>
+            </article>
+            <article class="home-feature">
+                <div class="home-feature-icon"><i class="bi bi-person-check"></i></div>
+                <h3>Strict ID Verification</h3>
+                <p>Ensuring safety and preventing fraud through customer identification and manual staff approval.</p>
+            </article>
+            <article class="home-feature">
+                <div class="home-feature-icon"><i class="bi bi-coin"></i></div>
+                <h3>No Hidden Charges</h3>
+                <p>Automated, itemized billing statements clearly showing cost breakdowns.</p>
+            </article>
+            <article class="home-feature">
+                <div class="home-feature-icon"><i class="bi bi-person-badge"></i></div>
+                <h3>Driver-Assisted Only</h3>
+                <p>All rentals include licensed driver. Self-drive is not available.</p>
+            </article>
+        </div>
     </section>
 
-    <section id="about-us" class="client-info-section">
-        <h2>About Us</h2>
-        <p>EasyRent makes vehicle rental simple, transparent, and reliable for every trip.</p>
+    <section class="home-section home-popular">
+        <div class="home-wrap">
+            <div class="home-section-heading">
+                <h2>Popular Vehicles</h2>
+                <a asp-controller="ClientSide" asp-action="Browse" class="home-text-link">
+                    View All Vehicles
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
+            @if (Model.PopularVehicles.Any())
+            {
+                <div class="home-vehicle-grid">
+                    @foreach (var vehicle in Model.PopularVehicles)
+                    {
+                        <a asp-controller="ClientSide" asp-action="VehicleDetails" asp-route-id="@vehicle.VehicleId" class="home-vehicle-card">
+                            <div class="home-vehicle-image">
+                                @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+                                {
+                                    <img src="/images/@vehicle.ImagePath" alt="@vehicle.Model" />
+                                }
+                                else
+                                {
+                                    <div class="home-vehicle-placeholder"><i class="bi bi-car-front"></i></div>
+                                }
+                            </div>
+                            <div class="home-vehicle-body">
+                                <div class="home-vehicle-top">
+                                    <div>
+                                        <h3>@vehicle.Model</h3>
+                                        <p>@VehicleTypeLabel(vehicle.TypeLabel) • @vehicle.PassengersCount seater</p>
+                                    </div>
+                                    @if (vehicle.Rating.HasValue)
+                                    {
+                                        <span class="home-rating">
+                                            <i class="bi bi-star-fill"></i>
+                                            @vehicle.Rating.Value.ToString("0.0")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="home-rating-empty">No reviews yet</span>
+                                    }
+                                </div>
+                                <strong class="home-vehicle-price">₱@vehicle.BasePrice.ToString("N0") / 8 hours</strong>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="home-empty">No vehicles are listed yet. Check back soon.</p>
+            }
+        </div>
     </section>
 
-    <section id="faqs" class="client-info-section">
-        <h2>FAQs</h2>
-        <p>Have questions about bookings, payments, or vehicle availability? Contact our support team anytime.</p>
+    <section id="about-us" class="home-section">
+        <div class="home-wrap">
+            <div class="home-why">
+                <div class="home-why-copy">
+                    <h2>Why Choose EasyRent?</h2>
+                    <p>Streamlining your travel with secure verification, transparent pricing, and reliable local service in Talisay City.</p>
+                    <a asp-controller="ClientSide" asp-action="AboutUs" class="home-btn home-btn-outline">
+                        Learn More About Us
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="home-why-stats">
+                    <article>
+                        <i class="bi bi-clock"></i>
+                        <strong>24/7</strong>
+                        <h3>System Accessibility</h3>
+                        <p>Round-the-clock reservation.</p>
+                    </article>
+                    <article>
+                        <i class="bi bi-calendar3"></i>
+                        <strong>11+</strong>
+                        <h3>years of experience</h3>
+                        <p>years of experience in car rental service.</p>
+                    </article>
+                    <article>
+                        <i class="bi bi-geo-alt"></i>
+                        <strong>24+</strong>
+                        <h3>service areas</h3>
+                        <p>serving multiple provinces in Region 7.</p>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section home-reviews">
+        <div class="home-wrap">
+            <h2 class="home-reviews-title">What our customer say</h2>
+            <div class="home-review-grid">
+                @foreach (var review in Model.Testimonials)
+                {
+                    <article class="home-review-card">
+                        <span class="home-rating">
+                            <i class="bi bi-star-fill"></i>
+                            @review.Rating.ToString("0.0")
+                        </span>
+                        <p>&ldquo;@review.Comment&rdquo;</p>
+                        <div class="home-review-user">
+                            <span class="home-review-avatar">@Initial(review.CustomerName)</span>
+                            <strong>@review.CustomerName</strong>
+                        </div>
+                    </article>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section home-cta-section">
+        <div class="home-wrap">
+            <div class="home-cta">
+                <div class="home-cta-copy">
+                    <h2>Why Choose EasyRent?</h2>
+                    <p>Book your ride now and experience convenience on the road.</p>
+                </div>
+                <a asp-controller="ClientSide" asp-action="Browse" class="home-btn home-btn-light">
+                    Browse Vehicles
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
     </section>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var pickup = document.getElementById('homePickupDate');
+            var dropoff = document.getElementById('homeDropoffDate');
+            if (!pickup || !dropoff) return;
+
+            function todayIso() {
+                var now = new Date();
+                var month = String(now.getMonth() + 1).padStart(2, '0');
+                var day = String(now.getDate()).padStart(2, '0');
+                return now.getFullYear() + '-' + month + '-' + day;
+            }
+
+            var today = todayIso();
+            pickup.min = today;
+            dropoff.min = today;
+
+            pickup.addEventListener('change', function () {
+                dropoff.min = pickup.value || today;
+                if (pickup.value && dropoff.value && dropoff.value < pickup.value) {
+                    dropoff.value = pickup.value;
+                }
+            });
+
+            var form = document.getElementById('homeSearchForm');
+            if (form) {
+                form.addEventListener('submit', function () {
+                    form.querySelectorAll('input, select').forEach(function (field) {
+                        if (!field.value) {
+                            field.disabled = true;
+                        }
+                    });
+                });
+            }
+        })();
+    </script>
+}

@@ -1,0 +1,79 @@
+@model IList<EasyRent_Checking.ViewModels.HomeVehicleCard>
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Saved Vehicles";
+}
+
+<div class="client-home browse-page favorites-page">
+<div class="client-page my-bookings-page">
+    <div class="my-bookings-header">
+        <div>
+            <h1 class="my-bookings-title">Saved Vehicles</h1>
+            <p class="my-bookings-subtitle">Vehicles you saved from Browse and vehicle details.</p>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="browse-grid" data-favorites-grid>
+        @if (Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                <article class="browse-card" data-favorite-card>
+                    <div class="browse-card-image">
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="/images/@item.ImagePath" alt="@item.Model" />
+                        }
+                        else
+                        {
+                            <div class="browse-card-placeholder"><i class="bi bi-car-front"></i></div>
+                        }
+                        <button type="button"
+                                class="client-details-icon-btn is-favorite browse-card-favorite"
+                                data-favorite-toggle
+                                data-remove-on-unfavorite
+                                data-toggle-url="@Url.Action("ToggleFavorite", "ClientSide", new { id = item.VehicleId })"
+                                aria-pressed="true"
+                                aria-label="Remove from favorites">
+                            <i class="bi bi-heart-fill"></i>
+                        </button>
+                    </div>
+                    <div class="browse-card-body">
+                        <div class="browse-card-top">
+                            <h2>@item.Model</h2>
+                            @if (item.Rating.HasValue)
+                            {
+                                <span class="home-rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    @item.Rating.Value.ToString("0.0")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="home-rating-empty">No reviews yet</span>
+                            }
+                        </div>
+                        <p>@item.TypeLabel • @item.PassengersCount seater</p>
+                        <strong>₱@item.BasePrice.ToString("N0") / 8 hours</strong>
+                        <small>₱@item.SucceedingFee.ToString("N0") succeeding rate</small>
+                        <a asp-action="VehicleDetails" asp-route-id="@item.VehicleId" class="home-btn home-btn-primary browse-card-btn">
+                            Browse Vehicle
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </article>
+            }
+        }
+    </div>
+
+    <p class="home-empty @(Model.Any() ? "d-none" : "")" data-favorites-empty>You have not saved any vehicles yet. Open a vehicle and tap the heart to save it here.</p>
+</div>
+</div>
+
+@section Scripts {
+    <script src="~/js/vehicle-favorite.js" asp-append-version="true"></script>
+}

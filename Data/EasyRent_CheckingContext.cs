@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using EasyRent_Checking.Models;
 
 namespace EasyRent_Checking.Data
@@ -20,6 +20,11 @@ namespace EasyRent_Checking.Data
 		public DbSet<Vehicle> Vehicles { get; set; } = default!;
 		public DbSet<Transit> Transits { get; set; } = default!;
 		public DbSet<Feedback> Feedbacks { get; set; } = default!;
+		public DbSet<MaintenanceLog> MaintenanceLogs { get; set; } = default!;
+		public DbSet<MaintenancePlan> MaintenancePlans { get; set; } = default!;
+		public DbSet<IncidentReport> IncidentReports { get; set; } = default!;
+		public DbSet<VehicleFavorite> VehicleFavorites { get; set; } = default!;
+		public DbSet<SystemLog> SystemLogs { get; set; } = default!;
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -115,7 +120,11 @@ namespace EasyRent_Checking.Data
 			});
 
 			modelBuilder.Entity<Driver>().ToTable("Driver");
-			modelBuilder.Entity<Vehicle>().ToTable("Vehicle");
+			modelBuilder.Entity<Vehicle>(entity =>
+			{
+				entity.ToTable("Vehicle");
+				entity.Property(e => e.Type).HasMaxLength(30).IsRequired();
+			});
 
 			modelBuilder.Entity<Feedback>(entity =>
 			{
@@ -133,6 +142,90 @@ namespace EasyRent_Checking.Data
 					.OnDelete(DeleteBehavior.Restrict);
 
 				entity.HasIndex(e => e.TransitID).IsUnique();
+			});
+
+			modelBuilder.Entity<MaintenancePlan>(entity =>
+			{
+				entity.ToTable("MaintenancePlan");
+				entity.HasKey(e => e.MaintenancePlanId);
+
+				entity.HasOne(e => e.Vehicle)
+					.WithMany()
+					.HasForeignKey(e => e.VehicleId)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				entity.HasIndex(e => new { e.VehicleId, e.Type }).IsUnique();
+			});
+
+			modelBuilder.Entity<MaintenanceLog>(entity =>
+			{
+				entity.ToTable("MaintenanceLog");
+				entity.HasKey(e => e.MaintenanceLogId);
+
+				entity.HasOne(e => e.Vehicle)
+					.WithMany()
+					.HasForeignKey(e => e.VehicleId)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				entity.HasOne(e => e.Plan)
+					.WithMany(p => p.Logs)
+					.HasForeignKey(e => e.MaintenancePlanId)
+					.OnDelete(DeleteBehavior.SetNull);
+
+				entity.HasIndex(e => e.VehicleId);
+				entity.HasIndex(e => e.MaintenancePlanId);
+			});
+
+			modelBuilder.Entity<VehicleFavorite>(entity =>
+			{
+				entity.ToTable("VehicleFavorite");
+				entity.HasKey(e => e.FavoriteId);
+
+				entity.HasOne(e => e.Customer)
+					.WithMany()
+					.HasForeignKey(e => e.CustomerId)
+					.OnDelete(DeleteBehavior.Cascade);
+
+				entity.HasOne(e => e.Vehicle)
+					.WithMany()
+					.HasForeignKey(e => e.VehicleId)
+					.OnDelete(DeleteBehavior.Cascade);
+
+				entity.HasIndex(e => new { e.CustomerId, e.VehicleId }).IsUnique();
+			});
+
+			modelBuilder.Entity<IncidentReport>(entity =>
+			{
+				entity.ToTable("IncidentReport");
+				entity.HasKey(e => e.IncidentReportId);
+
+				entity.HasOne(e => e.Vehicle)
+					.WithMany()
+					.HasForeignKey(e => e.VehicleId)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				entity.HasOne(e => e.Transit)
+					.WithMany()
+					.HasForeignKey(e => e.TransitID)
+					.OnDelete(DeleteBehavior.SetNull);
+
+				entity.HasOne(e => e.Driver)
+					.WithMany()
+					.HasForeignKey(e => e.DriverID)
+					.OnDelete(DeleteBehavior.SetNull);
+
+				entity.HasIndex(e => e.VehicleId);
+				entity.HasIndex(e => e.TransitID);
+				entity.HasIndex(e => e.DriverID);
+				entity.HasIndex(e => e.Status);
+			});
+
+			modelBuilder.Entity<SystemLog>(entity =>
+			{
+				entity.ToTable("SystemLog");
+				entity.HasKey(e => e.SystemLogId);
+				entity.HasIndex(e => e.CreatedAt);
+				entity.HasIndex(e => new { e.Category, e.Action });
 			});
 		}
 	}

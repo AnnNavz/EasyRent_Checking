@@ -10,6 +10,8 @@ namespace EasyRent_Checking.Services
 		public const string RentalsFolder = "Rentals";
 		public const string PaymentReceiptsFolder = "Rentals/Cashless Receipts";
 		public const string TransitsFolder = "Transits";
+		public const string MaintenanceFolder = "Maintenance";
+		public const string IncidentsFolder = "Incidents";
 		public const string SystemImagesFolder = "System Images";
 
 		public static string SystemImageUrl(string fileName)

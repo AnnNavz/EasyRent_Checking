@@ -1,0 +1,953 @@
+/* Driver details page */
+.driver-details-page {
+    padding: 0 0.25rem 1.5rem;
+}
+
+.driver-details-page .driver-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+}
+
+.driver-details-page .driver-details-profile {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.driver-details-page .driver-details-avatar {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background: #dbeafe;
+    border: 3px solid #bfdbfe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-details-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.driver-details-page .driver-details-avatar i {
+    font-size: 3rem;
+    color: var(--admin-navy, #1e3a8a);
+}
+
+.driver-details-page .driver-details-name {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    margin: 0 0 0.2rem;
+    letter-spacing: -0.3px;
+}
+
+.driver-details-page .driver-details-subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    display: block;
+    margin-bottom: 0.55rem;
+    font-weight: 500;
+}
+
+.driver-details-page .driver-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #eaf9eb;
+    color: #32b935;
+    border-radius: 999px;
+    padding: 0.28rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-top: 0.1rem;
+}
+
+.driver-details-page .driver-status-badge.is-inactive {
+    background: #fdeceb;
+    color: #c21f00;
+}
+
+.driver-details-page .driver-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.driver-details-page .driver-details-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-details-btn-back {
+    background: #fff !important;
+    border: 1px solid var(--admin-navy, #1e3a8a) !important;
+    color: var(--admin-navy, #1e3a8a) !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.35rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.driver-details-page .driver-details-btn-back:hover {
+    background: #eff6ff !important;
+    color: var(--admin-navy, #1e3a8a) !important;
+}
+
+.driver-details-page .driver-details-btn-edit {
+    background: var(--admin-navy, #1e3a8a) !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.driver-details-page .driver-details-btn-edit:hover {
+    background: var(--admin-navy-deep, #172e6e) !important;
+    color: #fff !important;
+}
+
+.driver-details-page .driver-details-btn-deactivate {
+    background: #fff !important;
+    border: 1px solid #c21f00 !important;
+    color: #c21f00 !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.driver-details-page .driver-details-btn-deactivate:hover {
+    background: #fdeceb !important;
+    color: #a81b00 !important;
+}
+
+.driver-details-page .driver-details-btn-activate {
+    background: #32b935 !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.driver-details-page .driver-details-btn-activate:hover {
+    background: #2aa12e !important;
+    color: #fff !important;
+}
+
+.driver-details-page .driver-details-status-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.driver-details-page .driver-details-status-footer-text {
+    flex: 1;
+    min-width: 220px;
+}
+
+.driver-details-page .driver-details-status-footer-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.35rem;
+}
+
+.driver-details-page .driver-details-status-footer-text p {
+    font-size: 0.84rem;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.driver-details-page .driver-details-status-footer-action {
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-details-tabs {
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 1.5rem;
+    gap: 0.25rem;
+}
+
+.driver-details-page .driver-details-tabs .nav-link {
+    border: none;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.65rem 1.35rem;
+    background: transparent;
+    position: relative;
+}
+
+.driver-details-page .driver-details-tabs .nav-link.active {
+    color: var(--admin-navy, #1e3a8a);
+}
+
+.driver-details-page .driver-details-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 1rem;
+    right: 1rem;
+    height: 3px;
+    background: var(--admin-navy, #1e3a8a);
+    border-radius: 2px 2px 0 0;
+}
+
+.driver-details-page .driver-info-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 1.35rem 1.5rem;
+    height: 100%;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.driver-details-page .driver-info-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1.1rem;
+}
+
+.driver-details-page .driver-info-card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: var(--admin-navy, #1e3a8a);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+}
+
+.driver-details-page .driver-info-card-title {
+    font-family: var(--font-title);
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    margin: 0;
+}
+
+.driver-details-page .driver-info-cards-row {
+    margin-bottom: 0.25rem;
+}
+
+.driver-details-page .driver-info-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+}
+
+.driver-details-page .driver-info-field {
+    min-width: 0;
+}
+
+.driver-details-page .driver-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.driver-details-page .driver-info-field-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    margin-bottom: 0.6rem;
+}
+
+.driver-details-page .driver-info-field-value {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.driver-details-page .driver-info-value-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: var(--admin-navy, #1e3a8a);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-info-review-banner {
+    margin-top: 1.5rem;
+    background: #eef2ff;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.driver-details-page .driver-info-review-banner i {
+    color: var(--admin-navy, #1e3a8a);
+    font-size: 1.15rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-info-review-banner p {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #475569;
+    line-height: 1.55;
+}
+
+.driver-details-page .driver-info-review-banner strong {
+    color: var(--admin-navy, #1e3a8a);
+}
+
+.driver-details-page .driver-timeline-section-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    border-left: 4px solid var(--admin-navy, #1e3a8a);
+    padding-left: 0.65rem;
+    margin-bottom: 1.25rem;
+}
+
+.driver-details-page .driver-timeline {
+    position: relative;
+    padding-left: 0.25rem;
+}
+
+.driver-details-page .driver-timeline-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.driver-details-page .driver-timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 36px;
+    bottom: -12px;
+    width: 2px;
+    background: #e2e8f0;
+}
+
+.driver-details-page .driver-timeline-marker {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #94a3b8;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.driver-details-page .driver-timeline-marker.is-primary {
+    background: var(--admin-navy, #1e3a8a);
+}
+
+.driver-details-page .driver-timeline-card {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+}
+
+.driver-details-page .driver-timeline-time {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-bottom: 0.35rem;
+}
+
+.driver-details-page .driver-timeline-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.35rem;
+}
+
+.driver-details-page .driver-timeline-desc {
+    font-size: 0.84rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.driver-details-page .driver-load-older-btn {
+    width: 100%;
+    background: #fff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    border-radius: 10px !important;
+    padding: 0.72rem 1rem !important;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
+}
+
+.driver-details-page .driver-load-older-btn:hover {
+    background: #f8fafc !important;
+}
+
+.driver-details-page .driver-license-expiry-card {
+    background: var(--admin-navy, #1e3a8a);
+    color: #fff;
+    border-radius: 14px;
+    padding: 1.35rem 1.25rem;
+    box-shadow: 0 8px 24px rgba(30, 58, 138, 0.18);
+}
+
+.driver-details-page .driver-license-expiry-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    opacity: 0.95;
+}
+
+.driver-details-page .driver-license-expiry-date {
+    font-family: var(--font-title);
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin-bottom: 0.85rem;
+}
+
+.driver-details-page .driver-license-expiry-badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 0.28rem 0.75rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.driver-details-page .driver-license-expiry-badge.is-valid {
+    background: #eaf9eb;
+    color: #32b935;
+}
+
+.driver-details-page .driver-license-expiry-badge.is-expired {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.driver-details-page .driver-documents-panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
+}
+
+.driver-details-page .driver-documents-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.driver-details-page .driver-documents-panel-intro {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.driver-details-page .driver-documents-panel-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: var(--admin-navy, #1e3a8a);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-documents-panel-title {
+    font-family: var(--font-title);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    margin: 0 0 0.15rem;
+}
+
+.driver-details-page .driver-documents-panel-desc {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+.driver-details-page .driver-documents-upload-btn {
+    background: var(--admin-navy, #1e3a8a) !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1rem !important;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-documents-upload-btn:hover {
+    background: var(--admin-navy-deep, #172e6e) !important;
+    color: #fff !important;
+}
+
+.driver-details-page .driver-documents-table-wrap {
+    padding: 0 1rem;
+}
+
+.driver-details-page .driver-documents-table thead th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.95rem 0.75rem;
+    background: #fff;
+}
+
+.driver-details-page .driver-documents-table tbody td {
+    font-size: 0.84rem;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 0.95rem 0.75rem;
+    vertical-align: middle;
+}
+
+.driver-details-page .driver-documents-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.driver-details-page .driver-document-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.driver-details-page .driver-document-thumb {
+    width: 52px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-document-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.driver-details-page .driver-document-thumb i {
+    color: #94a3b8;
+    font-size: 1rem;
+}
+
+.driver-details-page .driver-document-name-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.driver-details-page .driver-document-display-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.driver-details-page .driver-document-file-name {
+    font-size: 0.76rem;
+    color: #94a3b8;
+    font-family: monospace;
+}
+
+.driver-details-page .driver-document-type-badge {
+    display: inline-block;
+    background: #ede9fe;
+    color: #6d28d9;
+    border-radius: 999px;
+    padding: 0.28rem 0.7rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.driver-details-page .driver-document-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.28rem 0.7rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.driver-details-page .driver-document-status-badge.is-verified {
+    background: #eaf9eb;
+    color: #32b935;
+}
+
+.driver-details-page .driver-document-status-badge.is-pending {
+    background: #fef9c3;
+    color: #a16207;
+}
+
+.driver-details-page .driver-document-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.driver-details-page .driver-documents-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1.5rem 1.1rem;
+    border-top: 1px solid #e5e7eb;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.driver-details-page .driver-documents-pagination-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.driver-details-page .driver-documents-pagination-nav span {
+    color: #334155;
+}
+
+.driver-details-page .driver-documents-empty {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: #64748b;
+}
+
+.driver-details-page .driver-documents-empty i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.75rem;
+    opacity: 0.55;
+}
+
+.driver-details-page .driver-documents-empty p {
+    margin: 0 0 1rem;
+    font-size: 0.88rem;
+}
+
+.driver-details-page .driver-doc-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.driver-details-page .driver-doc-preview {
+    background: #f8fafc;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.driver-details-page .driver-doc-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.driver-details-page .driver-doc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.driver-details-page .driver-doc-filename {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+    font-family: monospace;
+}
+
+@media (max-width: 767.98px) {
+    .driver-details-page .driver-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .driver-details-page .driver-details-name {
+        font-size: 1.55rem;
+    }
+}
+
+.driver-details-page .driver-ratings-card {
+    margin-top: 1.25rem;
+    height: auto;
+}
+
+.driver-details-page .driver-rating-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.driver-details-page .driver-rating-row {
+    display: grid;
+    grid-template-columns: 130px 1fr 40px;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    color: #334155;
+}
+
+.driver-details-page .driver-rating-track {
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.driver-details-page .driver-rating-fill {
+    height: 100%;
+    background: #1e3a8a;
+    border-radius: 999px;
+}
+
+.driver-details-page .driver-rating-score {
+    font-weight: 700;
+    text-align: right;
+    color: #0f172a;
+}
+
+.driver-details-page .driver-rating-count,
+.driver-details-page .driver-rating-empty {
+    margin: 0.9rem 0 0;
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+.driver-details-page .driver-reviews-summary-score {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    margin-bottom: 1.15rem;
+}
+
+.driver-details-page .driver-reviews-avg {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--admin-navy, #1e3a8a);
+    line-height: 1;
+}
+
+.driver-details-page .driver-reviews-summary-stars {
+    display: flex;
+    gap: 0.15rem;
+    color: #f59e0b;
+    font-size: 0.95rem;
+}
+
+.driver-details-page .driver-reviews-summary-stars .bi-star {
+    color: #cbd5e1;
+}
+
+.driver-details-page .driver-reviews-summary-count {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.driver-details-page .driver-reviews-section-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    border-left: 4px solid var(--admin-navy, #1e3a8a);
+    padding-left: 0.65rem;
+    margin-bottom: 1.15rem;
+}
+
+.driver-details-page .driver-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.driver-details-page .driver-review-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.driver-details-page .driver-review-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+}
+
+.driver-details-page .driver-review-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: var(--admin-navy, #1e3a8a);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-review-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.driver-details-page .driver-review-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.driver-details-page .driver-review-date {
+    font-size: 0.76rem;
+    color: #94a3b8;
+}
+
+.driver-details-page .driver-review-stars {
+    display: flex;
+    gap: 0.1rem;
+    color: #f59e0b;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+.driver-details-page .driver-review-stars .bi-star {
+    color: #cbd5e1;
+}
+
+.driver-details-page .driver-review-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    font-size: 0.76rem;
+    color: #64748b;
+    margin-bottom: 0.55rem;
+}
+
+.driver-details-page .driver-review-comment {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #475569;
+    line-height: 1.55;
+}
+
+.driver-details-page .driver-review-comment.is-muted {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.driver-details-page .driver-reviews-empty {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: #64748b;
+}
+
+.driver-details-page .driver-reviews-empty i {
+    font-size: 1.75rem;
+    display: block;
+    margin-bottom: 0.65rem;
+    opacity: 0.55;
+}
+
+.driver-details-page .driver-reviews-empty p {
+    margin: 0;
+    font-size: 0.86rem;
+}
+
+@media (max-width: 575.98px) {
+    .driver-details-page .driver-rating-row {
+        grid-template-columns: 110px 1fr 36px;
+        font-size: 0.75rem;
+    }
+}

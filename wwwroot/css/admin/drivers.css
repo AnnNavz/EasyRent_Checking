@@ -1,0 +1,323 @@
+/* Driver index styles. Loaded by the admin layout when ActivePage is Drivers. */
+
+/* --- Datatable Avatar Badges --- */
+/* Container for the avatar circle */
+.table-driver-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50% !important;
+    overflow: hidden; /* Important: Trims image corners to retain a clean circle */
+    background-color: #e9ecef;
+}
+
+/* Enforces image aspect containment without squeezing or stretching */
+.table-driver-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+}
+
+/* --- Drivers index page (mockup layout) --- */
+.drivers-index-page {
+    background-color: #ffffff;
+}
+
+.drivers-index-page .driver-metric-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    min-height: 110px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.drivers-index-page .driver-metric-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #1a3275;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.drivers-index-page .driver-metric-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.drivers-index-page .driver-metric-label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #667085;
+    margin-bottom: 0.15rem;
+}
+
+.drivers-index-page .driver-metric-value {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a3275;
+    line-height: 1.1;
+}
+
+.drivers-index-page .driver-metric-trend {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.drivers-index-page .driver-metric-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    background: #ecfdf3;
+    color: #027a48;
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.drivers-index-page .driver-metric-badge.is-down {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.drivers-index-page .driver-metric-badge i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.drivers-index-page .driver-metric-compare {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.68rem;
+    color: #98a2b3;
+    font-weight: 500;
+}
+
+.drivers-index-page .driver-index-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 0.85rem 1rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.drivers-index-page .driver-index-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.drivers-index-page .driver-index-toolbar-search {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 220px;
+}
+
+.drivers-index-page .driver-index-search-icon,
+.drivers-index-page .driver-index-mic-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667085;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.drivers-index-page .driver-index-search-icon {
+    left: 0.95rem;
+}
+
+.drivers-index-page .driver-index-mic-icon {
+    right: 0.95rem;
+}
+
+.drivers-index-page .driver-index-search-input {
+    height: 42px;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: #ffffff !important;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    font-size: 0.85rem;
+    color: #344054;
+}
+
+.drivers-index-page .driver-index-search-input:focus {
+    border-color: #1a3275;
+    box-shadow: 0 0 0 0.15rem rgba(26, 50, 117, 0.12);
+}
+
+.drivers-index-page .driver-index-search-clear {
+    position: absolute;
+    right: 2.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667085;
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.drivers-index-page .driver-index-add-btn {
+    background: #1a3275 !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.drivers-index-page .driver-index-add-btn:hover {
+    background: #12234f !important;
+    color: #ffffff !important;
+}
+
+.drivers-index-page .index-table-panel {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.drivers-index-page .index-table-panel .admin-table thead th {
+    background: #eef1f6;
+    color: #344054;
+    font-weight: 700;
+    border-bottom: 1px solid #d8dde6;
+    border-top: 1px solid #d8dde6;
+    border-right: 1px solid #d8dde6;
+}
+
+.drivers-index-page .index-table-panel .admin-table thead th:first-child {
+    border-left: 1px solid #d8dde6;
+    border-top-left-radius: 12px;
+}
+
+.drivers-index-page .index-table-panel .admin-table thead th:last-child {
+    border-top-right-radius: 12px;
+    border-right: 1px solid #d8dde6;
+}
+
+.drivers-index-page .index-table-panel .admin-table tbody td {
+    background: #ffffff;
+    vertical-align: middle;
+}
+
+.drivers-index-page .table-driver-avatar {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #d9e2f3;
+    border: none;
+}
+
+.drivers-index-page .table-driver-initials {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1a3275;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.drivers-index-page .pagination-wrapper {
+    font-size: 0.82rem;
+    color: #667085;
+}
+
+@media (max-width: 991.98px) {
+    .drivers-index-page .driver-index-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .drivers-index-page .driver-index-add-btn {
+        justify-content: center;
+    }
+
+    .drivers-index-page .driver-metric-trend {
+        display: none;
+    }
+}
+
+.pms-expand-btn {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    background: transparent;
+    color: #667085;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.pms-expand-btn:hover {
+    background: #eef1f6;
+    color: #1a3275;
+}
+
+.pms-expand-btn i {
+    transition: transform 0.15s ease;
+}
+
+.pms-expand-btn:not(.collapsed) i {
+    transform: rotate(90deg);
+}
+
+.pms-expand-row > td {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e4e7ec;
+}
+
+.pms-nested-table {
+    margin: 0;
+}
+
+.pms-nested-table thead th {
+    background: transparent !important;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #667085 !important;
+    border-top: 0 !important;
+    border-right: 0 !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+}
+
+.pms-nested-table tbody td {
+    background: transparent !important;
+    font-size: 0.9rem;
+}
+
+.pms-interval-input.is-inactive {
+    background: #f8fafc;
+    color: #98a2b3;
+    cursor: pointer;
+}
+
+.pms-interval-input.is-active {
+    background: #ffffff;
+    cursor: text;
+}
+

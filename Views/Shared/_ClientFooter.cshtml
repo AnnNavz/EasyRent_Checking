@@ -1,0 +1,83 @@
+<footer class="client-footer" id="faqs">
+    <div class="client-footer-inner">
+        <div class="client-footer-grid">
+            <div class="client-footer-brand">
+                <a asp-controller="ClientSide" asp-action="Homepage" class="client-footer-logo">
+                    <img src="~/images/System Images/EasyRentLogo.png" alt="EasyRent" asp-append-version="true" />
+                    <span>
+                        <strong>EasyRent</strong>
+                        <small>Vehicle Rental System</small>
+                    </span>
+                </a>
+                <p>Rent a Car,<br />Joy in every trip.</p>
+            </div>
+
+            <div class="client-footer-col">
+                <h2>Quick Links</h2>
+                <nav>
+                    <a asp-controller="ClientSide" asp-action="Homepage">Home</a>
+                    <a asp-controller="ClientSide" asp-action="Browse">Vehicles</a>
+                    <a asp-controller="ClientSide" asp-action="HowItWorks">How It Works</a>
+                    <a asp-controller="ClientSide" asp-action="AboutUs">About Us</a>
+                    <a asp-controller="ClientSide" asp-action="Homepage" asp-fragment="faqs">FAQs</a>
+                </nav>
+            </div>
+
+            <div class="client-footer-col" id="contact-us">
+                <h2>Contact Us</h2>
+                <ul>
+                    <li>
+                        <i class="bi bi-telephone"></i>
+                        <span>+63 963 6902 998</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-at"></i>
+                        <a href="mailto:easyrent@business.ph">easyrent@business.ph</a>
+                    </li>
+                    <li>
+                        <i class="bi bi-geo-alt"></i>
+                        <span>Z5-003 Sitio Molila, Upper Mohon, Talisay City, Cebu, Philippines 6045</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="client-footer-col">
+                <h2>Accepted Payments</h2>
+                <ul class="client-footer-payments">
+                    <li>
+                        <img src="~/images/System Images/GcashImage.jpg" alt="GCash" />
+                        <span>
+                            <strong>GCash</strong>
+                            <small>QR only</small>
+                        </span>
+                    </li>
+                    <li>
+                        <img src="~/images/System Images/BDOimage.png" alt="BDO" />
+                        <span>
+                            <strong>BDO</strong>
+                            <small>QR only</small>
+                        </span>
+                    </li>
+                    <li>
+                        <i class="bi bi-shop-window"></i>
+                        <span>
+                            <strong>Walk-in</strong>
+                            <small>Pay at Office</small>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="client-footer-bottom">
+        <div class="client-footer-bottom-inner">
+            <p>&copy; 2026 EasyRent. All rights reserved.</p>
+            <p>
+                <a href="#terms">Terms &amp; Conditions</a>
+                <span aria-hidden="true">•</span>
+                <a asp-controller="ClientSide" asp-action="PrivacyPolicy">Privacy &amp; Policy</a>
+            </p>
+        </div>
+    </div>
+</footer>

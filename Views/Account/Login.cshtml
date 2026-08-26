@@ -1,12 +1,11 @@
 ﻿@{
-    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
     ViewData["Title"] = "Login";
-    ViewData["HideSignIn"] = true;
 }
 
-<div class="auth-page">
+<div class="auth-page auth-page-login">
     <div class="auth-login-header">
-        <div class="auth-card-brand">
+        <div class="auth-card-brand auth-card-brand-login">
             <img src="~/images/System Images/EasyRentLogo.png" alt="EasyRent" class="client-brand-logo-img" asp-append-version="true" />
             <span class="client-brand-name">EasyRent</span>
         </div>
@@ -29,56 +28,73 @@
                 <p>@ViewData["LoginReminder"]</p>
             </div>
         }
-        <form asp-controller="Account" asp-action="Login" method="post" class="auth-form" novalidate>
+
+        <form asp-controller="Account" asp-action="Login" method="post" class="auth-form auth-form-login" autocomplete="off" novalidate>
             <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
             <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
             <div class="auth-field">
-                <label class="auth-label" for="loginEmail">Email Address</label>
+                <label class="auth-label auth-label-login" for="loginEmail">Email Address</label>
                 <div class="auth-input-wrap">
-                    <i class="bi bi-envelope auth-input-icon"></i>
-                    <input id="loginEmail" name="Email" type="email" class="auth-input" placeholder="name@example.com" autocomplete="email" required />
+                    <i class="bi bi-envelope auth-input-icon auth-input-icon-login"></i>
+                    <input id="loginEmail" name="Email" type="email" class="auth-input auth-input-login" placeholder="name@example.com" value="" autocomplete="off" autocapitalize="off" spellcheck="false" required />
                 </div>
             </div>
 
             <div class="auth-field">
-                <label class="auth-label" for="loginPassword">Password</label>
+                <label class="auth-label auth-label-login" for="loginPassword">Password</label>
                 <div class="auth-input-wrap">
-                    <i class="bi bi-lock auth-input-icon"></i>
-                    <input id="loginPassword" name="Password" type="password" class="auth-input auth-password-input" placeholder="**********" autocomplete="current-password" required />
+                    <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                    <input id="loginPassword" name="Password" type="password" class="auth-input auth-input-login auth-password-input" placeholder="••••••••••" value="" autocomplete="new-password" required />
                     <button type="button" class="auth-password-toggle" aria-label="Show password">
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>
             </div>
 
-            <label class="auth-check">
-                <input type="checkbox" name="RememberMe" value="true" />
-                <span>Remember me for 30 days</span>
-            </label>
+            <div class="auth-row-between">
+                <a asp-controller="Account" asp-action="ForgotPassword" class="auth-forgot-link auth-forgot-link-login">Forgot Password?</a>
+            </div>
 
-            <button type="submit" class="auth-submit">Login</button>
+            <button type="submit" class="auth-submit auth-submit-login">Sign In</button>
         </form>
+
+        <div class="auth-divider auth-divider-login"></div>
 
         <p class="auth-footer-text auth-login-footer">
             Don't have an account yet?
-            <a asp-controller="Account" asp-action="Registration" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="auth-footer-link">Sign up for free</a>
+            <a asp-controller="Account" asp-action="Registration" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="auth-footer-link auth-footer-link-login">Sign up for free</a>
         </p>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        document.querySelectorAll('.auth-password-toggle').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var input = btn.parentElement.querySelector('.auth-password-input');
-                var icon = btn.querySelector('i');
-                if (!input) return;
-                var show = input.type === 'password';
-                input.type = show ? 'text' : 'password';
-                icon.classList.toggle('bi-eye', !show);
-                icon.classList.toggle('bi-eye-slash', show);
+        (function () {
+            function clearLoginFields() {
+                var email = document.getElementById('loginEmail');
+                var password = document.getElementById('loginPassword');
+                if (email) email.value = '';
+                if (password) password.value = '';
+            }
+
+            // Browsers often autofill after paint / on bfcache restore — clear then and shortly after.
+            clearLoginFields();
+            window.addEventListener('pageshow', clearLoginFields);
+            setTimeout(clearLoginFields, 50);
+            setTimeout(clearLoginFields, 300);
+
+            document.querySelectorAll('.auth-password-toggle').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var input = btn.parentElement.querySelector('.auth-password-input');
+                    var icon = btn.querySelector('i');
+                    if (!input) return;
+                    var show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    icon.classList.toggle('bi-eye', !show);
+                    icon.classList.toggle('bi-eye-slash', show);
+                });
             });
-        });
+        })();
     </script>
 }

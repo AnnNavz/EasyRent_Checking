@@ -5,113 +5,106 @@
     var hidePaymentEdit = ViewData["HideSummaryPaymentEdit"] as bool? == true || isReserveFlow;
 }
 
-<div class="text-start mb-4" id="summaryHeaderBlock" data-reserve-flow="@(isReserveFlow ? "true" : "false")">
-    <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;" id="summaryPageTitle">@(isReserveFlow ? "Hold Summary" : "Booking Summary")</h5>
-    <p class="text-muted small mb-0" id="summaryPageSubtitle">
-        @(isReserveFlow
-            ? $"Review your trip details. Payment is not included now — you must pay within {RentalRules.ReservePaymentWindowDays} days or this hold expires."
-            : "Review the rental details below before confirming and submitting this booking.")
-    </p>
-</div>
-
-<!-- Rental Details -->
+<!-- Rental Information -->
 <div class="form-container-card booking-summary-card booking-details-panel p-4 mb-4 shadow-sm">
     <div class="booking-details-header">
         <div class="booking-details-title">
-            <i class="bi bi-clipboard2-check"></i>
-            <span>Rental Details</span>
+            <span class="booking-details-title-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+            <span>Rental Information</span>
         </div>
         <button type="button" class="btn booking-summary-edit-btn" data-summary-edit data-summary-edit-step="1">
             <i class="bi bi-pencil"></i> Edit
         </button>
     </div>
 
-    <div class="booking-details-section">
-        <div class="booking-details-columns">
-            <div class="booking-details-col">
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Rental Status</span>
-                    <span class="booking-status-badge booking-status-pending"><i class="bi bi-clock"></i> Pending</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Booking Date &amp; Time</span>
-                    <span class="booking-details-value" id="summaryBookingDateTime">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Customer Name</span>
-                    <span class="booking-details-value" id="summaryCustomerName">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Contact Information</span>
-                    <span class="booking-details-value" id="summaryContact">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Pick-up Location</span>
-                    <span class="booking-details-value" id="summaryPickupLocation">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Drop-off Location</span>
-                    <span class="booking-details-value" id="summaryDropoffLocation">—</span>
-                </div>
+    <div class="booking-details-list">
+        <div class="booking-details-row">
+            <span class="booking-details-label">Rental Status</span>
+            <span class="booking-status-badge booking-status-pending"><i class="bi bi-clock"></i> Pending</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Designated Driver</span>
+            <span class="booking-status-badge booking-status-pending"><i class="bi bi-clock"></i> Pending</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Booking Date &amp; Time</span>
+            <span class="booking-details-value booking-details-value-with-icon">
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                <span id="summaryBookingDateTime">—</span>
+            </span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Customer Name</span>
+            <span class="booking-details-value" id="summaryCustomerName">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Vehicle Brand &amp; Model</span>
+            <span class="booking-details-value" id="summaryVehicleName">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Vehicle Type</span>
+            <span class="booking-details-value" id="summaryVehicleType">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Contact Information</span>
+            <span class="booking-details-value" id="summaryContact">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Pickup Location</span>
+            <span class="booking-details-value" id="summaryPickupLocation">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Drop-off Location</span>
+            <span class="booking-details-value" id="summaryDropoffLocation">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Pick-up Date &amp; Time</span>
+            <span class="booking-details-value" id="summaryPickupDateTime">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Return Date &amp; Time</span>
+            <span class="booking-details-value" id="summaryReturnDateTime">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Total Duration</span>
+            <span class="booking-details-value" id="summaryDuration">—</span>
+        </div>
+
+        <div class="booking-details-divider" role="separator"></div>
+
+        <div class="booking-details-row">
+            <span class="booking-details-label">Passenger Count</span>
+            <span class="booking-details-value" id="summaryPassengers">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Senior/PWD Discount</span>
+            <span class="booking-details-value" id="summaryDiscount">—</span>
+        </div>
+        <div class="booking-details-row booking-details-row-id">
+            <span class="booking-details-label">Valid ID Uploaded</span>
+            <span class="booking-details-value booking-details-file d-none" id="summaryValidIdFallback">—</span>
+        </div>
+        <div class="booking-summary-id-grid d-none" id="summaryDiscountIdSection">
+            <div class="booking-summary-id-card" id="summaryDiscountFrontCard">
+                <span class="booking-summary-id-label">Front</span>
+                <a class="booking-summary-id-thumb d-none" id="summaryDiscountPreviewLink" href="#" target="_blank" rel="noopener">
+                    <img id="summaryDiscountPreviewImg" alt="Front of Senior/PWD ID" />
+                </a>
+                <span class="booking-summary-id-name" id="summaryDiscountFrontName"></span>
             </div>
-            <div class="booking-details-col">
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Designated Driver</span>
-                    <span class="booking-status-badge booking-status-pending"><i class="bi bi-clock"></i> Pending</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Vehicle Brand &amp; Model</span>
-                    <span class="booking-details-value" id="summaryVehicleName">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Vehicle Type</span>
-                    <span class="booking-details-value" id="summaryVehicleType">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Pick-up Date &amp; Time</span>
-                    <span class="booking-details-value" id="summaryPickupDateTime">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Return Date &amp; Time</span>
-                    <span class="booking-details-value" id="summaryReturnDateTime">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Total Duration</span>
-                    <span class="booking-details-value" id="summaryDuration">—</span>
-                </div>
+            <div class="booking-summary-id-card d-none" id="summaryDiscountBackCard">
+                <span class="booking-summary-id-label">Back</span>
+                <a class="booking-summary-id-thumb d-none" id="summaryDiscountBackPreviewLink" href="#" target="_blank" rel="noopener">
+                    <img id="summaryDiscountBackPreviewImg" alt="Back of Senior/PWD ID" />
+                </a>
+                <span class="booking-summary-id-name" id="summaryDiscountBackName"></span>
             </div>
         </div>
-    </div>
 
-    <div class="booking-details-section">
-        <div class="booking-details-columns">
-            <div class="booking-details-col">
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Passenger Count</span>
-                    <span class="booking-details-value" id="summaryPassengers">—</span>
-                </div>
-                <div class="booking-details-row">
-                    <span class="booking-details-label">Senior/PWD Discount</span>
-                    <span class="booking-details-value" id="summaryDiscount">—</span>
-                </div>
-            </div>
-            <div class="booking-details-col">
-                <div class="booking-details-row booking-details-row-stack">
-                    <span class="booking-details-label">Valid ID Uploaded</span>
-                    <span class="booking-details-value booking-details-file" id="summaryValidId">—</span>
-                    <div class="booking-summary-doc-preview d-none" id="summaryDiscountPreviewWrap">
-                        <a id="summaryDiscountPreviewLink" href="#" target="_blank" rel="noopener">
-                            <img id="summaryDiscountPreviewImg" alt="Senior/PWD discount ID" />
-                        </a>
-                    </div>
-                </div>
-            </div>
+        <div class="booking-details-section booking-details-section-notes">
+            <span class="booking-details-label">Special Requests / Notes</span>
+            <div class="booking-summary-notes" id="summaryNotes">—</div>
         </div>
-    </div>
-
-    <div class="booking-details-section booking-details-section-notes">
-        <span class="booking-details-label">Special Requests / Notes</span>
-        <div class="booking-summary-notes" id="summaryNotes">—</div>
     </div>
 </div>
 
@@ -119,7 +112,7 @@
 <div class="form-container-card booking-summary-card booking-payment-panel p-4 mb-4 shadow-sm">
     <div class="booking-details-header">
         <div class="booking-details-title">
-            <i class="bi bi-credit-card-2-front"></i>
+            <span class="booking-details-title-icon booking-details-title-icon--round" aria-hidden="true"><i class="bi bi-credit-card-2-front-fill"></i></span>
             <span id="summaryPaymentPanelTitle">@(isReserveFlow ? "Estimated Costs" : "Payment Details")</span>
         </div>
         <button type="button" class="btn booking-summary-edit-btn @(hidePaymentEdit ? "d-none" : "")" id="summaryPaymentEditBtn" data-summary-edit data-summary-edit-step="3">
@@ -131,79 +124,80 @@
         Payment is deferred. Estimated total is shown below — pay within @RentalRules.ReservePaymentWindowDays days from Transactions &amp; Rentals.
     </div>
 
-    <div class="booking-payment-grid">
-        <div class="booking-payment-line">
-            <span class="booking-payment-label">Base Rental Fee</span>
-            <strong class="booking-payment-amount" id="summaryBaseFee">₱0.00</strong>
+    @* Pay-now: account / reference / amount / date / proof *@
+    <div class="booking-details-list js-summary-paynow @(isReserveFlow ? "d-none" : "")">
+        <div class="booking-details-row">
+            <span class="booking-details-label">Account Name</span>
+            <span class="booking-details-value" id="summaryPaymentAccount">—</span>
         </div>
-        <div class="booking-payment-status">
-            <span class="booking-payment-status-label">Payment Status</span>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Reference/Transaction Number</span>
+            <span class="booking-details-value" id="summaryTransactionReference">—</span>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Amount Sent (₱)</span>
+            <strong class="booking-details-value booking-details-value-strong" id="summaryAmountPaid">₱0.00</strong>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Date &amp; Time of Payment</span>
+            <span class="booking-details-value booking-details-value-with-icon">
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                <span id="summaryPaymentDateTime">—</span>
+            </span>
+        </div>
+
+        <div class="booking-details-divider" role="separator"></div>
+
+        <div class="booking-summary-receipt-section" id="summaryReceiptSection">
+            <span class="booking-details-label booking-summary-receipt-label">Payment Proof/Screenshot</span>
+            <span class="booking-details-value booking-details-file d-none" id="summaryReceiptName">—</span>
+            <div class="booking-summary-receipt-frame d-none" id="summaryReceiptPreviewWrap">
+                <a class="booking-summary-receipt-link" id="summaryReceiptPreviewLink" href="#" target="_blank" rel="noopener">
+                    <img id="summaryReceiptPreviewImg" alt="Payment receipt" />
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @* Pay-later / hold: estimated fare breakdown *@
+    <div class="booking-details-list @(isReserveFlow ? "" : "d-none")" id="summaryFeeGrid">
+        <div class="booking-details-row">
+            <span class="booking-details-label">Base Rental Fee</span>
+            <strong class="booking-details-value booking-details-value-strong" id="summaryBaseFee">₱0.00</strong>
+        </div>
+        <div class="booking-details-row">
+            <span class="booking-details-label">Payment Status</span>
             <span class="booking-status-badge booking-status-pending"><i class="bi bi-clock"></i> <span id="summaryPaymentStatusText">@(isReserveFlow ? "Pay Later" : "Pending")</span></span>
         </div>
-
-        <div class="booking-payment-line">
-            <span class="booking-payment-label" id="summarySucceedingLabel">Succeeding Hours</span>
-            <strong class="booking-payment-amount" id="summarySucceedingFee">₱0.00</strong>
+        <div class="booking-details-row">
+            <span class="booking-details-label" id="summarySucceedingLabel">Succeeding Hours</span>
+            <strong class="booking-details-value booking-details-value-strong" id="summarySucceedingFee">₱0.00</strong>
         </div>
-        <div class="booking-payment-status-spacer" aria-hidden="true"></div>
-
-        <div class="booking-payment-line" id="summaryDiscountRow" hidden>
-            <span class="booking-payment-label">Senior Discount (10%)</span>
-            <strong class="booking-payment-amount" id="summaryDiscountAmount">-₱0.00</strong>
+        <div class="booking-details-row" id="summaryDiscountRow" hidden>
+            <span class="booking-details-label">Senior Discount (10%)</span>
+            <strong class="booking-details-value booking-details-value-strong" id="summaryDiscountAmount">-₱0.00</strong>
         </div>
-        <div class="booking-payment-status-spacer" id="summaryDiscountSpacer" aria-hidden="true" hidden></div>
-
-        <div class="booking-payment-line js-summary-paynow @(isReserveFlow ? "d-none" : "")">
-            <span class="booking-payment-label">Payment Type</span>
-            <strong class="booking-payment-amount" id="summaryPaymentType">—</strong>
-        </div>
-        <div class="booking-payment-status-spacer js-summary-paynow @(isReserveFlow ? "d-none" : "")" aria-hidden="true"></div>
-
-        <div class="booking-payment-line js-summary-paynow @(isReserveFlow ? "d-none" : "")">
-            <span class="booking-payment-label">Payment Method</span>
-            <strong class="booking-payment-amount" id="summaryPaymentMethod">—</strong>
-        </div>
-        <div class="booking-payment-status-spacer js-summary-paynow @(isReserveFlow ? "d-none" : "")" aria-hidden="true"></div>
-
-        <div class="booking-payment-line js-summary-paynow @(isReserveFlow ? "d-none" : "")">
-            <span class="booking-payment-label">Amount Paying Now</span>
-            <strong class="booking-payment-amount" id="summaryAmountPaid">₱0.00</strong>
-        </div>
-        <div class="booking-payment-status-spacer js-summary-paynow @(isReserveFlow ? "d-none" : "")" aria-hidden="true"></div>
-
-        <div class="booking-payment-line js-summary-paynow @(isReserveFlow ? "d-none" : "")">
-            <span class="booking-payment-label">Account Name</span>
-            <strong class="booking-payment-amount" id="summaryPaymentAccount">—</strong>
-        </div>
-        <div class="booking-payment-status-spacer js-summary-paynow @(isReserveFlow ? "d-none" : "")" aria-hidden="true"></div>
-    </div>
-
-    <div class="booking-summary-receipt-section js-summary-paynow @(isReserveFlow ? "d-none" : "")" id="summaryReceiptSection" hidden>
-        <span class="booking-details-label">Payment Receipt</span>
-        <span class="booking-details-value booking-details-file" id="summaryReceiptName">—</span>
-        <div class="booking-summary-doc-preview d-none" id="summaryReceiptPreviewWrap">
-            <a id="summaryReceiptPreviewLink" href="#" target="_blank" rel="noopener">
-                <img id="summaryReceiptPreviewImg" alt="Payment receipt" />
-            </a>
+        <div class="booking-details-divider" role="separator"></div>
+        <div class="booking-details-row" id="summaryFeeTotal">
+            <span class="booking-details-label" id="summaryTotalLabel">@(isReserveFlow ? "Estimated Total" : "Total Rental Costs")</span>
+            <strong class="booking-details-value booking-payment-total-amount" id="summaryTotalCost">₱0.00</strong>
         </div>
     </div>
 
-    <div class="booking-payment-total">
-        <span class="booking-payment-total-label" id="summaryTotalLabel">@(isReserveFlow ? "Estimated Total" : "Total Rental Costs")</span>
-        <strong class="booking-payment-total-amount" id="summaryTotalCost">₱0.00</strong>
-        <span class="booking-payment-status-spacer" aria-hidden="true"></span>
-    </div>
+    @* Hidden fields still written by BookingSummary.populate *@
+    <span class="d-none" id="summaryPaymentType" aria-hidden="true"></span>
+    <span class="d-none" id="summaryPaymentMethod" aria-hidden="true"></span>
+    <span class="d-none" id="summaryDiscountSpacer" aria-hidden="true"></span>
 </div>
 
-<div class="d-flex justify-content-end gap-2 align-items-center">
+<div class="rent-step-actions rent-step-actions--split payment-type-actions">
     <button type="button"
-            class="btn btn-light border px-4 py-2 fw-semibold text-dark rounded-3"
-            style="font-size: 0.9rem;"
+            class="rent-btn-cancel"
             id="summaryBackBtn"
             @if (!string.IsNullOrEmpty(summaryBackStep)) { <text>data-wizard-back="@summaryBackStep"</text> }>
         Back
     </button>
-    <button type="submit" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #1E3A8A; border-color: #1E3A8A;" id="summaryConfirmBtn"
+    <button type="submit" class="rent-btn-continue" id="summaryConfirmBtn"
             data-label-pay-now="Submit Booking &amp; Payment"
             data-label-pay-later="Confirm Hold">
         @confirmLabel

@@ -1,0 +1,1717 @@
+/* Book a Vehicle: browse grid, vehicle details, and choose-rental option. */
+
+/* --- Page header --- */
+.client-page-header {
+    margin-bottom: 1.5rem;
+}
+
+.client-page-header h1 {
+    font-family: var(--font-title);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.3px;
+}
+
+.client-page-header p {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--client-muted);
+    margin: 0;
+}
+
+/* --- Toolbar --- */
+.client-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.client-category-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.client-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    background: #e8e8e8;
+    color: #444;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.client-filter-pill:hover {
+    background: #ddd;
+    color: #222;
+}
+
+.client-filter-pill.active {
+    background: var(--client-dark);
+    color: #fff;
+}
+
+.client-toolbar-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.client-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.9rem;
+    background: #F9FAFF;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #444;
+}
+
+.client-toolbar-btn::after {
+    margin-left: 0.25rem;
+}
+
+/* --- Vehicle grid --- */
+.client-vehicle-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+}
+
+@media (max-width: 1199.98px) {
+    .client-vehicle-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .client-vehicle-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .client-vehicle-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Vehicle card --- */
+.client-vehicle-card {
+    background: var(--client-card-bg);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.client-vehicle-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+.client-vehicle-image {
+    position: relative;
+    aspect-ratio: 1.45 / 1;
+    background: #f8f8f8;
+    border: 1.5px solid #222;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.client-vehicle-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.client-vehicle-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-vehicle-placeholder svg {
+    width: 100%;
+    height: 100%;
+    stroke: #222;
+    stroke-width: 0.8;
+    opacity: 0.85;
+}
+
+.client-vehicle-type-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(120, 120, 120, 0.72);
+    border-radius: 999px;
+    padding: 0.18rem 0.65rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.client-vehicle-favorite {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    border: none;
+    background: transparent;
+    color: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.client-vehicle-favorite:hover {
+    color: #e04545;
+}
+
+.client-vehicle-body {
+    padding: 0.85rem 0.15rem 0.1rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.client-vehicle-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.1rem;
+}
+
+.client-vehicle-model {
+    font-family: var(--font-title);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--client-dark);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+
+.client-vehicle-brand {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--client-muted);
+    margin: 0 0 0.55rem;
+}
+
+.client-vehicle-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--client-muted);
+    flex-shrink: 0;
+}
+
+.client-vehicle-rating i {
+    color: #ffc107;
+    font-size: 0.82rem;
+}
+
+.client-vehicle-price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0 0 0.75rem;
+}
+
+.client-vehicle-price strong {
+    font-family: var(--font-title);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--client-dark);
+}
+
+.client-vehicle-price span {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--client-muted);
+}
+
+.client-vehicle-specs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.client-vehicle-spec {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--client-muted);
+}
+
+.client-vehicle-spec i {
+    font-size: 0.85rem;
+    color: var(--client-muted);
+}
+
+/* --- Empty state --- */
+.client-empty-state {
+    text-align: center;
+    padding: 4rem 1.5rem;
+    color: #888;
+    font-family: var(--font-body);
+}
+
+.client-empty-state i {
+    font-size: 2.5rem;
+    opacity: 0.35;
+    margin-bottom: 0.75rem;
+}
+
+/* --- Browse Vehicles page --- */
+.browse-page {
+    padding: 2.25rem 0 0;
+}
+
+.favorites-page {
+    padding-bottom: 3.5rem;
+}
+
+.browse-header {
+    margin-bottom: 1.35rem;
+}
+
+.browse-header h1 {
+    margin: 0 0 0.4rem;
+    font-size: clamp(1.8rem, 3vw, 2.35rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: var(--client-navy);
+}
+
+.browse-header p {
+    margin: 0;
+    color: #6b7386;
+    font-size: 1rem;
+}
+
+.browse-search {
+    margin: 0 0 1.75rem;
+    background: #F9FAFF;
+    box-shadow: none;
+    border: 1px solid #e0e5ef;
+}
+
+.browse-panel {
+    padding: 1.35rem 1.4rem 1.6rem;
+    background: #F9FAFF;
+    border-radius: 22px;
+    box-shadow: 0 12px 32px rgba(26, 43, 93, 0.08);
+}
+
+.browse-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+}
+
+.browse-toolbar-left {
+    display: flex;
+    gap: 0.65rem;
+}
+
+.browse-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 0.45rem 0.95rem;
+    background: #F9FAFF;
+    border: 1px solid #d8deea;
+    border-radius: 10px;
+    color: var(--client-navy);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.browse-find {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: min(100%, 320px);
+    flex: 1 1 260px;
+    max-width: 360px;
+}
+
+.browse-find-submit {
+    position: absolute;
+    left: 0.35rem;
+    z-index: 1;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: transparent;
+    color: #8b95a8;
+}
+
+.browse-find input {
+    width: 100%;
+    height: 42px;
+    padding: 0 2.6rem 0 2.3rem;
+    border: 1px solid #d8deea;
+    border-radius: 10px;
+    background: #F9FAFF;
+    color: var(--client-navy);
+    font-size: 0.85rem;
+}
+
+.browse-find input:focus {
+    outline: none;
+    border-color: #b7c4de;
+    box-shadow: 0 0 0 3px rgba(26, 43, 93, 0.08);
+}
+
+.browse-find-mic {
+    position: absolute;
+    right: 0.35rem;
+    z-index: 1;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: transparent;
+    color: #8b95a8;
+}
+
+.browse-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.browse-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #F9FAFF;
+    border: 1px solid #eef1f6;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(26, 43, 93, 0.06);
+}
+
+.browse-card-image {
+    position: relative;
+    height: 180px;
+    background: #f7f8fb;
+}
+
+.browse-card-favorite {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.65rem;
+    width: 34px;
+    height: 34px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    z-index: 2;
+}
+
+.browse-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.browse-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9aa3b5;
+    font-size: 2rem;
+}
+
+.browse-card-body {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.05rem 1.1rem;
+}
+
+.browse-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.browse-card-body h2 {
+    margin: 0;
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: var(--client-navy);
+}
+
+.browse-card-body p {
+    margin: 0.2rem 0 0.75rem;
+    color: #98a0af;
+    font-size: 0.86rem;
+}
+
+.browse-card-body strong {
+    color: var(--client-navy);
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
+.browse-card-body small {
+    margin: 0.2rem 0 0.95rem;
+    color: #8b95a8;
+    font-size: 0.78rem;
+}
+
+.browse-card-btn {
+    width: 100%;
+    margin-top: auto;
+    background: var(--client-navy);
+    color: #fff;
+}
+
+.browse-card-btn:hover {
+    background: #24366b;
+    color: #fff;
+}
+
+.browse-pager {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 1.6rem;
+}
+
+.browse-pager a,
+.browse-pager span {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 0.55rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--client-navy);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.browse-pager a:hover {
+    background: #eef1f8;
+}
+
+.browse-pager .is-current {
+    background: var(--client-navy);
+    color: #fff;
+}
+
+.browse-pager .is-disabled,
+.browse-pager-gap {
+    color: #b0b7c6;
+}
+
+.browse-help {
+    padding: 3.25rem 0 4.5rem;
+}
+
+@media (max-width: 991.98px) {
+    .browse-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .browse-grid,
+    .browse-search {
+        grid-template-columns: 1fr;
+    }
+
+    .browse-find {
+        max-width: none;
+    }
+}
+
+/* --- Vehicle details page --- */
+.client-main:has(.client-details-page) {
+    background: #eff5fd;
+}
+
+.client-details-breadcrumb-bar {
+    background: #eef1f6;
+    border-bottom: 1px solid #e4e8f0;
+    padding: 0.85rem 0;
+}
+
+.client-details-breadcrumb-inner {
+    max-width: none;
+    width: calc(100% - (2 * var(--client-side-gutter)));
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.client-details-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: #666666;
+}
+
+.client-details-breadcrumb a {
+    color: #666666;
+    text-decoration: none;
+}
+
+.client-details-breadcrumb a:hover {
+    color: #333333;
+}
+
+.client-details-breadcrumb-current {
+    color: #333333;
+    font-weight: 600;
+}
+
+.client-details-breadcrumb-sep {
+    color: #666666;
+    font-size: 0.85rem;
+}
+
+.client-btn-back-browse {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    background: var(--client-navy);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.client-btn-back-browse:hover {
+    background: #24366b;
+    color: #fff;
+}
+
+.client-details-page {
+    padding-top: 1.5rem;
+    background: transparent;
+}
+
+.client-details-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.client-details-card {
+    background: #F9FAFF;
+    border: 1px solid #e8ecf3;
+    border-radius: 20px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    padding: 1.35rem 1.4rem 1.4rem;
+    overflow: hidden;
+}
+
+.client-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.client-details-type-pill {
+    display: inline-block;
+    background: #eef1f6;
+    color: #5b6578;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.22rem 0.7rem;
+    border-radius: 999px;
+    margin-bottom: 0.5rem;
+}
+
+.client-details-title {
+    font-family: var(--font-title);
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--client-navy);
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.4px;
+}
+
+.client-details-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+}
+
+.client-details-stars {
+    display: inline-flex;
+    gap: 0.1rem;
+    color: #f1c40f;
+    font-size: 0.72rem;
+}
+
+.client-details-stars .bi-star {
+    color: #d5d5d5;
+}
+
+.client-details-rating-text {
+    font-weight: 700;
+    color: #333333;
+}
+
+.client-details-meta-muted {
+    color: #666666;
+}
+
+.client-details-header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.client-details-icon-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid #d8deea;
+    border-radius: 50%;
+    background: #F9FAFF;
+    color: var(--client-navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    font-size: 0.95rem;
+}
+
+.client-details-icon-btn:hover {
+    background: #f4f6fb;
+    border-color: #c5cde0;
+}
+
+.client-details-icon-btn.is-favorite {
+    color: #e11d48;
+    border-color: #fecdd3;
+    background: #fff1f2;
+}
+
+.client-details-icon-btn.is-favorite:hover {
+    background: #ffe4e6;
+    border-color: #fda4af;
+}
+
+.client-details-gallery {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #eef1f6;
+    margin-bottom: 0.35rem;
+}
+
+.client-details-gallery img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.client-details-gallery-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9aa3b5;
+    font-size: 3rem;
+}
+
+.client-details-gallery-overlay {
+    position: absolute;
+    bottom: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(26, 43, 93, 0.72);
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.client-details-gallery-overlay-left {
+    left: 14px;
+}
+
+.client-details-gallery-overlay-right {
+    right: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.client-details-gallery-overlay-right.is-available {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.client-details-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4caf50;
+    display: inline-block;
+}
+
+.client-details-tabs-wrap {
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.client-details-tabs {
+    justify-content: center;
+    border-bottom: 1px solid #e8ecf3;
+    gap: 1.5rem;
+    margin-bottom: 0;
+    padding: 0.35rem 0 0;
+    background: transparent;
+}
+
+.client-details-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    color: #8b95a8;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.85rem 0.25rem;
+    background: transparent;
+}
+
+.client-details-tabs .nav-link.active {
+    color: var(--client-navy);
+    border-bottom-color: var(--client-navy);
+    background: transparent;
+}
+
+.client-details-tab-content {
+    margin-top: 0;
+}
+
+.client-details-panel {
+    background: transparent;
+    border-radius: 0;
+    padding: 1.25rem 0.15rem 1.4rem;
+}
+
+.client-details-panel h2 {
+    font-family: var(--font-title);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--client-navy);
+    margin: 0 0 0.7rem;
+}
+
+.client-details-panel p {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: #5b6578;
+    margin: 0 0 1.45rem;
+}
+
+.client-details-features {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    margin: 0.35rem 0 1.75rem;
+    padding: 0.15rem 0;
+}
+
+.client-details-feature {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    text-align: left;
+    color: var(--client-navy);
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.client-details-feature:not(:last-child) {
+    border-right: 1px solid #dce3ef;
+}
+
+.client-details-feature-icon {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: #e8eef7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--client-navy);
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.client-details-trust-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0 0;
+    padding: 1.05rem 1.15rem;
+    background: #e8eef7;
+    border-radius: 16px;
+    color: var(--client-navy);
+}
+
+.client-details-trust-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--client-navy);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.client-details-trust-icon i {
+    font-size: 1.45rem;
+    color: #fff;
+}
+
+.client-details-trust-banner strong {
+    display: block;
+    font-size: 0.98rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+
+.client-details-trust-banner p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #5b6578;
+}
+
+.vehicle-reviews-summary {
+    margin: 0 0 1.45rem;
+    padding: 0;
+    border: 0;
+}
+
+.vehicle-reviews-avg {
+    display: block;
+    font-family: var(--font-title);
+    font-size: 2.35rem;
+    font-weight: 800;
+    color: var(--client-navy);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+}
+
+.vehicle-reviews-summary-stars {
+    display: flex;
+    gap: 0.2rem;
+    color: #f0b429;
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+}
+
+.vehicle-reviews-summary-stars .bi-star {
+    color: #d8deea;
+}
+
+.vehicle-reviews-summary-count {
+    display: block;
+    font-size: 0.8rem;
+    color: #8b95a8;
+}
+
+.vehicle-reviews-heading {
+    font-size: 1.05rem !important;
+    margin: 0 0 0.9rem !important;
+}
+
+.vehicle-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+}
+
+.vehicle-review-card {
+    background: #F9FAFF;
+    border: 1px solid #e6ebf3;
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(26, 43, 93, 0.05);
+    padding: 1.05rem 1.15rem 1.1rem;
+}
+
+.vehicle-review-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.vehicle-review-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--client-navy);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.vehicle-review-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.vehicle-review-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--client-navy);
+}
+
+.vehicle-review-date {
+    font-size: 0.74rem;
+    color: #8b95a8;
+}
+
+.vehicle-review-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    flex-shrink: 0;
+    color: var(--client-navy);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.vehicle-review-score i {
+    color: #f0b429;
+    font-size: 0.95rem;
+}
+
+.vehicle-review-comment {
+    margin: 0 !important;
+    font-size: 0.88rem !important;
+    line-height: 1.55 !important;
+    color: var(--client-navy) !important;
+}
+
+.vehicle-review-comment.is-muted {
+    color: #8b95a8 !important;
+    font-style: italic;
+}
+
+.vehicle-reviews-empty {
+    margin-bottom: 0 !important;
+}
+
+.client-details-subheading {
+    margin-top: 0.5rem !important;
+}
+
+.client-details-rating-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1.05rem;
+}
+
+.client-details-rating-row {
+    display: grid;
+    grid-template-columns: 128px 1fr 42px;
+    align-items: center;
+    gap: 0.85rem;
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: #5b6578;
+}
+
+.client-details-rating-track {
+    height: 14px;
+    background: #e8eef7;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.client-details-rating-fill {
+    height: 100%;
+    background: var(--client-navy);
+    border-radius: 999px;
+}
+
+.client-details-rating-score {
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-align: right;
+    color: var(--client-navy);
+}
+
+.client-details-rating-empty {
+    margin: 0.85rem 0 0;
+    font-size: 0.78rem;
+    color: #8b95a8;
+}
+
+.client-details-sidebar {
+    position: sticky;
+    top: calc(var(--client-topbar-height) + 1rem);
+}
+
+.client-rate-summary {
+    background: #d9d9d9;
+    border-radius: 12px;
+    padding: 1.15rem 1rem 1.1rem;
+}
+
+.client-rate-summary-title {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #4a4a4a;
+    margin: 0 0 0.35rem;
+}
+
+.client-rate-summary-note {
+    font-size: 0.68rem;
+    color: #4a4a4a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    line-height: 1.4;
+}
+
+.client-rate-summary-note i {
+    color: #4a4a4a;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.client-rate-summary-divider {
+    border: none;
+    border-top: 1px solid #4a4a4a;
+    margin: 0.75rem 0 0.85rem;
+    opacity: 0.35;
+}
+
+.client-rate-card {
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    margin-bottom: 0.65rem;
+}
+
+.client-rate-card--base {
+    background: #bbbbbb;
+    border: 1px solid #4a4a4a;
+}
+
+.client-rate-card--succeeding {
+    background: #bbbbbb;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    padding-bottom: 0.65rem;
+}
+
+.client-rate-card-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.client-rate-card-icon {
+    font-size: 1.1rem;
+    color: #4a4a4a;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-rate-card-icon--circle {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid #4a4a4a;
+    border-radius: 50%;
+    font-size: 0.85rem;
+}
+
+.client-rate-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.client-rate-card-label {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #4a4a4a;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.client-rate-card-subtitle {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 400;
+    color: #4a4a4a;
+    line-height: 1.2;
+}
+
+.client-rate-card-label .client-rate-card-subtitle {
+    display: inline;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.client-rate-card-price {
+    font-family: var(--font-title);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #4a4a4a;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.client-rate-card-divider {
+    border: none;
+    border-top: 1px solid #4a4a4a;
+    margin: 0.6rem 0;
+    opacity: 0.3;
+}
+
+.client-rate-includes {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.client-rate-includes li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    color: #4a4a4a;
+    margin-bottom: 0.28rem;
+    line-height: 1.35;
+}
+
+.client-rate-includes li:last-child {
+    margin-bottom: 0;
+}
+
+.client-rate-includes i {
+    color: #4a4a4a;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.client-rate-footnote {
+    font-size: 0.62rem;
+    color: #4a4a4a;
+    margin: 0.55rem 0 0;
+    display: flex;
+    gap: 0.35rem;
+    line-height: 1.45;
+    align-items: flex-start;
+}
+
+.client-rate-footnote i {
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+    font-size: 0.75rem;
+}
+
+.client-rate-footnote strong {
+    font-weight: 700;
+}
+
+.client-rate-example {
+    background: #bbbbbb;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    padding: 0.75rem 0.85rem;
+    margin-bottom: 0.65rem;
+}
+
+.client-rate-example-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #4a4a4a;
+    margin-bottom: 0.55rem;
+    text-transform: uppercase;
+}
+
+.client-rate-example-header i {
+    font-size: 0.9rem;
+}
+
+.client-rate-example-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: #4a4a4a;
+    margin-bottom: 0.25rem;
+}
+
+.client-rate-example-row.is-discount {
+    color: #2f6b3a;
+    font-weight: 600;
+}
+
+.client-rate-example-empty {
+    font-size: 0.7rem;
+    color: #4a4a4a;
+    margin: 0;
+    line-height: 1.45;
+    opacity: 0.9;
+}
+
+.client-rate-example-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #4a4a4a;
+    margin: 0;
+}
+
+.client-rate-example-note {
+    font-size: 0.6rem;
+    color: #4a4a4a;
+    margin: 0.5rem 0 0;
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
+.client-rate-info-box {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    background: #bbbbbb;
+    border: 1px solid #4a4a4a;
+    border-radius: 10px;
+    padding: 0.6rem 0.7rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.65rem;
+    color: #4a4a4a;
+    line-height: 1.45;
+}
+
+.client-rate-info-box i {
+    color: #4a4a4a;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+    font-size: 0.85rem;
+}
+
+.client-rate-info-box p {
+    margin: 0;
+}
+
+.client-rate-info-box strong {
+    font-weight: 700;
+}
+
+.client-btn-reserve-lg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.65rem;
+    padding: 0.85rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #fff;
+    background: #2f2f2f;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+    border: none;
+    border-radius: 10px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.client-btn-reserve-lg i {
+    font-size: 1.05rem;
+}
+
+.client-details-page .client-rate-summary {
+    background: #F9FAFF;
+    border: 1px solid #e8ecf3;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    border-radius: 20px;
+    padding: 1.25rem 1.15rem 1.15rem;
+}
+
+.client-details-page .client-rate-summary-title,
+.client-details-page .client-rate-card-label,
+.client-details-page .client-rate-card-price,
+.client-details-page .client-rate-example-total,
+.client-details-page .client-rate-example-header {
+    color: var(--client-navy);
+}
+
+.client-details-page .client-rate-summary-note,
+.client-details-page .client-rate-card-subtitle,
+.client-details-page .client-rate-includes li,
+.client-details-page .client-rate-footnote,
+.client-details-page .client-rate-example-row,
+.client-details-page .client-rate-info-box,
+.client-details-page .client-rate-trust-item,
+.client-details-page .client-rate-disclaimer {
+    color: #5b6578;
+}
+
+.client-details-page .client-rate-summary-note i,
+.client-details-page .client-rate-card-icon,
+.client-details-page .client-rate-includes i,
+.client-details-page .client-rate-info-box i,
+.client-details-page .client-rate-trust-item i {
+    color: var(--client-navy);
+}
+
+.client-details-page .client-rate-card--base,
+.client-details-page .client-rate-card--succeeding,
+.client-details-page .client-rate-example {
+    background: #F9FAFF;
+    border: 1px solid #dce3ef;
+    box-shadow: none;
+}
+
+.client-details-page .client-rate-info-box {
+    border: none;
+    box-shadow: none;
+    color: #3d4a66;
+}
+
+.client-details-page .client-rate-info-box--discount {
+    background: #e8f1fb;
+}
+
+.client-details-page .client-rate-info-box--payment {
+    background: #eceefe;
+}
+
+.client-details-page .client-rate-example {
+    border-style: dashed;
+}
+
+.client-details-page .client-rate-card-icon--circle {
+    border-color: var(--client-navy);
+}
+
+.client-details-page .client-rate-summary-divider,
+.client-details-page .client-rate-card-divider {
+    border-top-color: #d8deea;
+    opacity: 1;
+}
+
+.client-details-page .client-btn-reserve-lg {
+    background: var(--client-navy);
+    box-shadow: 0 8px 18px rgba(26, 43, 93, 0.22);
+}
+
+.client-details-page .client-btn-reserve-lg:hover {
+    background: #24366b;
+    color: #fff;
+}
+
+.client-details-page .client-rate-trust {
+    border-top-color: #e4e8f0;
+}
+
+.client-details-page .client-rate-trust-item:not(:last-child) {
+    border-right-color: #e4e8f0;
+}
+
+.client-btn-reserve-lg:disabled,
+.client-btn-reserve-lg[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.client-rate-trust {
+    display: flex;
+    align-items: stretch;
+    margin-top: 0.85rem;
+    border-top: 1px solid rgba(74, 74, 74, 0.25);
+    padding-top: 0.75rem;
+}
+
+.client-rate-trust-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.3rem;
+    font-size: 0.58rem;
+    color: #4a4a4a;
+    text-align: center;
+    padding: 0 0.35rem;
+    line-height: 1.3;
+}
+
+.client-rate-trust-item:not(:last-child) {
+    border-right: 1px solid rgba(74, 74, 74, 0.3);
+}
+
+.client-rate-trust-item i {
+    font-size: 1rem;
+    color: #4a4a4a;
+}
+
+.client-rate-disclaimer {
+    font-size: 0.58rem;
+    color: #4a4a4a;
+    text-align: center;
+    margin: 0.65rem 0 0;
+    line-height: 1.45;
+    opacity: 0.85;
+}
+
+.client-rate-disclaimer strong {
+    font-weight: 700;
+}
+
+@media (max-width: 991.98px) {
+    .client-details-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .client-details-sidebar {
+        position: static;
+    }
+
+    .client-btn-back-browse {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .client-details-title {
+        font-size: 1.35rem;
+    }
+
+    .client-details-features {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+    }
+
+    .client-details-feature {
+        justify-content: flex-start;
+    }
+
+    .client-details-feature:not(:last-child) {
+        border-right: 0;
+        padding-bottom: 0.85rem;
+        border-bottom: 1px solid #dce3ef;
+    }
+
+    .client-details-rating-row {
+        grid-template-columns: 96px 1fr 32px;
+        font-size: 0.7rem;
+    }
+
+    .client-rate-trust {
+        flex-direction: column;
+    }
+
+    .client-rate-trust-item:not(:last-child) {
+        border-right: none;
+        border-bottom: 1px solid rgba(74, 74, 74, 0.3);
+        padding-bottom: 0.65rem;
+        margin-bottom: 0.65rem;
+    }
+}
+
+.client-choose-option-page {
+    padding: 2rem 1.25rem 3rem;
+}
+
+.client-choose-option-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.client-choose-option-title {
+    font-size: 1.75rem;
+    font-weight: 750;
+    color: #1a1a1a;
+    margin-bottom: 0.4rem;
+}
+
+.client-choose-option-subtitle {
+    color: #555;
+    margin-bottom: 1.75rem;
+}
+
+.client-choose-option-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.client-choose-option-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1.35rem 1.25rem;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    border: 1.5px solid #d8d8d8;
+    background: #F9FAFF;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.client-choose-option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    color: inherit;
+}
+
+.client-choose-option-card.is-book {
+    border-color: #1E3A8A;
+}
+
+.client-choose-option-card.is-reserve {
+    border-color: #0f766e;
+}
+
+.client-choose-option-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    color: #1E3A8A;
+    font-size: 1.15rem;
+}
+
+.client-choose-option-card.is-reserve .client-choose-option-icon {
+    color: #0f766e;
+}
+
+.client-choose-option-card h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.client-choose-option-card p {
+    margin: 0;
+    color: #555;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    flex: 1;
+}
+
+.client-choose-option-cta {
+    margin-top: 0.5rem;
+    font-weight: 700;
+    color: #1E3A8A;
+    font-size: 0.9rem;
+}
+
+.client-choose-option-card.is-reserve .client-choose-option-cta {
+    color: #0f766e;
+}
+
+.client-choose-option-vehicle {
+    margin-top: 1.25rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 767.98px) {
+    .client-choose-option-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

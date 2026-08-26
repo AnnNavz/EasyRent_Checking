@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mail;
+using System.Net.Mime;
 
 namespace EasyRent_Checking.Services
 {
@@ -14,7 +15,11 @@ namespace EasyRent_Checking.Services
 			_logger = logger;
 		}
 
-		public async Task SendAsync(string toEmail, string subject, string htmlBody)
+		public async Task SendAsync(
+			string toEmail,
+			string subject,
+			string htmlBody,
+			IEnumerable<EmailAttachment>? attachments = null)
 		{
 			var host = _config["Smtp:Host"]
 				?? throw new InvalidOperationException("Smtp:Host is not configured.");
@@ -42,8 +47,27 @@ namespace EasyRent_Checking.Services
 			};
 			message.To.Add(toEmail);
 
+			var streams = new List<MemoryStream>();
 			try
 			{
+				if (attachments != null)
+				{
+					foreach (var attachment in attachments)
+					{
+						if (attachment.Content.Length == 0)
+						{
+							continue;
+						}
+
+						var stream = new MemoryStream(attachment.Content);
+						streams.Add(stream);
+						message.Attachments.Add(new Attachment(
+							stream,
+							attachment.FileName,
+							attachment.ContentType ?? MediaTypeNames.Application.Pdf));
+					}
+				}
+
 				await client.SendMailAsync(message);
 				_logger.LogInformation("SMTP accepted email to {ToEmail} from {FromEmail}", toEmail, fromEmail);
 			}
@@ -51,6 +75,13 @@ namespace EasyRent_Checking.Services
 			{
 				_logger.LogError(ex, "Failed to send email to {Email}", toEmail);
 				throw;
+			}
+			finally
+			{
+				foreach (var stream in streams)
+				{
+					await stream.DisposeAsync();
+				}
 			}
 		}
 	}

@@ -1,0 +1,64 @@
+@model EasyRent_Checking.Models.IncidentReport
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Complete Repair";
+    ViewData["ActivePage"] = "Incidents";
+    ViewData["SectionTitle"] = "Incident Reports";
+    ViewData["SectionUrl"] = Url.Action("Index", "Incidents");
+
+    var vehicle = Model.Vehicle;
+}
+
+<div class="container-fluid px-4 py-3">
+    <div class="details-page-actions mb-3">
+        <a asp-action="Details" asp-route-id="@Model.IncidentReportId" class="btn btn-page-back">Back</a>
+    </div>
+
+    <div class="reservation-view-card" style="max-width: 720px;">
+        <div class="reservation-view-section-title mb-3">
+            <i class="bi bi-wrench-adjustable"></i>
+            <span>Complete Repair — INC-@Model.IncidentReportId.ToString("D5")</span>
+        </div>
+
+        <p class="text-muted small mb-3">
+            @(vehicle != null ? $"{vehicle.Brand} {vehicle.Model} · {vehicle.PlateNumber}" : "Vehicle")
+        </p>
+
+        <form asp-action="CompleteRepair" asp-route-id="@Model.IncidentReportId" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="WorkDone" class="form-label"></label>
+                <textarea asp-for="WorkDone" name="workDone" class="form-control" rows="4" placeholder="What was repaired?"></textarea>
+                <span asp-validation-for="WorkDone" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Cost" class="form-label"></label>
+                <div class="input-group">
+                    <span class="input-group-text">₱</span>
+                    <input asp-for="Cost" name="cost" class="form-control" type="number" step="0.01" min="0" />
+                </div>
+                <span asp-validation-for="Cost" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Photo</label>
+                <input name="imageFile" type="file" class="form-control" accept=".png,.jpg,.jpeg,image/*" />
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <span class="small text-muted">A photo is already on this report. Upload only if you want to replace it.</span>
+                }
+            </div>
+
+            <button type="submit" class="btn reservation-btn-approve">Save and Close Incident</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

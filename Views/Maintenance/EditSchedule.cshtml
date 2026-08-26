@@ -1,0 +1,43 @@
+@model EasyRent_Checking.ViewModels.MaintenanceScheduleInput
+@using EasyRent_Checking.Services
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Edit Maintenance Table";
+    ViewData["ActivePage"] = "Maintenance";
+    ViewData["ShowInclude"] = false;
+}
+
+<div class="pms-setup-page">
+    <div class="pms-setup-heading">
+        <h1>Edit Maintenance Table</h1>
+        <p>@ViewData["VehicleLabel"] — change intervals for this vehicle only. Next due dates will be recalculated.</p>
+    </div>
+
+    <form asp-action="EditSchedule" asp-route-id="@Model.VehicleId" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="VehicleId" />
+        <input type="hidden" asp-for="Preset" />
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <div class="pms-setup-card">
+            <h2 class="pms-setup-card-title">Maintenance Items</h2>
+            <partial name="_PmsScheduleTable" for="Rows" />
+        </div>
+
+        <div class="pms-setup-footer">
+            <div class="pms-setup-note">
+                <i class="bi bi-info-circle-fill"></i>
+                <p><strong>Note:</strong> The maintenance schedule will be used to generate due items based on the PMS interval. You can edit this setup anytime.</p>
+            </div>
+            <div class="pms-setup-actions">
+                <a asp-action="Index" class="btn pms-setup-btn-cancel">Cancel</a>
+                <button type="submit" class="btn pms-setup-btn-save">Save Maintenance</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

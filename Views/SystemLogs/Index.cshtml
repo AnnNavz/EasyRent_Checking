@@ -1,0 +1,198 @@
+@model IEnumerable<EasyRent_Checking.Models.SystemLog>
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Activity Logs";
+    ViewData["ActivePage"] = "SystemLogs";
+
+    var currentFilter = ViewData["CurrentFilter"]?.ToString();
+    var actionFilter = ViewData["CurrentAction"]?.ToString();
+    var currentSort = ViewData["CurrentSort"]?.ToString();
+    var currentSearch = ViewData["CurrentSearch"]?.ToString();
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+
+    string CategoryLabel(SystemLogCategory category) => category switch
+    {
+        SystemLogCategory.Incident => "Incident Report",
+        SystemLogCategory.Booking => "Booking",
+        SystemLogCategory.Trip => "Active Trips",
+        SystemLogCategory.Maintenance => "Vehicle Maintenance",
+        _ => category.ToString()
+    };
+
+    string SortName = currentSort switch
+    {
+        "DateOldest" => "Oldest first",
+        "User" => "User",
+        "Action" => "Action",
+        "Date" => "Newest first",
+        _ => "Sorting by"
+    };
+
+    string FilterName = !string.IsNullOrEmpty(currentFilter) && Enum.TryParse(currentFilter, true, out SystemLogCategory filterCategory)
+        ? CategoryLabel(filterCategory)
+        : !string.IsNullOrEmpty(actionFilter)
+            ? actionFilter
+            : "Filters";
+
+    string Query(string? sort = null, string? filter = null, string? action = null, string? search = null)
+    {
+        sort ??= currentSort;
+        filter ??= currentFilter;
+        action ??= actionFilter;
+        search ??= currentSearch;
+        return $"?sortBy={Uri.EscapeDataString(sort ?? "")}&currentFilter={Uri.EscapeDataString(filter ?? "")}&actionFilter={Uri.EscapeDataString(action ?? "")}&searchString={Uri.EscapeDataString(search ?? "")}";
+    }
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "AD";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0][..2].ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
+        }
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+}
+
+<div class="activity-logs-page customers-index-page">
+    <div class="activity-logs-header mb-4">
+        <h1 class="activity-logs-title">Activity Logs</h1>
+        <p class="activity-logs-subtitle">A record of all important actions and activities in the system.</p>
+    </div>
+
+    <form asp-action="Index" method="get" class="w-100">
+        <input type="hidden" name="sortBy" value="@currentSort" />
+        <input type="hidden" name="currentFilter" value="@currentFilter" />
+        <input type="hidden" name="actionFilter" value="@actionFilter" />
+
+        <div class="customer-index-toolbar mb-4">
+            <div class="customer-index-toolbar-filters">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter" type="button" data-bs-toggle="dropdown">
+                        @SortName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="@(Query(sort: "Date"))">Newest first</a></li>
+                        <li><a class="dropdown-item" href="@(Query(sort: "DateOldest"))">Oldest first</a></li>
+                        <li><a class="dropdown-item" href="@(Query(sort: "User"))">User</a></li>
+                        <li><a class="dropdown-item" href="@(Query(sort: "Action"))">Action</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="@(Query(sort: ""))">Clear Sorting</a></li>
+                    </ul>
+                </div>
+
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter" type="button" data-bs-toggle="dropdown">
+                        @FilterName
+                    </button>
+                    <ul class="dropdown-menu activity-logs-filter-menu">
+                        <li><h6 class="dropdown-header">Module</h6></li>
+                        <li><a class="dropdown-item" href="@(Query(filter: ""))">All modules</a></li>
+                        @foreach (SystemLogCategory category in Enum.GetValues<SystemLogCategory>())
+                        {
+                            <li>
+                                <a class="dropdown-item" href="@(Query(filter: category.ToString()))">@CategoryLabel(category)</a>
+                            </li>
+                        }
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><h6 class="dropdown-header">Action</h6></li>
+                        <li><a class="dropdown-item" href="@(Query(action: ""))">All actions</a></li>
+                        @foreach (SystemLogAction action in Enum.GetValues<SystemLogAction>())
+                        {
+                            <li>
+                                <a class="dropdown-item" href="@(Query(action: action.ToString()))">@action</a>
+                            </li>
+                        }
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="@(Query(filter: "", action: ""))">Clear Filters</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="customer-index-toolbar-search">
+                <i class="bi bi-search customer-index-search-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="searchString"
+                       value="@currentSearch"
+                       class="form-control customer-index-search-input"
+                       placeholder="Search logs..." />
+                <i class="bi bi-mic customer-index-mic-icon" aria-hidden="true"></i>
+                @if (!string.IsNullOrEmpty(currentSearch))
+                {
+                    <a href="@(Query(search: ""))"
+                       class="customer-index-search-clear"
+                       aria-label="Clear search">&times;</a>
+                }
+            </div>
+        </div>
+    </form>
+
+    <div class="index-table-panel mb-4">
+        <div class="table-responsive">
+            <table class="table admin-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>
+                            <a class="activity-log-sort" href="@(Query(sort: currentSort == "Date" ? "DateOldest" : "Date"))">
+                                Date &amp; Time <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a class="activity-log-sort" href="@(Query(sort: "User"))">
+                                User <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a class="activity-log-sort" href="@(Query(sort: "Action"))">
+                                Action <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                            </a>
+                        </th>
+                        <th>Module</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-nowrap">
+                                    <div class="activity-log-datetime">
+                                        <span class="activity-log-date">@item.CreatedAt.ToString("MMMM d, yyyy", ph)</span>
+                                        <span class="activity-log-time">@item.CreatedAt.ToString("h:mm tt", ph)</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-customer-cell">
+                                        <div class="table-customer-avatar" aria-hidden="true">@GetInitials(item.ActorName)</div>
+                                        <span class="table-customer-name">@item.ActorName</span>
+                                    </div>
+                                </td>
+                                <td class="activity-log-action">@item.Action</td>
+                                <td>@CategoryLabel(item.Category)</td>
+                                <td class="activity-log-details">@item.Summary</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted fw-medium">
+                                <i class="bi bi-journal-text fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                No activity logs yet. Admin actions will appear here.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AdminPagination" />
+    </div>
+</div>

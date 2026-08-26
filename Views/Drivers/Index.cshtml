@@ -1,15 +1,23 @@
-﻿@model IEnumerable<EasyRent_Checking.Models.Driver>
+@model IEnumerable<EasyRent_Checking.Models.Driver>
+@using System.Globalization
 
 @{
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "Driver Management";
     ViewData["ActivePage"] = "Drivers";
 
+    var totalDriversChange = ViewData["TotalDriversChange"] as decimal? ?? 0m;
+    var activeDriversChange = ViewData["ActiveDriversChange"] as decimal? ?? 0m;
+
+    string FormatTrend(decimal change) =>
+        Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
+
     string currentSortName = ViewData["CurrentSort"]?.ToString() == "Name" ? "Name" :
                              ViewData["CurrentSort"]?.ToString() == "ExpiryDate" ? "Expiry Date" : "Sorting by";
 
     string currentFilterName = ViewData["CurrentFilter"]?.ToString() == "ActiveOnly" ? "Active Only" :
-                               ViewData["CurrentFilter"]?.ToString() == "Expired" ? "Expired Licenses" : "Filters";
+                               ViewData["CurrentFilter"]?.ToString() == "Expired" ? "Expired Licenses" :
+                               ViewData["CurrentFilter"]?.ToString() == "Deactivated" ? "Deactivated" : "Filters";
 
     string indexReturnUrl = Url.Action("Index", new
     {
@@ -32,7 +40,10 @@
                     <div class="driver-metric-value">@(ViewData["TotalDriversCount"] ?? "0")</div>
                 </div>
                 <div class="driver-metric-trend">
-                    <span class="driver-metric-badge"><i class="bi bi-arrow-up-short"></i> 12.4%</span>
+                    <span class="driver-metric-badge @(totalDriversChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(totalDriversChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(totalDriversChange)
+                    </span>
                     <span class="driver-metric-compare">vs last month</span>
                 </div>
             </div>
@@ -47,7 +58,10 @@
                     <div class="driver-metric-value">@(ViewData["ActiveDriversCount"] ?? "0")</div>
                 </div>
                 <div class="driver-metric-trend">
-                    <span class="driver-metric-badge"><i class="bi bi-arrow-up-short"></i> 12.4%</span>
+                    <span class="driver-metric-badge @(activeDriversChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(activeDriversChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(activeDriversChange)
+                    </span>
                     <span class="driver-metric-compare">vs last month</span>
                 </div>
             </div>
@@ -78,6 +92,7 @@
                     </button>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="?currentFilter=ActiveOnly&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Active Only</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Deactivated&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Deactivated</a></li>
                         <li><a class="dropdown-item" href="?currentFilter=Expired&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Expired Licenses</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
                         <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
@@ -145,11 +160,11 @@
                                 <td>@Html.DisplayFor(modelItem => item.Address)</td>
                                 <td>@Html.DisplayFor(modelItem => item.ContactNo)</td>
                                 <td class="text-uppercase">@Html.DisplayFor(modelItem => item.LicenseNo)</td>
-                                <td>@(item.ExpiryDate.ToString("MM-dd-yyyy"))</td>
+                                <td>@AdminDates.Format(item.ExpiryDate)</td>
                                 <td class="text-end">
                                     <div class="dropdown">
-                                        <button class="btn btn-link text-dark p-0 border-0 line-height-1" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Driver actions">
-                                            <i class="bi bi-three-dots-vertical fs-5"></i>
+                                        <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Driver actions">
+                                            <i class="bi bi-three-dots"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                             <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.DriverId" asp-route-returnUrl="@indexReturnUrl"><i class="bi bi-pencil me-2"></i> Edit</a></li>

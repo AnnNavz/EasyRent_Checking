@@ -1,0 +1,99 @@
+@model EasyRent_Checking.ViewModels.VerifyLoginCodeInputModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+    ViewData["Title"] = "Verify sign-in";
+}
+
+<div class="auth-page auth-page-login auth-page-forgot">
+    <div class="auth-login-header">
+        <div class="auth-card-brand auth-card-brand-login">
+            <img src="~/images/System Images/EasyRentLogo.png" alt="EasyRent" class="client-brand-logo-img" asp-append-version="true" />
+            <span class="client-brand-name">EasyRent</span>
+        </div>
+        <h1 class="auth-page-title">Check your email</h1>
+        <p class="auth-subtitle auth-page-subtitle">We sent a 6-digit sign-in code to <strong>@Model.MaskedEmail</strong>. Enter it below to finish signing in.</p>
+    </div>
+
+    <div class="auth-card auth-card-login auth-card-mockup">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success small py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger small py-2 px-3 mb-3" role="alert">@TempData["ErrorMessage"]</div>
+        }
+
+        <form asp-controller="Account" asp-action="VerifyLoginCode" method="post" class="auth-form auth-form-login" novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="auth-field">
+                <label asp-for="Code" class="auth-label auth-label-login">Verification code</label>
+                <div class="auth-input-wrap">
+                    <i class="bi bi-shield-lock auth-input-icon auth-input-icon-login"></i>
+                    <input asp-for="Code"
+                           class="auth-input auth-input-login auth-otp-input"
+                           inputmode="numeric"
+                           autocomplete="one-time-code"
+                           maxlength="6"
+                           placeholder="••••••"
+                           aria-describedby="otpHint" />
+                </div>
+                <span asp-validation-for="Code" class="text-danger small"></span>
+                <p id="otpHint" class="auth-password-hint">The code expires in 10 minutes.</p>
+            </div>
+
+            <button type="submit" class="auth-submit auth-submit-login">Verify code</button>
+        </form>
+
+        <form asp-controller="Account" asp-action="ResendLoginCode" method="post" class="auth-resend-form">
+            @Html.AntiForgeryToken()
+            <button type="submit"
+                    class="auth-resend-btn"
+                    id="resendCodeBtn"
+                    @(Model.ResendWaitSeconds > 0 ? "disabled" : null)>
+                @(Model.ResendWaitSeconds > 0
+                    ? $"Resend code in {Model.ResendWaitSeconds}s"
+                    : "Resend code")
+            </button>
+        </form>
+
+        <div class="auth-divider auth-divider-login"></div>
+
+        <p class="auth-footer-text auth-login-footer">
+            <a asp-controller="Account" asp-action="Login" class="auth-footer-link auth-footer-link-login">Back to login</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var input = document.querySelector('.auth-otp-input');
+            if (input) {
+                input.addEventListener('input', function () {
+                    input.value = input.value.replace(/\D/g, '').slice(0, 6);
+                });
+                input.focus();
+            }
+
+            var btn = document.getElementById('resendCodeBtn');
+            var wait = @Model.ResendWaitSeconds;
+            if (!btn || wait <= 0) return;
+
+            var remaining = wait;
+            var timer = setInterval(function () {
+                remaining -= 1;
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = 'Resend code';
+                    return;
+                }
+                btn.textContent = 'Resend code in ' + remaining + 's';
+            }, 1000);
+        })();
+    </script>
+}

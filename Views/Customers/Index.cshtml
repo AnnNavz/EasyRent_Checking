@@ -1,61 +1,240 @@
 @model IEnumerable<EasyRent_Checking.Models.CustomerProfile>
+@using EasyRent_Checking.Models
+@using System.Globalization
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Customers";
+    ViewData["Title"] = "User Management";
     ViewData["ActivePage"] = "Customers";
+
+    var totalCustomersChange = ViewData["TotalCustomersChange"] as decimal? ?? 0m;
+    var pendingCustomersChange = ViewData["PendingCustomersChange"] as decimal? ?? 0m;
+
+    string FormatTrend(decimal change) =>
+        Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
+
+    string currentSortName = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "Name" => "Name",
+        "Email" => "Email",
+        "Status" => "Status",
+        _ => "Sorting by"
+    };
+
+    string currentFilterName = ViewData["CurrentFilter"]?.ToString() switch
+    {
+        "Approved" => "Approved",
+        "Pending" => "Pending",
+        "Inactive" => "Inactive",
+        _ => "Filters"
+    };
+
+    string indexReturnUrl = Url.Action("Index", new
+    {
+        searchString = ViewData["CurrentSearch"],
+        sortBy = ViewData["CurrentSort"],
+        currentFilter = ViewData["CurrentFilter"],
+        page = ViewData["PageIndex"]
+    }) ?? "";
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "??";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0][..2].ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
+        }
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    string StatusLabel(Status status) => status switch
+    {
+        Status.Active => "Approved",
+        Status.Inactive => "Inactive",
+        _ => "Pending"
+    };
+
+    string StatusClass(Status status) => status switch
+    {
+        Status.Active => "is-approved",
+        Status.Inactive => "is-inactive",
+        _ => "is-pending"
+    };
 }
 
-<h1>Index</h1>
+<div class="customers-index-page">
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="customer-metric-card">
+                <div class="customer-metric-icon is-total" aria-hidden="true">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="customer-metric-body">
+                    <span class="customer-metric-label">Total Customers</span>
+                    <div class="customer-metric-value">@(ViewData["TotalCustomersCount"] ?? "0")</div>
+                </div>
+                <div class="customer-metric-trend">
+                    <span class="customer-metric-badge @(totalCustomersChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(totalCustomersChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(totalCustomersChange)
+                    </span>
+                    <span class="customer-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="customer-metric-card">
+                <div class="customer-metric-icon is-pending" aria-hidden="true">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="customer-metric-body">
+                    <span class="customer-metric-label">Pending Customers</span>
+                    <div class="customer-metric-value">@(ViewData["PendingCustomersCount"] ?? "0")</div>
+                </div>
+                <div class="customer-metric-trend">
+                    <span class="customer-metric-badge @(pendingCustomersChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(pendingCustomersChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(pendingCustomersChange)
+                    </span>
+                    <span class="customer-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.FullName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ContactNumber)
-            </th>
-            <th>
-                Email
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ValidIDtype)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.FullName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ContactNumber)
-            </td>
-            <td>
-                @(item.User?.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ValidIDtype)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-customerid="@item.CustomerId">Edit</a> |
-                <a asp-action="Details" asp-route-customerid="@item.CustomerId">Details</a> |
-                <a asp-action="Delete" asp-route-customerid="@item.CustomerId">Delete</a>
-            </td>
-        </tr>
+    <form asp-action="Index" method="get" class="w-100">
+        <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+        <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
+
+        <div class="customer-index-toolbar mb-4">
+            <div class="customer-index-toolbar-filters">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentSortName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?sortBy=Name&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Name</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=Email&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Email</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=Status&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Status</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
+                    </ul>
+                </div>
+
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentFilterName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?currentFilter=Approved&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Approved</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Pending&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Pending</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Inactive&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Inactive</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="customer-index-toolbar-search">
+                <i class="bi bi-search customer-index-search-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="searchString"
+                       value="@ViewData["CurrentSearch"]"
+                       class="form-control customer-index-search-input"
+                       placeholder="Search Customer" />
+                <i class="bi bi-mic customer-index-mic-icon" aria-hidden="true"></i>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
+                {
+                    <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]"
+                       class="customer-index-search-clear"
+                       aria-label="Clear search">&times;</a>
+                }
+            </div>
+
+            <a asp-action="Create" class="btn customer-index-add-btn">
+                <i class="bi bi-plus-lg"></i> Add Customer
+            </a>
+        </div>
+    </form>
+
+    <div class="index-table-panel mb-4">
+        <div class="table-responsive">
+            <table class="table admin-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Contact Number</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th class="text-end" style="width: 80px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var safeName = (item.FullName ?? "this customer")
+                                .Replace("\\", "\\\\")
+                                .Replace("'", "\\'");
+                            <tr>
+                                <td>
+                                    <div class="table-customer-cell">
+                                        <div class="table-customer-avatar" aria-hidden="true">
+                                            @GetInitials(item.FullName)
+                                        </div>
+                                        <span class="table-customer-name">@item.FullName</span>
+                                    </div>
+                                </td>
+                                <td>@Html.DisplayFor(modelItem => item.ContactNumber)</td>
+                                <td>@(item.User?.Email ?? "—")</td>
+                                <td>
+                                    <span class="customer-status-badge @StatusClass(item.Status)">@StatusLabel(item.Status)</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Customer actions">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                            <li><a class="dropdown-item" asp-action="Edit" asp-route-customerid="@item.CustomerId" asp-route-returnUrl="@indexReturnUrl"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                            <li><a class="dropdown-item" asp-action="Details" asp-route-customerid="@item.CustomerId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                            <li><hr class="dropdown-menu-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.CustomerId', '@safeName')">
+                                                    <i class="bi bi-trash me-2"></i> Delete
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted fw-medium">
+                                <i class="bi bi-people fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                No matching customers found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AdminPagination" />
+    </div>
+</div>
+
+@{
+    ViewData["DeleteModalId"] = "customerDeletePopup";
+    ViewData["DeleteHiddenInputId"] = "popupCustomerId";
+    ViewData["DeleteHiddenInputName"] = "customerid";
+    ViewData["DeleteMessageId"] = "deletePopupMessage";
+    ViewData["DeleteEntityLabel"] = "customer";
 }
-    </tbody>
-</table>
+<partial name="_DeleteConfirmModal" />

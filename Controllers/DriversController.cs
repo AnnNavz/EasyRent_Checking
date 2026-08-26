@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,14 +14,19 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace EasyRent_Checking.Controllers
 {
+    [Authorize(Policy = "StaffArea")]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public class DriversController : Controller
     {
         private readonly EasyRent_CheckingContext _context;
 		private readonly IWebHostEnvironment _webHostEnvironment;
-		public DriversController(EasyRent_CheckingContext context, IWebHostEnvironment webHostEnvironment)
+		private readonly SystemLogService _logs;
+
+		public DriversController(EasyRent_CheckingContext context, IWebHostEnvironment webHostEnvironment, SystemLogService logs)
         {
             _context = context;
 			_webHostEnvironment = webHostEnvironment;
+			_logs = logs;
 		}
 
 		// GET: Drivers
@@ -42,8 +48,20 @@ namespace EasyRent_Checking.Controllers
 
 			// 2. Real-time KPI Metric Card Calculation
 			var systemDate = DateOnly.FromDateTime(DateTime.Now);
-			ViewData["TotalDriversCount"] = await driversQuery.CountAsync();
-			ViewData["ActiveDriversCount"] = await driversQuery.CountAsync(d => d.ExpiryDate >= systemDate);
+			var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+			var totalDriversCount = await driversQuery.CountAsync();
+			var activeDriversCount = await driversQuery.CountAsync(d => d.IsActive && d.ExpiryDate >= systemDate);
+			var totalDriversAtMonthStart = await driversQuery.CountAsync(d => d.CreatedAt < monthStart);
+			var activeDriversAtMonthStart = await driversQuery.CountAsync(d =>
+				d.CreatedAt < monthStart
+				&& d.IsActive
+				&& d.ExpiryDate >= DateOnly.FromDateTime(monthStart));
+
+			ViewData["TotalDriversCount"] = totalDriversCount;
+			ViewData["ActiveDriversCount"] = activeDriversCount;
+			ViewData["TotalDriversChange"] = PctChange(totalDriversCount, totalDriversAtMonthStart);
+			ViewData["ActiveDriversChange"] = PctChange(activeDriversCount, activeDriversAtMonthStart);
 
 			// 3. Search Bar Functional Handler
 			if (!string.IsNullOrEmpty(searchString))
@@ -58,11 +76,15 @@ namespace EasyRent_Checking.Controllers
 			{
 				if (currentFilter == "ActiveOnly")
 				{
-					driversQuery = driversQuery.Where(d => d.ExpiryDate >= systemDate);
+					driversQuery = driversQuery.Where(d => d.IsActive && d.ExpiryDate >= systemDate);
 				}
 				else if (currentFilter == "Expired")
 				{
 					driversQuery = driversQuery.Where(d => d.ExpiryDate < systemDate);
+				}
+				else if (currentFilter == "Deactivated")
+				{
+					driversQuery = driversQuery.Where(d => !d.IsActive);
 				}
 			}
 
@@ -109,7 +131,196 @@ namespace EasyRent_Checking.Controllers
                 return NotFound();
             }
 
-            return View(driver);
+            var transits = await _context.Transits
+                .AsNoTracking()
+                .Include(t => t.Rental)
+                .Where(t => t.DriverID == id)
+                .OrderByDescending(t => t.TransitID)
+                .Take(20)
+                .ToListAsync();
+
+            var rentalIds = transits.Select(t => t.RentalID).Distinct().ToList();
+            var rentalDetailsByRentalId = await _context.RentalDetails
+                .AsNoTracking()
+                .Where(d => rentalIds.Contains(d.RentalID))
+                .ToDictionaryAsync(d => d.RentalID);
+
+            var activityHistory = transits
+                .Select(t =>
+                {
+                    rentalDetailsByRentalId.TryGetValue(t.RentalID, out var details);
+                    return MapTransitToActivity(t, details, t.Rental);
+                })
+                .ToList();
+
+            var driverReviews = await _context.Feedbacks
+                .AsNoTracking()
+                .Include(f => f.Customer)
+                .Where(f => f.Transit != null
+                    && f.Transit.DriverID == id
+                    && f.DriverProfessionalism != null
+                    && f.DriverDriving != null
+                    && f.DriverCourtesy != null)
+                .OrderByDescending(f => f.CreatedAt)
+                .ToListAsync();
+
+            var reviewItems = driverReviews
+                .Select(f => new DriverReviewItem
+                {
+                    CustomerName = f.Customer?.FullName ?? "Customer",
+                    Comment = f.Comment,
+                    CreatedAt = f.CreatedAt,
+                    Professionalism = f.DriverProfessionalism!.Value,
+                    Driving = f.DriverDriving!.Value,
+                    Courtesy = f.DriverCourtesy!.Value
+                })
+                .ToList();
+
+            var documents = BuildDriverDocuments(driver);
+
+            var model = new DriverDetailsViewModel
+            {
+                Driver = driver,
+                ActivityHistory = activityHistory,
+                Reviews = reviewItems,
+                Documents = documents,
+                ReviewCount = reviewItems.Count,
+                OverallTen = RatingScale.ToTen(reviewItems.Select(r => r.OverallStars)),
+                ProfessionalismTen = RatingScale.ToTen(reviewItems.Select(r => r.Professionalism)),
+                DrivingTen = RatingScale.ToTen(reviewItems.Select(r => r.Driving)),
+                CourtesyTen = RatingScale.ToTen(reviewItems.Select(r => r.Courtesy))
+            };
+
+            return View(model);
+        }
+
+        // POST: Drivers/ToggleActive/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleActive(int id)
+        {
+            var driver = await _context.Drivers.FindAsync(id);
+            if (driver == null)
+            {
+                return NotFound();
+            }
+
+            driver.IsActive = !driver.IsActive;
+            _logs.Record(
+                driver.IsActive ? SystemLogAction.Reactivated : SystemLogAction.Deactivated,
+                SystemLogCategory.Driver,
+                driver.IsActive
+                    ? $"Reactivated driver {driver.Name}."
+                    : $"Deactivated driver {driver.Name}.",
+                "Driver",
+                driver.DriverId);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = driver.IsActive
+                ? $"{driver.Name} has been reactivated."
+                : $"{driver.Name} has been deactivated.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        private static DriverActivityLogItem MapTransitToActivity(Transit transit, RentalDetails? details, Rental? rental)
+        {
+            var bookingRef = $"#FL-{transit.RentalID}";
+
+            var title = transit.TripStatus switch
+            {
+                TripStatus.Completed => $"Rent Trip Successful : {bookingRef}",
+                TripStatus.InTransit => $"Trip In Progress : {bookingRef}",
+                TripStatus.Cancelled => $"Trip Cancelled : {bookingRef}",
+                TripStatus.Delayed => $"Trip Delayed : {bookingRef}",
+                _ => $"Trip Scheduled : {bookingRef}"
+            };
+
+            string description;
+            if (details != null)
+            {
+                var dayCount = details.ReturnDate.DayNumber - details.PickupDate.DayNumber + 1;
+
+                description = transit.TripStatus switch
+                {
+                    TripStatus.Completed when dayCount > 1 =>
+                        $"Successful trip to {details.PickupLocation} for the first day and {details.DropoffLocation} for the second day of the reservation.",
+                    TripStatus.Completed when !string.IsNullOrWhiteSpace(rental?.Notes) =>
+                        $"Successful trip to {details.DropoffLocation} for {rental.Notes.Trim().TrimEnd('.')} for one day.",
+                    TripStatus.Completed =>
+                        $"Successful trip to {details.DropoffLocation} for one day.",
+                    _ => $"Trip from {details.PickupLocation} to {details.DropoffLocation}."
+                };
+            }
+            else
+            {
+                description = transit.TripStatus == TripStatus.Completed
+                    ? "Rental trip completed."
+                    : "Assigned rental trip.";
+            }
+
+            return new DriverActivityLogItem
+            {
+                OccurredAt = ResolveActivityDate(transit, details),
+                Title = title,
+                Description = description,
+                TripStatus = transit.TripStatus
+            };
+        }
+
+        private static IReadOnlyList<DriverDocumentItem> BuildDriverDocuments(Driver driver)
+        {
+            var uploadedAt = driver.CreatedAt.ToLocalTime();
+            var documents = new List<DriverDocumentItem>();
+
+            if (!string.IsNullOrEmpty(driver.FrontLicenseImagePath))
+            {
+                documents.Add(new DriverDocumentItem
+                {
+                    DisplayName = "Front License",
+                    FileName = GetStoredFileName(driver.FrontLicenseImagePath),
+                    ImagePath = driver.FrontLicenseImagePath,
+                    UploadedAt = uploadedAt,
+                    IsVerified = true
+                });
+            }
+
+            if (!string.IsNullOrEmpty(driver.BackLicenseImagePath))
+            {
+                documents.Add(new DriverDocumentItem
+                {
+                    DisplayName = "Back License",
+                    FileName = GetStoredFileName(driver.BackLicenseImagePath),
+                    ImagePath = driver.BackLicenseImagePath,
+                    UploadedAt = uploadedAt,
+                    IsVerified = true
+                });
+            }
+
+            return documents;
+        }
+
+        private static string GetStoredFileName(string path)
+        {
+            var separatorIndex = path.IndexOf('_');
+            return separatorIndex >= 0 && separatorIndex < path.Length - 1
+                ? path[(separatorIndex + 1)..]
+                : path;
+        }
+
+        private static DateTime ResolveActivityDate(Transit transit, RentalDetails? details)
+        {
+            if (details == null)
+            {
+                return DateTime.Now;
+            }
+
+            return transit.TripStatus switch
+            {
+                TripStatus.Completed => details.ReturnDate.ToDateTime(details.ReturnTime),
+                TripStatus.InTransit => details.PickupDate.ToDateTime(details.PickupTime),
+                _ => details.PickupDate.ToDateTime(details.PickupTime)
+            };
         }
 
         // GET: Drivers/Create
@@ -144,6 +355,13 @@ namespace EasyRent_Checking.Controllers
 
 				_context.Add(driver);
                 await _context.SaveChangesAsync();
+				_logs.Record(
+					SystemLogAction.Created,
+					SystemLogCategory.Driver,
+					$"Added driver {driver.Name}.",
+					"Driver",
+					driver.DriverId);
+				await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(CreateSuccess), new { id = driver.DriverId });
             }
             return View(driver);
@@ -169,8 +387,8 @@ namespace EasyRent_Checking.Controllers
                 ActivePage = "Drivers",
                 Heading = "Driver Profile Created",
                 MessageHtml = $"<strong>{driver.Name}</strong> has been successfully added to the system and is ready for assignment.",
-                PrimaryActionText = "View Drivers",
-                PrimaryActionUrl = Url.Action(nameof(Index)) ?? "",
+                PrimaryActionText = "View Driver's Profile",
+                PrimaryActionUrl = Url.Action(nameof(Details), new { id = driver.DriverId }) ?? "",
                 SecondaryActionText = "Add Another Driver",
                 SecondaryActionUrl = Url.Action(nameof(Create)) ?? ""
             };
@@ -256,6 +474,12 @@ namespace EasyRent_Checking.Controllers
 					}
 
 					_context.Update(existingDriver);
+					_logs.Record(
+						SystemLogAction.Updated,
+						SystemLogCategory.Driver,
+						$"Updated driver {existingDriver.Name}.",
+						"Driver",
+						existingDriver.DriverId);
 					await _context.SaveChangesAsync();
 				}
 				catch (DbUpdateConcurrencyException)
@@ -306,6 +530,12 @@ namespace EasyRent_Checking.Controllers
             var driver = await _context.Drivers.FindAsync(id);
             if (driver != null)
             {
+				_logs.Record(
+					SystemLogAction.Deleted,
+					SystemLogCategory.Driver,
+					$"Deleted driver {driver.Name}.",
+					"Driver",
+					driver.DriverId);
                 _context.Drivers.Remove(driver);
             }
 
@@ -317,5 +547,8 @@ namespace EasyRent_Checking.Controllers
         {
             return _context.Drivers.Any(e => e.DriverId == id);
         }
+
+        private static decimal PctChange(decimal current, decimal previous)
+            => Math.Round((current - previous) * 0.1m, 1);
     }
 }

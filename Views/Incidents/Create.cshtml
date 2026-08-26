@@ -1,0 +1,118 @@
+@model EasyRent_Checking.Models.IncidentReport
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Report Accident";
+    ViewData["ActivePage"] = "Incidents";
+    ViewData["SectionTitle"] = "Incident Reports";
+    ViewData["SectionUrl"] = Url.Action("Index", "Incidents");
+
+    var transit = ViewBag.Transit as Transit;
+    var vehicle = transit?.Vehicle;
+    var occurredValue = Model.OccurredAt == default
+        ? DateTime.Now.ToString("yyyy-MM-ddTHH:mm")
+        : Model.OccurredAt.ToString("yyyy-MM-ddTHH:mm");
+}
+
+<div class="container-fluid px-4 py-3">
+    <div class="details-page-actions mb-3">
+        @if (transit != null)
+        {
+            <a asp-controller="Transits" asp-action="Details" asp-route-transitid="@transit.TransitID" class="btn btn-page-back">Back</a>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-page-back">Back</a>
+        }
+    </div>
+
+    <div class="reservation-view-card" style="max-width: 720px;">
+        <div class="reservation-view-section-title mb-3">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span>
+                @(transit != null
+                    ? $"Report Accident — BK-{transit.RentalID.ToString("D5")}"
+                    : "Report Incident")
+            </span>
+        </div>
+
+        @if (transit != null)
+        {
+            <p class="text-muted small mb-3">
+                @(vehicle != null ? $"{vehicle.Brand} {vehicle.Model} · {vehicle.PlateNumber}" : "Vehicle")
+                @(transit.Driver != null ? $" · {transit.Driver.Name}" : "")
+            </p>
+        }
+
+        <form asp-action="Create" asp-route-transitid="@transit?.TransitID" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            @if (transit != null)
+            {
+                <input type="hidden" asp-for="VehicleId" />
+                <input type="hidden" asp-for="TransitID" />
+                <input type="hidden" asp-for="DriverID" />
+            }
+            else
+            {
+                <div class="mb-3">
+                    <label asp-for="VehicleId" class="form-label"></label>
+                    <select asp-for="VehicleId" class="form-select" asp-items="ViewBag.VehicleId">
+                        <option value="">Select vehicle...</option>
+                    </select>
+                    <span asp-validation-for="VehicleId" class="text-danger"></span>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="Type" class="form-label"></label>
+                <select asp-for="Type" class="form-select" asp-items="Html.GetEnumSelectList<IncidentType>()"></select>
+                <span asp-validation-for="Type" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Severity" class="form-label"></label>
+                <select asp-for="Severity" class="form-select" asp-items="Html.GetEnumSelectList<IncidentSeverity>()"></select>
+                <span asp-validation-for="Severity" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="OccurredAt" class="form-label"></label>
+                <input asp-for="OccurredAt" type="datetime-local" class="form-control" value="@occurredValue" />
+                <span asp-validation-for="OccurredAt" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Location" class="form-label"></label>
+                <input asp-for="Location" class="form-control" />
+                <span asp-validation-for="Location" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="What happened?"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="IsUndrivable" class="form-check-input" />
+                <label asp-for="IsUndrivable" class="form-check-label"></label>
+                <div class="small text-muted">If checked, this vehicle is set to Unavailable until the report is closed or dismissed.</div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="ImageFile" class="form-label"></label>
+                <input asp-for="ImageFile" type="file" class="form-control" accept=".png,.jpg,.jpeg,image/*" />
+                <span asp-validation-for="ImageFile" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn reservation-btn-reject">Submit Report</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

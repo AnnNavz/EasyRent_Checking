@@ -1,0 +1,182 @@
+@model IEnumerable<EasyRent_Checking.Models.IncidentReport>
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Incident Reports";
+    ViewData["ActivePage"] = "Incidents";
+
+    string EnumLabel(Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>()?.GetName();
+        return display ?? value.ToString();
+    }
+
+    string StatusClass(IncidentStatus status) => status switch
+    {
+        IncidentStatus.Reported => "trip-status-delayed",
+        IncidentStatus.UnderReview => "trip-status-in-transit",
+        IncidentStatus.InRepair => "trip-status-scheduled",
+        IncidentStatus.Closed => "trip-status-completed",
+        IncidentStatus.Dismissed => "trip-status-cancelled",
+        _ => "trip-status-scheduled"
+    };
+
+    string currentSortName = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "Vehicle" => "Vehicle",
+        "Severity" => "Severity",
+        "Status" => "Status",
+        _ => "Sorting by"
+    };
+
+    string currentFilterName = ViewData["CurrentFilter"]?.ToString() switch
+    {
+        "Reported" => "Reported",
+        "UnderReview" => "Under Review",
+        "InRepair" => "In Repair",
+        "Closed" => "Closed",
+        "Dismissed" => "Dismissed",
+        _ => "Filters"
+    };
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4 col-sm-6">
+        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="metric-label">Under Review</span>
+                <div class="metric-value">@(ViewData["UnderReviewCount"] ?? "0")</div>
+            </div>
+            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="metric-label">In Repair</span>
+                <div class="metric-value">@(ViewData["InRepairCount"] ?? "0")</div>
+            </div>
+            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="metric-label">Closed</span>
+                <div class="metric-value">@(ViewData["ClosedCount"] ?? "0")</div>
+            </div>
+            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+    </div>
+</div>
+
+<form asp-action="Index" method="get" class="w-100">
+    <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+    <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
+
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                @currentSortName
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="?sortBy=Vehicle&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Vehicle</a></li>
+                <li><a class="dropdown-item" href="?sortBy=Severity&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Severity</a></li>
+                <li><a class="dropdown-item" href="?sortBy=Status&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Status</a></li>
+                <li><hr class="dropdown-menu-divider"></li>
+                <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
+            </ul>
+        </div>
+
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                @currentFilterName
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="?currentFilter=Reported&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Reported</a></li>
+                <li><a class="dropdown-item" href="?currentFilter=UnderReview&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Under Review</a></li>
+                <li><a class="dropdown-item" href="?currentFilter=InRepair&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">In Repair</a></li>
+                <li><a class="dropdown-item" href="?currentFilter=Closed&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Closed</a></li>
+                <li><a class="dropdown-item" href="?currentFilter=Dismissed&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Dismissed</a></li>
+                <li><hr class="dropdown-menu-divider"></li>
+                <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
+            </ul>
+        </div>
+
+        <div class="flex-grow-1" style="min-width: 220px;">
+            <input type="text"
+                   name="searchString"
+                   value="@ViewData["CurrentSearch"]"
+                   class="form-control"
+                   placeholder="Search plate, driver, location..." />
+        </div>
+
+        <a asp-action="Create" class="btn reservation-btn-approve">Report Incident</a>
+    </div>
+</form>
+
+<div class="index-table-panel mb-4">
+    <div class="table-responsive">
+        <table class="table admin-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Report</th>
+                    <th>Vehicle</th>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Occurred</th>
+                    <th>Status</th>
+                    <th class="text-end" style="width: 60px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        var vehicleName = item.Vehicle != null
+                            ? $"{item.Vehicle.Brand} {item.Vehicle.Model}".Trim()
+                            : "—";
+                        <tr>
+                            <td class="fw-semibold text-dark font-monospace">INC-@item.IncidentReportId.ToString("D5")</td>
+                            <td>
+                                <div class="fw-semibold text-dark">@(item.Vehicle?.PlateNumber ?? "—")</div>
+                                <div class="small text-muted">@vehicleName</div>
+                            </td>
+                            <td>@EnumLabel(item.Type)</td>
+                            <td>@EnumLabel(item.Severity)</td>
+                            <td>@AdminDates.Format(item.OccurredAt, includeTime: true)</td>
+                            <td>
+                                <span class="booking-status-badge @StatusClass(item.Status)">@EnumLabel(item.Status)</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="dropdown">
+                                    <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Incident actions">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                        <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.IncidentReportId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted fw-medium">
+                            <i class="bi bi-exclamation-triangle fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                            No incident reports yet.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <partial name="_AdminPagination" />
+</div>

@@ -7,13 +7,13 @@
     ViewData["Title"] = $"{Model.Brand} {Model.Model}";
     ViewData["ActiveNav"] = "Vehicles";
 
-    string typeLabel = Model.Type == VehicleType.Van ? "VAN" : Model.Type.ToString().ToUpper();
-    string vehicleTitle = $"{Model.Model} {Model.Brand}".ToUpper();
+    string typeLabel = VehicleTypes.DisplayUpper(Model.Type);
+    string vehicleTitle = $"{Model.Model} {Model.Brand}";
     string breadcrumbLabel = $"{Model.Brand} {Model.Model}";
     bool isAvailable = Model.Status == VehicleStatus.Available;
     string statusLabel = Model.Status switch
     {
-        VehicleStatus.Available => "Available Now",
+        VehicleStatus.Available => "Available",
         VehicleStatus.Rented => "Currently Rented",
         VehicleStatus.InMaintenance => "In Maintenance",
         _ => "Unavailable"
@@ -27,31 +27,29 @@
     var averageRating = ViewData["AverageRating"] as double? ?? 0d;
     var completedTrips = ViewData["CompletedTripsCount"] as int? ?? 0;
     var filledStars = reviewCount == 0 ? 0 : (int)Math.Round(averageRating, MidpointRounding.AwayFromZero);
+    var professionalismTen = ViewData["ProfessionalismTen"] as double? ?? 0d;
+    var drivingTen = ViewData["DrivingTen"] as double? ?? 0d;
+    var courtesyTen = ViewData["CourtesyTen"] as double? ?? 0d;
+    var hasDriverRatings = ViewData["HasDriverRatings"] as bool? ?? false;
+    var isFavorite = ViewData["IsFavorite"] as bool? ?? false;
 
-    string GetInitials(string? name)
+    string GetInitial(string? name)
     {
-        if (string.IsNullOrWhiteSpace(name)) return "??";
-        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 1)
-        {
-            return parts[0].Length >= 2
-                ? parts[0][..2].ToUpperInvariant()
-                : parts[0].ToUpperInvariant();
-        }
-        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        return char.ToUpperInvariant(name.Trim()[0]).ToString();
     }
 }
 
 <div class="client-details-breadcrumb-bar">
     <div class="client-details-breadcrumb-inner">
         <nav class="client-details-breadcrumb" aria-label="Breadcrumb">
-            <a asp-action="Homepage"><i class="bi bi-house-door"></i></a>
+            <a asp-controller="ClientSide" asp-action="Homepage">Home</a>
             <span class="client-details-breadcrumb-sep">&rsaquo;</span>
-            <a asp-action="Browse">Browse Vehicles</a>
+            <a asp-controller="ClientSide" asp-action="Browse">Browse Vehicles</a>
             <span class="client-details-breadcrumb-sep">&rsaquo;</span>
             <span class="client-details-breadcrumb-current">@breadcrumbLabel</span>
         </nav>
-        <a asp-action="Browse" class="client-btn-back-browse">
+        <a asp-controller="ClientSide" asp-action="Browse" class="client-btn-back-browse">
             <i class="bi bi-arrow-left"></i>
             Back to Browse Details
         </a>
@@ -61,174 +59,195 @@
 <div class="client-page client-details-page">
     @if (TempData["RentalSuccess"] != null)
     {
-        <div class="alert alert-success mx-3 mt-3 mb-0" role="alert">@TempData["RentalSuccess"]</div>
+        <div class="alert alert-success mx-0 mb-3" role="alert">@TempData["RentalSuccess"]</div>
     }
     @if (TempData["RentalError"] != null)
     {
-        <div class="alert alert-danger mx-3 mt-3 mb-0" role="alert">@TempData["RentalError"]</div>
+        <div class="alert alert-danger mx-0 mb-3" role="alert">@TempData["RentalError"]</div>
     }
     <div class="client-details-layout">
         <div class="client-details-main">
-            <div class="client-details-header">
-                <div>
-                    <span class="client-details-type-pill">@typeLabel</span>
-                    <h1 class="client-details-title">@vehicleTitle</h1>
-                    <div class="client-details-meta">
-                        <span class="client-details-stars" aria-hidden="true">
-                            @for (var i = 1; i <= 5; i++)
+            <div class="client-details-card">
+                <div class="client-details-header">
+                    <div>
+                        <span class="client-details-type-pill">@typeLabel</span>
+                        <h1 class="client-details-title">@vehicleTitle</h1>
+                        <div class="client-details-meta">
+                            <span class="client-details-stars" aria-hidden="true">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= filledStars ? "bi-star-fill" : "bi-star")"></i>
+                                }
+                            </span>
+                            @if (reviewCount > 0)
                             {
-                                <i class="bi @(i <= filledStars ? "bi-star-fill" : "bi-star")"></i>
+                                <span class="client-details-rating-text">@averageRating.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                <span class="client-details-meta-muted">(@reviewCount verified @(reviewCount == 1 ? "review" : "reviews"))</span>
                             }
-                        </span>
-                        @if (reviewCount > 0)
-                        {
-                            <span class="client-details-rating-text">@averageRating.ToString("0.0", CultureInfo.InvariantCulture)</span>
-                            <span class="client-details-meta-muted">(@reviewCount verified @(reviewCount == 1 ? "review" : "reviews"))</span>
-                        }
-                        else
-                        {
-                            <span class="client-details-rating-text">—</span>
-                            <span class="client-details-meta-muted">(No reviews yet)</span>
-                        }
-                        <span class="client-details-meta-muted">@completedTrips @(completedTrips == 1 ? "trip" : "trips") completed</span>
+                            else
+                            {
+                                <span class="client-details-meta-muted">(No reviews yet)</span>
+                            }
+                            <span class="client-details-meta-muted">@completedTrips @(completedTrips == 1 ? "trip" : "trips") completed</span>
+                        </div>
+                    </div>
+                    <div class="client-details-header-actions">
+                        <button type="button" class="client-details-icon-btn" id="vehicleShareBtn" aria-label="Share">
+                            <i class="bi bi-share"></i>
+                        </button>
+                        <button type="button"
+                                class="client-details-icon-btn @(isFavorite ? "is-favorite" : "")"
+                                data-favorite-toggle
+                                data-toggle-url="@Url.Action("ToggleFavorite", "ClientSide", new { id = Model.VehicleId })"
+                                data-login-url="@(User.Identity?.IsAuthenticated == true ? null : Url.Action("Login", "Account", new { returnUrl = Url.Action("VehicleDetails", "ClientSide", new { id = Model.VehicleId }) }))"
+                                aria-pressed="@(isFavorite ? "true" : "false")"
+                                aria-label="@(isFavorite ? "Remove from favorites" : "Save to favorites")">
+                            <i class="bi @(isFavorite ? "bi-heart-fill" : "bi-heart")"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="client-details-header-actions">
-                    <button type="button" class="client-details-icon-btn" aria-label="Share">
-                        <i class="bi bi-share"></i>
-                    </button>
-                    <button type="button" class="client-details-icon-btn" aria-label="Save to favorites">
-                        <i class="bi bi-heart"></i>
-                    </button>
-                </div>
-            </div>
 
-            <div class="client-details-gallery">
-                @if (!string.IsNullOrEmpty(Model.ImagePath))
-                {
-                    <img src="/images/@Model.ImagePath" alt="@vehicleTitle" />
-                }
-                else
-                {
-                    <div class="client-details-gallery-placeholder">
-                        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <line x1="0" y1="0" x2="100" y2="100" />
-                            <line x1="100" y1="0" x2="0" y2="100" />
-                        </svg>
-                    </div>
-                }
-                <div class="client-details-gallery-overlay client-details-gallery-overlay-left">
-                    Vehicle Type @typeLabel &bull; @Model.PassengersCount seats
-                </div>
-                <div class="client-details-gallery-overlay client-details-gallery-overlay-right @(isAvailable ? "is-available" : "")">
-                    @if (isAvailable)
+                <div class="client-details-gallery">
+                    @if (!string.IsNullOrEmpty(Model.ImagePath))
                     {
-                        <span class="client-details-status-dot"></span>
+                        <img src="/images/@Model.ImagePath" alt="@vehicleTitle" />
                     }
-                    @statusLabel
+                    else
+                    {
+                        <div class="client-details-gallery-placeholder">
+                            <i class="bi bi-car-front"></i>
+                        </div>
+                    }
+                    <div class="client-details-gallery-overlay client-details-gallery-overlay-left">
+                        <i class="bi bi-people"></i>
+                        @Model.PassengersCount seats
+                    </div>
+                    <div class="client-details-gallery-overlay client-details-gallery-overlay-right @(isAvailable ? "is-available" : "")">
+                        @if (isAvailable)
+                        {
+                            <span class="client-details-status-dot"></span>
+                        }
+                        @statusLabel
+                    </div>
                 </div>
-            </div>
 
-            <div class="client-details-tabs-wrap">
-            <ul class="nav client-details-tabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-panel" type="button" role="tab">Overview</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-panel" type="button" role="tab">Reviews &amp; Ratings</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="policy-tab" data-bs-toggle="tab" data-bs-target="#policy-panel" type="button" role="tab">Rental Policy</button>
-                </li>
-            </ul>
+                <div class="client-details-tabs-wrap">
+                    <ul class="nav client-details-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-panel" type="button" role="tab">Overview</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-panel" type="button" role="tab">Reviews &amp; Ratings</button>
+                        </li>
+                    </ul>
 
-            <div class="tab-content client-details-tab-content">
-                <div class="tab-pane fade show active" id="overview-panel" role="tabpanel">
-                    <div class="client-details-panel">
-                        <h2>About this Vehicle</h2>
-                        <p>@aboutText</p>
+                    <div class="tab-content client-details-tab-content">
+                        <div class="tab-pane fade show active" id="overview-panel" role="tabpanel">
+                            <div class="client-details-panel">
+                                <h2>About this Vehicle</h2>
+                                <p>@aboutText</p>
 
-                        <h2 class="client-details-subheading">Performance Ratings</h2>
-                        <div class="client-details-rating-bars">
-                            <div class="client-details-rating-row">
-                                <span>Comfort</span>
-                                <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: 100%;"></div></div>
-                                <span class="client-details-rating-score">10.0</span>
+                                <div class="client-details-features">
+                                    <div class="client-details-feature">
+                                        <span class="client-details-feature-icon"><i class="bi bi-snow"></i></span>
+                                        <span>Fully Air Conditioning</span>
+                                    </div>
+                                    <div class="client-details-feature">
+                                        <span class="client-details-feature-icon"><i class="bi bi-geo-alt"></i></span>
+                                        <span>GPS Navigation</span>
+                                    </div>
+                                    <div class="client-details-feature">
+                                        <span class="client-details-feature-icon"><i class="bi bi-person-badge"></i></span>
+                                        <span>Driver-Assisted Only</span>
+                                    </div>
+                                </div>
+
+                                <div class="client-details-rating-bars">
+                                    <div class="client-details-rating-row">
+                                        <span>Professionalism</span>
+                                        <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: @(professionalismTen * 10)%;"></div></div>
+                                        <span class="client-details-rating-score">@professionalismTen.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                    </div>
+                                    <div class="client-details-rating-row">
+                                        <span>Driving</span>
+                                        <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: @(drivingTen * 10)%;"></div></div>
+                                        <span class="client-details-rating-score">@drivingTen.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                    </div>
+                                    <div class="client-details-rating-row">
+                                        <span>Courtesy</span>
+                                        <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: @(courtesyTen * 10)%;"></div></div>
+                                        <span class="client-details-rating-score">@courtesyTen.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                    </div>
+                                </div>
+                                @if (!hasDriverRatings)
+                                {
+                                    <p class="client-details-rating-empty">Driver ratings appear here after completed trips are reviewed.</p>
+                                }
+
+                                <div class="client-details-trust-banner">
+                                    <span class="client-details-trust-icon" aria-hidden="true">
+                                        <i class="bi bi-shield-fill-check"></i>
+                                    </span>
+                                    <div>
+                                        <strong>Why rent with EasyRent?</strong>
+                                        <p>We ensure a smooth and secure booking experience from the start.</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="client-details-rating-row">
-                                <span>Performance</span>
-                                <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: 90%;"></div></div>
-                                <span class="client-details-rating-score">9.0</span>
-                            </div>
-                            <div class="client-details-rating-row">
-                                <span>Safety</span>
-                                <div class="client-details-rating-track"><div class="client-details-rating-fill" style="width: 90%;"></div></div>
-                                <span class="client-details-rating-score">9.0</span>
+                        </div>
+                        <div class="tab-pane fade" id="reviews-panel" role="tabpanel">
+                            <div class="client-details-panel">
+                                @if (reviewCount > 0)
+                                {
+                                    <div class="vehicle-reviews-summary">
+                                        <span class="vehicle-reviews-avg">@averageRating.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                        <div class="vehicle-reviews-summary-stars" aria-hidden="true">
+                                            @for (var i = 1; i <= 5; i++)
+                                            {
+                                                <i class="bi @(i <= filledStars ? "bi-star-fill" : "bi-star")"></i>
+                                            }
+                                        </div>
+                                        <span class="vehicle-reviews-summary-count">Based on @reviewCount verified @(reviewCount == 1 ? "review" : "reviews")</span>
+                                    </div>
+
+                                    <h2 class="vehicle-reviews-heading">Customer Reviews</h2>
+                                    <div class="vehicle-reviews-list">
+                                        @foreach (var review in reviews)
+                                        {
+                                            var reviewerName = review.Customer?.FullName ?? "Customer";
+                                            var reviewScore = (review.VehicleComfort + review.VehiclePerformance + review.VehicleSafety) / 3.0;
+                                            <article class="vehicle-review-card">
+                                                <div class="vehicle-review-head">
+                                                    <span class="vehicle-review-avatar" aria-hidden="true">@GetInitial(reviewerName)</span>
+                                                    <div class="vehicle-review-meta">
+                                                        <span class="vehicle-review-name">@reviewerName</span>
+                                                        <span class="vehicle-review-date">@review.CreatedAt.ToString("MMMM d, yyyy | h:mm tt", CultureInfo.InvariantCulture)</span>
+                                                    </div>
+                                                    <div class="vehicle-review-score" aria-label="@reviewScore.ToString("0.0", CultureInfo.InvariantCulture) out of 5">
+                                                        <i class="bi bi-star-fill" aria-hidden="true"></i>
+                                                        <span>@reviewScore.ToString("0.0", CultureInfo.InvariantCulture)</span>
+                                                    </div>
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                                {
+                                                    <p class="vehicle-review-comment">“@review.Comment”</p>
+                                                }
+                                                else
+                                                {
+                                                    <p class="vehicle-review-comment is-muted">No written comment.</p>
+                                                }
+                                            </article>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="vehicle-reviews-empty">No customer reviews for this vehicle yet. Ratings appear here after completed trips are reviewed.</p>
+                                }
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="reviews-panel" role="tabpanel">
-                    <div class="client-details-panel">
-                        <h2>Reviews &amp; Ratings</h2>
-                        @if (reviewCount > 0)
-                        {
-                            <div class="vehicle-reviews-summary">
-                                <div class="vehicle-reviews-summary-score">
-                                    <span class="vehicle-reviews-avg">@averageRating.ToString("0.0", CultureInfo.InvariantCulture)</span>
-                                    <div class="vehicle-reviews-summary-stars" aria-hidden="true">
-                                        @for (var i = 1; i <= 5; i++)
-                                        {
-                                            <i class="bi @(i <= filledStars ? "bi-star-fill" : "bi-star")"></i>
-                                        }
-                                    </div>
-                                    <span class="vehicle-reviews-summary-count">Based on @reviewCount verified @(reviewCount == 1 ? "review" : "reviews")</span>
-                                </div>
-                            </div>
-
-                            <div class="vehicle-reviews-list">
-                                @foreach (var review in reviews)
-                                {
-                                    var reviewerName = review.Customer?.FullName ?? "Customer";
-                                    <article class="vehicle-review-card">
-                                        <div class="vehicle-review-head">
-                                            <span class="vehicle-review-avatar" aria-hidden="true">@GetInitials(reviewerName)</span>
-                                            <div class="vehicle-review-meta">
-                                                <span class="vehicle-review-name">@reviewerName</span>
-                                                <span class="vehicle-review-date">@review.CreatedAt.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)</span>
-                                            </div>
-                                            <div class="vehicle-review-stars" aria-label="@review.Rating out of 5 stars">
-                                                @for (var i = 1; i <= 5; i++)
-                                                {
-                                                    <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
-                                                }
-                                            </div>
-                                        </div>
-                                        @if (!string.IsNullOrWhiteSpace(review.Comment))
-                                        {
-                                            <p class="vehicle-review-comment">@review.Comment</p>
-                                        }
-                                        else
-                                        {
-                                            <p class="vehicle-review-comment is-muted">No written comment.</p>
-                                        }
-                                    </article>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <p class="vehicle-reviews-empty">No customer reviews for this vehicle yet. Ratings appear here after completed trips are reviewed.</p>
-                        }
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="policy-panel" role="tabpanel">
-                    <div class="client-details-panel">
-                        <h2>Rental Policy</h2>
-                        <p>Free cancellation is available before vehicle pull-out. A ₱2,000 fee applies for cancellations made less than 24 hours before the scheduled pull-out time. Staff approval is required after payment.</p>
-                    </div>
-                </div>
-            </div>
             </div>
         </div>
 
@@ -237,3 +256,24 @@
         </aside>
     </div>
 </div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script src="~/js/vehicle-favorite.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var share = document.getElementById('vehicleShareBtn');
+            if (!share) return;
+            share.addEventListener('click', function () {
+                var payload = { title: document.title, url: window.location.href };
+                if (navigator.share) {
+                    navigator.share(payload).catch(function () {});
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(payload.url);
+                }
+            });
+        })();
+    </script>
+}

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EasyRent_Checking.Models;
@@ -5,28 +6,103 @@ using EasyRent_Checking.ViewModels;
 using EasyRent_Checking.Data;
 using EasyRent_Checking.Services;
 
+[Authorize(Policy = "StaffArea")]
+[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
 public class CustomersController : Controller
 {
 	private readonly EasyRent_CheckingContext _context;
 	private readonly IWebHostEnvironment _webHostEnvironment;
 	private readonly BookingEmailService _bookingEmailService;
+	private readonly SystemLogService _logs;
 
 	public CustomersController(
 		EasyRent_CheckingContext context,
 		IWebHostEnvironment webHostEnvironment,
-		BookingEmailService bookingEmailService)
+		BookingEmailService bookingEmailService,
+		SystemLogService logs)
 	{
 		_context = context;
 		_webHostEnvironment = webHostEnvironment;
 		_bookingEmailService = bookingEmailService;
+		_logs = logs;
 	}
 
 	// GET: CUSTOMERS
-	public async Task<IActionResult> Index()
+	public async Task<IActionResult> Index(string searchString, string sortBy, string currentFilter, int? page)
 	{
-		var customers = await _context.CustomerProfiles
+		const int pageSize = 10;
+		var pageNumber = page.GetValueOrDefault(1);
+		if (pageNumber < 1)
+		{
+			pageNumber = 1;
+		}
+
+		ViewData["CurrentSearch"] = searchString;
+		ViewData["CurrentSort"] = sortBy;
+		ViewData["CurrentFilter"] = currentFilter;
+
+		var customersQuery = _context.CustomerProfiles
 			.Include(c => c.User)
+			.AsQueryable();
+
+		var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+		var totalCustomersCount = await customersQuery.CountAsync();
+		var pendingCustomersCount = await customersQuery.CountAsync(c => c.Status == Status.Pending);
+		var totalAtMonthStart = await customersQuery.CountAsync(c => c.User != null && c.User.CreatedAt < monthStart);
+		var pendingAtMonthStart = await customersQuery.CountAsync(c =>
+			c.Status == Status.Pending && c.User != null && c.User.CreatedAt < monthStart);
+
+		ViewData["TotalCustomersCount"] = totalCustomersCount;
+		ViewData["PendingCustomersCount"] = pendingCustomersCount;
+		ViewData["TotalCustomersChange"] = PctChange(totalCustomersCount, totalAtMonthStart);
+		ViewData["PendingCustomersChange"] = PctChange(pendingCustomersCount, pendingAtMonthStart);
+
+		if (!string.IsNullOrEmpty(searchString))
+		{
+			var term = searchString.Trim();
+			customersQuery = customersQuery.Where(c =>
+				c.FullName.Contains(term)
+				|| c.ContactNumber.Contains(term)
+				|| (c.User != null && c.User.Email.Contains(term)));
+		}
+
+		if (!string.IsNullOrEmpty(currentFilter))
+		{
+			if (currentFilter == "Approved")
+			{
+				customersQuery = customersQuery.Where(c => c.Status == Status.Active);
+			}
+			else if (Enum.TryParse(currentFilter, true, out Status filterStatus))
+			{
+				customersQuery = customersQuery.Where(c => c.Status == filterStatus);
+			}
+		}
+
+		customersQuery = sortBy switch
+		{
+			"Name" => customersQuery.OrderBy(c => c.FullName),
+			"Email" => customersQuery.OrderBy(c => c.User!.Email),
+			"Status" => customersQuery.OrderBy(c => c.Status),
+			_ => customersQuery.OrderByDescending(c => c.CustomerId)
+		};
+
+		var totalCount = await customersQuery.CountAsync();
+		var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
+		if (pageNumber > totalPages)
+		{
+			pageNumber = totalPages;
+		}
+
+		ViewData["PageIndex"] = pageNumber;
+		ViewData["TotalPages"] = totalPages;
+		ViewData["TotalCount"] = totalCount;
+		ViewData["PageSize"] = pageSize;
+
+		var customers = await customersQuery
+			.Skip((pageNumber - 1) * pageSize)
+			.Take(pageSize)
 			.ToListAsync();
+
 		return View(customers);
 	}
 
@@ -63,6 +139,12 @@ public class CustomersController : Controller
 		}
 
 		customer.Status = Status.Active;
+		_logs.Record(
+			SystemLogAction.Approved,
+			SystemLogCategory.Customer,
+			$"Approved customer {customer.FullName}.",
+			"Customer",
+			customer.CustomerId);
 		await _context.SaveChangesAsync();
 
 		var loginUrl = Url.Action("Login", "Account", null, Request.Scheme);
@@ -84,6 +166,12 @@ public class CustomersController : Controller
 		}
 
 		customer.Status = Status.Inactive;
+		_logs.Record(
+			SystemLogAction.Rejected,
+			SystemLogCategory.Customer,
+			$"Rejected customer {customer.FullName}.",
+			"Customer",
+			customer.CustomerId);
 		await _context.SaveChangesAsync();
 		TempData["SuccessMessage"] = "Customer account rejected and set to Inactive.";
 		return RedirectToAction(nameof(Details), new { customerid });
@@ -98,7 +186,7 @@ public class CustomersController : Controller
 	// POST: CUSTOMERS/Create
 	[HttpPost]
 	[ValidateAntiForgeryToken]
-	public async Task<IActionResult> Create([Bind("FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,ValidIDImagePath,ValidIDImageFile,Status")] CustomerAccountInputModel model)
+	public async Task<IActionResult> Create([Bind("FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,FrontValidIDImagePath,BackValidIDImagePath,FrontValidIDImageFile,BackValidIDImageFile,Status")] CustomerAccountInputModel model)
 	{
 		if (string.IsNullOrWhiteSpace(model.Password))
 		{
@@ -119,11 +207,19 @@ public class CustomersController : Controller
 			return View(model);
 		}
 
-		if (model.ValidIDImageFile != null)
+		if (model.FrontValidIDImageFile != null)
 		{
-			model.ValidIDImagePath = await ImageStorage.SaveAsync(
+			model.FrontValidIDImagePath = await ImageStorage.SaveAsync(
 				_webHostEnvironment,
-				model.ValidIDImageFile,
+				model.FrontValidIDImageFile,
+				ImageStorage.CustomersFolder);
+		}
+
+		if (model.BackValidIDImageFile != null)
+		{
+			model.BackValidIDImagePath = await ImageStorage.SaveAsync(
+				_webHostEnvironment,
+				model.BackValidIDImageFile,
 				ImageStorage.CustomersFolder);
 		}
 
@@ -145,13 +241,50 @@ public class CustomersController : Controller
 			FullName = model.FullName.Trim(),
 			ContactNumber = model.ContactNumber.Trim(),
 			ValidIDtype = model.ValidIDtype,
-			ValidIDImagePath = model.ValidIDImagePath,
+			FrontValidIDImagePath = model.FrontValidIDImagePath,
+			BackValidIDImagePath = model.BackValidIDImagePath,
 			Status = model.Status
 		};
 
 		_context.CustomerProfiles.Add(profile);
 		await _context.SaveChangesAsync();
-		return RedirectToAction(nameof(Index));
+		_logs.Record(
+			SystemLogAction.Created,
+			SystemLogCategory.Customer,
+			$"Created customer {profile.FullName}.",
+			"Customer",
+			profile.CustomerId);
+		await _context.SaveChangesAsync();
+		return RedirectToAction(nameof(CreateSuccess), new { customerid = profile.CustomerId });
+	}
+
+	// GET: CUSTOMERS/CreateSuccess/5
+	public async Task<IActionResult> CreateSuccess(int? customerid)
+	{
+		if (customerid == null)
+		{
+			return NotFound();
+		}
+
+		var customer = await _context.CustomerProfiles.FindAsync(customerid);
+		if (customer == null)
+		{
+			return NotFound();
+		}
+
+		var model = new CreateSuccessViewModel
+		{
+			PageTitle = "Add New Customer",
+			ActivePage = "Customers",
+			Heading = "Customer Profile Created",
+			MessageHtml = $"<strong>{customer.FullName}</strong> has been successfully created and added to the system.",
+			PrimaryActionText = "View Customer's Profile",
+			PrimaryActionUrl = Url.Action(nameof(Details), new { customerid = customer.CustomerId }) ?? "",
+			SecondaryActionText = "Add Another Customer",
+			SecondaryActionUrl = Url.Action(nameof(Create)) ?? ""
+		};
+
+		return View("CreateSuccess", model);
 	}
 
 	// GET: CUSTOMERS/Edit/5
@@ -176,7 +309,7 @@ public class CustomersController : Controller
 	// POST: CUSTOMERS/Edit/5
 	[HttpPost]
 	[ValidateAntiForgeryToken]
-	public async Task<IActionResult> Edit(int? customerid, [Bind("CustomerId,FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,ValidIDImagePath,ValidIDImageFile,Status")] CustomerAccountInputModel model)
+	public async Task<IActionResult> Edit(int? customerid, [Bind("CustomerId,FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,FrontValidIDImagePath,BackValidIDImagePath,FrontValidIDImageFile,BackValidIDImageFile,Status")] CustomerAccountInputModel model)
 	{
 		if (customerid != model.CustomerId)
 		{
@@ -215,11 +348,19 @@ public class CustomersController : Controller
 
 		try
 		{
-			if (model.ValidIDImageFile != null)
+			if (model.FrontValidIDImageFile != null)
 			{
-				model.ValidIDImagePath = await ImageStorage.SaveAsync(
+				model.FrontValidIDImagePath = await ImageStorage.SaveAsync(
 					_webHostEnvironment,
-					model.ValidIDImageFile,
+					model.FrontValidIDImageFile,
+					ImageStorage.CustomersFolder);
+			}
+
+			if (model.BackValidIDImageFile != null)
+			{
+				model.BackValidIDImagePath = await ImageStorage.SaveAsync(
+					_webHostEnvironment,
+					model.BackValidIDImageFile,
 					ImageStorage.CustomersFolder);
 			}
 
@@ -227,7 +368,8 @@ public class CustomersController : Controller
 			profile.FullName = model.FullName.Trim();
 			profile.ContactNumber = model.ContactNumber.Trim();
 			profile.ValidIDtype = model.ValidIDtype;
-			profile.ValidIDImagePath = model.ValidIDImagePath;
+			profile.FrontValidIDImagePath = model.FrontValidIDImagePath;
+			profile.BackValidIDImagePath = model.BackValidIDImagePath;
 			profile.Status = model.Status;
 
 			if (!string.IsNullOrWhiteSpace(model.Password))
@@ -235,6 +377,12 @@ public class CustomersController : Controller
 				profile.User.SetPassword(model.Password);
 			}
 
+			_logs.Record(
+				SystemLogAction.Updated,
+				SystemLogCategory.Customer,
+				$"Updated customer {profile.FullName}.",
+				"Customer",
+				profile.CustomerId);
 			await _context.SaveChangesAsync();
 		}
 		catch (DbUpdateConcurrencyException)
@@ -280,6 +428,12 @@ public class CustomersController : Controller
 
 		if (profile?.User != null)
 		{
+			_logs.Record(
+				SystemLogAction.Deleted,
+				SystemLogCategory.Customer,
+				$"Deleted customer {profile.FullName}.",
+				"Customer",
+				profile.CustomerId);
 			// Cascade removes CustomerProfile with User.
 			_context.Users.Remove(profile.User);
 		}
@@ -292,4 +446,7 @@ public class CustomersController : Controller
 	{
 		return _context.CustomerProfiles.Any(e => e.CustomerId == customerid);
 	}
+
+	private static decimal PctChange(decimal current, decimal previous)
+		=> Math.Round((current - previous) * 0.1m, 1);
 }

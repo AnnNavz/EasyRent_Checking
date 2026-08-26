@@ -1,4 +1,4 @@
-﻿@model EasyRent_Checking.Models.Vehicle
+@model EasyRent_Checking.Models.Vehicle
 
 @{
     Layout = "_LayoutAdminDashboard";
@@ -6,19 +6,23 @@
     ViewData["ActivePage"] = "Vehicles";
 }
 
-<div class="wizard-max-wrapper py-3">
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/vehicle-create.css" asp-append-version="true" />
+}
+
+<div class="wizard-max-wrapper vehicle-create-wizard py-3">
     <div class="step-timeline">
         <div class="step-node active" id="node-1">
             <div class="step-circle" id="circle-1">1</div>
-            <div class="step-label">Info</div>
+            <div class="step-label">INFO</div>
         </div>
         <div class="step-node" id="node-2">
             <div class="step-circle" id="circle-2">2</div>
-            <div class="step-label">Review</div>
+            <div class="step-label">REVIEW</div>
         </div>
         <div class="step-node" id="node-3">
             <div class="step-circle" id="circle-3">3</div>
-            <div class="step-label">Complete</div>
+            <div class="step-label">COMPLETE</div>
         </div>
     </div>
 
@@ -27,119 +31,122 @@
 
         <!-- STEP 1: INFO -->
         <div class="wizard-step-panel active" id="stepPanel-1">
-            <div class="text-start mb-4">
-                <h5 class="wizard-page-title fw-bold text-dark mb-1" id="step1-title" style="letter-spacing: -0.3px;">Register New Vehicle</h5>
-                <p class="text-muted small" id="step1-subtitle">Enter the core vehicle details for fleet registration.</p>
+            <div class="text-start mb-2">
+                <h5 class="vehicle-wizard-heading" id="step1-title">Register New Vehicle</h5>
+                <p class="vehicle-wizard-subheading" id="step1-subtitle">Fill in the vehicle details below to add a new vehicle</p>
             </div>
 
-            <div class="form-container-card p-4 mb-4 shadow-sm">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-car-front fs-5 text-secondary"></i>
-                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Information</h6>
+            <div class="vehicle-wizard-card">
+                <div class="vehicle-wizard-section-head">
+                    <span class="vehicle-wizard-section-icon"><i class="bi bi-car-front-fill"></i></span>
+                    <h6 class="vehicle-wizard-section-title">Vehicle Information</h6>
                 </div>
-                <hr class="wizard-section-divider" />
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label asp-for="Brand" class="form-label fw-semibold small text-secondary mb-1">Brand</label>
-                        <input asp-for="Brand" id="input-Brand" class="form-control form-control-thin shadow-sm" placeholder="e.g. Mercedes-Benz" />
+                        <label asp-for="Brand" class="vehicle-wizard-label">Brand</label>
+                        <input asp-for="Brand" id="input-Brand" class="form-control vehicle-wizard-input" placeholder="e.g. Mercedes-Benz" />
                         <span asp-validation-for="Brand" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="Model" class="form-label fw-semibold small text-secondary mb-1">Model</label>
-                        <input asp-for="Model" id="input-Model" class="form-control form-control-thin shadow-sm" placeholder="e.g. Sprinter 2500" />
+                        <label asp-for="Model" class="vehicle-wizard-label">Model</label>
+                        <input asp-for="Model" id="input-Model" class="form-control vehicle-wizard-input" placeholder="e.g. Sprinter 2500" />
                         <span asp-validation-for="Model" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="Color" class="form-label fw-semibold small text-secondary mb-1">Color</label>
-                        <input asp-for="Color" id="input-Color" class="form-control form-control-thin shadow-sm" placeholder="e.g. Blue" />
+                        <label asp-for="Color" class="vehicle-wizard-label">Color</label>
+                        <input asp-for="Color" id="input-Color" class="form-control vehicle-wizard-input" placeholder="e.g. Blue" />
                         <span asp-validation-for="Color" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="Type" class="form-label fw-semibold small text-secondary mb-1">Type</label>
-                        <select asp-for="Type" id="input-Type" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
-                        <span asp-validation-for="Type" class="text-danger small mt-1 d-block"></span>
+                        <partial name="_VehicleTypeField" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="PlateNumber" class="form-label fw-semibold small text-secondary mb-1">Plate Number</label>
-                        <input asp-for="PlateNumber" id="input-PlateNumber" class="form-control form-control-thin shadow-sm text-uppercase font-monospace" placeholder="e.g. GAP 4821" />
+                        <label asp-for="PlateNumber" class="vehicle-wizard-label">Plate Number</label>
+                        <input asp-for="PlateNumber" id="input-PlateNumber" class="form-control vehicle-wizard-input text-uppercase font-monospace" placeholder="e.g. GAP 4821" />
                         <span asp-validation-for="PlateNumber" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="Status" class="form-label fw-semibold small text-secondary mb-1">Status</label>
-                        <select asp-for="Status" id="input-Status" class="form-select form-control-thin shadow-sm" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
+                        <label asp-for="Status" class="vehicle-wizard-label">Status</label>
+                        <select asp-for="Status" id="input-Status" class="form-select vehicle-wizard-input" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
                         <span asp-validation-for="Status" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="RegistrationDate" class="form-label fw-semibold small text-secondary mb-1">Registration Date</label>
-                        <input asp-for="RegistrationDate" id="input-RegistrationDate" type="date" class="form-control form-control-thin shadow-sm" />
+                        <label asp-for="RegistrationDate" class="vehicle-wizard-label">Registration Date</label>
+                        <div class="vehicle-date-input-wrap">
+                            <input asp-for="RegistrationDate" id="input-RegistrationDate" type="date" class="form-control vehicle-wizard-input" />
+                            <i class="bi bi-calendar3 vehicle-date-icon" aria-hidden="true"></i>
+                        </div>
                         <span asp-validation-for="RegistrationDate" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="RegistrationExpiry" class="form-label fw-semibold small text-secondary mb-1">Registration Expiry Date</label>
-                        <input asp-for="RegistrationExpiry" id="input-RegistrationExpiry" type="date" class="form-control form-control-thin shadow-sm" />
+                        <label asp-for="RegistrationExpiry" class="vehicle-wizard-label">Registration Expiry Date</label>
+                        <div class="vehicle-date-input-wrap">
+                            <input asp-for="RegistrationExpiry" id="input-RegistrationExpiry" type="date" class="form-control vehicle-wizard-input" />
+                            <i class="bi bi-calendar3 vehicle-date-icon" aria-hidden="true"></i>
+                        </div>
                         <span asp-validation-for="RegistrationExpiry" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="BasePrice" class="form-label fw-semibold small text-secondary mb-1">Base Price</label>
-                        <div class="input-group shadow-sm">
-                            <span class="input-group-text form-control-thin">₱</span>
-                            <input asp-for="BasePrice" id="input-BasePrice" class="form-control form-control-thin" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
+                        <label asp-for="Odometer" class="vehicle-wizard-label">Odometer (km)</label>
+                        <div class="input-group vehicle-input-suffix">
+                            <input asp-for="Odometer" id="input-Odometer" class="form-control vehicle-wizard-input" type="number" min="0" step="1" />
+                            <span class="input-group-text">km</span>
+                        </div>
+                        <span asp-validation-for="Odometer" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PassengersCount" class="vehicle-wizard-label">Passengers Count</label>
+                        <input asp-for="PassengersCount" id="input-PassengersCount" class="form-control vehicle-wizard-input" type="number" min="1" max="50" placeholder="e.g. 6" />
+                        <span asp-validation-for="PassengersCount" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="BasePrice" class="vehicle-wizard-label">Base Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            <input asp-for="BasePrice" id="input-BasePrice" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
                         </div>
                         <span asp-validation-for="BasePrice" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="SucceedingFee" class="form-label fw-semibold small text-secondary mb-1">Succeeding Fee</label>
-                        <div class="input-group shadow-sm">
-                            <span class="input-group-text form-control-thin">₱</span>
-                            <input asp-for="SucceedingFee" id="input-SucceedingFee" class="form-control form-control-thin" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
+                        <label asp-for="SucceedingFee" class="vehicle-wizard-label">Succeeding Fee</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            <input asp-for="SucceedingFee" id="input-SucceedingFee" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
                         </div>
                         <span class="small text-muted mt-1 d-block">Per hour after the first 8 hours</span>
                         <span asp-validation-for="SucceedingFee" class="text-danger small mt-1 d-block"></span>
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="PassengersCount" class="form-label fw-semibold small text-secondary mb-1">Passengers Count</label>
-                        <input asp-for="PassengersCount" id="input-PassengersCount" class="form-control form-control-thin shadow-sm" type="number" min="1" max="50" placeholder="e.g. 6" />
-                        <span asp-validation-for="PassengersCount" class="text-danger small mt-1 d-block"></span>
-                    </div>
                     <div class="col-12">
-                        <label asp-for="Description" class="form-label fw-semibold small text-secondary mb-1">Description</label>
-                        <textarea asp-for="Description" id="input-Description" class="form-control form-control-thin shadow-sm" rows="4" placeholder="Describe the vehicle features, condition, or rental notes"></textarea>
+                        <label asp-for="Description" class="vehicle-wizard-label">Description</label>
+                        <textarea asp-for="Description" id="input-Description" class="form-control vehicle-wizard-input" rows="4" placeholder="Describe the vehicle features, condition, or rental notes"></textarea>
                         <span asp-validation-for="Description" class="text-danger small mt-1 d-block"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="form-container-card p-4 mb-4 shadow-sm">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-file-earmark-text fs-5 text-secondary"></i>
-                    <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Image</h6>
+            <div class="vehicle-wizard-card">
+                <div class="vehicle-wizard-section-head">
+                    <span class="vehicle-wizard-section-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                    <h6 class="vehicle-wizard-section-title">Vehicle Image Upload</h6>
                 </div>
-                <hr class="wizard-section-divider" />
 
                 <div id="vehicle-image-upload-zone" class="license-upload-zone">
                     <div>
-                        <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-2"></i>
-                        <span class="d-block small fw-bold text-dark mb-1">Drag & drop image scan or <span class="text-decoration-underline">click to browse</span></span>
-                        <span class="d-block text-muted text-uppercase" style="font-size: 0.75rem;">PNG, JPG, or PDF (MAX 5MB)</span>
+                        <i class="bi bi-cloud-arrow-up fs-3 d-block mb-2"></i>
+                        <span class="d-block upload-main-text mb-1">Drag &amp; drop or click to upload</span>
+                        <span class="d-block upload-sub-text">PNG, JPG, or JPEG (max 5MB)</span>
                     </div>
-                    <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg,.pdf" onchange="updateFileFeedback(this)" />
+                    <input asp-for="ImageFile" id="input-File" type="file" class="license-file-input" accept=".png,.jpg,.jpeg" onchange="updateFileFeedback(this)" />
                 </div>
 
                 <div id="vehicle-image-preview-state" class="d-none">
-                    <div class="edit-license-preview-wrap">
-                        <div class="license-preview-box" id="vehicle-image-preview-box" title="Click to replace image">
-                            <img id="vehicle-preview-img" class="d-none" alt="Vehicle image preview" />
-                            <div id="vehicle-preview-placeholder" class="license-preview-placeholder"></div>
-                        </div>
-                        <button type="button" id="vehicle-image-edit-remove" class="edit-license-remove-btn d-none" onclick="clearFileSelection()" aria-label="Remove vehicle image">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                        <span id="vehicle-image-edit-filename" class="d-none small text-muted font-monospace text-center d-block mt-2"></span>
+                    <div class="vehicle-image-preview-box" id="vehicle-image-preview-box" title="Click to replace image">
+                        <img id="vehicle-preview-img" alt="Vehicle image preview" />
                     </div>
-                    <div id="vehicle-image-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between p-3 mt-2">
+                    <div id="vehicle-image-filename-bar" class="upload-preview-bar d-flex align-items-center justify-content-between">
                         <span id="feedback-filename" class="small fw-semibold text-muted font-monospace" style="font-size:0.8rem;">vehicle_image.png</span>
-                        <button type="button" class="btn btn-link text-dark small text-decoration-none p-0 border-0 fw-bold" style="font-size:0.8rem;" onclick="clearFileSelection()">Remove</button>
+                        <button type="button" class="vehicle-image-remove-btn" onclick="clearFileSelection()">Remove</button>
                     </div>
                 </div>
             </div>
@@ -147,117 +154,125 @@
 
         <!-- STEP 2: REVIEW -->
         <div class="wizard-step-panel" id="stepPanel-2">
-            <div class="text-start mb-4">
-                <h5 class="wizard-page-title fw-bold text-dark mb-1" style="letter-spacing: -0.3px;">Reviews & Verify</h5>
-                <p class="text-muted small">Please confirm the vehicle details before saving to the database.</p>
+            <div class="text-start mb-2">
+                <h5 class="vehicle-wizard-heading">Reviews &amp; Verify</h5>
+                <p class="vehicle-wizard-subheading">Please confirm the vehicle details before saving to the database.</p>
             </div>
 
-            <div class="form-container-card p-4 mb-4 shadow-sm text-dark">
-                <div class="mb-4">
-                    <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
-                        <i class="bi bi-car-front fs-5"></i>
-                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Vehicle Information</h6>
+            <div class="vehicle-wizard-card">
+                <div class="vehicle-review-card-head">
+                    <div class="vehicle-wizard-section-head mb-0">
+                        <span class="vehicle-wizard-section-icon"><i class="bi bi-car-front-fill"></i></span>
+                        <h6 class="vehicle-wizard-section-title">Vehicle Information</h6>
                     </div>
-                    <hr class="wizard-section-divider" />
-                    <div class="row g-3 px-1" style="font-size: 0.9rem;">
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Brand</span>
-                            <span id="review-Brand" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Model</span>
-                            <span id="review-Model" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Color</span>
-                            <span id="review-Color" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Type</span>
-                            <span id="review-Type" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Plate Number</span>
-                            <span id="review-PlateNumber" class="fw-bold text-dark font-monospace text-uppercase">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Status</span>
-                            <span id="review-Status" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Registration Date</span>
-                            <span id="review-RegistrationDate" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Registration Expiry Date</span>
-                            <span id="review-RegistrationExpiry" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Base Price</span>
-                            <span id="review-BasePrice" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Succeeding Fee</span>
-                            <span id="review-SucceedingFee" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-md-6">
-                            <span class="text-muted d-block small mb-0.5">Passengers Count</span>
-                            <span id="review-PassengersCount" class="fw-bold text-dark">-</span>
-                        </div>
-                        <div class="col-12">
-                            <span class="text-muted d-block small mb-0.5">Description</span>
-                            <span id="review-Description" class="fw-bold text-dark">-</span>
-                        </div>
+                    <button type="button" class="vehicle-review-edit-btn" onclick="openEditMode()">
+                        Edit <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+
+                <div class="vehicle-review-grid mb-4">
+                    <div>
+                        <span class="vehicle-review-field-label">Brand</span>
+                        <span id="review-Brand" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Model</span>
+                        <span id="review-Model" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Color</span>
+                        <span id="review-Color" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Type</span>
+                        <span id="review-Type" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Plate Number</span>
+                        <span id="review-PlateNumber" class="vehicle-review-field-value font-monospace text-uppercase">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Status</span>
+                        <span id="review-Status" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Registration Date</span>
+                        <span class="vehicle-review-field-value vehicle-review-date">
+                            <i class="bi bi-calendar3" aria-hidden="true"></i>
+                            <span id="review-RegistrationDate">-</span>
+                        </span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Registration Expiry Date</span>
+                        <span class="vehicle-review-field-value vehicle-review-date">
+                            <i class="bi bi-calendar3" aria-hidden="true"></i>
+                            <span id="review-RegistrationExpiry">-</span>
+                        </span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Odometer</span>
+                        <span id="review-Odometer" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Passengers Count</span>
+                        <span id="review-PassengersCount" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Base Price</span>
+                        <span id="review-BasePrice" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div>
+                        <span class="vehicle-review-field-label">Succeeding Fee</span>
+                        <span id="review-SucceedingFee" class="vehicle-review-field-value">-</span>
+                    </div>
+                    <div class="vehicle-review-grid-full">
+                        <span class="vehicle-review-field-label">Description</span>
+                        <span id="review-Description" class="vehicle-review-field-value">-</span>
                     </div>
                 </div>
 
-                <div>
-                    <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
-                        <i class="bi bi-file-earmark-arrow-up fs-5"></i>
-                        <h6 class="wizard-section-title fw-bold mb-0 text-dark" style="font-size:0.95rem;">Uploaded image</h6>
-                    </div>
-                    <hr class="wizard-section-divider" />
-                    <div class="review-doc-card" style="max-width: 320px;">
-                        <div class="review-doc-preview">
-                            <img id="review-VehicleImg" class="d-none" alt="Vehicle image" />
-                            <div id="review-VehiclePlaceholder" class="license-preview-placeholder"></div>
-                        </div>
-                        <span id="review-Filename" class="review-doc-filename">No image chosen</span>
+                <div class="vehicle-wizard-section-head">
+                    <span class="vehicle-wizard-section-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                    <h6 class="vehicle-wizard-section-title">Vehicle Image</h6>
+                </div>
+                <div class="vehicle-review-image-wrap">
+                    <img id="review-VehicleImg" class="d-none" alt="Vehicle image" />
+                    <div id="review-VehiclePlaceholder" class="vehicle-review-image-empty">
+                        <i class="bi bi-image fs-2"></i>
+                        <span id="review-Filename">No image chosen</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- STEP 3: COMPLETE -->
+        <!-- STEP 3: COMPLETE (fallback; successful save redirects to CreateSuccess) -->
         <div class="wizard-step-panel" id="stepPanel-3">
-            <div class="text-center py-5">
+            <div class="vehicle-success-panel">
                 <div class="mb-4">
-                    <div class="success-circle mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background-color: #d4edda; border-radius: 50%;">
-                        <i class="bi bi-check-lg text-success fs-2"></i>
-                    </div>
+                    <partial name="_SuccessCheckIcon" />
                 </div>
-                <h5 class="wizard-page-title fw-bold text-dark mb-2" style="letter-spacing: -0.3px;">Vehicle Registered Successfully!</h5>
-                <p class="text-muted small mb-4">The vehicle has been added to the fleet inventory.</p>
-                <div class="d-flex justify-content-center gap-2">
-                    <a href="@Url.Action("Index")" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;">Back to Vehicles List</a>
-                    <a href="@Url.Action("Create")" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;">Add Another Vehicle</a>
+                <h5 class="vehicle-wizard-heading mb-2">New Registered Vehicle</h5>
+                <p class="vehicle-wizard-subheading mb-4">The vehicle has been added to the fleet inventory.</p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <a href="@Url.Action("Index")" class="btn vehicle-wizard-btn-next">View Vehicles <i class="bi bi-arrow-right ms-1"></i></a>
+                    <a href="@Url.Action("Create")" class="btn vehicle-wizard-btn-back"><i class="bi bi-plus-lg me-1"></i> Add Another Vehicle</a>
                 </div>
             </div>
         </div>
 
-        <div class="d-flex justify-content-end gap-2 align-items-center">
-            <button type="button" class="btn btn-light border px-4 py-2 fw-semibold text-secondary rounded-3" style="font-size: 0.9rem;" id="btnWizardCancel" onclick="handleCancelClick()">Cancel</button>
-            <button type="button" class="btn btn-dark px-4 py-2 fw-bold rounded-3 shadow-sm" style="font-size: 0.9rem; background-color: #000; border-color: #000;" id="btnWizardNext" onclick="navigateStep(1)">Continue</button>
+        <div class="vehicle-wizard-actions">
+            <button type="button" class="btn vehicle-wizard-btn-back" id="btnWizardCancel" onclick="handleCancelClick()">Cancel</button>
+            <button type="button" class="btn vehicle-wizard-btn-next" id="btnWizardNext" onclick="navigateStep(1)">Continue</button>
         </div>
     </form>
 </div>
 
+<script src="~/js/vehicle-type-field.js" asp-append-version="true"></script>
 <script>
-    let currentStep = 1;
     let isEditMode = false;
     const totalSteps = 3;
 
-    const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Status', 'RegistrationDate', 'RegistrationExpiry', 'BasePrice', 'SucceedingFee', 'PassengersCount'];
+    const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Odometer', 'Status', 'RegistrationDate', 'RegistrationExpiry', 'BasePrice', 'SucceedingFee', 'PassengersCount'];
 
     function setExpiryOneYearAfterRegistration() {
         const regDateInput = document.getElementById('input-RegistrationDate');
@@ -277,6 +292,7 @@
     }
 
     function validateStep1() {
+        if (typeof syncVehicleType === 'function') syncVehicleType();
         const form = document.getElementById('vehicleWizardForm');
         let valid = true;
         let firstInvalid = null;
@@ -317,6 +333,7 @@
         }
 
         if (direction === 1 && currentStep === 2) {
+            if (typeof syncVehicleType === 'function') syncVehicleType();
             document.getElementById('vehicleWizardForm').submit();
             return;
         }
@@ -351,7 +368,6 @@
         currentStep = targetStep;
         isEditMode = false;
         resetStep1Header();
-        setImagePreviewMode(false);
         document.getElementById(`stepPanel-${currentStep}`).classList.add('active');
 
         for (let i = 1; i <= totalSteps; i++) {
@@ -364,6 +380,17 @@
         }
 
         updateWizardButtons();
+        updateStepCircles();
+    }
+
+    function updateStepCircles() {
+        for (let i = 1; i <= totalSteps; i++) {
+            const circle = document.getElementById(`circle-${i}`);
+            const node = document.getElementById(`node-${i}`);
+            if (!circle || !node) continue;
+
+            circle.textContent = String(i);
+        }
     }
 
     function openEditMode() {
@@ -372,8 +399,6 @@
         document.getElementById('stepPanel-1').classList.add('active');
         document.getElementById('step1-title').innerText = 'Edit Details';
         document.getElementById('step1-subtitle').innerText = 'Update the vehicle information before confirming.';
-        setImagePreviewMode(true);
-        refreshImageStateForEdit();
         setTopbarTitle('Edit Details');
         updateWizardButtons();
     }
@@ -383,7 +408,6 @@
         document.getElementById('stepPanel-1').classList.remove('active');
         document.getElementById('stepPanel-2').classList.add('active');
         resetStep1Header();
-        setImagePreviewMode(false);
         setTopbarTitle('Add New Vehicle');
         if (refreshReview) compileReviewSummary();
         updateWizardButtons();
@@ -391,7 +415,7 @@
 
     function resetStep1Header() {
         document.getElementById('step1-title').innerText = 'Register New Vehicle';
-        document.getElementById('step1-subtitle').innerText = 'Enter the core vehicle details for fleet registration.';
+        document.getElementById('step1-subtitle').innerText = 'Fill in the vehicle details below to add a new vehicle';
     }
 
     function setTopbarTitle(title) {
@@ -399,51 +423,12 @@
         if (breadcrumbCurrent) breadcrumbCurrent.innerText = title;
     }
 
-    function setImagePreviewMode(isEdit) {
-        const removeBtn = document.getElementById('vehicle-image-edit-remove');
-        const filenameBar = document.getElementById('vehicle-image-filename-bar');
-        const editFilename = document.getElementById('vehicle-image-edit-filename');
-        const previewBox = document.getElementById('vehicle-image-preview-box');
-
-        if (isEdit) {
-            removeBtn.classList.remove('d-none');
-            filenameBar.classList.add('d-none');
-            editFilename.classList.remove('d-none');
-            previewBox.classList.add('edit-clickable');
-            editFilename.innerText = document.getElementById('feedback-filename').innerText;
-        } else {
-            removeBtn.classList.add('d-none');
-            filenameBar.classList.remove('d-none');
-            editFilename.classList.add('d-none');
-            previewBox.classList.remove('edit-clickable');
-        }
-    }
-
-    function refreshImageStateForEdit() {
-        const fileInput = document.getElementById('input-File');
-        const uploadZone = document.getElementById('vehicle-image-upload-zone');
-        const previewState = document.getElementById('vehicle-image-preview-state');
-        const previewImg = document.getElementById('vehicle-preview-img');
-
-        const hasFile = fileInput.files && fileInput.files.length > 0;
-        const hasPreview = previewImg.src && !previewImg.classList.contains('d-none');
-
-        if (hasFile || hasPreview) {
-            uploadZone.classList.add('d-none');
-            previewState.classList.remove('d-none');
-            if (hasFile && !hasPreview) updateFileFeedback(fileInput);
-        } else {
-            uploadZone.classList.remove('d-none');
-            previewState.classList.add('d-none');
-        }
-    }
-
     function updateWizardButtons() {
         const cancelBtn = document.getElementById('btnWizardCancel');
         const nextBtn = document.getElementById('btnWizardNext');
 
         if (isEditMode) {
-            cancelBtn.innerText = 'Edit Details';
+            cancelBtn.innerText = 'Cancel';
             cancelBtn.classList.remove('d-none');
             nextBtn.innerText = 'Continue';
             nextBtn.classList.remove('d-none');
@@ -480,8 +465,6 @@
         const previewState = document.getElementById('vehicle-image-preview-state');
         const nameSpan = document.getElementById('feedback-filename');
         const previewImg = document.getElementById('vehicle-preview-img');
-        const previewPlaceholder = document.getElementById('vehicle-preview-placeholder');
-        const editFilename = document.getElementById('vehicle-image-edit-filename');
 
         if (input.files && input.files.length > 0) {
             const file = input.files[0];
@@ -494,16 +477,12 @@
                 reader.onload = function (e) {
                     previewImg.src = e.target.result;
                     previewImg.classList.remove('d-none');
-                    previewPlaceholder.classList.add('d-none');
                 };
                 reader.readAsDataURL(file);
             } else {
-                previewImg.classList.add('d-none');
                 previewImg.src = '';
-                previewPlaceholder.classList.remove('d-none');
+                previewImg.classList.add('d-none');
             }
-
-            if (isEditMode && editFilename) editFilename.innerText = file.name;
         }
     }
 
@@ -512,16 +491,12 @@
         const uploadZone = document.getElementById('vehicle-image-upload-zone');
         const previewState = document.getElementById('vehicle-image-preview-state');
         const previewImg = document.getElementById('vehicle-preview-img');
-        const previewPlaceholder = document.getElementById('vehicle-preview-placeholder');
-        const editFilename = document.getElementById('vehicle-image-edit-filename');
 
         fileInput.value = '';
         uploadZone.classList.remove('d-none');
         previewState.classList.add('d-none');
         previewImg.src = '';
         previewImg.classList.add('d-none');
-        previewPlaceholder.classList.remove('d-none');
-        if (editFilename) editFilename.innerText = '';
     }
 
     function formatReviewDate(value) {
@@ -537,11 +512,16 @@
         document.getElementById('review-Color').innerText = document.getElementById('input-Color').value.trim() || 'N/A';
 
         const typeEl = document.getElementById('input-Type');
-        document.getElementById('review-Type').innerText = typeEl.options[typeEl.selectedIndex]?.text || 'N/A';
+        document.getElementById('review-Type').innerText = typeof selectedVehicleTypeLabel === 'function'
+            ? selectedVehicleTypeLabel()
+            : (typeEl?.value || 'N/A');
         document.getElementById('review-PlateNumber').innerText = document.getElementById('input-PlateNumber').value.trim() || 'N/A';
+        const odometerValue = document.getElementById('input-Odometer').value.trim();
+        document.getElementById('review-Odometer').innerText = odometerValue ? `${Number(odometerValue).toLocaleString('en-PH')} km` : '0 km';
 
         const statusEl = document.getElementById('input-Status');
-        document.getElementById('review-Status').innerText = statusEl.options[statusEl.selectedIndex]?.text || 'N/A';
+        const statusText = statusEl.options[statusEl.selectedIndex]?.text || 'N/A';
+        document.getElementById('review-Status').innerText = statusText === 'Available' ? 'Active' : statusText;
         document.getElementById('review-RegistrationDate').innerText = formatReviewDate(document.getElementById('input-RegistrationDate').value);
         document.getElementById('review-RegistrationExpiry').innerText = formatReviewDate(document.getElementById('input-RegistrationExpiry').value);
         document.getElementById('review-BasePrice').innerText = document.getElementById('input-BasePrice').value
@@ -563,22 +543,16 @@
             reviewImg.src = stepPreviewImg.src;
             reviewImg.classList.remove('d-none');
             reviewPlaceholder.classList.add('d-none');
-            reviewFilename.innerText = fileInput.files?.length > 0 ? fileInput.files[0].name : 'vehicle_image.png';
-        } else if (fileInput.files && fileInput.files.length > 0) {
+        } else if (fileInput.files && fileInput.files.length > 0 && fileInput.files[0].type.startsWith('image/')) {
             const file = fileInput.files[0];
             reviewFilename.innerText = file.name;
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    reviewImg.src = e.target.result;
-                    reviewImg.classList.remove('d-none');
-                    reviewPlaceholder.classList.add('d-none');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                reviewImg.classList.add('d-none');
-                reviewPlaceholder.classList.remove('d-none');
-            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                reviewImg.src = e.target.result;
+                reviewImg.classList.remove('d-none');
+                reviewPlaceholder.classList.add('d-none');
+            };
+            reader.readAsDataURL(file);
         } else {
             reviewFilename.innerText = 'No image chosen';
             reviewImg.classList.add('d-none');
@@ -596,7 +570,7 @@
             zone.addEventListener(eventName, function (event) {
                 event.preventDefault();
                 event.stopPropagation();
-                zone.style.backgroundColor = '#e9e9e9';
+                zone.style.backgroundColor = '#eef2ff';
             });
         });
 
@@ -622,10 +596,11 @@
     document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('input-RegistrationDate').addEventListener('change', setExpiryOneYearAfterRegistration);
         document.getElementById('input-RegistrationDate').addEventListener('input', setExpiryOneYearAfterRegistration);
-        document.getElementById('vehicle-image-preview-box').addEventListener('click', function () {
-            if (isEditMode) document.getElementById('input-File').click();
-        });
         setupImageDragDrop();
+        updateStepCircles();
+        document.getElementById('vehicle-image-preview-box').addEventListener('click', function () {
+            document.getElementById('input-File').click();
+        });
     });
 </script>
 

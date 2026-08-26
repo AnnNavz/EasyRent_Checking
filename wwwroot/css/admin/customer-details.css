@@ -1,0 +1,110 @@
+/* Customer details — matches the admin details mockup on top of rentals.css */
+
+.customer-details-page .customer-details-personal {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.35rem;
+}
+
+.customer-details-page .customer-details-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: #1E296A;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 2.1rem;
+}
+
+.customer-details-page .customer-details-personal-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.75rem;
+}
+
+.customer-details-page .customer-details-personal-grid .reservation-view-label {
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.customer-details-page .reservation-view-side-title {
+    display: flex;
+    align-items: center;
+}
+
+.customer-details-page .customer-activity-timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 0 0 1.25rem 0.35rem;
+    padding-left: 1rem;
+}
+
+.customer-details-page .customer-activity-timeline::before {
+    content: "";
+    position: absolute;
+    left: 0.28rem;
+    top: 0.35rem;
+    bottom: 0.35rem;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.customer-details-page .customer-activity-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.customer-details-page .customer-activity-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #1E296A;
+    flex-shrink: 0;
+    margin-top: 0.35rem;
+    margin-left: -1.07rem;
+    box-shadow: 0 0 0 3px #fff;
+}
+
+.customer-details-page .customer-activity-dot.is-approved {
+    background: #32b935;
+}
+
+.customer-details-page .customer-activity-dot.is-rejected {
+    background: #c21f00;
+}
+
+.customer-details-page .customer-activity-item strong {
+    display: block;
+    color: #1A2B4C;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.customer-details-page .customer-activity-item span {
+    display: block;
+    color: #6b7280;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+@media (max-width: 767.98px) {
+    .customer-details-page .customer-details-personal {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .customer-details-page .customer-details-personal-grid {
+        grid-template-columns: 1fr;
+        width: 100%;
+        text-align: left;
+    }
+}
