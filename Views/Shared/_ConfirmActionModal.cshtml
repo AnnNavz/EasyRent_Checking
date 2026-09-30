@@ -75,6 +75,8 @@
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
         }
 
+        window.openAdminConfirmForForm = openConfirmForForm;
+
         submitBtn.addEventListener('click', function () {
             if (!pendingForm) return;
             var form = pendingForm;

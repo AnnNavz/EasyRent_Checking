@@ -12,6 +12,8 @@
         RentalStatus.Approved => "Approved",
         RentalStatus.Cancelled => "Cancelled",
         RentalStatus.Expired => "Expired",
+        RentalStatus.Refunded => "Refunded",
+        RentalStatus.RefundRejected => "Cancelled",
         _ => "Pending"
     };
 
@@ -20,6 +22,8 @@
         RentalStatus.Approved => "is-approved",
         RentalStatus.Cancelled => "is-cancelled",
         RentalStatus.Expired => "is-expired",
+        RentalStatus.Refunded => "is-refunded",
+        RentalStatus.RefundRejected => "is-cancelled",
         _ => "is-pending"
     };
 
@@ -85,28 +89,68 @@
             {
                 @foreach (var item in Model.Items)
                 {
-                    <article class="my-booking-row">
-                        <div class="my-booking-thumb" aria-hidden="true">
-                            @if (!string.IsNullOrEmpty(item.VehicleImagePath))
-                            {
-                                <img src="~/images/@item.VehicleImagePath" alt="@item.VehicleTitle" />
-                            }
-                        </div>
+                    <article class="my-booking-row@(item.Vehicles.Count > 1 ? " has-multi-vehicles" : "")">
+                        @if (item.Vehicles.Count > 1)
+                        {
+                            <div class="my-booking-thumbs is-multi" aria-hidden="true">
+                                @foreach (var bookingVehicle in item.Vehicles.Take(3))
+                                {
+                                    <div class="my-booking-thumb-tile">
+                                        @if (!string.IsNullOrEmpty(bookingVehicle.ImagePath))
+                                        {
+                                            <img src="~/images/@bookingVehicle.ImagePath" alt="@bookingVehicle.Brand @bookingVehicle.Model" />
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-car-front-fill" aria-hidden="true"></i>
+                                        }
+                                    </div>
+                                }
+                                @if (item.Vehicles.Count > 3)
+                                {
+                                    <div class="my-booking-thumb-tile is-more">
+                                        <span>+@(item.Vehicles.Count - 3)</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="my-booking-thumb" aria-hidden="true">
+                                @if (!string.IsNullOrEmpty(item.VehicleImagePath))
+                                {
+                                    <img src="~/images/@item.VehicleImagePath" alt="@item.VehicleTitle" />
+                                }
+                            </div>
+                        }
 
                         <div class="my-booking-main">
                             <span class="my-booking-status @StatusClass(item.RentalStatus)">@StatusLabel(item.RentalStatus)</span>
-                            <h2 class="my-booking-vehicle">@item.VehicleTitle</h2>
-                            <p class="my-booking-spec">
-                                @if (item.VehicleTitle.EndsWith("vehicles", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    @item.VehicleTypeLabel
-                                    <text> • up to @item.PassengersCount seater</text>
-                                }
-                                else
-                                {
+                            @if (!string.IsNullOrWhiteSpace(item.ProgressLabel)
+                                && item.ProgressLabel != StatusLabel(item.RentalStatus))
+                            {
+                                <span class="my-booking-progress is-@item.ProgressTone">@item.ProgressLabel</span>
+                            }
+                            @if (item.Vehicles.Count > 1)
+                            {
+                                <h2 class="my-booking-vehicle">@item.Vehicles.Count vehicles</h2>
+                                <ul class="my-booking-vehicle-list">
+                                    @foreach (var bookingVehicle in item.Vehicles)
+                                    {
+                                        <li>
+                                            <strong>@bookingVehicle.Brand @bookingVehicle.Model</strong>
+                                            <span>@bookingVehicle.TypeLabel • @bookingVehicle.PassengersCount seater</span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <h2 class="my-booking-vehicle">@item.VehicleTitle</h2>
+                                <p class="my-booking-spec">
                                     @item.VehicleTypeLabel <text>• @item.PassengersCount seater</text>
-                                }
-                            </p>
+                                </p>
+                            }
                         </div>
 
                         <div class="my-booking-meta my-booking-schedule">
@@ -137,9 +181,22 @@
                             @if (!string.IsNullOrWhiteSpace(item.DriverName))
                             {
                                 <span class="my-booking-driver-pill">
-                                    <span class="my-booking-driver-avatar" aria-hidden="true">@(item.DriverInitials ?? "D")</span>
+                                    <span class="my-booking-driver-avatar" aria-hidden="true">
+                                        @if (!string.IsNullOrEmpty(item.DriverImagePath))
+                                        {
+                                            <img src="~/images/@item.DriverImagePath" alt="@item.DriverName" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
+                                        }
+                                        else
+                                        {
+                                            @(item.DriverInitials ?? "D")
+                                        }
+                                    </span>
                                     @item.DriverName
                                 </span>
+                            }
+                            else if (item.ProgressLabel == "Preparing vehicle & driver")
+                            {
+                                <span class="my-booking-meta-value my-booking-driver-prep">Preparing assignment</span>
                             }
                             else
                             {

@@ -85,6 +85,21 @@ a.booking-customer-avatar:hover {
     color: #667085;
 }
 
+.booking-status-refunded {
+    background: #e8f4fd;
+    color: #175cd3;
+}
+
+.booking-status-refundable {
+    background: #fef7e6;
+    color: #b54708;
+}
+
+.booking-status-refund-rejected {
+    background: #fdeceb;
+    color: #912018;
+}
+
 .trip-status-scheduled,
 .trip-status-in-transit,
 .trip-status-completed {
@@ -180,7 +195,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #e8ecf3;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
     padding: 1.25rem 1.3rem 1.35rem;
     margin-bottom: 1.15rem;
 }
@@ -1171,7 +1186,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #e8ecf3;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
     padding: 0.85rem 1rem;
 }
 
@@ -1224,7 +1239,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: none;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.15);
     padding: 1.15rem 1.2rem 1.2rem;
 }
 
@@ -1310,7 +1325,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #e8ecf3;
     border-radius: 16px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.15);
     padding: 1rem 1.05rem 1.05rem;
 }
 
@@ -1360,10 +1375,10 @@ a.booking-customer-avatar:hover {
 
 .payment-reminders-sidebar-card,
 .admin-booking-create .payment-reminders-sidebar-card {
-    background: #eef2ff;
+    background: #dce6f5;
     border: none;
     border-radius: 16px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
     padding: 1rem 1.05rem 1.05rem;
 }
 
@@ -1420,7 +1435,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #e8ecf3;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
     padding: 1.25rem 1.3rem 1.35rem;
     margin-bottom: 1.15rem;
 }
@@ -1531,7 +1546,7 @@ a.booking-customer-avatar:hover {
     border: 1px solid #e8ecf3;
     border-radius: 16px;
     padding: 1rem 1rem 1.15rem;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.15);
     position: relative;
     z-index: 0;
 }
@@ -2029,7 +2044,7 @@ a.booking-customer-avatar:hover {
 .admin-booking-create .booking-summary-card {
     background: #ffffff !important;
     border: 1px solid #e4e7ec;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
 }
 
 .admin-booking-create .step-node {
@@ -2109,7 +2124,7 @@ a.booking-customer-avatar:hover {
 .admin-booking-create .payment-step2-card {
     background: #ffffff;
     border: 1px solid #e8ecf3;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
 }
 
 .admin-booking-create .payment-step2-heading i {
@@ -2174,7 +2189,7 @@ a.booking-customer-avatar:hover {
 .admin-booking-create .admin-rental-summary-card {
     background: #ffffff;
     border: 1px solid #e8ecf3;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.15);
 }
 
 .admin-booking-create .admin-rental-summary-image {
@@ -2241,13 +2256,13 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #e8ecf3;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
 }
 
 .admin-booking-create .payment-method-panel {
     background: #ffffff;
     border: 1px solid #e4e7ec;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.11);
 }
 
 .admin-booking-create .payment-method-info-row,
@@ -2289,6 +2304,22 @@ a.booking-customer-avatar:hover {
     }
 }
 
+.admin-booking-create .payment-upload-preview .license-preview-box {
+    height: auto;
+    min-height: 120px;
+    overflow: visible;
+}
+
+.admin-booking-create .payment-upload-preview .license-preview-box img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: 220px;
+    object-fit: contain;
+}
+
 .admin-booking-create .license-preview-box {
     background: #f3f4f6;
     border: 1px solid #e5e7eb;
@@ -2325,7 +2356,7 @@ a.booking-customer-avatar:hover {
     border-radius: 16px;
     padding: 1.25rem 1.5rem;
     min-height: 110px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
 }
 
 .inquiries-index-page .inquiry-metric-icon {
@@ -2344,6 +2375,16 @@ a.booking-customer-avatar:hover {
 .inquiries-index-page .inquiry-metric-icon.is-gold {
     background: #F5B301;
     color: #ffffff;
+}
+
+.inquiries-index-page .inquiry-metric-icon.is-green {
+    background: #32b935;
+    color: #ffffff;
+}
+
+.inquiries-index-page .inquiry-metric-badge.is-neutral {
+    background: #f2f4f7;
+    color: #475467;
 }
 
 .inquiries-index-page .inquiry-metric-body {
@@ -2412,7 +2453,7 @@ a.booking-customer-avatar:hover {
     background: #ffffff;
     border-radius: 16px;
     padding: 0.85rem 1rem;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.11);
 }
 
 .inquiries-index-page .inquiry-index-toolbar-filters {
@@ -2428,22 +2469,14 @@ a.booking-customer-avatar:hover {
     min-width: 220px;
 }
 
-.inquiries-index-page .inquiry-index-search-icon,
-.inquiries-index-page .inquiry-index-mic-icon {
+.inquiries-index-page .inquiry-index-search-icon {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     color: #667085;
     font-size: 0.95rem;
     pointer-events: none;
-}
-
-.inquiries-index-page .inquiry-index-search-icon {
     left: 0.95rem;
-}
-
-.inquiries-index-page .inquiry-index-mic-icon {
-    right: 0.95rem;
 }
 
 .inquiries-index-page .inquiry-index-search-input {
@@ -2452,7 +2485,7 @@ a.booking-customer-avatar:hover {
     border-radius: 10px;
     background: #ffffff !important;
     padding-left: 2.5rem;
-    padding-right: 2.5rem;
+    padding-right: 1rem;
     font-size: 0.85rem;
     color: #344054;
 }
@@ -2464,7 +2497,7 @@ a.booking-customer-avatar:hover {
 
 .inquiries-index-page .inquiry-index-search-clear {
     position: absolute;
-    right: 2.35rem;
+    right: 0.85rem;
     top: 50%;
     transform: translateY(-50%);
     color: #667085;
@@ -2494,7 +2527,7 @@ a.booking-customer-avatar:hover {
 }
 
 .inquiries-index-page .index-table-panel {
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
 }
 
 .inquiries-index-page .index-table-panel .admin-table thead th {
@@ -2532,6 +2565,1259 @@ a.booking-customer-avatar:hover {
     }
 }
 
+/* --- Incident Reports index page (mockup layout) --- */
+.incidents-index-page {
+    background-color: #ffffff;
+}
+
+.incidents-index-page .incident-metric-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    min-height: 110px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+}
+
+.incidents-index-page .incident-metric-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #1a3275;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.incidents-index-page .incident-metric-icon.is-gold {
+    background: #F5B301;
+    color: #ffffff;
+}
+
+.incidents-index-page .incident-metric-icon.is-orange {
+    background: #f97316;
+    color: #ffffff;
+}
+
+.incidents-index-page .incident-metric-icon.is-success {
+    background: #32b935;
+    color: #ffffff;
+}
+
+.incidents-index-page .incident-metric-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.incidents-index-page .incident-metric-label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #667085;
+    margin-bottom: 0.15rem;
+}
+
+.incidents-index-page .incident-metric-value {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a3275;
+    line-height: 1.1;
+}
+
+.incidents-index-page .incident-metric-trend {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.incidents-index-page .incident-metric-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    background: #ecfdf3;
+    color: #027a48;
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.incidents-index-page .incident-metric-badge.is-down {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.incidents-index-page .incident-metric-badge i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.incidents-index-page .incident-metric-compare {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.68rem;
+    color: #98a2b3;
+    font-weight: 500;
+}
+
+.incidents-index-page .incident-index-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: #1a3275 !important;
+    color: #ffffff !important;
+    border: none;
+    border-radius: 999px;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.incidents-index-page .incident-index-add-btn:hover {
+    background: #12234f !important;
+    color: #ffffff !important;
+}
+
+.incidents-index-page .index-table-panel {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
+}
+
+.incidents-index-page .index-table-panel .admin-table thead th {
+    background: #eef1f6;
+    color: #344054;
+    font-weight: 700;
+    border-bottom: 1px solid #d8dde6;
+    border-top: 1px solid #d8dde6;
+    border-right: 1px solid #d8dde6;
+}
+
+.incidents-index-page .index-table-panel .admin-table thead th:first-child {
+    border-left: 1px solid #d8dde6;
+    border-top-left-radius: 12px;
+}
+
+.incidents-index-page .index-table-panel .admin-table thead th:last-child {
+    border-top-right-radius: 12px;
+    border-right: 1px solid #d8dde6;
+}
+
+.incidents-index-page .index-table-panel .admin-table tbody td {
+    background: #ffffff;
+}
+
+.incidents-index-page .incident-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 88px;
+    padding: 0.38rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.incidents-index-page .incident-status-badge.is-under-review {
+    background: #fff4e5;
+    color: #b54708;
+}
+
+.incidents-index-page .incident-status-badge.is-in-repair {
+    background: #fff4e5;
+    color: #c2410c;
+}
+
+.incidents-index-page .incident-status-badge.is-closed {
+    background: #eaf9eb;
+    color: #32b935;
+}
+
+.incidents-index-page .incident-status-badge.is-reported {
+    background: #eff8ff;
+    color: #175cd3;
+}
+
+.incidents-index-page .incident-status-badge.is-dismissed {
+    background: #f2f4f7;
+    color: #667085;
+}
+
+@media (max-width: 767.98px) {
+    .incidents-index-page .incident-metric-card {
+        flex-wrap: wrap;
+    }
+
+    .incidents-index-page .incident-metric-trend {
+        width: 100%;
+        text-align: left;
+        padding-left: calc(52px + 1rem);
+    }
+}
+
+/* --- Record Incident page --- */
+.incident-record-page {
+    max-width: 980px;
+}
+
+.incident-record-page .incident-record-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem;
+}
+
+.incident-record-page .incident-record-title {
+    margin: 0 0 0.35rem;
+    color: #1E296A;
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.incident-record-page .incident-record-subtitle {
+    margin: 0;
+    color: #667085;
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+.incident-record-page .incident-record-info-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    max-width: 340px;
+    background: #eef2ff;
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    color: #1E296A;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    font-weight: 600;
+}
+
+.incident-record-page .incident-record-info-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #1E296A;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    margin-top: 0.05rem;
+}
+
+.incident-record-page .incident-record-trip-note {
+    color: #667085;
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.incident-record-page .incident-record-card {
+    background: #ffffff;
+    border: 1px solid #e8ecf3;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.15);
+    padding: 1.25rem 1.35rem 1.35rem;
+}
+
+.incident-record-page .incident-record-section-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.incident-record-page .incident-record-section-copy {
+    min-width: 0;
+}
+
+.incident-record-page .incident-record-section-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1E296A;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.incident-record-page .incident-record-section-title {
+    margin: 0 0 0.15rem;
+    color: #1E296A;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.incident-record-page .incident-record-section-desc {
+    margin: 0;
+    color: #667085;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.incident-record-page .incident-vehicle-card {
+    padding-top: 1rem;
+}
+
+.incident-record-page .incident-vehicle-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 1rem;
+    padding: 0.25rem;
+    border: 1px solid #e8ecf3;
+    border-radius: 999px;
+    background: #f8fafc;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.incident-record-page .incident-vehicle-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.incident-record-page .incident-vehicle-search {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+}
+
+.incident-record-page .incident-vehicle-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.95rem;
+    transform: translateY(-50%);
+    color: #98a2b3;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.incident-record-page .incident-vehicle-search input {
+    width: 100%;
+    border: 1px solid #d0d5dd;
+    border-radius: 999px;
+    background: #ffffff;
+    padding: 0.62rem 1rem 0.62rem 2.5rem;
+    font-size: 0.88rem;
+    color: #344054;
+}
+
+.incident-record-page .incident-vehicle-search input:focus {
+    outline: none;
+    border-color: #1E296A;
+    box-shadow: 0 0 0 3px rgba(30, 41, 106, 0.12);
+}
+
+.incident-record-page .incident-vehicle-tab {
+    border: 0;
+    background: transparent;
+    color: #667085;
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.incident-record-page .incident-vehicle-tab.is-active {
+    background: #ffffff;
+    color: #1E296A;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.incident-record-page .incident-vehicle-tab-count {
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #1E296A;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.incident-record-page .incident-vehicle-tab.is-active .incident-vehicle-tab-count {
+    background: #1E296A;
+    color: #ffffff;
+}
+
+.incident-record-page .incident-vehicle-filter-btn {
+    border: 1px solid #1E296A !important;
+    color: #1E296A !important;
+    background: #ffffff !important;
+    border-radius: 999px;
+    padding: 0.58rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.incident-record-page .incident-vehicle-filter-btn:hover,
+.incident-record-page .incident-vehicle-filter-btn:focus,
+.incident-record-page .incident-vehicle-filter-btn.show {
+    background: #eef2ff !important;
+    color: #1E296A !important;
+}
+
+.incident-record-page .incident-vehicle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 290px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.15rem;
+    margin-right: -0.15rem;
+}
+
+.incident-record-page .incident-vehicle-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.incident-record-page .incident-vehicle-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.incident-record-page .incident-vehicle-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.incident-record-page .incident-vehicle-option {
+    display: grid;
+    grid-template-columns: auto 72px minmax(160px, 1.2fr) minmax(130px, 0.9fr);
+    align-items: center;
+    gap: 0.85rem;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    margin: 0;
+    background: #ffffff;
+}
+
+.incident-record-page .incident-vehicle-list.is-transit-tab .incident-vehicle-option {
+    grid-template-columns: auto 72px minmax(160px, 1.2fr) minmax(130px, 0.9fr) minmax(170px, 1fr);
+}
+
+.incident-record-page .incident-vehicle-option.is-selected,
+.incident-record-page .incident-vehicle-option:has(.incident-vehicle-radio:checked) {
+    border-color: #93c5fd;
+    background: #f8fbff;
+    box-shadow: 0 0 0 1px rgba(30, 41, 106, 0.08);
+}
+
+.incident-record-page .incident-vehicle-radio {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: #1E296A;
+}
+
+.incident-record-page .incident-vehicle-thumb {
+    width: 72px;
+    height: 52px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #eef1f6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #98a2b3;
+    font-size: 1.2rem;
+}
+
+.incident-record-page .incident-vehicle-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.incident-record-page .incident-vehicle-identity {
+    min-width: 0;
+}
+
+.incident-record-page .incident-vehicle-status {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+
+.incident-record-page .incident-vehicle-status.is-available {
+    color: #32b935;
+}
+
+.incident-record-page .incident-vehicle-status.is-unavailable {
+    color: #667085;
+}
+
+.incident-record-page .incident-vehicle-status.is-in-transit {
+    color: #f97316;
+}
+
+.incident-record-page .incident-vehicle-name {
+    display: block;
+    color: #1E296A;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.incident-record-page .incident-vehicle-meta {
+    display: block;
+    color: #667085;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.incident-record-page .incident-vehicle-meta-col {
+    min-width: 0;
+}
+
+.incident-record-page .incident-vehicle-meta-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #98a2b3;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.incident-record-page .incident-vehicle-meta-value {
+    display: block;
+    color: #344054;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.incident-record-page .incident-vehicle-driver {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.incident-record-page .incident-vehicle-driver-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #eef1f6;
+    color: #667085;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.incident-record-page .incident-vehicle-driver-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.incident-record-page .incident-vehicle-empty {
+    border: 1px dashed #d0d5dd;
+    border-radius: 14px;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #667085;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.incident-record-page .incident-vehicle-tab-empty {
+    margin-top: 0.75rem;
+    padding: 1.25rem 1rem;
+}
+
+.incident-record-page .incident-record-field-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #344054;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.incident-record-page .incident-record-input,
+.incident-record-page .incident-record-textarea {
+    border: 1px solid #d0d5dd;
+    border-radius: 10px;
+    background: #f9fafb;
+    color: #344054;
+    font-size: 0.88rem;
+    padding: 0.65rem 0.85rem;
+}
+
+.incident-record-page .incident-record-input:focus,
+.incident-record-page .incident-record-textarea:focus {
+    border-color: #1E296A;
+    box-shadow: 0 0 0 3px rgba(30, 41, 106, 0.12);
+    background: #ffffff;
+}
+
+.incident-record-page .incident-record-input-wrap {
+    position: relative;
+}
+
+.incident-record-page .incident-record-input-wrap .incident-record-input {
+    padding-right: 2.5rem;
+}
+
+.incident-record-page .incident-record-input-icon {
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #98a2b3;
+    pointer-events: none;
+}
+
+.incident-record-page .incident-record-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.incident-record-page .incident-record-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding-top: 0.25rem;
+}
+
+.incident-record-page .incident-record-checkbox .form-check-input {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    accent-color: #1E296A;
+}
+
+.incident-record-page .incident-record-checkbox .form-check-label {
+    color: #344054;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.incident-record-page .incident-record-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.incident-record-page .incident-record-cancel-btn {
+    border: 1px solid #d0d5dd !important;
+    color: #344054 !important;
+    background: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 0.65rem 1.2rem;
+    font-weight: 600;
+}
+
+.incident-record-page .incident-record-submit-btn {
+    border: none !important;
+    background: #1E296A !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 0.65rem 1.35rem;
+    font-weight: 700;
+}
+
+.incident-record-page .incident-record-submit-btn:hover {
+    background: #12234f !important;
+    color: #ffffff !important;
+}
+
+.incident-create-success.admin-success-screen {
+    max-width: 700px;
+}
+
+.incident-create-success .admin-success-heading {
+    color: #1E296A;
+}
+
+.incident-create-success .btn-admin-primary {
+    background-color: #1E296A !important;
+    border-radius: 10px !important;
+}
+
+.incident-create-success .btn-admin-primary:hover {
+    background-color: #12234f !important;
+}
+
+.incident-create-success .btn-admin-outline {
+    border-color: #1E296A !important;
+    color: #1E296A !important;
+    border-radius: 10px !important;
+}
+
+.incident-create-success .btn-admin-outline:hover {
+    background: #eef2ff !important;
+    color: #1E296A !important;
+}
+
+@media (max-width: 991.98px) {
+    .incident-record-page .incident-vehicle-option {
+        grid-template-columns: auto 72px 1fr;
+    }
+
+    .incident-record-page .incident-vehicle-meta-col {
+        grid-column: 2 / -1;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .incident-record-page .incident-record-header {
+        flex-direction: column;
+    }
+
+    .incident-record-page .incident-record-info-banner {
+        max-width: none;
+        width: 100%;
+    }
+
+    .incident-record-page .incident-vehicle-option {
+        grid-template-columns: auto 1fr;
+    }
+
+    .incident-record-page .incident-vehicle-thumb {
+        grid-column: 2;
+    }
+
+    .incident-record-page .incident-vehicle-identity,
+    .incident-record-page .incident-vehicle-meta-col {
+        grid-column: 1 / -1;
+    }
+}
+
+/* --- Incident Details page --- */
+.incident-details-page .incident-details-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.incident-details-page .incident-details-status.is-reported {
+    background: #fff1e7;
+    color: #c2410c;
+}
+
+.incident-details-page .incident-details-status.is-under-review {
+    background: #eff8ff;
+    color: #175cd3;
+}
+
+.incident-details-page .incident-details-status.is-in-repair {
+    background: #fff4e5;
+    color: #c2410c;
+}
+
+.incident-details-page .incident-details-status.is-closed {
+    background: #eaf9eb;
+    color: #32b935;
+}
+
+.incident-details-page .incident-details-status.is-dismissed {
+    background: #f2f4f7;
+    color: #667085;
+}
+
+.incident-details-page .incident-details-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+
+.incident-details-page .reservation-view-avatar {
+    overflow: hidden;
+    padding: 0;
+}
+
+.incident-details-page .incident-details-description-block {
+    padding: 1.15rem 0;
+    border-bottom: 1px solid #e8ecf3;
+}
+
+.incident-details-page .incident-details-description-block .reservation-view-notes {
+    margin-top: 0.45rem;
+    margin-bottom: 0;
+}
+
+.incident-details-page .incident-details-facts {
+    margin-top: 1.15rem;
+}
+
+.incident-details-page .incident-details-image-frame {
+    border: 1px solid #dfe5ef;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #f4f6fb;
+    min-height: 220px;
+}
+
+.incident-details-page .incident-details-image-frame img {
+    width: 100%;
+    max-height: 420px;
+    object-fit: cover;
+    display: block;
+}
+
+.incident-details-page .incident-details-image-empty {
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #98a2b3;
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.incident-details-page .incident-details-image-empty i {
+    font-size: 2rem;
+}
+
+.incident-details-page .incident-details-image-empty p {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.incident-details-page .incident-details-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.incident-details-page .incident-details-info-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.incident-details-page .incident-details-info-row.is-block {
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.incident-details-page .incident-details-info-label {
+    color: #667085;
+    font-size: 0.84rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.incident-details-page .incident-details-info-value {
+    color: #344054;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.incident-details-page .incident-details-info-row.is-block .incident-details-info-value {
+    text-align: left;
+    line-height: 1.55;
+    font-weight: 500;
+}
+
+.incident-details-page .incident-details-linked-trip {
+    color: #667085;
+    font-size: 0.84rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.incident-details-page .incident-details-btn-review {
+    background: #32b935 !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    font-weight: 700;
+    padding: 0.7rem 1rem !important;
+}
+
+.incident-details-page .incident-details-btn-review:hover {
+    background: #27962a !important;
+    color: #ffffff !important;
+}
+
+.incident-details-page .incident-details-btn-dismiss {
+    background: #c21f00 !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    font-weight: 700;
+    padding: 0.7rem 1rem !important;
+}
+
+.incident-details-page .incident-details-btn-dismiss:hover {
+    background: #a01800 !important;
+    color: #ffffff !important;
+}
+
+.incident-details-page .incident-details-action-note {
+    color: #667085;
+    font-size: 0.84rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* --- Complete Incident page --- */
+.incident-complete-page {
+    max-width: 980px;
+}
+
+.incident-complete-page .incident-complete-header {
+    margin-bottom: 1.5rem;
+}
+
+.incident-complete-page .incident-complete-title {
+    margin: 0 0 0.35rem;
+    color: #1E296A;
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.incident-complete-page .incident-complete-subtitle {
+    margin: 0;
+    color: #667085;
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+.incident-complete-page .incident-complete-card,
+.incident-complete-page .incident-complete-summary-card {
+    background: #ffffff;
+    border: 1px solid #e8ecf3;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.15);
+    padding: 1.25rem 1.35rem 1.35rem;
+}
+
+.incident-complete-page .incident-complete-field-label {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: #344054;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.incident-complete-page .incident-complete-input,
+.incident-complete-page .incident-complete-textarea {
+    border: 1px solid #d0d5dd;
+    border-radius: 10px;
+    background: #f9fafb;
+    color: #344054;
+    font-size: 0.88rem;
+    padding: 0.65rem 0.85rem;
+}
+
+.incident-complete-page .incident-complete-input:focus,
+.incident-complete-page .incident-complete-textarea:focus {
+    border-color: #1E296A;
+    box-shadow: 0 0 0 3px rgba(30, 41, 106, 0.12);
+    background: #ffffff;
+}
+
+.incident-complete-page .incident-complete-textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.incident-complete-page .incident-complete-upload-zone {
+    position: relative;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 14px;
+    background: #f9fafb;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    text-align: center;
+    padding: 1.25rem 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.incident-complete-page .incident-complete-upload-zone.is-dragover,
+.incident-complete-page .incident-complete-upload-zone:hover {
+    border-color: #93c5fd;
+    background: #f8fbff;
+}
+
+.incident-complete-page .incident-complete-upload-zone i {
+    font-size: 1.35rem;
+    color: #667085;
+    margin-bottom: 0.15rem;
+}
+
+.incident-complete-page .incident-complete-upload-main {
+    color: #344054;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.incident-complete-page .incident-complete-upload-sub {
+    color: #98a2b3;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.incident-complete-page .incident-complete-file-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.incident-complete-page .incident-complete-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.65rem;
+    padding: 0.55rem 0.15rem 0;
+}
+
+.incident-complete-page .incident-complete-file-name {
+    color: #344054;
+    font-size: 0.84rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.incident-complete-page .incident-complete-file-remove {
+    border: none;
+    background: transparent;
+    color: #175cd3;
+    font-size: 0.84rem;
+    font-weight: 700;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.incident-complete-page .incident-complete-upload-note {
+    color: #667085;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.incident-complete-page .incident-complete-summary-label {
+    display: block;
+    color: #98a2b3;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.incident-complete-page .incident-complete-summary-id {
+    color: #1E296A;
+    font-size: 1.65rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+}
+
+.incident-complete-page .incident-complete-vehicle-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e8ecf3;
+}
+
+.incident-complete-page .incident-complete-vehicle-thumb {
+    width: 72px;
+    height: 52px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f4f6fb;
+    border: 1px solid #e4e8f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #98a2b3;
+    flex-shrink: 0;
+}
+
+.incident-complete-page .incident-complete-vehicle-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.incident-complete-page .incident-complete-vehicle-copy {
+    min-width: 0;
+}
+
+.incident-complete-page .incident-complete-vehicle-status {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+
+.incident-complete-page .incident-complete-vehicle-status.is-available {
+    color: #32b935;
+}
+
+.incident-complete-page .incident-complete-vehicle-status.is-unavailable {
+    color: #667085;
+}
+
+.incident-complete-page .incident-complete-vehicle-status.is-in-transit {
+    color: #f97316;
+}
+
+.incident-complete-page .incident-complete-vehicle-name {
+    display: block;
+    color: #1E296A;
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.incident-complete-page .incident-complete-vehicle-meta {
+    display: block;
+    color: #667085;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.incident-complete-page .incident-complete-meta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.incident-complete-page .incident-complete-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.incident-complete-page .incident-complete-meta-label {
+    color: #667085;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.incident-complete-page .incident-complete-meta-value {
+    color: #344054;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.incident-complete-page .incident-complete-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.incident-complete-page .incident-complete-cancel-btn,
+.incident-complete-page .incident-complete-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 44px;
+    line-height: 1.25;
+    border-width: 1.5px;
+    border-style: solid;
+    border-radius: 10px !important;
+    font-weight: 700;
+    padding: 0.7rem 1.35rem !important;
+    text-decoration: none;
+}
+
+.incident-complete-page .incident-complete-cancel-btn {
+    border-color: #1E296A !important;
+    color: #1E296A !important;
+    background: #ffffff !important;
+    min-width: 120px;
+}
+
+.incident-complete-page .incident-complete-submit-btn {
+    border-color: transparent !important;
+    background: #1E296A !important;
+    color: #ffffff !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+}
+
+.incident-complete-page .incident-complete-submit-btn:hover {
+    background: #12234f !important;
+    color: #ffffff !important;
+}
+
+@media (max-width: 991.98px) {
+    .incident-complete-page .incident-complete-actions {
+        justify-content: stretch;
+    }
+
+    .incident-complete-page .incident-complete-cancel-btn,
+    .incident-complete-page .incident-complete-submit-btn {
+        flex: 1 1 220px;
+    }
+}
+
 /* --- Rental Details page (mock redesign) --- */
 .reservation-details-page .reservation-details-id-card {
     display: flex;
@@ -2541,7 +3827,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #e8ecf3;
     border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.06);
+    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.15);
     padding: 0.85rem 1.2rem;
     width: 100%;
 }
@@ -2656,7 +3942,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #e8ecf3;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
     padding: 1.25rem 1.3rem 1.35rem;
 }
 
@@ -2711,7 +3997,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #dfe5ef;
     border-radius: 14px;
-    box-shadow: 0 4px 14px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 4px 14px rgba(26, 43, 93, 0.13);
     padding: 0.75rem 0.9rem;
     justify-self: stretch;
     box-sizing: border-box;
@@ -2754,6 +4040,52 @@ a.booking-customer-avatar:hover {
 .reservation-details-page .reservation-view-vehicle-label {
     font-weight: 600;
     margin-bottom: 0.1rem;
+}
+
+.reservation-details-page .reservation-view-vehicle.is-multi {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+}
+
+.reservation-details-page .reservation-view-vehicle-multi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    min-width: 0;
+    width: 100%;
+}
+
+.reservation-details-page .reservation-view-vehicle-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.reservation-details-page .reservation-view-vehicle-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.reservation-details-page .reservation-view-vehicle-item-meta {
+    min-width: 0;
+}
+
+.reservation-details-page .reservation-view-vehicle-item .reservation-view-vehicle-name {
+    font-size: 0.92rem;
+    line-height: 1.25;
+}
+
+.reservation-details-page .reservation-view-vehicle-item .reservation-view-vehicle-type {
+    display: block;
+    margin-top: 0.05rem;
+}
+
+.reservation-details-page .reservation-view-vehicle-type.is-shared-note {
+    margin-top: 0.1rem;
+    font-size: 0.74rem;
 }
 
 .reservation-details-page .reservation-view-fact {
@@ -2817,7 +4149,7 @@ a.booking-customer-avatar:hover {
 
 .reservation-details-page .reservation-id-docs {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.85rem;
 }
 
@@ -2827,6 +4159,7 @@ a.booking-customer-avatar:hover {
     border-radius: 14px;
     padding: 0.85rem;
     text-align: center;
+    min-width: 0;
 }
 
 .reservation-details-page .reservation-id-doc-label {
@@ -2841,24 +4174,34 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border-radius: 10px;
     overflow: hidden;
-    min-height: 140px;
+    width: 100%;
+    aspect-ratio: 1.586 / 1;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 0.55rem;
 }
 
+.reservation-details-page .reservation-id-doc-frame a {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 .reservation-details-page .reservation-id-doc-frame img {
     width: 100%;
-    height: 150px;
-    object-fit: cover;
+    height: 100%;
+    object-fit: contain;
     display: block;
+    background: #fff;
 }
 
 .reservation-details-page .reservation-id-doc-frame .reservation-view-placeholder {
     color: #9aa3b5;
     font-size: 2rem;
-    min-height: 140px;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2869,6 +4212,8 @@ a.booking-customer-avatar:hover {
     color: #6b7385;
     font-size: 0.75rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .reservation-details-page .reservation-view-notes-title {
@@ -3009,15 +4354,25 @@ a.booking-customer-avatar:hover {
     border: 1px solid #e8ecf3;
     border-radius: 14px;
     padding: 0.85rem;
-    min-height: 220px;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+.reservation-details-page .reservation-receipt-frame a {
+    display: block;
+    max-width: min(100%, 280px);
+}
+
 .reservation-details-page .reservation-receipt-frame img {
+    display: block;
+    width: auto;
     max-width: 100%;
-    max-height: 420px;
+    height: auto;
+    max-height: 220px;
     border-radius: 10px;
     object-fit: contain;
 }
@@ -3095,6 +4450,10 @@ a.booking-customer-avatar:hover {
     color: #c21f00;
 }
 
+.reservation-details-page .reservation-view-audit-item.is-warn {
+    color: #b54708;
+}
+
 .reservation-details-page .reservation-btn-approve {
     background: #32b935 !important;
     border-radius: 10px !important;
@@ -3113,6 +4472,18 @@ a.booking-customer-avatar:hover {
 
 .reservation-details-page .reservation-btn-reject:hover {
     background: #a81b00 !important;
+}
+
+.reservation-details-page .reservation-btn-refund {
+    background: #175cd3 !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 0.8rem 1rem !important;
+}
+
+.reservation-details-page .reservation-btn-refund:hover {
+    background: #134db8 !important;
+    color: #ffffff !important;
 }
 
 .reservation-details-page .reservation-btn-payment {
@@ -3319,7 +4690,7 @@ a.booking-customer-avatar:hover {
     background: #fff;
     border: 1px solid #e8ecf3;
     border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.06);
+    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.15);
     padding: 0.85rem 1.2rem;
     flex: 1 1 auto;
     min-width: min(100%, 280px);
@@ -3441,6 +4812,10 @@ a.booking-customer-avatar:hover {
 
 .admin-booking-edit .admin-booking-edit-existing-media img {
     max-width: min(100%, 280px);
+    max-height: 220px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     border-radius: 12px;
     border: 1px solid #e4e8f0;
     background: #f8fafc;
@@ -3452,4 +4827,1596 @@ a.booking-customer-avatar:hover {
     font-weight: 600;
 }
 
+/* --- Active Trip Details page --- */
+.transit-details-page .transit-vehicle-trip-card .reservation-view-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
 
+.transit-details-page .transit-vehicle-trip-card + .transit-vehicle-trip-card {
+    margin-top: 0;
+}
+
+.transit-details-page .transit-trip-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.15rem 1.5rem;
+    margin-bottom: 1.35rem;
+}
+
+.transit-details-page .transit-trip-metric-label {
+    display: block;
+    color: #1E296A;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+}
+
+.transit-details-page .transit-trip-metric-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #475467;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.transit-details-page .transit-trip-metric-value.is-empty {
+    color: #667085;
+}
+
+.transit-details-page .transit-trip-value-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1E296A;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.82rem;
+}
+
+.transit-details-page .transit-photo-block + .transit-photo-block {
+    margin-top: 1rem;
+}
+
+.transit-details-page .transit-details-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.transit-details-page .transit-photo-label {
+    display: block;
+    color: #1E296A;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0.55rem;
+}
+
+.transit-details-page .transit-photo-empty {
+    min-height: 120px;
+    border: 1px dashed #d0d5dd;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #98a2b3;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.transit-details-page .transit-photo-frame {
+    display: block;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e4e8f0;
+    background: #f8fafc;
+}
+
+.transit-details-page .transit-photo-frame img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+.transit-details-page .booking-progress-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.transit-details-page .booking-progress-step {
+    position: relative;
+    display: flex;
+    gap: 0.85rem;
+    padding-bottom: 1.35rem;
+}
+
+.transit-details-page .booking-progress-step:last-child {
+    padding-bottom: 0;
+}
+
+.transit-details-page .booking-progress-step:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 18px;
+    bottom: 0;
+    width: 2px;
+    background: #e4e8f0;
+}
+
+.transit-details-page .booking-progress-step.is-done:not(:last-child)::before {
+    background: #32b935;
+}
+
+.transit-details-page .booking-progress-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #d0d5dd;
+    background: #fff;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    position: relative;
+    z-index: 1;
+}
+
+.transit-details-page .booking-progress-step.is-done .booking-progress-dot {
+    border-color: #32b935;
+    background: #32b935;
+}
+
+.transit-details-page .booking-progress-step.is-current .booking-progress-dot {
+    border-color: #f97316;
+    background: #f97316;
+}
+
+.transit-details-page .booking-progress-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.transit-details-page .booking-progress-body strong {
+    display: block;
+    color: #1E296A;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+.transit-details-page .booking-progress-body > span {
+    display: block;
+    color: #667085;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.transit-details-page .booking-progress-action-form {
+    margin-top: 0.65rem;
+}
+
+.transit-details-page .booking-progress-help {
+    margin: 0.55rem 0 0;
+    color: #667085;
+    font-size: 0.75rem;
+    line-height: 1.45;
+}
+
+.transit-details-page .transit-incident-report-card {
+    background: #fdeceb;
+    border-color: #f5c4bc;
+}
+
+.transit-details-page .transit-incident-report-note {
+    margin: 0 0 0.95rem;
+    color: #9b1c1c;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: right;
+}
+
+.transit-details-page .transit-vehicle-alert {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.15rem;
+    border-radius: 14px;
+    border: 1px solid transparent;
+}
+
+.transit-details-page .transit-vehicle-alert.is-warning {
+    background: #fff8eb;
+    border-color: #f2d49b;
+    color: #7a4d00;
+}
+
+.transit-details-page .transit-vehicle-alert.is-blocked {
+    background: #fdeceb;
+    border-color: #f5c4bc;
+    color: #9b1c1c;
+}
+
+.transit-details-page .transit-vehicle-alert-icon {
+    flex: 0 0 auto;
+    font-size: 1.35rem;
+    line-height: 1;
+    margin-top: 0.1rem;
+}
+
+.transit-details-page .transit-vehicle-alert-title {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.transit-details-page .transit-vehicle-alert-message,
+.transit-details-page .transit-vehicle-alert-schedule {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.transit-details-page .transit-vehicle-alert-schedule {
+    margin-top: 0.45rem;
+    font-weight: 700;
+}
+
+.transit-details-page .transit-vehicle-alert-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+}
+
+.transit-details-page .transit-vehicle-alert-link {
+    background: #fff;
+    border: 1px solid currentColor;
+    color: inherit;
+    font-weight: 700;
+}
+
+.transit-details-page .transit-vehicle-alert-resolve {
+    background: #9b1c1c;
+    border-color: #9b1c1c;
+    color: #fff;
+    font-weight: 700;
+}
+
+.transit-details-page .transit-issue-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.transit-details-page .transit-issue-alert {
+    display: flex;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    border-radius: 14px;
+    border: 1px solid transparent;
+}
+
+.transit-details-page .transit-issue-alert.is-warning {
+    background: #fff8eb;
+    border-color: #f5d08a;
+    color: #7a4d00;
+}
+
+.transit-details-page .transit-issue-alert.is-blocked {
+    background: #fdeceb;
+    border-color: #f1b4ae;
+    color: #912018;
+}
+
+.transit-details-page .transit-issue-alert-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+}
+
+.transit-details-page .transit-issue-alert-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.transit-details-page .transit-issue-alert-source {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.transit-details-page .transit-issue-alert-ref {
+    font-size: 0.78rem;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+.transit-details-page .transit-issue-alert-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(145, 32, 24, 0.12);
+}
+
+.transit-details-page .transit-issue-alert-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.35rem;
+}
+
+.transit-details-page .transit-issue-alert-desc {
+    margin: 0 0 0.75rem;
+    font-size: 0.92rem;
+}
+
+.transit-details-page .transit-issue-alert-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 1rem;
+    margin: 0 0 0.85rem;
+}
+
+.transit-details-page .transit-issue-alert-meta dt {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+    margin-bottom: 0.1rem;
+}
+
+.transit-details-page .transit-issue-alert-meta dd {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.transit-details-page .transit-issue-alert-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.transit-details-page .booking-progress-help.is-danger-text {
+    color: #9b1c1c;
+    font-weight: 700;
+}
+
+.transit-details-page .booking-progress-help.is-warning-text {
+    color: #7a4d00;
+    font-weight: 700;
+}
+
+@media (max-width: 991.98px) {
+    .transit-details-page .transit-trip-metrics {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Vehicle preparation & driver assignment --- */
+.transit-preparation-page {
+    max-width: 980px;
+}
+
+.transit-preparation-page .transit-prep-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem;
+}
+
+.transit-preparation-page .transit-prep-title {
+    margin: 0 0 0.35rem;
+    color: #1E296A;
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.transit-preparation-page .transit-prep-subtitle {
+    margin: 0;
+    color: #667085;
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+.transit-preparation-page .transit-prep-info-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    max-width: 340px;
+    background: #eef2ff;
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    color: #1E296A;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    font-weight: 600;
+}
+
+.transit-preparation-page .transit-prep-info-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #1E296A;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    margin-top: 0.05rem;
+}
+
+.transit-preparation-page .transit-prep-card {
+    background: #ffffff;
+    border: 1px solid #e8ecf3;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(26, 43, 93, 0.15);
+    padding: 1.25rem 1.35rem 1.35rem;
+}
+
+.transit-preparation-page .transit-prep-section-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.transit-preparation-page .transit-prep-section-copy {
+    min-width: 0;
+}
+
+.transit-preparation-page .transit-prep-section-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1E296A;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.transit-preparation-page .transit-prep-section-title {
+    margin: 0 0 0.15rem;
+    color: #1E296A;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.transit-preparation-page .transit-prep-section-desc {
+    margin: 0;
+    color: #667085;
+    font-size: 0.82rem;
+}
+
+.transit-preparation-page .transit-driver-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.transit-preparation-page .transit-driver-search {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.transit-preparation-page .transit-driver-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.95rem;
+    transform: translateY(-50%);
+    color: #667085;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.transit-preparation-page .transit-driver-search input {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #d0d5dd;
+    border-radius: 10px;
+    outline: 0;
+    padding: 0 1rem 0 2.5rem;
+    font-size: 0.88rem;
+    color: #344054;
+    background: #ffffff;
+}
+
+.transit-preparation-page .transit-driver-search input:focus {
+    border-color: #1E296A;
+    box-shadow: 0 0 0 0.15rem rgba(30, 41, 106, 0.1);
+}
+
+.transit-preparation-page .transit-driver-filter-btn {
+    height: 42px;
+    border: 1.5px solid #1E296A !important;
+    background: #ffffff !important;
+    color: #1E296A !important;
+    border-radius: 10px !important;
+    font-size: 0.84rem;
+    font-weight: 700;
+    padding: 0 1rem !important;
+    box-shadow: none !important;
+}
+
+.transit-preparation-page .transit-driver-filter-btn:hover,
+.transit-preparation-page .transit-driver-filter-btn:focus,
+.transit-preparation-page .transit-driver-filter-btn.show {
+    background: #f8faff !important;
+    color: #1E296A !important;
+    border-color: #1E296A !important;
+}
+
+.transit-preparation-page .transit-driver-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: calc(3 * 5.75rem + 2 * 0.75rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.15rem;
+    margin-right: -0.15rem;
+}
+
+.transit-preparation-page .transit-driver-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.transit-preparation-page .transit-driver-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.transit-preparation-page .transit-driver-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.transit-preparation-page .transit-driver-option {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 0;
+    padding: 0.95rem 1rem;
+    border: 1.5px solid #e4e8f0;
+    border-radius: 14px;
+    background: #f8f9fb;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.transit-preparation-page .transit-driver-option.is-selected,
+.transit-preparation-page .transit-driver-option:has(.transit-driver-radio:checked) {
+    border-color: #1E296A;
+    background: #eef2ff;
+}
+
+.transit-preparation-page .transit-driver-radio {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: #1E296A;
+    cursor: pointer;
+}
+
+.transit-preparation-page .transit-driver-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #1E296A;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.transit-preparation-page .transit-driver-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.transit-preparation-page .transit-driver-identity {
+    flex: 1 1 180px;
+    min-width: 140px;
+}
+
+.transit-preparation-page .transit-driver-status {
+    display: block;
+    color: #32b935;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-bottom: 0.12rem;
+}
+
+.transit-preparation-page .transit-driver-name {
+    display: block;
+    color: #1E296A;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.transit-preparation-page .transit-driver-meta-col {
+    flex: 1 1 150px;
+    min-width: 120px;
+}
+
+.transit-preparation-page .transit-driver-rating-col {
+    flex: 1 1 170px;
+}
+
+.transit-preparation-page .transit-driver-meta-label {
+    display: block;
+    color: #1E296A;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+.transit-preparation-page .transit-driver-meta-value {
+    display: block;
+    color: #1E296A;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.transit-preparation-page .transit-driver-rating-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #1E296A;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.transit-preparation-page .transit-driver-rating-sub {
+    display: block;
+    margin-top: 0.12rem;
+    color: #667085;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.transit-preparation-page .transit-driver-star {
+    color: #f59e0b;
+    font-size: 0.78rem;
+}
+
+.transit-preparation-page .transit-driver-empty {
+    border: 1px dashed #d0d5dd;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    color: #667085;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.transit-preparation-page .transit-prep-field-label {
+    display: block;
+    color: #1E296A;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+}
+
+.transit-preparation-page .transit-prep-field-help {
+    display: block;
+    margin-top: 0.35rem;
+    color: #667085;
+    font-size: 0.75rem;
+}
+
+.transit-preparation-page .transit-prep-input-wrap {
+    position: relative;
+}
+
+.transit-preparation-page .transit-prep-input-wrap.has-suffix .transit-prep-input {
+    padding-right: 2.75rem;
+}
+
+.transit-preparation-page .transit-prep-input,
+.transit-preparation-page .transit-prep-textarea {
+    border: 1px solid #d0d5dd;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    min-height: 44px;
+}
+
+.transit-preparation-page .transit-prep-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.transit-preparation-page .transit-prep-input-icon {
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #98a2b3;
+    pointer-events: none;
+}
+
+.transit-preparation-page .transit-prep-input-suffix {
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #98a2b3;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.transit-preparation-page .transit-photo-section {
+    margin-top: 1.5rem;
+}
+
+.transit-preparation-page .transit-photo-section-title {
+    margin: 0 0 0.35rem;
+    color: #1E296A;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.transit-preparation-page .transit-photo-section-desc {
+    margin: 0 0 1.1rem;
+    color: #667085;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.transit-preparation-page .transit-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.transit-preparation-page .transit-photo-card {
+    background: #f1f3f5;
+    border-radius: 14px;
+    padding: 1rem 1rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 250px;
+}
+
+.transit-preparation-page .transit-photo-card-label {
+    display: block;
+    text-align: center;
+    color: #1E296A;
+    font-size: 0.88rem;
+    font-weight: 800;
+    margin-bottom: 0.85rem;
+}
+
+.transit-preparation-page .transit-photo-dropzone {
+    position: relative;
+    flex: 1;
+    min-height: 150px;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    text-align: center;
+    padding: 1.15rem 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    overflow: hidden;
+}
+
+.transit-preparation-page .transit-photo-upload-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    pointer-events: none;
+}
+
+.transit-preparation-page .transit-photo-upload-empty[hidden] {
+    display: none !important;
+}
+
+.transit-preparation-page .transit-photo-preview {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+.transit-preparation-page .transit-photo-preview[hidden] {
+    display: none !important;
+}
+
+.transit-preparation-page .transit-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.transit-preparation-page .transit-photo-timestamp {
+    position: absolute;
+    left: 0.65rem;
+    bottom: 0.65rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.72);
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.3;
+    pointer-events: none;
+}
+
+.transit-preparation-page .transit-photo-dropzone.has-preview {
+    border-style: solid;
+    border-color: #dbeafe;
+    padding: 0;
+}
+
+.transit-preparation-page .transit-photo-dropzone.is-dragover,
+.transit-preparation-page .transit-photo-dropzone:hover {
+    background: #f8fbff;
+    border-color: #93c5fd;
+}
+
+.transit-preparation-page .transit-photo-dropzone i {
+    color: #1E296A;
+    font-size: 1.45rem;
+    line-height: 1;
+}
+
+.transit-preparation-page .transit-photo-upload-sub {
+    color: #98a2b3;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.transit-preparation-page .transit-photo-file-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.transit-preparation-page .transit-photo-file-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem;
+}
+
+.transit-preparation-page .transit-photo-file-bar[hidden] {
+    display: none !important;
+}
+
+.transit-preparation-page .transit-photo-file-name {
+    color: #98a2b3;
+    font-size: 0.8rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transit-preparation-page .transit-photo-remove-btn {
+    border: 0;
+    background: transparent;
+    color: #1E296A;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.transit-preparation-page .transit-photo-add-card {
+    background: #f1f3f5;
+    border: none;
+    border-radius: 14px;
+    min-height: 250px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    color: #1E296A;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 1rem;
+    transition: background-color 0.15s ease;
+}
+
+.transit-preparation-page .transit-photo-add-card:hover {
+    background: #e9edf2;
+}
+
+.transit-preparation-page .transit-photo-add-card i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.transit-preparation-page .transit-prep-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 991.98px) {
+    .transit-preparation-page .transit-prep-header {
+        flex-direction: column;
+    }
+
+    .transit-preparation-page .transit-prep-info-banner {
+        max-width: none;
+        width: 100%;
+    }
+
+    .transit-preparation-page .transit-driver-option {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .transit-preparation-page .transit-driver-meta-col,
+    .transit-preparation-page .transit-driver-rating-col {
+        flex: 1 1 calc(50% - 2rem);
+    }
+
+    .transit-preparation-page .transit-photo-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* --- Resolve booking (replace / refund) --- */
+.resolve-booking-page {
+    max-width: 820px;
+}
+
+.resolve-booking-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.85rem;
+    padding: 1rem 1.1rem;
+    background: #fff;
+    border: 1px solid #e4e7ec;
+    border-radius: 14px;
+}
+
+.resolve-booking-summary-label {
+    display: block;
+    color: #98a2b3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.resolve-booking-summary-item strong {
+    display: block;
+    margin-top: 0.2rem;
+    color: #101828;
+    font-size: 0.9rem;
+}
+
+.resolve-booking-page .resolve-booking-tabs-card {
+    padding-top: 1rem;
+}
+
+.resolve-booking-page .resolve-booking-tabs {
+    margin-bottom: 1.25rem;
+}
+
+.resolve-booking-page .incident-vehicle-tab.is-disabled,
+.resolve-booking-page .incident-vehicle-tab:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.resolve-booking-page .resolve-tab-panel {
+    display: none;
+}
+
+.resolve-booking-page .resolve-tab-panel.is-active {
+    display: block;
+}
+
+.resolve-booking-page .resolve-tab-intro {
+    margin-bottom: 1.15rem;
+}
+
+.resolve-booking-page .resolve-tab-title {
+    margin: 0 0 0.25rem;
+    color: #1E296A;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.resolve-booking-page .resolve-tab-desc {
+    margin: 0;
+    color: #667085;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.resolve-booking-page .resolve-booking-empty {
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    background: #f9fafb;
+    border: 1px dashed #d0d5dd;
+    color: #667085;
+    font-size: 0.84rem;
+}
+
+.resolve-booking-page .resolve-vehicle-list {
+    max-height: 280px;
+    overflow: auto;
+}
+
+.resolve-booking-page .resolve-field-help {
+    margin-top: 0.35rem;
+    color: #667085;
+    font-size: 0.78rem;
+}
+
+.resolve-booking-page .resolve-booking-footer {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* --- Customer refund review (admin) --- */
+.reservation-details-page .reservation-refund-review-card {
+    border-color: #fde68a;
+}
+
+.reservation-details-page .reservation-refund-review-card .reservation-view-side-title {
+    margin-bottom: 0.15rem;
+}
+
+.reservation-refund-review-lead {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #667085;
+}
+
+.reservation-refund-review-card {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 16px;
+    padding: 1.15rem 1.2rem 1.2rem;
+    box-shadow: 0 8px 22px rgba(180, 71, 8, 0.08);
+}
+
+.reservation-refund-review-head {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    margin-bottom: 0.95rem;
+}
+
+.reservation-refund-review-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fef3c7;
+    color: #b54708;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.reservation-refund-review-head h6 {
+    margin: 0 0 0.25rem;
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: #1E296A;
+}
+
+.reservation-refund-review-head p {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #667085;
+}
+
+.reservation-refund-review-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 0.95rem;
+}
+
+.reservation-refund-review-meta div {
+    background: #ffffff;
+    border: 1px solid #f3e8c8;
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
+}
+
+.reservation-refund-review-meta dt {
+    margin: 0 0 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #667085;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.reservation-refund-review-meta dd {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #1E296A;
+}
+
+.reservation-refund-review-reason {
+    margin-bottom: 0.95rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #f3e8c8;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #4b5563;
+}
+
+.reservation-refund-review-reason strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #667085;
+}
+
+.reservation-refund-review-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.reservation-cancellation-panel {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid #e6ebf3;
+}
+
+.reservation-cancellation-panel-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #667085;
+}
+
+.reservation-cancellation-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.reservation-cancellation-step {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    padding: 0.65rem 0.75rem;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e6ebf3;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #4b5563;
+}
+
+.reservation-cancellation-step.is-warn {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.reservation-cancellation-step.is-danger {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.reservation-cancellation-step.is-success {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1e40af;
+}
+
+.reservation-cancellation-step-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e6ebf3;
+    color: #1E296A;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+.reservation-cancellation-step.is-warn .reservation-cancellation-step-icon {
+    background: #fef3c7;
+    color: #b54708;
+}
+
+.reservation-cancellation-step.is-danger .reservation-cancellation-step-icon {
+    background: #fee2e2;
+    color: #c21f00;
+}
+
+.reservation-cancellation-step.is-success .reservation-cancellation-step-icon {
+    background: #dbeafe;
+    color: #175cd3;
+}
+
+.reservation-cancellation-step strong {
+    display: block;
+    margin-bottom: 0.1rem;
+    font-size: 0.84rem;
+    color: #1A2B4C;
+}
+
+.admin-refund-modal-dialog {
+    max-width: 520px;
+}
+
+.admin-refund-modal-content {
+    border: 0 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 18px 48px rgba(26, 43, 93, 0.16) !important;
+    overflow: hidden;
+}
+
+.admin-refund-modal-head {
+    text-align: center;
+    padding: 1.65rem 1.65rem 0.35rem;
+}
+
+.admin-refund-modal-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 0.85rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.55rem;
+}
+
+.admin-refund-modal-head.is-approve .admin-refund-modal-icon {
+    background: var(--admin-success-bg);
+    color: var(--admin-success);
+}
+
+.admin-refund-modal-head.is-danger .admin-refund-modal-icon {
+    background: var(--admin-danger-bg);
+    color: var(--admin-danger);
+}
+
+.admin-refund-modal-head h2 {
+    margin: 0 0 0.35rem;
+    font-family: var(--font-title);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.admin-refund-modal-head p {
+    margin: 0 auto;
+    max-width: 24rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #6b7280;
+}
+
+.admin-refund-modal-body {
+    padding: 1rem 1.65rem 0.25rem;
+}
+
+.admin-refund-modal-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+}
+
+.admin-refund-modal-summary div {
+    background: #f8fafc;
+    border: 1px solid #e6ebf3;
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
+}
+
+.admin-refund-modal-summary dt {
+    margin: 0 0 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #667085;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.admin-refund-modal-summary dd {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #1E296A;
+}
+
+.admin-refund-modal-quote {
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e6ebf3;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #4b5563;
+}
+
+.admin-refund-modal-quote strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #667085;
+}
+
+.admin-refund-modal-body .form-label {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #1E296A;
+}
+
+.admin-refund-modal-body .form-control,
+.admin-refund-modal-body .form-select {
+    border-radius: 10px;
+    border-color: #d0d5dd;
+}
+
+.admin-refund-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    justify-content: flex-end;
+    padding: 1rem 1.65rem 1.45rem;
+}
+
+.admin-refund-modal-btn-secondary {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #374151 !important;
+    border-radius: 10px !important;
+    padding: 0.65rem 1rem !important;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.admin-refund-modal-btn-secondary:hover {
+    background: #f9fafb !important;
+}
+
+@media (max-width: 575.98px) {
+    .reservation-refund-review-meta,
+    .admin-refund-modal-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-refund-modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .admin-refund-modal-footer .btn {
+        width: 100%;
+    }
+}
+
+.reservation-details-page .reservation-view-side-card.reservation-refund-review-card {
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
+}
+
+.reservation-refund-review-receipt {
+    margin-bottom: 0.95rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e6ebf3;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #4b5563;
+}
+
+.reservation-refund-review-receipt strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #667085;
+}
+
+.reservation-refund-review-receipt-link {
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #dbe3ef;
+    background: #fff;
+}
+
+.reservation-refund-review-receipt-link img {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    background: #f8fafc;
+}
+
+.reservation-details-page .reservation-refund-review-actions .btn {
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.admin-refund-upload-panel {
+    position: relative;
+}
+
+.admin-refund-upload-zone {
+    position: relative;
+    border: 2px dashed #d0d5dd;
+    border-radius: 12px;
+    background: #ffffff;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.admin-refund-upload-zone:hover {
+    background: #f8fafc;
+    border-color: #1E296A;
+}
+
+.admin-refund-upload-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.admin-refund-upload-empty {
+    text-align: center;
+    color: #667085;
+    font-size: 0.84rem;
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.admin-refund-upload-empty i {
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: 0.35rem;
+    color: #1E296A;
+}
+
+.admin-refund-upload-empty span {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: #98a2b3;
+}
+
+.admin-refund-upload-preview {
+    display: none;
+}
+
+.admin-refund-upload-preview.is-visible {
+    display: block;
+}
+
+.admin-refund-upload-preview-box {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #f8fafc;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.admin-refund-upload-preview-box img {
+    display: block;
+    width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.admin-refund-upload-preview-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.55rem;
+    font-size: 0.78rem;
+    color: #667085;
+}
+
+.admin-refund-upload-remove {
+    border: none;
+    background: transparent;
+    color: #c21f00;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0;
+}
+
+.reservation-details-page .admin-refund-modal-footer .reservation-btn-approve,
+.reservation-details-page .admin-refund-modal-footer .reservation-btn-reject {
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}

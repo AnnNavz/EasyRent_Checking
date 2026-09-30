@@ -1,5 +1,6 @@
 @model EasyRent_Checking.Models.Rental
 @using EasyRent_Checking.Models
+@using EasyRent_Checking.ViewModels
 @using System.Globalization
 
 @{
@@ -7,18 +8,32 @@
     ViewData["Title"] = "View Details";
     ViewData["ActivePage"] = "Rentals";
 
-    var details = Model?.Details;
+    var details = Model;
+    var selectedVehicles = ViewData["SelectedVehicles"] as List<Vehicle> ?? new List<Vehicle>();
     var rentalVehicles = (Model?.RentalVehicles ?? Enumerable.Empty<RentalVehicle>())
         .OrderBy(rv => rv.SortOrder)
         .ThenBy(rv => rv.RentalVehicleId)
         .ToList();
-    var vehicle = rentalVehicles.FirstOrDefault()?.Vehicle ?? details?.Vehicle;
+    if (rentalVehicles.Count == 0 && selectedVehicles.Count > 0)
+    {
+        rentalVehicles = selectedVehicles
+            .Select((v, index) => new RentalVehicle { Vehicle = v, VehicleId = v.VehicleId, SortOrder = index })
+            .ToList();
+    }
+    var vehicle = rentalVehicles.FirstOrDefault()?.Vehicle;
     var latestPayment = ViewData["LatestPayment"] as Payment;
+    var cancellationFeePayment = ViewData["CancellationFeePayment"] as Payment;
     var transit = ViewData["Transit"] as Transit;
     var transits = ViewData["Transits"] as IList<Transit> ?? new List<Transit>();
     var isPending = Model?.RentalStatus == RentalStatus.Pending;
     var isApproved = Model?.RentalStatus == RentalStatus.Approved;
     var isCancelled = Model?.RentalStatus == RentalStatus.Cancelled;
+    var isRefunded = Model?.RentalStatus == RentalStatus.Refunded;
+    var isRefundRejected = Model?.RentalStatus == RentalStatus.RefundRejected;
+    var hasPendingRefund = ViewData["HasPendingRefundRequest"] as bool? == true;
+    var processRefundModel = ViewData["ProcessRefundModel"] as ProcessCustomerRefundViewModel;
+    var rejectRefundModel = ViewData["RejectRefundModel"] as RejectCustomerRefundViewModel;
+    var amountPaid = ViewData["AmountPaid"] as decimal? ?? 0m;
     var ph = CultureInfo.GetCultureInfo("en-PH");
 
     string FormatDate(DateOnly? date)
@@ -33,6 +48,21 @@
         + value.ToString("h:mm tt", CultureInfo.InvariantCulture);
 
     string FormatPeso(decimal amount) => "₱" + amount.ToString("N2", ph);
+
+    string FormatIdType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type)) return "—";
+        return type switch
+        {
+            "NationalID" => "National ID",
+            "DriverLicense" => "Driver's License",
+            "VotersID" => "Voter's ID",
+            "PostalID" => "Postal ID",
+            "UMID" => "UMID",
+            "Passport" => "Passport",
+            _ => type
+        };
+    }
 
     string GetInitials(string? name)
     {
@@ -90,6 +120,8 @@
         RentalStatus.Approved => "booking-status-approved",
         RentalStatus.Cancelled => "booking-status-cancelled",
         RentalStatus.Expired => "booking-status-expired",
+        RentalStatus.Refunded => "booking-status-refunded",
+        RentalStatus.RefundRejected => "booking-status-refund-rejected",
         _ => "booking-status-pending"
     };
 
@@ -98,8 +130,14 @@
         RentalStatus.Approved => "bi-check-circle",
         RentalStatus.Cancelled => "bi-x-circle",
         RentalStatus.Expired => "bi-hourglass-bottom",
+        RentalStatus.Refunded => "bi-cash-coin",
+        RentalStatus.RefundRejected => "bi-slash-circle",
         _ => "bi-clock"
     };
+
+    string DisplayStatusLabel() => hasPendingRefund
+        ? "Pending Refund Review"
+        : Model!.RentalStatus.ToString();
 
     var bookingId = $"BK-{Model?.RentalId.ToString("D5") ?? "00000"}";
     var discountLabel = hasSeniorDiscount ? "Senior Citizen (10% off)" : "None";
@@ -109,6 +147,7 @@
         ? System.IO.Path.GetFileName(details!.DiscountImagePath)
         : null;
     var vehicleTypeLabel = vehicle != null ? VehicleTypes.Display(vehicle.Type) : "—";
+    var isMultiVehicle = rentalVehicles.Count > 1;
     var paymentOptionLabel = latestPayment?.PaymentType
         ?? (Model?.RentalOption == RentalOption.Reserve ? "Pay Later" : "—");
 }
@@ -121,8 +160,8 @@
                     <span class="reservation-view-id-label">Booking ID</span>
                     <h1 class="reservation-view-id mb-0">@bookingId</h1>
                 </div>
-                <span class="booking-status-badge @StatusBadgeClass(Model!.RentalStatus)">
-                    <i class="bi @StatusIcon(Model.RentalStatus)"></i>@Model.RentalStatus
+                <span class="booking-status-badge @(hasPendingRefund ? "booking-status-refundable" : StatusBadgeClass(Model!.RentalStatus))">
+                    <i class="bi @(hasPendingRefund ? "bi-hourglass-split" : StatusIcon(Model.RentalStatus))"></i>@DisplayStatusLabel()
                 </span>
             </div>
 
@@ -135,49 +174,67 @@
                             <div class="reservation-view-person-meta">@Model.ContactNumber</div>
                         </div>
                     </div>
-                    <div class="reservation-view-vehicle">
-                        <div class="reservation-view-vehicle-thumb" aria-hidden="true">
-                            @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
-                            {
-                                <img src="~/images/@vehicle.ImagePath" alt="@vehicle.Model" />
-                            }
-                            else
-                            {
-                                <i class="bi bi-truck-front"></i>
-                            }
-                        </div>
-                        <div>
-                            <div class="reservation-view-vehicle-label">
-                                @(rentalVehicles.Count > 1 ? $"Selected Vehicles ({rentalVehicles.Count})" : "Selected Vehicle")
+                    <div class="reservation-view-vehicle @(isMultiVehicle ? "is-multi" : "")">
+                        @if (isMultiVehicle && rentalVehicles.Count > 0)
+                        {
+                            <div class="reservation-view-vehicle-multi">
+                                <div class="reservation-view-vehicle-label">Selected Vehicles (@rentalVehicles.Count)</div>
+                                <div class="reservation-view-vehicle-stack">
+                                    @foreach (var line in rentalVehicles)
+                                    {
+                                        var lineVehicle = line.Vehicle;
+                                        var lineLabel = lineVehicle != null
+                                            ? $"{lineVehicle.Model} {lineVehicle.Brand}".Trim()
+                                            : $"Vehicle #{line.VehicleId}";
+                                        var lineType = lineVehicle != null ? VehicleTypes.Display(lineVehicle.Type) : "—";
+                                        <div class="reservation-view-vehicle-item">
+                                            <div class="reservation-view-vehicle-thumb" aria-hidden="true">
+                                                @if (!string.IsNullOrEmpty(lineVehicle?.ImagePath))
+                                                {
+                                                    <img src="~/images/@lineVehicle.ImagePath" alt="@lineLabel" />
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-truck-front"></i>
+                                                }
+                                            </div>
+                                            <div class="reservation-view-vehicle-item-meta">
+                                                <div class="reservation-view-vehicle-name">@lineLabel</div>
+                                                <div class="reservation-view-vehicle-type">@lineType</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="reservation-view-vehicle-type is-shared-note">Multiple vehicles · shared schedule</div>
                             </div>
-                            <div class="reservation-view-vehicle-name">
-                                @if (rentalVehicles.Count > 0)
+                        }
+                        else
+                        {
+                            <div class="reservation-view-vehicle-thumb" aria-hidden="true">
+                                @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
                                 {
-                                    @string.Join(", ", rentalVehicles.Select(rv =>
-                                        rv.Vehicle != null
-                                            ? $"{rv.Vehicle.Model} {rv.Vehicle.Brand}".Trim()
-                                            : $"Vehicle #{rv.VehicleId}"))
-                                }
-                                else if (vehicle != null)
-                                {
-                                    @($"{vehicle.Model} {vehicle.Brand}")
+                                    <img src="~/images/@vehicle.ImagePath" alt="@vehicle.Model" />
                                 }
                                 else
                                 {
-                                    @:Unassigned
+                                    <i class="bi bi-truck-front"></i>
                                 }
                             </div>
-                            <div class="reservation-view-vehicle-type">
-                                @if (rentalVehicles.Count > 1)
-                                {
-                                    @:Multiple vehicles · shared schedule
-                                }
-                                else
-                                {
-                                    @vehicleTypeLabel
-                                }
+                            <div>
+                                <div class="reservation-view-vehicle-label">Selected Vehicle</div>
+                                <div class="reservation-view-vehicle-name">
+                                    @if (vehicle != null)
+                                    {
+                                        @($"{vehicle.Model} {vehicle.Brand}".Trim())
+                                    }
+                                    else
+                                    {
+                                        @:Unassigned
+                                    }
+                                </div>
+                                <div class="reservation-view-vehicle-type">@vehicleTypeLabel</div>
                             </div>
-                        </div>
+                        }
                     </div>
                 </div>
 
@@ -307,6 +364,73 @@
                 </div>
             </div>
 
+            @{
+                var customerProfile = Model.Customer;
+                var customerFrontId = customerProfile?.FrontValidIDImagePath;
+                var customerBackId = customerProfile?.BackValidIDImagePath;
+                var customerFrontFileName = !string.IsNullOrWhiteSpace(customerFrontId)
+                    ? System.IO.Path.GetFileName(customerFrontId)
+                    : null;
+                var customerBackFileName = !string.IsNullOrWhiteSpace(customerBackId)
+                    ? System.IO.Path.GetFileName(customerBackId)
+                    : null;
+            }
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-section-title">
+                    <span class="reservation-view-section-icon"><i class="bi bi-person-vcard-fill"></i></span>
+                    <span>Customer Valid ID</span>
+                </div>
+                <div class="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div>
+                        <span class="reservation-view-label">ID Type</span>
+                        <span class="reservation-view-value">@FormatIdType(customerProfile?.ValidIDtype)</span>
+                    </div>
+                    @if (Model.CustomerId.HasValue)
+                    {
+                        <a asp-controller="Customers" asp-action="Details" asp-route-customerid="@Model.CustomerId"
+                           class="reservation-view-inline-link">View full customer profile</a>
+                    }
+                </div>
+                <div class="reservation-id-docs">
+                    <div class="reservation-id-doc-card">
+                        <span class="reservation-id-doc-label">Front</span>
+                        <div class="reservation-id-doc-frame">
+                            @if (!string.IsNullOrWhiteSpace(customerFrontId))
+                            {
+                                <a href="~/images/@customerFrontId" target="_blank" rel="noopener">
+                                    <img src="~/images/@customerFrontId" alt="Front of customer valid ID" />
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="reservation-view-placeholder" aria-hidden="true">
+                                    <i class="bi bi-person-vcard"></i>
+                                </div>
+                            }
+                        </div>
+                        <span class="reservation-id-doc-name">@(customerFrontFileName ?? "No file uploaded")</span>
+                    </div>
+                    <div class="reservation-id-doc-card">
+                        <span class="reservation-id-doc-label">Back</span>
+                        <div class="reservation-id-doc-frame">
+                            @if (!string.IsNullOrWhiteSpace(customerBackId))
+                            {
+                                <a href="~/images/@customerBackId" target="_blank" rel="noopener">
+                                    <img src="~/images/@customerBackId" alt="Back of customer valid ID" />
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="reservation-view-placeholder" aria-hidden="true">
+                                    <i class="bi bi-person-vcard"></i>
+                                </div>
+                            }
+                        </div>
+                        <span class="reservation-id-doc-name">@(customerBackFileName ?? "No file uploaded")</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="reservation-view-card mb-4">
                 <div class="reservation-view-section-title">
                     <span class="reservation-view-section-icon"><i class="bi bi-receipt"></i></span>
@@ -433,6 +557,75 @@
                 <a asp-action="Edit" asp-route-id="@Model?.RentalId" class="btn btn-reservation-edit">Edit Reservation</a>
             </div>
 
+                @if (hasPendingRefund && processRefundModel != null && rejectRefundModel != null)
+                {
+                    <div class="reservation-view-side-card reservation-refund-review-card mb-4">
+                        <div class="reservation-refund-review-head">
+                            <span class="reservation-refund-review-icon" aria-hidden="true">
+                                <i class="bi bi-hourglass-split"></i>
+                            </span>
+                            <div>
+                                <h6 class="reservation-view-side-title mb-1">Refund Review Required</h6>
+                                <p class="reservation-refund-review-lead">The customer cancelled this booking and requested a refund. Review the details before approving or rejecting.</p>
+                            </div>
+                        </div>
+
+                        <dl class="reservation-refund-review-meta">
+                            <div>
+                                <dt>Requested refund</dt>
+                                <dd>@FormatPeso(processRefundModel.RefundRequestedAmount)</dd>
+                            </div>
+                            <div>
+                                <dt>Amount paid</dt>
+                                <dd>@FormatPeso(processRefundModel.AmountPaid)</dd>
+                            </div>
+                        </dl>
+
+                        @if (!string.IsNullOrWhiteSpace(processRefundModel.CustomerReason))
+                        {
+                            <div class="reservation-refund-review-reason">
+                                <strong>Customer cancellation reason</strong>
+                                @processRefundModel.CustomerReason
+                            </div>
+                        }
+
+                        @if (cancellationFeePayment != null && !string.IsNullOrWhiteSpace(cancellationFeePayment.ReceiptImagePath))
+                        {
+                            <div class="reservation-refund-review-receipt">
+                                <strong>Cancellation fee receipt</strong>
+                                <a href="~/images/@cancellationFeePayment.ReceiptImagePath" target="_blank" rel="noopener" class="reservation-refund-review-receipt-link">
+                                    <img src="~/images/@cancellationFeePayment.ReceiptImagePath" alt="Cancellation fee receipt" />
+                                </a>
+                            </div>
+                        }
+                        else if ((Model?.CancellationFee ?? 0m) > 0)
+                        {
+                            <div class="reservation-refund-review-receipt">
+                                <strong>Cancellation fee receipt</strong>
+                                <div class="reservation-receipt-empty reservation-refund-review-receipt-empty">
+                                    <i class="bi bi-receipt"></i>
+                                    <p>No cancellation fee receipt uploaded (e.g. Walk-in payment).</p>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="reservation-refund-review-actions">
+                            <button type="button"
+                                    class="btn reservation-btn-approve w-100"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#processCustomerRefundModal">
+                                Approve Refund
+                            </button>
+                            <button type="button"
+                                    class="btn reservation-btn-reject w-100"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#rejectCustomerRefundModal">
+                                Reject Refund
+                            </button>
+                        </div>
+                    </div>
+                }
+
             <div class="reservation-view-side-card mb-4">
                 <h6 class="reservation-view-side-title">Internal Audit Log</h6>
                 <div class="reservation-view-audit-list">
@@ -456,39 +649,123 @@
                             <span>Booking Approved</span>
                         </div>
                     }
-                    @if (isCancelled)
+                    @if (isCancelled || isRefunded || isRefundRejected)
                     {
-                        <div class="reservation-view-audit-item">
-                            <span>Booking Cancelled@(Model?.CancelledAt != null ? $" · {FormatTimestamp(Model.CancelledAt.Value)}" : "")</span>
-                        </div>
-                        @if ((Model?.CancellationFee ?? 0m) > 0)
-                        {
-                            <div class="reservation-view-audit-item is-danger">
-                                <span>Cancellation fee due: @FormatPeso(Model!.CancellationFee!.Value)</span>
+                        <div class="reservation-cancellation-panel">
+                            <h6 class="reservation-cancellation-panel-title">Cancellation &amp; Refund</h6>
+                            <div class="reservation-cancellation-timeline">
+                                <div class="reservation-cancellation-step">
+                                    <span class="reservation-cancellation-step-icon" aria-hidden="true"><i class="bi bi-x-circle"></i></span>
+                                    <div>
+                                        <strong>Booking cancelled</strong>
+                                        @(Model?.CancelledAt != null ? FormatTimestamp(Model.CancelledAt.Value) : "Cancellation recorded")
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(Model?.CustomerCancellationReason))
+                                {
+                                    <div class="reservation-cancellation-step">
+                                        <span class="reservation-cancellation-step-icon" aria-hidden="true"><i class="bi bi-chat-left-text"></i></span>
+                                        <div>
+                                            <strong>Customer reason</strong>
+                                            @Model.CustomerCancellationReason
+                                        </div>
+                                    </div>
+                                }
+                                @if ((Model?.CancellationFee ?? 0m) > 0)
+                                {
+                                    <div class="reservation-cancellation-step @(Model?.CancellationFeePaidAt != null ? "" : "is-danger")">
+                                        <span class="reservation-cancellation-step-icon" aria-hidden="true"><i class="bi bi-cash-stack"></i></span>
+                                        <div>
+                                            <strong>Cancellation fee @(Model?.CancellationFeePaidAt != null ? "paid" : "due")</strong>
+                                            @FormatPeso(Model!.CancellationFee!.Value)@(Model.CancellationFeePaidAt != null ? $" · {FormatTimestamp(Model.CancellationFeePaidAt.Value)}" : "")
+                                        </div>
+                                    </div>
+                                }
+                                @if (hasPendingRefund)
+                                {
+                                    <div class="reservation-cancellation-step is-warn">
+                                        <span class="reservation-cancellation-step-icon" aria-hidden="true"><i class="bi bi-hourglass-split"></i></span>
+                                        <div>
+                                            <strong>Pending refund review</strong>
+                                            @FormatPeso(Model!.RefundRequestedAmount ?? amountPaid)@(Model.RefundRequestedAt != null ? $" · {FormatTimestamp(Model.RefundRequestedAt.Value)}" : "")
+                                        </div>
+                                    </div>
+                                }
+                                else if (Model?.RefundRequestedAt != null && !isRefundRejected)
+                                {
+                                    <div class="reservation-cancellation-step">
+                                        <span class="reservation-cancellation-step-icon" aria-hidden="true"><i class="bi bi-arrow-repeat"></i></span>
+                                        <div>
+                                            <strong>Refund requested</strong>
+                                            @FormatPeso(Model.RefundRequestedAmount ?? amountPaid)@(Model.RefundRequestedAt != null ? $" · {FormatTimestamp(Model.RefundRequestedAt.Value)}" : "")
+                                        </div>
+                                    </div>
+                                }
+                                @if ((Model?.RefundAmount ?? 0m) > 0 || isRefunded)
+                                {
+                                    <div class="reservation-cancellation-step is-success">
+                                        <span class="reservation-cancellation-step-icon" aria-hidden="true"><i class="bi bi-cash-coin"></i></span>
+                                        <div>
+                                            <strong>Refund approved</strong>
+                                            @FormatPeso(Model!.RefundAmount ?? 0m)@(Model.RefundedAt != null ? $" · {FormatTimestamp(Model.RefundedAt.Value)}" : "")
+                                        </div>
+                                    </div>
+                                }
+                                @if (isRefundRejected)
+                                {
+                                    <div class="reservation-cancellation-step is-danger">
+                                        <span class="reservation-cancellation-step-icon" aria-hidden="true"><i class="bi bi-slash-circle"></i></span>
+                                        <div>
+                                            <strong>Refund rejected</strong>
+                                            @(Model?.RefundRejectedAt != null ? FormatTimestamp(Model.RefundRejectedAt.Value) : "Review completed")
+                                            @if (!string.IsNullOrWhiteSpace(Model?.RefundRejectionReason))
+                                            {
+                                                <span> — @Model.RefundRejectionReason</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model?.CompanyCancellationReason))
+                                {
+                                    <div class="reservation-cancellation-step">
+                                        <span class="reservation-cancellation-step-icon" aria-hidden="true"><i class="bi bi-building"></i></span>
+                                        <div>
+                                            <strong>Company reason</strong>
+                                            @Model.CompanyCancellationReason
+                                        </div>
+                                    </div>
+                                }
                             </div>
-                        }
+                        </div>
                     }
                 </div>
 
                 @if (isPending)
                 {
-                    <form asp-action="Approve" asp-route-id="@Model.RentalId" method="post" class="mb-2"
-                          data-confirm="Approve this reservation?"
-                          data-confirm-text="The booking will be confirmed and the vehicle will be reserved for this customer."
-                          data-confirm-button="Approve Reservation"
-                          data-confirm-tone="approve">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn reservation-btn-approve w-100">Approve Reservation</button>
-                    </form>
+                    @if (latestPayment != null)
+                    {
+                        <form asp-action="Approve" asp-route-id="@Model.RentalId" method="post" class="mb-2"
+                              data-confirm="Confirm this paid booking?"
+                              data-confirm-text="Vehicles will be reserved and a confirmation email will be sent."
+                              data-confirm-button="Confirm Booking"
+                              data-confirm-tone="approve">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn reservation-btn-approve w-100" @(hasPendingRefund ? "disabled" : null)>Confirm Booking</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="small text-muted mb-2">Waiting for payment. This hold confirms automatically when payment is recorded.</p>
+                    }
                     <form asp-action="Reject" asp-route-id="@Model.RentalId" method="post"
-                          data-confirm="Reject this reservation?"
+                          data-confirm="Cancel this unpaid hold?"
                           data-confirm-text="The customer will be notified and the vehicle will become available again."
-                          data-confirm-button="Reject Reservation"
+                          data-confirm-button="Cancel Hold"
                           data-confirm-tone="danger"
                           data-confirm-icon="bi-x-circle"
                           data-confirm-submit-icon="bi-x-lg">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn reservation-btn-reject w-100">Reject Reservation</button>
+                        <button type="submit" class="btn reservation-btn-reject w-100" @(hasPendingRefund ? "disabled" : null)>Cancel Hold</button>
                     </form>
                 }
             </div>
@@ -510,3 +787,201 @@
         </div>
     </div>
 </div>
+
+@if (hasPendingRefund && processRefundModel != null && rejectRefundModel != null)
+{
+    <div class="modal fade admin-refund-modal" id="processCustomerRefundModal" tabindex="-1" aria-labelledby="processCustomerRefundModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered admin-refund-modal-dialog">
+            <div class="modal-content admin-refund-modal-content">
+                <div class="admin-refund-modal-head is-approve">
+                    <div class="admin-refund-modal-icon" aria-hidden="true">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                    <h2 id="processCustomerRefundModalLabel">Approve customer refund</h2>
+                    <p>Record the refund amount and upload the receipt. The customer will receive a confirmation email.</p>
+                </div>
+                <form asp-action="ProcessCustomerRefund" asp-route-id="@Model!.RentalId" method="post" enctype="multipart/form-data"
+                      data-confirm="Approve and issue this refund?"
+                      data-confirm-text="The refund will be recorded and the customer will receive a confirmation email with the receipt."
+                      data-confirm-button="Approve Refund"
+                      data-confirm-tone="approve">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="RentalId" value="@processRefundModel.RentalId" />
+                    <div class="admin-refund-modal-body">
+                        <dl class="admin-refund-modal-summary">
+                            <div>
+                                <dt>Requested</dt>
+                                <dd>@FormatPeso(processRefundModel.RefundRequestedAmount)</dd>
+                            </div>
+                            <div>
+                                <dt>Amount paid</dt>
+                                <dd>@FormatPeso(processRefundModel.AmountPaid)</dd>
+                            </div>
+                        </dl>
+                        @if (!string.IsNullOrWhiteSpace(processRefundModel.CustomerReason))
+                        {
+                            <div class="admin-refund-modal-quote">
+                                <strong>Customer reason</strong>
+                                @processRefundModel.CustomerReason
+                            </div>
+                        }
+                        <div class="mb-3">
+                            <label class="form-label" for="RefundAmount">Refund amount</label>
+                            <input type="number" step="0.01" min="0" max="@processRefundModel.RefundRequestedAmount" class="form-control" id="RefundAmount" name="RefundAmount" value="@processRefundModel.RefundAmount.ToString(CultureInfo.InvariantCulture)" required />
+                            <div class="form-text">Cannot exceed the requested amount.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="RefundReceiptImageFile">Refund receipt</label>
+                            <div class="admin-refund-upload-panel">
+                                <div class="admin-refund-upload-zone" id="refundReceiptUploadZone">
+                                    <div class="admin-refund-upload-empty" id="refundReceiptUploadEmpty">
+                                        <i class="bi bi-cloud-arrow-up"></i>
+                                        <strong>Click or drag to upload refund receipt</strong>
+                                        <span>PNG, JPG, or JPEG</span>
+                                    </div>
+                                    <input type="file" class="admin-refund-upload-input" id="RefundReceiptImageFile" name="RefundReceiptImageFile" accept=".png,.jpg,.jpeg,image/*" />
+                                </div>
+                                <div class="admin-refund-upload-preview" id="refundReceiptUploadPreview">
+                                    <button type="button" class="admin-refund-upload-preview-box" id="refundReceiptPreviewBox" title="Click to replace image">
+                                        <img id="refundReceiptPreviewImg" class="d-none" alt="Refund receipt preview" />
+                                    </button>
+                                    <div class="admin-refund-upload-preview-bar">
+                                        <span id="refundReceiptFilename"></span>
+                                        <button type="button" class="admin-refund-upload-remove" id="refundReceiptRemoveBtn">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">Required when refund amount is greater than zero.</div>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label" for="RefundNotes">Internal notes (optional)</label>
+                            <textarea class="form-control" id="RefundNotes" name="Notes" rows="2" maxlength="500"></textarea>
+                        </div>
+                    </div>
+                    <div class="admin-refund-modal-footer">
+                        <button type="button" class="btn admin-refund-modal-btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn reservation-btn-approve">Approve Refund</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade admin-refund-modal" id="rejectCustomerRefundModal" tabindex="-1" aria-labelledby="rejectCustomerRefundModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered admin-refund-modal-dialog">
+            <div class="modal-content admin-refund-modal-content">
+                <div class="admin-refund-modal-head is-danger">
+                    <div class="admin-refund-modal-icon" aria-hidden="true">
+                        <i class="bi bi-slash-circle"></i>
+                    </div>
+                    <h2 id="rejectCustomerRefundModalLabel">Reject customer refund</h2>
+                    <p>The customer will be notified by email with the rejection reason you provide.</p>
+                </div>
+                <form asp-action="RejectCustomerRefund" asp-route-id="@Model!.RentalId" method="post"
+                      data-confirm="Reject this refund request?"
+                      data-confirm-text="The customer will be notified by email with the rejection reason you provide."
+                      data-confirm-button="Reject Refund"
+                      data-confirm-tone="danger">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="RentalId" value="@rejectRefundModel.RentalId" />
+                    <div class="admin-refund-modal-body">
+                        <dl class="admin-refund-modal-summary">
+                            <div>
+                                <dt>Requested refund</dt>
+                                <dd>@FormatPeso(rejectRefundModel.RefundRequestedAmount)</dd>
+                            </div>
+                            <div>
+                                <dt>Booking status</dt>
+                                <dd>Cancelled</dd>
+                            </div>
+                        </dl>
+                        @if (!string.IsNullOrWhiteSpace(rejectRefundModel.CustomerReason))
+                        {
+                            <div class="admin-refund-modal-quote">
+                                <strong>Customer reason</strong>
+                                @rejectRefundModel.CustomerReason
+                            </div>
+                        }
+                        <div class="mb-3">
+                            <label class="form-label" for="RejectReason">Rejection reason</label>
+                            <select class="form-select" id="RejectReason" name="Reason" required>
+                                <option value="">Select a reason</option>
+                                @foreach (var option in RejectCustomerRefundViewModel.ReasonOptions)
+                                {
+                                    <option value="@option">@option</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label" for="RejectOtherDetails">Additional details</label>
+                            <textarea class="form-control" id="RejectOtherDetails" name="OtherDetails" rows="3" maxlength="500" placeholder="Required when selecting Other; optional for predefined reasons"></textarea>
+                        </div>
+                    </div>
+                    <div class="admin-refund-modal-footer">
+                        <button type="button" class="btn admin-refund-modal-btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn reservation-btn-reject">Reject Refund</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    (function () {
+        const fileInput = document.getElementById('RefundReceiptImageFile');
+        const emptyState = document.getElementById('refundReceiptUploadEmpty');
+        const zone = document.getElementById('refundReceiptUploadZone');
+        const previewState = document.getElementById('refundReceiptUploadPreview');
+        const previewBox = document.getElementById('refundReceiptPreviewBox');
+        const previewImg = document.getElementById('refundReceiptPreviewImg');
+        const filenameLabel = document.getElementById('refundReceiptFilename');
+        const removeBtn = document.getElementById('refundReceiptRemoveBtn');
+        if (!fileInput || !previewState || !zone) return;
+
+        function clearReceipt() {
+            fileInput.value = '';
+            if (previewImg) {
+                previewImg.src = '';
+                previewImg.classList.add('d-none');
+            }
+            if (filenameLabel) filenameLabel.textContent = '';
+            if (emptyState) emptyState.classList.remove('d-none');
+            zone.classList.remove('d-none');
+            previewState.classList.remove('is-visible');
+        }
+
+        function showReceipt(file) {
+            if (!file || !previewImg) return;
+            if (filenameLabel) filenameLabel.textContent = file.name;
+            zone.classList.add('d-none');
+            if (emptyState) emptyState.classList.add('d-none');
+            previewState.classList.add('is-visible');
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                previewImg.src = event.target?.result || '';
+                previewImg.classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files[0]) showReceipt(fileInput.files[0]);
+            else clearReceipt();
+        });
+
+        if (previewBox) {
+            previewBox.addEventListener('click', function () {
+                fileInput.click();
+            });
+        }
+
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                clearReceipt();
+            });
+        }
+    })();
+</script>

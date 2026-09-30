@@ -11,14 +11,16 @@ QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var keysPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "private", "aspnet-keys"));
+var keysPath = builder.Environment.IsDevelopment()
+	? Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "private", "aspnet-keys"))
+	: Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys");
 try
 {
 	Directory.CreateDirectory(keysPath);
 }
-catch
+catch when (!builder.Environment.IsDevelopment())
 {
-	keysPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys");
+	keysPath = Path.Combine(Path.GetTempPath(), "EasyRent_Checking", "keys");
 	Directory.CreateDirectory(keysPath);
 }
 
@@ -27,10 +29,14 @@ builder.Services.AddDataProtection()
 	.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 
 builder.Services.AddDbContext<EasyRent_CheckingContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("EasyRent_CheckingContext") ?? throw new InvalidOperationException("Connection string 'EasyRent_CheckingContext' not found.")));
+	options.UseSqlServer(
+		builder.Configuration.GetConnectionString("EasyRent_CheckingContext")
+			?? throw new InvalidOperationException("Connection string 'EasyRent_CheckingContext' not found."),
+		sql => sql.EnableRetryOnFailure(maxRetryCount: 3)));
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+	.AddRazorRuntimeCompilation();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<ReceiptPdfService>();
@@ -55,6 +61,31 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+var errorLogPath = Path.Combine(app.Environment.ContentRootPath, "App_Data", "error-log.txt");
+Directory.CreateDirectory(Path.GetDirectoryName(errorLogPath)!);
+
+app.Use(async (context, next) =>
+{
+	try
+	{
+		await next();
+	}
+	catch (Exception ex)
+	{
+		var entry = $"[{DateTime.UtcNow:u}] {context.Request.Method} {context.Request.Path}{Environment.NewLine}{ex}{Environment.NewLine}{Environment.NewLine}";
+		try
+		{
+			await File.AppendAllTextAsync(errorLogPath, entry);
+		}
+		catch
+		{
+			// Ignore logging failures.
+		}
+
+		throw;
+	}
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

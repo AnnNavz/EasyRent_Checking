@@ -88,8 +88,8 @@ namespace EasyRent_Checking.Services
 
 			var pendingRentals = await _context.Rentals
 				.AsNoTracking()
-				.Include(r => r.Details)
-					.ThenInclude(d => d!.Vehicle)
+				.Include(r => r.RentalVehicles)
+					.ThenInclude(rv => rv.Vehicle)
 				.Where(r => r.RentalStatus == RentalStatus.Pending)
 				.OrderByDescending(r => r.RentalId)
 				.Take(8)
@@ -97,19 +97,77 @@ namespace EasyRent_Checking.Services
 
 			foreach (var rental in pendingRentals)
 			{
-				var plate = rental.Details?.Vehicle?.PlateNumber ?? "a vehicle";
-				var pickup = rental.Details == null
-					? now
-					: rental.Details.PickupDate.ToDateTime(rental.Details.PickupTime);
+				var plate = rental.RentalVehicles?
+					.OrderBy(rv => rv.SortOrder)
+					.Select(rv => rv.Vehicle?.PlateNumber)
+					.FirstOrDefault(p => !string.IsNullOrWhiteSpace(p))
+					?? "a vehicle";
+				var pickup = rental.PickupDate.ToDateTime(rental.PickupTime);
 				recent.Add((pickup, Item(
 					"booking-" + rental.RentalId,
 					"booking",
 					"booking",
 					"bi-calendar-check",
-					"New booking received",
-					$"Booking #{rental.RentalId} — {rental.CustomerName} requested {plate}.",
+					"Pay-later hold awaiting payment",
+					$"Booking #{rental.RentalId} — {rental.CustomerName} reserved {plate}.",
 					pickup,
 					"/Rentals/Details/" + rental.RentalId)));
+			}
+
+			var pendingRefunds = await _context.Rentals
+				.AsNoTracking()
+				.Where(r => r.RefundRequestedAt != null
+					&& r.RefundedAt == null
+					&& r.RefundRejectedAt == null
+					&& r.RentalStatus == RentalStatus.Cancelled)
+				.OrderByDescending(r => r.RefundRequestedAt)
+				.Take(8)
+				.ToListAsync();
+
+			foreach (var rental in pendingRefunds)
+			{
+				var at = rental.RefundRequestedAt ?? now;
+				var amount = rental.RefundRequestedAmount ?? 0m;
+				recent.Add((at, Item(
+					"refund-" + rental.RentalId,
+					"booking",
+					"warn",
+					"bi-cash-coin",
+					"Pending refund review",
+					$"Booking #{rental.RentalId} — {rental.CustomerName} requested a refund of ₱{amount:N2}.",
+					at,
+					"/Rentals/Details/" + rental.RentalId)));
+			}
+
+			var transitIssueLinks = await _context.TransitIssueLinks
+				.AsNoTracking()
+				.Include(l => l.Transit)!
+					.ThenInclude(t => t!.Rental)
+				.Include(l => l.IncidentReport)
+				.Include(l => l.MaintenanceLog)
+				.Where(l => l.ResolvedAt == null)
+				.OrderByDescending(l => l.LinkedAt)
+				.Take(8)
+				.ToListAsync();
+
+			foreach (var link in transitIssueLinks)
+			{
+				var rentalId = link.Transit?.RentalID ?? 0;
+				var source = link.Source == TransitIssueSource.Incident ? "Incident report" : "Maintenance log";
+				var refLabel = link.Source == TransitIssueSource.Incident && link.IncidentReportId.HasValue
+					? IncidentReport.FormatReference(link.IncidentReportId.Value)
+					: link.MaintenanceLogId.HasValue
+						? $"MNT-{link.MaintenanceLogId.Value:D5}"
+						: "Issue";
+				recent.Add((link.LinkedAt, Item(
+					"transit-issue-" + link.TransitIssueLinkId,
+					"booking",
+					"warn",
+					"bi-info-circle",
+					"Vehicle issue on active trip",
+					$"BK-{rentalId:D5} — {source} {refLabel} may require attention on Transit Management.",
+					link.LinkedAt,
+					"/Transits/Details/" + link.TransitID)));
 			}
 
 			foreach (var row in classified.Where(x => x.Kind == PmsDueKind.DueSoon).Take(6))
@@ -211,15 +269,15 @@ namespace EasyRent_Checking.Services
 					"/Incidents/Details/" + incident.IncidentReportId)));
 			}
 
-			var pendingCustomers = await _context.CustomerProfiles
+			var unverifiedCustomers = await _context.CustomerProfiles
 				.AsNoTracking()
 				.Include(c => c.User)
-				.Where(c => c.Status == Status.Pending)
-				.OrderByDescending(c => c.User != null ? c.User.CreatedAt : DateTime.MinValue)
+				.Where(c => c.User != null && !c.User.EmailConfirmed)
+				.OrderByDescending(c => c.User!.CreatedAt)
 				.Take(5)
 				.ToListAsync();
 
-			foreach (var customer in pendingCustomers)
+			foreach (var customer in unverifiedCustomers)
 			{
 				var at = customer.User?.CreatedAt ?? now;
 				recent.Add((at, Item(
@@ -227,8 +285,8 @@ namespace EasyRent_Checking.Services
 					"system",
 					"system",
 					"bi-person-plus",
-					"Customer pending approval",
-					$"{customer.FullName} registered and is waiting for account approval.",
+					"New customer registered",
+					$"{customer.User?.FullName} created an account and still needs to verify email.",
 					at,
 					"/Customers/Details?customerid=" + customer.CustomerId)));
 			}

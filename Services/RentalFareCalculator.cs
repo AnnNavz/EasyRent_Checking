@@ -1,6 +1,9 @@
 using EasyRent_Checking.Models;
 
 namespace EasyRent_Checking.Services
+/*
+ * Rental fare calculation
+ */
 {
 	public readonly record struct RentalFareBreakdown(
 		decimal BasePackageAmount,
@@ -16,32 +19,38 @@ namespace EasyRent_Checking.Services
 		decimal LineTotalAmount,
 		int SucceedingHours);
 
-	/// <summary>
-	/// Snapshots rental fare for payment.
-	/// SucceedingFeeTotal = (hours beyond the base package) × vehicle succeeding rate — not the per-hour rate alone.
-	/// </summary>
+	/*
+	 * Rental fare is computed here at booking time and saved on the rental.
+	 * Payment uses that saved amount, not the vehicle's current price.
+	 */
 	public static class RentalFareCalculator
 	{
-		/// <summary>Hours covered by <see cref="Vehicle.BasePrice"/> before succeeding fees apply.</summary>
+		// Hours covered by Vehicle.BasePrice before succeeding fees apply (company 8-hour package).
 		public const int BasePackageHours = 8;
 
-		public static RentalFareBreakdown Calculate(Vehicle vehicle, RentalDetails details)
+		// Single-vehicle shortcut. Computes the line for one vehicle, then applies Senior/PWD discount
+		// if rental.Discount is Yes. Use this when the booking has only one vehicle.
+		public static RentalFareBreakdown Calculate(Vehicle vehicle, Rental rental)
 		{
-			var lines = CalculateLines(new[] { vehicle }, details);
-			return Aggregate(lines, details.Discount == Discount.Yes);
+			var lines = CalculateLines(new[] { vehicle }, rental);
+			return Aggregate(lines, rental.Discount == Discount.Yes);
 		}
 
+		// Per-vehicle fare before discount.
+		// Gets pickup and return from the rental, rounds duration to whole hours, then extra hours = max(0, totalHours - 8).
+		// Every vehicle on the booking uses that same extra-hour count.
+		// Line total = BasePrice + (extra hours × that vehicle's SucceedingFee). Discount is not applied here.
 		public static IReadOnlyList<RentalVehicleFareLine> CalculateLines(
 			IReadOnlyList<Vehicle> vehicles,
-			RentalDetails details)
+			Rental rental)
 		{
 			if (vehicles == null || vehicles.Count == 0)
 			{
 				return Array.Empty<RentalVehicleFareLine>();
 			}
 
-			var start = details.PickupDate.ToDateTime(details.PickupTime);
-			var end = details.ReturnDate.ToDateTime(details.ReturnTime);
+			var start = rental.PickupDate.ToDateTime(rental.PickupTime);
+			var end = rental.ReturnDate.ToDateTime(rental.ReturnTime);
 			var totalHours = end > start
 				? Math.Max(0, (int)Math.Round((end - start).TotalHours))
 				: 0;
@@ -64,6 +73,9 @@ namespace EasyRent_Checking.Services
 			return lines;
 		}
 
+		// Combines all vehicle lines into one booking total.
+		// Sums base amounts and succeeding fees, then if applyDiscount is true takes 10% off the subtotal (Senior/PWD).
+		// Discount is once on the whole booking, not per vehicle.
 		public static RentalFareBreakdown Aggregate(
 			IReadOnlyList<RentalVehicleFareLine> lines,
 			bool applyDiscount)
@@ -85,38 +97,40 @@ namespace EasyRent_Checking.Services
 				TotalAmount: totalAmount);
 		}
 
-		public static void ApplyTo(Rental rental, Vehicle vehicle, RentalDetails details)
+		// Single-vehicle overload. Writes the computed fare onto the rental record.
+		public static void ApplyTo(Rental rental, Vehicle vehicle)
 		{
-			ApplyTo(rental, new[] { vehicle }, details);
+			ApplyTo(rental, new[] { vehicle });
 		}
 
-		public static void ApplyTo(Rental rental, IReadOnlyList<Vehicle> vehicles, RentalDetails details)
+		// Saves SucceedingFeeTotal and TotalAmount on the rental so payment uses this snapshot
+		// even if vehicle prices change later. Discount follows rental.Discount.
+		public static void ApplyTo(Rental rental, IReadOnlyList<Vehicle> vehicles)
 		{
-			var lines = CalculateLines(vehicles, details);
-			var fare = Aggregate(lines, details.Discount == Discount.Yes);
+			var lines = CalculateLines(vehicles, rental);
+			var fare = Aggregate(lines, rental.Discount == Discount.Yes);
 			rental.SucceedingFeeTotal = fare.SucceedingFeeTotal;
 			rental.TotalAmount = fare.TotalAmount;
 		}
 
-		/// <summary>
-		/// Builds <see cref="RentalVehicle"/> rows with line amounts.
-		/// Discount is applied once on the booking total (not per line).
-		/// </summary>
+		// Creates one RentalVehicle row per selected vehicle (base, succeeding fee, line total, sort order).
+		// Line amounts are undiscounted; Senior/PWD 10% is only on the rental total from ApplyTo / Aggregate.
 		public static List<RentalVehicle> BuildRentalVehicles(
 			IReadOnlyList<Vehicle> vehicles,
-			RentalDetails details)
+			Rental rental)
 		{
-			var lines = CalculateLines(vehicles, details);
-			var result = new List<RentalVehicle>(lines.Count);
-			for (var i = 0; i < lines.Count; i++)
+			var fareLines = CalculateLines(vehicles, rental);
+			var result = new List<RentalVehicle>(vehicles.Count);
+			for (var i = 0; i < vehicles.Count; i++)
 			{
-				var line = lines[i];
+				var vehicle = vehicles[i];
+				var fare = fareLines.FirstOrDefault(l => l.VehicleId == vehicle.VehicleId);
 				result.Add(new RentalVehicle
 				{
-					VehicleId = line.VehicleId,
-					LineBaseAmount = line.LineBaseAmount,
-					LineSucceedingFeeTotal = line.LineSucceedingFeeTotal,
-					LineTotalAmount = line.LineTotalAmount,
+					VehicleId = vehicle.VehicleId,
+					LineBaseAmount = fare.LineBaseAmount,
+					LineSucceedingFeeTotal = fare.LineSucceedingFeeTotal,
+					LineTotalAmount = fare.LineTotalAmount,
 					SortOrder = i
 				});
 			}

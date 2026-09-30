@@ -11,7 +11,9 @@ namespace EasyRent_Checking.Models
 		Pending,
 		Approved,
 		Cancelled,
-		Expired
+		Expired,
+		Refunded,
+		RefundRejected
 	}
 
 	public enum RentalOption

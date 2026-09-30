@@ -4,7 +4,7 @@
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "User Management";
+    ViewData["Title"] = "Customer Management";
     ViewData["ActivePage"] = "Customers";
 
     var totalCustomersChange = ViewData["TotalCustomersChange"] as decimal? ?? 0m;
@@ -23,8 +23,7 @@
 
     string currentFilterName = ViewData["CurrentFilter"]?.ToString() switch
     {
-        "Approved" => "Approved",
-        "Pending" => "Pending",
+        "Approved" => "Active",
         "Inactive" => "Inactive",
         _ => "Filters"
     };
@@ -52,9 +51,9 @@
 
     string StatusLabel(Status status) => status switch
     {
-        Status.Active => "Approved",
+        Status.Active => "Active",
         Status.Inactive => "Inactive",
-        _ => "Pending"
+        _ => "Unverified"
     };
 
     string StatusClass(Status status) => status switch
@@ -91,7 +90,7 @@
                     <i class="bi bi-people-fill"></i>
                 </div>
                 <div class="customer-metric-body">
-                    <span class="customer-metric-label">Pending Customers</span>
+                    <span class="customer-metric-label">Unverified Email</span>
                     <div class="customer-metric-value">@(ViewData["PendingCustomersCount"] ?? "0")</div>
                 </div>
                 <div class="customer-metric-trend">
@@ -112,7 +111,7 @@
         <div class="customer-index-toolbar mb-4">
             <div class="customer-index-toolbar-filters">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
                     </button>
                     <ul class="dropdown-menu">
@@ -125,12 +124,11 @@
                 </div>
 
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentFilterName
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="?currentFilter=Approved&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Approved</a></li>
-                        <li><a class="dropdown-item" href="?currentFilter=Pending&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Pending</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Approved&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Active</a></li>
                         <li><a class="dropdown-item" href="?currentFilter=Inactive&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Inactive</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
                         <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
@@ -144,8 +142,7 @@
                        name="searchString"
                        value="@ViewData["CurrentSearch"]"
                        class="form-control customer-index-search-input"
-                       placeholder="Search Customer" />
-                <i class="bi bi-mic customer-index-mic-icon" aria-hidden="true"></i>
+                       placeholder="Search Customers" />
                 @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
                 {
                     <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]"
@@ -177,29 +174,29 @@
                     {
                         @foreach (var item in Model)
                         {
-                            var safeName = (item.FullName ?? "this customer")
+                            var safeName = (item.User!.FullName ?? "this customer")
                                 .Replace("\\", "\\\\")
                                 .Replace("'", "\\'");
                             <tr>
                                 <td>
                                     <div class="table-customer-cell">
-                                        <a asp-action="Details" asp-route-customerid="@item.CustomerId" class="table-customer-avatar" aria-label="View @item.FullName profile">
-                                            @if (!string.IsNullOrEmpty(item.ProfileImagePath))
+                                        <a asp-action="Details" asp-route-customerid="@item.CustomerId" class="table-customer-avatar" aria-label="View @item.User!.FullName profile">
+                                            @if (!string.IsNullOrEmpty(item.User!.ProfileImagePath))
                                             {
-                                                <img src="~/images/@item.ProfileImagePath" alt="" />
+                                                <img src="~/images/@item.User!.ProfileImagePath" alt="" />
                                             }
                                             else
                                             {
-                                                @GetInitials(item.FullName)
+                                                @GetInitials(item.User!.FullName)
                                             }
                                         </a>
-                                        <span class="table-customer-name">@item.FullName</span>
+                                        <span class="table-customer-name">@item.User!.FullName</span>
                                     </div>
                                 </td>
-                                <td>@Html.DisplayFor(modelItem => item.ContactNumber)</td>
+                                <td>@Html.DisplayFor(modelItem => item.User!.ContactNumber)</td>
                                 <td>@(item.User?.Email ?? "—")</td>
                                 <td>
-                                    <span class="customer-status-badge @StatusClass(item.Status)">@StatusLabel(item.Status)</span>
+                                    <span class="customer-status-badge @StatusClass(item.User!.Status)">@StatusLabel(item.User!.Status)</span>
                                 </td>
                                 <td class="text-end">
                                     <div class="dropdown">

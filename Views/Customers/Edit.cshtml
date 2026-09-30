@@ -47,12 +47,12 @@
             <div class="row g-3">
                 <div class="col-12">
                     <label class="customer-wizard-label">Full Name</label>
-                    <input asp-for="FullName" class="form-control customer-wizard-input" placeholder="e.g. Jane Doe" />
+                    <input asp-for="FullName" class="form-control customer-wizard-input" placeholder="@FieldRules.NamePlaceholder" />
                     <span asp-validation-for="FullName" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
                     <label class="customer-wizard-label">Phone Number</label>
-                    <input asp-for="ContactNumber" class="form-control customer-wizard-input" placeholder="09123456789 or +639123456789" />
+                    <input asp-for="ContactNumber" class="form-control customer-wizard-input" placeholder="09123456789" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" />
                     <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
@@ -92,6 +92,7 @@
                         <option value="@nameof(ValidIDtype.UMID)">UMID</option>
                         <option value="@nameof(ValidIDtype.DriverLicense)">Driver's License</option>
                         <option value="@nameof(ValidIDtype.VotersID)">Voter's ID</option>
+                        <option value="@nameof(ValidIDtype.PostalID)">Postal ID</option>
                     </select>
                     <span asp-validation-for="ValidIDtype" class="text-danger small mt-1 d-block"></span>
                 </div>

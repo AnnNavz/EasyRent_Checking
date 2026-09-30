@@ -67,19 +67,27 @@
                     </div>
 
                     <div class="pms-record-card">
-                        <div class="mb-3">
+                        <div class="pms-record-card-head">
+                            <span class="pms-side-card-icon"><i class="bi bi-car-front-fill"></i></span>
+                            <h6>Vehicle</h6>
+                        </div>
+                        <div class="mb-0">
                             <label asp-for="Odometer" class="pms-record-label">Odometer (km)</label>
-                            <div class="input-group pms-record-input-group">
-                                <input asp-for="Odometer"
-                                       id="input-Odometer"
-                                       class="form-control pms-record-input"
-                                       type="number"
-                                       min="0"
-                                       step="1"
-                                       placeholder="Current vehicle reading" />
-                                <span class="input-group-text pms-record-suffix">km</span>
-                            </div>
+                            <input asp-for="Odometer"
+                                   id="input-Odometer"
+                                   class="form-control pms-record-input"
+                                   type="number"
+                                   min="0"
+                                   step="1"
+                                   placeholder="Current vehicle reading" />
                             <span asp-validation-for="Odometer" class="text-danger small mt-1 d-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="pms-record-card">
+                        <div class="pms-record-card-head">
+                            <span class="pms-side-card-icon"><i class="bi bi-clipboard-check"></i></span>
+                            <h6>Checkup Findings</h6>
                         </div>
                         <div>
                             <label asp-for="WorkDone" class="pms-record-label">Findings</label>
@@ -210,7 +218,7 @@
                                 <dd class="text-uppercase font-monospace">@plate</dd>
                             </div>
                             <div>
-                                <dt>Current Odometer</dt>
+                                <dt>Current Odometer (km)</dt>
                                 <dd>@vehicle.Odometer.ToString("N0")</dd>
                             </div>
                             <div>
@@ -410,7 +418,7 @@
         function compileReviewSummary() {
             const odometer = document.getElementById('input-Odometer').value;
             document.getElementById('review-Odometer').innerText = odometer
-                ? Number(odometer).toLocaleString() + 'km'
+                ? Number(odometer).toLocaleString()
                 : '—';
 
             const cost = document.getElementById('input-Cost').value;

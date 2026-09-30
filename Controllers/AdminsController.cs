@@ -12,8 +12,8 @@ using EasyRent_Checking.Services;
 
 namespace EasyRent_Checking.Controllers
 {
-	/// <summary>CRUD for admin user accounts.</summary>
-	[Authorize(Policy = "AdminOnly")]
+	/// <summary>CRUD for admin/staff accounts. Account settings are available to both roles.</summary>
+	[Authorize(Policy = "StaffArea")]
 	[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
 	public class AdminsController : Controller
 	{
@@ -31,7 +31,8 @@ namespace EasyRent_Checking.Controllers
 			_webHostEnvironment = webHostEnvironment;
 		}
 
-		public async Task<IActionResult> Index(string searchString, string sortBy, int? page)
+		[Authorize(Policy = "AdminOnly")]
+		public async Task<IActionResult> Index(string searchString, string sortBy, string staffSortBy, int? page, int? staffPage)
 		{
 			const int pageSize = 10;
 			var pageNumber = page.GetValueOrDefault(1);
@@ -40,43 +41,57 @@ namespace EasyRent_Checking.Controllers
 				pageNumber = 1;
 			}
 
-			ViewData["Title"] = "Admin Management";
+			ViewData["Title"] = "Admin & Staff Management";
 			ViewData["ActivePage"] = "Admins";
 			ViewData["CurrentSearch"] = searchString;
 			ViewData["CurrentSort"] = sortBy;
+			ViewData["CurrentStaffSort"] = staffSortBy;
 			ViewData["CurrentAdminId"] = CurrentUserId();
 
-			var adminsQuery = _context.AdminProfiles
-				.Include(a => a.User)
-				.AsQueryable();
+			var adminsQuery = _context.Users.Where(u => u.Role == UserRole.Admin);
+			var staffQuery = _context.Users.Where(u => u.Role == UserRole.Staff);
 
 			var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 			var lastMonthStart = monthStart.AddMonths(-1);
 			var totalAdminsCount = await adminsQuery.CountAsync();
-			var addedThisMonth = await adminsQuery.CountAsync(a => a.User != null && a.User.CreatedAt >= monthStart);
-			var totalAtMonthStart = await adminsQuery.CountAsync(a => a.User != null && a.User.CreatedAt < monthStart);
-			var addedLastMonth = await adminsQuery.CountAsync(a =>
-				a.User != null && a.User.CreatedAt >= lastMonthStart && a.User.CreatedAt < monthStart);
+			var addedThisMonth = await adminsQuery.CountAsync(u => u.CreatedAt >= monthStart);
+			var totalAtMonthStart = await adminsQuery.CountAsync(u => u.CreatedAt < monthStart);
+			var addedLastMonth = await adminsQuery.CountAsync(u =>
+				u.CreatedAt >= lastMonthStart && u.CreatedAt < monthStart);
 
 			ViewData["TotalAdminsCount"] = totalAdminsCount;
 			ViewData["AddedThisMonthCount"] = addedThisMonth;
 			ViewData["TotalAdminsChange"] = PctChange(totalAdminsCount, totalAtMonthStart);
 			ViewData["AddedThisMonthChange"] = PctChange(addedThisMonth, addedLastMonth);
 			ViewData["CanDeleteAdmins"] = totalAdminsCount > 1;
+			ViewData["TotalStaffCount"] = await staffQuery.CountAsync();
 
 			if (!string.IsNullOrEmpty(searchString))
 			{
 				var term = searchString.Trim();
-				adminsQuery = adminsQuery.Where(a =>
-					a.FullName.Contains(term)
-					|| (a.User != null && a.User.Email.Contains(term)));
+				adminsQuery = adminsQuery.Where(u =>
+					u.FullName.Contains(term)
+					|| u.ContactNumber.Contains(term)
+					|| (u.Address != null && u.Address.Contains(term))
+					|| u.Email.Contains(term));
+				staffQuery = staffQuery.Where(u =>
+					u.FullName.Contains(term)
+					|| u.ContactNumber.Contains(term)
+					|| (u.Address != null && u.Address.Contains(term))
+					|| u.Email.Contains(term));
 			}
 
 			adminsQuery = sortBy switch
 			{
-				"Name" => adminsQuery.OrderBy(a => a.FullName),
-				"Email" => adminsQuery.OrderBy(a => a.User!.Email),
-				_ => adminsQuery.OrderByDescending(a => a.AdminId)
+				"Name" => adminsQuery.OrderBy(u => u.FullName),
+				"Email" => adminsQuery.OrderBy(u => u.Email),
+				_ => adminsQuery.OrderByDescending(u => u.UserId)
+			};
+			staffQuery = staffSortBy switch
+			{
+				"Name" => staffQuery.OrderBy(u => u.FullName),
+				"Email" => staffQuery.OrderBy(u => u.Email),
+				_ => staffQuery.OrderByDescending(u => u.UserId)
 			};
 
 			var totalCount = await adminsQuery.CountAsync();
@@ -86,19 +101,39 @@ namespace EasyRent_Checking.Controllers
 				pageNumber = totalPages;
 			}
 
+			var staffPageNumber = staffPage.GetValueOrDefault(1);
+			if (staffPageNumber < 1)
+			{
+				staffPageNumber = 1;
+			}
+			var staffTotalCount = await staffQuery.CountAsync();
+			var staffTotalPages = staffTotalCount == 0 ? 1 : (int)Math.Ceiling(staffTotalCount / (double)pageSize);
+			if (staffPageNumber > staffTotalPages)
+			{
+				staffPageNumber = staffTotalPages;
+			}
+
 			ViewData["PageIndex"] = pageNumber;
 			ViewData["TotalPages"] = totalPages;
 			ViewData["TotalCount"] = totalCount;
 			ViewData["PageSize"] = pageSize;
+			ViewData["StaffPageIndex"] = staffPageNumber;
+			ViewData["StaffTotalPages"] = staffTotalPages;
+			ViewData["StaffTotalCount"] = staffTotalCount;
 
 			var admins = await adminsQuery
 				.Skip((pageNumber - 1) * pageSize)
+				.Take(pageSize)
+				.ToListAsync();
+			ViewData["StaffList"] = await staffQuery
+				.Skip((staffPageNumber - 1) * pageSize)
 				.Take(pageSize)
 				.ToListAsync();
 
 			return View(admins);
 		}
 
+		[Authorize(Policy = "AdminOnly")]
 		public async Task<IActionResult> Details(int? adminid)
 		{
 			if (adminid == null)
@@ -106,17 +141,105 @@ namespace EasyRent_Checking.Controllers
 				return NotFound();
 			}
 
-			var admin = await _context.AdminProfiles
-				.Include(a => a.User)
-				.FirstOrDefaultAsync(a => a.AdminId == adminid);
-			if (admin == null)
+			var member = await FindAdminOrStaffAsync(adminid.Value);
+			if (member == null)
 			{
 				return NotFound();
 			}
 
 			ViewData["CurrentAdminId"] = CurrentUserId();
-			ViewData["CanDeleteAdmins"] = await _context.AdminProfiles.CountAsync() > 1;
-			return View(admin);
+			ViewData["CanDeleteAdmins"] = await AdminRoleCountAsync() > 1;
+			return View(AdminStaffMemberViewModel.FromUser(member));
+		}
+
+		[Authorize(Policy = "AdminOnly")]
+		public async Task<IActionResult> Edit(int? adminid)
+		{
+			if (adminid == null)
+			{
+				return NotFound();
+			}
+
+			if (adminid == CurrentUserId())
+			{
+				TempData["ErrorMessage"] = "Use Account Settings to edit your own profile.";
+				return RedirectToAction(nameof(Settings));
+			}
+
+			var member = await FindAdminOrStaffAsync(adminid.Value);
+			if (member == null)
+			{
+				return NotFound();
+			}
+
+			return View(AdminAccountInputModel.FromUser(member));
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Policy = "AdminOnly")]
+		public async Task<IActionResult> Edit(int? adminid, [Bind("AdminId,FullName,Email,ContactNumber,Address,Password,ConfirmPassword,Role")] AdminAccountInputModel model)
+		{
+			if (adminid != model.AdminId)
+			{
+				return NotFound();
+			}
+
+			if (adminid == CurrentUserId())
+			{
+				TempData["ErrorMessage"] = "Use Account Settings to edit your own profile.";
+				return RedirectToAction(nameof(Settings));
+			}
+
+			if (string.IsNullOrWhiteSpace(model.Password))
+			{
+				ModelState.Remove(nameof(model.Password));
+				ModelState.Remove(nameof(model.ConfirmPassword));
+			}
+
+			NormalizeProfileContact(model);
+
+			if (!string.IsNullOrWhiteSpace(model.Email))
+			{
+				var emailExists = await _context.Users
+					.AnyAsync(u => u.Email == model.Email.Trim() && u.UserId != model.AdminId);
+				if (emailExists)
+				{
+					ModelState.AddModelError(nameof(model.Email), "An account with this email already exists.");
+				}
+			}
+
+			if (!ModelState.IsValid)
+			{
+				return View(model);
+			}
+
+			var member = await FindAdminOrStaffAsync(model.AdminId);
+			if (member == null)
+			{
+				return NotFound();
+			}
+
+			member.FullName = model.FullName.Trim();
+			member.ContactNumber = model.ContactNumber.Trim();
+			member.Address = model.Address.Trim();
+			member.Email = model.Email.Trim();
+			if (!string.IsNullOrWhiteSpace(model.Password))
+			{
+				member.SetPassword(model.Password);
+			}
+
+			var roleLabel = RoleLabel(member.Role);
+			_logs.Record(
+				SystemLogAction.Updated,
+				SystemLogCategory.Admin,
+				$"Updated {roleLabel.ToLowerInvariant()} account {member.FullName}.",
+				"Admin",
+				member.UserId);
+			await _context.SaveChangesAsync();
+
+			TempData["SuccessMessage"] = $"{roleLabel} account for {member.FullName} was updated.";
+			return RedirectToAction(nameof(Details), new { adminid = member.UserId });
 		}
 
 		[AllowAnonymous]
@@ -133,56 +256,41 @@ namespace EasyRent_Checking.Controllers
 		[HttpPost]
 		[AllowAnonymous]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create([Bind("FullName,Email,Password,ConfirmPassword")] AdminAccountInputModel model)
+		public async Task<IActionResult> Create([Bind("FullName,Email,ContactNumber,Address,Password,ConfirmPassword")] AdminAccountInputModel model)
 		{
 			if (await RejectIfAdminSetupCompleteAsync())
 			{
 				return User.Identity?.IsAuthenticated == true ? Forbid() : Challenge();
 			}
 
-			if (!string.IsNullOrWhiteSpace(model.Email))
-			{
-				var emailExists = await _context.Users.AnyAsync(u => u.Email == model.Email);
-				if (emailExists)
-				{
-					ModelState.AddModelError(nameof(model.Email), "An account with this email already exists.");
-				}
-			}
-
-			if (!ModelState.IsValid)
+			var user = await CreateAccountAsync(model, UserRole.Admin);
+			if (user == null)
 			{
 				return View(model);
 			}
 
-			var user = new User
+			TempData["SuccessMessage"] = $"Admin account for {user.FullName} was created.";
+			return RedirectToAction(nameof(Index));
+		}
+
+		[Authorize(Policy = "AdminOnly")]
+		public IActionResult CreateStaff()
+		{
+			return View(new AdminAccountInputModel());
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Policy = "AdminOnly")]
+		public async Task<IActionResult> CreateStaff([Bind("FullName,Email,ContactNumber,Address,Password,ConfirmPassword")] AdminAccountInputModel model)
+		{
+			var user = await CreateAccountAsync(model, UserRole.Staff);
+			if (user == null)
 			{
-				Email = model.Email.Trim(),
-				Role = UserRole.Admin,
-				CreatedAt = DateTime.Now,
-				EmailConfirmed = true
-			};
-			user.SetPassword(model.Password);
+				return View(model);
+			}
 
-			_context.Users.Add(user);
-			await _context.SaveChangesAsync();
-
-			var profile = new AdminProfile
-			{
-				AdminId = user.UserId,
-				FullName = model.FullName.Trim()
-			};
-
-			_context.AdminProfiles.Add(profile);
-			await _context.SaveChangesAsync();
-			_logs.Record(
-				SystemLogAction.Created,
-				SystemLogCategory.Admin,
-				$"Created admin account {profile.FullName}.",
-				"Admin",
-				profile.AdminId);
-			await _context.SaveChangesAsync();
-
-			TempData["SuccessMessage"] = $"Admin account for {profile.FullName} was created.";
+			TempData["SuccessMessage"] = $"Staff account for {user.FullName} was created.";
 			return RedirectToAction(nameof(Index));
 		}
 
@@ -190,22 +298,21 @@ namespace EasyRent_Checking.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> DeleteConfirmed(int? adminid)
 		{
-			var profile = await _context.AdminProfiles
-				.Include(a => a.User)
-				.FirstOrDefaultAsync(a => a.AdminId == adminid);
+			var admin = await _context.Users
+				.FirstOrDefaultAsync(u => u.UserId == adminid && u.Role == UserRole.Admin);
 
-			if (profile?.User == null)
+			if (admin == null)
 			{
 				return RedirectToAction(nameof(Index));
 			}
 
-			if (profile.AdminId == CurrentUserId())
+			if (admin.UserId == CurrentUserId())
 			{
 				TempData["ErrorMessage"] = "You cannot delete the account you are signed in with.";
 				return RedirectToAction(nameof(Index));
 			}
 
-			if (await _context.AdminProfiles.CountAsync() <= 1)
+			if (await AdminRoleCountAsync() <= 1)
 			{
 				TempData["ErrorMessage"] = "The last admin account cannot be deleted.";
 				return RedirectToAction(nameof(Index));
@@ -214,34 +321,101 @@ namespace EasyRent_Checking.Controllers
 			_logs.Record(
 				SystemLogAction.Deleted,
 				SystemLogCategory.Admin,
-				$"Deleted admin account {profile.FullName}.",
+				$"Deleted admin account {admin.FullName}.",
 				"Admin",
-				profile.AdminId);
-			_context.Users.Remove(profile.User);
+				admin.UserId);
+			_context.Users.Remove(admin);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = $"Admin account for {profile.FullName} was deleted.";
+			TempData["SuccessMessage"] = $"Admin account for {admin.FullName} was deleted.";
 			return RedirectToAction(nameof(Index));
+		}
+
+		[HttpPost, ActionName("DeleteStaff")]
+		[ValidateAntiForgeryToken]
+		[Authorize(Policy = "AdminOnly")]
+		public async Task<IActionResult> DeleteStaffConfirmed(int? staffid)
+		{
+			var staff = await _context.Users
+				.FirstOrDefaultAsync(u => u.UserId == staffid && u.Role == UserRole.Staff);
+
+			if (staff == null)
+			{
+				return RedirectToAction(nameof(Index));
+			}
+
+			if (staff.UserId == CurrentUserId())
+			{
+				TempData["ErrorMessage"] = "You cannot delete the account you are signed in with.";
+				return RedirectToAction(nameof(Index));
+			}
+
+			_logs.Record(
+				SystemLogAction.Deleted,
+				SystemLogCategory.Admin,
+				$"Deleted staff account {staff.FullName}.",
+				"Admin",
+				staff.UserId);
+			_context.Users.Remove(staff);
+			await _context.SaveChangesAsync();
+
+			TempData["SuccessMessage"] = $"Staff account for {staff.FullName} was deleted.";
+			return RedirectToAction(nameof(Index));
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Policy = "AdminOnly")]
+		public async Task<IActionResult> ToggleStaffActive(int staffid)
+		{
+			var staff = await _context.Users
+				.FirstOrDefaultAsync(u => u.UserId == staffid && u.Role == UserRole.Staff);
+
+			if (staff == null)
+			{
+				return NotFound();
+			}
+
+			if (staff.UserId == CurrentUserId())
+			{
+				TempData["ErrorMessage"] = "Use Account Settings to deactivate your own account.";
+				return RedirectToAction(nameof(Details), new { adminid = staffid });
+			}
+
+			staff.IsSelfDeactivated = !staff.IsSelfDeactivated;
+			_logs.Record(
+				staff.IsSelfDeactivated ? SystemLogAction.Deactivated : SystemLogAction.Reactivated,
+				SystemLogCategory.Admin,
+				staff.IsSelfDeactivated
+					? $"Deactivated staff account {staff.FullName}."
+					: $"Reactivated staff account {staff.FullName}.",
+				"Admin",
+				staff.UserId);
+			await _context.SaveChangesAsync();
+
+			TempData["SuccessMessage"] = staff.IsSelfDeactivated
+				? $"Staff account for {staff.FullName} was deactivated."
+				: $"Staff account for {staff.FullName} was reactivated.";
+			return RedirectToAction(nameof(Details), new { adminid = staffid });
 		}
 
 		public async Task<IActionResult> Settings(string? tab, string? edit)
 		{
-			var admin = await GetLoggedInAdminAsync();
-			if (admin?.AdminProfile == null)
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
 			{
 				return RedirectToAction("Index", "Dashboard");
 			}
 
-			return View(BuildSettingsViewModel(admin, admin.AdminProfile, tab, edit));
+			return View(BuildSettingsViewModel(account, tab, edit));
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> UpdateFullName(string fullName)
 		{
-			var admin = await GetLoggedInAdminAsync();
-			var profile = admin?.AdminProfile;
-			if (admin == null || profile == null)
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
 			{
 				return RedirectToAction("Index", "Dashboard");
 			}
@@ -252,15 +426,15 @@ namespace EasyRent_Checking.Controllers
 				return RedirectToSettings("profile", "name");
 			}
 
-			profile.FullName = fullName.Trim();
+			account.FullName = fullName.Trim();
 			_logs.Record(
 				SystemLogAction.Updated,
 				SystemLogCategory.Admin,
-				$"Updated admin name to {profile.FullName}.",
+				$"Updated {RoleLabel(account.Role).ToLowerInvariant()} name to {account.FullName}.",
 				"Admin",
-				profile.AdminId);
+				account.UserId);
 			await _context.SaveChangesAsync();
-			await SignInAdminAsync(admin, profile.FullName);
+			await SignInAdminAsync(account, account.FullName);
 			TempData["SuccessMessage"] = "Your name has been updated.";
 			return RedirectToSettings("profile");
 		}
@@ -269,9 +443,8 @@ namespace EasyRent_Checking.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> UpdateEmail(string email)
 		{
-			var admin = await GetLoggedInAdminAsync();
-			var profile = admin?.AdminProfile;
-			if (admin == null || profile == null)
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
 			{
 				return RedirectToAction("Index", "Dashboard");
 			}
@@ -284,23 +457,81 @@ namespace EasyRent_Checking.Controllers
 			}
 
 			var emailExists = await _context.Users
-				.AnyAsync(u => u.Email == email && u.UserId != admin.UserId);
+				.AnyAsync(u => u.Email == email && u.UserId != account.UserId);
 			if (emailExists)
 			{
 				TempData["ErrorMessage"] = "An account with this email already exists.";
 				return RedirectToSettings("profile", "email");
 			}
 
-			admin.Email = email;
+			account.Email = email;
 			_logs.Record(
 				SystemLogAction.Updated,
 				SystemLogCategory.Admin,
-				$"Updated admin email for {profile.FullName}.",
+				$"Updated {RoleLabel(account.Role).ToLowerInvariant()} email for {account.FullName}.",
 				"Admin",
-				profile.AdminId);
+				account.UserId);
 			await _context.SaveChangesAsync();
-			await SignInAdminAsync(admin, profile.FullName);
+			await SignInAdminAsync(account, account.FullName);
 			TempData["SuccessMessage"] = "Your email has been updated.";
+			return RedirectToSettings("profile");
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> UpdatePhone(string contactNumber)
+		{
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
+			{
+				return RedirectToAction("Index", "Dashboard");
+			}
+
+			contactNumber = FieldRules.NormalizePhMobile(contactNumber);
+			if (!FieldRules.IsPhMobile(contactNumber))
+			{
+				TempData["ErrorMessage"] = FieldRules.PhMobileMessage;
+				return RedirectToSettings("profile", "phone");
+			}
+
+			account.ContactNumber = contactNumber;
+			_logs.Record(
+				SystemLogAction.Updated,
+				SystemLogCategory.Admin,
+				$"Updated {RoleLabel(account.Role).ToLowerInvariant()} contact number for {account.FullName}.",
+				"Admin",
+				account.UserId);
+			await _context.SaveChangesAsync();
+			TempData["SuccessMessage"] = "Your contact number has been updated.";
+			return RedirectToSettings("profile");
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> UpdateAddress(string address)
+		{
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
+			{
+				return RedirectToAction("Index", "Dashboard");
+			}
+
+			address = (address ?? string.Empty).Trim();
+			if (string.IsNullOrWhiteSpace(address) || address.Length > 255)
+			{
+				TempData["ErrorMessage"] = "Address is required and cannot exceed 255 characters.";
+				return RedirectToSettings("profile", "address");
+			}
+
+			account.Address = address;
+			_logs.Record(
+				SystemLogAction.Updated,
+				SystemLogCategory.Admin,
+				$"Updated {RoleLabel(account.Role).ToLowerInvariant()} address for {account.FullName}.",
+				"Admin",
+				account.UserId);
+			await _context.SaveChangesAsync();
+			TempData["SuccessMessage"] = "Your address has been updated.";
 			return RedirectToSettings("profile");
 		}
 
@@ -308,9 +539,8 @@ namespace EasyRent_Checking.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> UpdateProfileImage(IFormFile? profileImageFile)
 		{
-			var admin = await GetLoggedInAdminAsync();
-			var profile = admin?.AdminProfile;
-			if (admin == null || profile == null)
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
 			{
 				return RedirectToAction("Index", "Dashboard");
 			}
@@ -337,17 +567,17 @@ namespace EasyRent_Checking.Controllers
 				return RedirectToSettings("profile");
 			}
 
-			profile.ProfileImagePath = await ImageStorage.SaveAsync(
+			account.ProfileImagePath = await ImageStorage.SaveAsync(
 				_webHostEnvironment,
 				profileImageFile,
-				ImageStorage.AdminsFolder);
+				account.Role == UserRole.Staff ? ImageStorage.StaffsFolder : ImageStorage.AdminsFolder);
 
 			_logs.Record(
 				SystemLogAction.Updated,
 				SystemLogCategory.Admin,
-				"Updated admin profile photo.",
+				$"Updated {RoleLabel(account.Role).ToLowerInvariant()} profile photo.",
 				"Admin",
-				profile.AdminId);
+				account.UserId);
 			await _context.SaveChangesAsync();
 			TempData["SuccessMessage"] = "Your profile photo has been updated.";
 			return RedirectToSettings("profile");
@@ -357,35 +587,34 @@ namespace EasyRent_Checking.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> ChangePassword([Bind(Prefix = "Password")] ChangePasswordInputModel model)
 		{
-			var admin = await GetLoggedInAdminAsync();
-			var profile = admin?.AdminProfile;
-			if (admin == null || profile == null)
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
 			{
 				return RedirectToAction("Index", "Dashboard");
 			}
 
 			if (!ModelState.IsValid)
 			{
-				var viewModel = BuildSettingsViewModel(admin, profile, "password", null);
+				var viewModel = BuildSettingsViewModel(account, "password", null);
 				viewModel.Password = model;
 				return View(nameof(Settings), viewModel);
 			}
 
-			if (!admin.VerifyPassword(model.CurrentPassword))
+			if (!account.VerifyPassword(model.CurrentPassword))
 			{
 				ModelState.AddModelError("Password.CurrentPassword", "Current password is incorrect.");
-				var viewModel = BuildSettingsViewModel(admin, profile, "password", null);
+				var viewModel = BuildSettingsViewModel(account, "password", null);
 				viewModel.Password = model;
 				return View(nameof(Settings), viewModel);
 			}
 
-			admin.SetPassword(model.NewPassword);
+			account.SetPassword(model.NewPassword);
 			_logs.Record(
 				SystemLogAction.Updated,
 				SystemLogCategory.Admin,
-				$"Changed password for admin {profile.FullName}.",
+				$"Changed password for {RoleLabel(account.Role).ToLowerInvariant()} {account.FullName}.",
 				"Admin",
-				profile.AdminId);
+				account.UserId);
 			await _context.SaveChangesAsync();
 			TempData["SuccessMessage"] = "Your password has been updated.";
 			return RedirectToSettings("password");
@@ -395,27 +624,26 @@ namespace EasyRent_Checking.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> UpdateMfa(bool enabled)
 		{
-			var admin = await GetLoggedInAdminAsync();
-			var profile = admin?.AdminProfile;
-			if (admin == null || profile == null)
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
 			{
 				return RedirectToAction("Index", "Dashboard");
 			}
 
-			admin.LoginMfaEnabled = enabled;
+			account.LoginMfaEnabled = enabled;
 			if (!enabled)
 			{
-				admin.ClearLoginOtp();
+				account.ClearLoginOtp();
 			}
 
 			_logs.Record(
 				SystemLogAction.Updated,
 				SystemLogCategory.Admin,
 				enabled
-					? $"Turned on email sign-in codes for {profile.FullName}."
-					: $"Turned off email sign-in codes for {profile.FullName}.",
+					? $"Turned on email sign-in codes for {account.FullName}."
+					: $"Turned off email sign-in codes for {account.FullName}.",
 				"Admin",
-				profile.AdminId);
+				account.UserId);
 			await _context.SaveChangesAsync();
 			TempData["SuccessMessage"] = enabled
 				? "Email sign-in codes are now on. We'll send a code after your password."
@@ -427,30 +655,32 @@ namespace EasyRent_Checking.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> DeactivateAccount()
 		{
-			var admin = await GetLoggedInAdminAsync();
-			var profile = admin?.AdminProfile;
-			if (admin == null || profile == null)
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
 			{
 				return RedirectToAction("Index", "Dashboard");
 			}
 
-			if (!await HasOtherActiveAdminsAsync(profile.AdminId))
+			var isStaff = account.Role == UserRole.Staff;
+			if (!isStaff && !await HasOtherActiveAdminsAsync(account.UserId))
 			{
 				TempData["ErrorMessage"] = "The last active admin account cannot be deactivated.";
 				return RedirectToSettings("security");
 			}
 
-			profile.IsSelfDeactivated = true;
+			account.IsSelfDeactivated = true;
 			_logs.Record(
 				SystemLogAction.Deactivated,
 				SystemLogCategory.Admin,
-				$"Deactivated admin account {profile.FullName}.",
+				$"Deactivated {RoleLabel(account.Role).ToLowerInvariant()} account {account.FullName}.",
 				"Admin",
-				profile.AdminId);
+				account.UserId);
 			await _context.SaveChangesAsync();
 			ClearLoginMfaCookie();
 			await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-			TempData["SuccessMessage"] = "Your account is deactivated. Sign in again anytime to reactivate it.";
+			TempData["SuccessMessage"] = isStaff
+				? "Your staff account is deactivated. Contact an administrator to reactivate it."
+				: "Your account is deactivated. Sign in again anytime to reactivate it.";
 			return RedirectToAction("Login", "Account");
 		}
 
@@ -458,14 +688,13 @@ namespace EasyRent_Checking.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> DeleteAccount()
 		{
-			var admin = await GetLoggedInAdminAsync();
-			var profile = admin?.AdminProfile;
-			if (admin == null || profile == null)
+			var account = await GetLoggedInStaffAreaUserAsync();
+			if (account == null)
 			{
 				return RedirectToAction("Index", "Dashboard");
 			}
 
-			if (!await HasOtherActiveAdminsAsync(profile.AdminId))
+			if (account.Role != UserRole.Staff && !await HasOtherActiveAdminsAsync(account.UserId))
 			{
 				TempData["ErrorMessage"] = "The last active admin account cannot be deleted.";
 				return RedirectToSettings("security");
@@ -474,10 +703,10 @@ namespace EasyRent_Checking.Controllers
 			_logs.Record(
 				SystemLogAction.Deleted,
 				SystemLogCategory.Admin,
-				$"Deleted admin account {profile.FullName}.",
+				$"Deleted {RoleLabel(account.Role).ToLowerInvariant()} account {account.FullName}.",
 				"Admin",
-				profile.AdminId);
-			_context.Users.Remove(admin);
+				account.UserId);
+			_context.Users.Remove(account);
 			await _context.SaveChangesAsync();
 			ClearLoginMfaCookie();
 			await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -485,22 +714,66 @@ namespace EasyRent_Checking.Controllers
 			return RedirectToAction("Login", "Account");
 		}
 
-		private async Task<User?> GetLoggedInAdminAsync()
+		private async Task<User?> CreateAccountAsync(AdminAccountInputModel model, UserRole role)
 		{
-			var userId = CurrentUserId();
-			if (userId == null)
+			NormalizeProfileContact(model);
+
+			if (!string.IsNullOrWhiteSpace(model.Email))
+			{
+				var emailExists = await _context.Users.AnyAsync(u => u.Email == model.Email.Trim());
+				if (emailExists)
+				{
+					ModelState.AddModelError(nameof(model.Email), "An account with this email already exists.");
+				}
+			}
+
+			if (string.IsNullOrWhiteSpace(model.Password))
+			{
+				ModelState.AddModelError(nameof(model.Password), "Password is required.");
+			}
+
+			if (!ModelState.IsValid)
 			{
 				return null;
 			}
 
-			return await _context.Users
-				.Include(u => u.AdminProfile)
-				.FirstOrDefaultAsync(u => u.UserId == userId && u.Role == UserRole.Admin);
+			var user = new User
+			{
+				Email = model.Email.Trim(),
+				FullName = model.FullName.Trim(),
+				ContactNumber = model.ContactNumber.Trim(),
+				Address = model.Address.Trim(),
+				Role = role,
+				Status = Status.Active,
+				CreatedAt = DateTime.Now,
+				EmailConfirmed = true
+			};
+			user.SetPassword(model.Password!);
+
+			_context.Users.Add(user);
+			await _context.SaveChangesAsync();
+			_logs.Record(
+				SystemLogAction.Created,
+				SystemLogCategory.Admin,
+				$"Created {RoleLabel(role).ToLowerInvariant()} account {user.FullName}.",
+				"Admin",
+				user.UserId);
+			await _context.SaveChangesAsync();
+			return user;
+		}
+
+		private Task<User?> FindAdminOrStaffAsync(int userId)
+			=> _context.Users.FirstOrDefaultAsync(u =>
+				u.UserId == userId && (u.Role == UserRole.Admin || u.Role == UserRole.Staff));
+
+		private async Task<User?> GetLoggedInStaffAreaUserAsync()
+		{
+			var userId = CurrentUserId();
+			return userId == null ? null : await FindAdminOrStaffAsync(userId.Value);
 		}
 
 		private AccountSettingsViewModel BuildSettingsViewModel(
-			User user,
-			AdminProfile profile,
+			User account,
 			string? tab,
 			string? editField)
 		{
@@ -511,17 +784,23 @@ namespace EasyRent_Checking.Controllers
 				_ => "profile"
 			};
 
+			var canClose = account.Role == UserRole.Staff
+				|| _context.Users.Any(u =>
+					u.Role == UserRole.Admin && u.UserId != account.UserId && !u.IsSelfDeactivated);
+
 			return new AccountSettingsViewModel
 			{
 				Tab = normalizedTab,
 				EditField = editField,
-				FullName = profile.FullName,
-				Email = user.Email,
-				LoginMfaEnabled = user.LoginMfaEnabled,
-				AvatarInitials = GetInitials(profile.FullName),
-				ProfileImagePath = profile.ProfileImagePath,
-				MemberSince = user.CreatedAt,
-				CanCloseAccount = _context.AdminProfiles.Any(a => a.AdminId != profile.AdminId && !a.IsSelfDeactivated)
+				FullName = account.FullName,
+				Email = account.Email,
+				ContactNumber = account.ContactNumber,
+				Address = account.Address ?? string.Empty,
+				LoginMfaEnabled = account.LoginMfaEnabled,
+				AvatarInitials = GetInitials(account.FullName),
+				ProfileImagePath = account.ProfileImagePath,
+				MemberSince = account.CreatedAt,
+				CanCloseAccount = canClose
 			};
 		}
 
@@ -550,6 +829,18 @@ namespace EasyRent_Checking.Controllers
 				});
 		}
 
+		private void NormalizeProfileContact(AdminAccountInputModel model)
+		{
+			model.ContactNumber = FieldRules.NormalizePhMobile(model.ContactNumber);
+			ModelState.Remove(nameof(model.ContactNumber));
+			if (!FieldRules.IsPhMobile(model.ContactNumber))
+			{
+				ModelState.AddModelError(nameof(model.ContactNumber), FieldRules.PhMobileMessage);
+			}
+
+			model.Address = (model.Address ?? string.Empty).Trim();
+		}
+
 		private static string GetInitials(string name)
 		{
 			if (string.IsNullOrWhiteSpace(name))
@@ -569,7 +860,8 @@ namespace EasyRent_Checking.Controllers
 		}
 
 		private async Task<bool> HasOtherActiveAdminsAsync(int adminId)
-			=> await _context.AdminProfiles.AnyAsync(a => a.AdminId != adminId && !a.IsSelfDeactivated);
+			=> await _context.Users.AnyAsync(u =>
+				u.Role == UserRole.Admin && u.UserId != adminId && !u.IsSelfDeactivated);
 
 		private void ClearLoginMfaCookie()
 		{
@@ -603,5 +895,16 @@ namespace EasyRent_Checking.Controllers
 
 		private static decimal PctChange(decimal current, decimal previous)
 			=> Math.Round((current - previous) * 0.1m, 1);
+
+		private async Task<int> AdminRoleCountAsync()
+			=> await _context.Users.CountAsync(u => u.Role == UserRole.Admin);
+
+		private static string RoleLabel(UserRole role)
+			=> role switch
+			{
+				UserRole.Admin => "Admin",
+				UserRole.Staff => "Staff",
+				_ => role.ToString()
+			};
 	}
 }

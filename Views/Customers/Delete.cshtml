@@ -14,16 +14,16 @@
     <hr />
     <dl class="row">
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.FullName)
+            @Html.DisplayNameFor(model => model.User!.FullName)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.FullName)
+            @Html.DisplayFor(model => model.User!.FullName)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.ContactNumber)
+            @Html.DisplayNameFor(model => model.User!.ContactNumber)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.ContactNumber)
+            @Html.DisplayFor(model => model.User!.ContactNumber)
         </dd>
         <dt class="col-sm-2">
             Email
@@ -38,10 +38,10 @@
             @Html.DisplayFor(model => model.ValidIDtype)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
+            @Html.DisplayNameFor(model => model.User!.Status)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Status)
+            @Html.DisplayFor(model => model.User!.Status)
         </dd>
     </dl>
     <form asp-action="Delete" asp-route-customerid="@Model.CustomerId">

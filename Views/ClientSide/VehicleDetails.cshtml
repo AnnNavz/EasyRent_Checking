@@ -1,4 +1,4 @@
-﻿@model EasyRent_Checking.Models.Vehicle
+@model EasyRent_Checking.Models.Vehicle
 @using EasyRent_Checking.Models
 @using System.Globalization
 
@@ -10,8 +10,10 @@
     string typeLabel = VehicleTypes.DisplayUpper(Model.Type);
     string vehicleTitle = $"{Model.Model} {Model.Brand}";
     string breadcrumbLabel = $"{Model.Brand} {Model.Model}";
-    bool isAvailable = Model.Status == VehicleStatus.Available;
-    string statusLabel = Model.Status switch
+    bool isAvailable = Model.IsActive && Model.Status == VehicleStatus.Available;
+    string statusLabel = !Model.IsActive
+        ? "Unavailable"
+        : Model.Status switch
     {
         VehicleStatus.Available => "Available",
         VehicleStatus.Rented => "Currently Rented",
@@ -206,7 +208,7 @@
                                     <div class="vehicle-reviews-list">
                                         @foreach (var review in reviews)
                                         {
-                                            var reviewerName = review.Customer?.FullName ?? "Customer";
+                                            var reviewerName = review.Customer?.User?.FullName ?? "Customer";
                                             var reviewScore = (review.VehicleComfort + review.VehiclePerformance + review.VehicleSafety) / 3.0;
                                             <article class="vehicle-review-card">
                                                 <div class="vehicle-review-head">

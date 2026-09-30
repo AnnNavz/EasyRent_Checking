@@ -122,10 +122,7 @@
                     <button type="submit" class="browse-find-submit" aria-label="Search">
                         <i class="bi bi-search"></i>
                     </button>
-                    <input type="search" name="q" id="browseFindInput" value="@Model.Query" placeholder="Search available vehicle..." aria-label="Search available vehicle" />
-                    <button type="button" class="browse-find-mic" id="browseFindMic" aria-label="Search by voice">
-                        <i class="bi bi-mic"></i>
-                    </button>
+                    <input type="search" name="q" id="browseFindInput" value="@Model.Query" placeholder="Search Vehicles" aria-label="Search Vehicles" />
                 </form>
             </div>
 
@@ -274,23 +271,6 @@
             }
             stripEmpty(document.getElementById('browseSearchForm'));
             stripEmpty(document.getElementById('browseFindForm'));
-
-            var mic = document.getElementById('browseFindMic');
-            var input = document.getElementById('browseFindInput');
-            var Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (mic && input && Speech) {
-                mic.addEventListener('click', function () {
-                    var recognition = new Speech();
-                    recognition.lang = 'en-US';
-                    recognition.onresult = function (event) {
-                        input.value = event.results[0][0].transcript;
-                        input.form && input.form.requestSubmit();
-                    };
-                    recognition.start();
-                });
-            } else if (mic) {
-                mic.hidden = true;
-            }
         })();
     </script>
 }

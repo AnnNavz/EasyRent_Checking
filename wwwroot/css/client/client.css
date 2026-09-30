@@ -13,6 +13,8 @@
     --client-side-gutter: 2.5rem;
     --font-title: 'Roboto', sans-serif;
     --font-body: 'Poppins', sans-serif;
+    --app-flash-offset-top: var(--client-topbar-height);
+    --app-flash-side-gutter: var(--client-side-gutter);
 }
 
 /* --- Base --- */
@@ -28,100 +30,6 @@
 
 .client-main {
     flex: 1 1 auto;
-}
-
-.client-flash-stack {
-    position: fixed;
-    top: calc(var(--client-topbar-height) + 0.85rem);
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(420px, calc(100% - (2 * var(--client-side-gutter))));
-    z-index: 1040;
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-    pointer-events: none;
-}
-
-.client-flash {
-    pointer-events: auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.85rem;
-    width: 100%;
-    padding: 0.78rem 1rem;
-    border-radius: 12px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.45;
-    box-shadow: 0 14px 34px rgba(26, 43, 93, 0.16);
-    animation: client-flash-in 0.28s ease forwards;
-}
-
-.client-flash.is-hiding {
-    animation: client-flash-out 0.22s ease forwards;
-}
-
-@keyframes client-flash-in {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes client-flash-out {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    to {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-}
-
-.client-flash-success {
-    background: #d1e7dd;
-    border: 1px solid #a3cfbb;
-    color: #0f5132;
-}
-
-.client-flash-error {
-    background: #f8d7da;
-    border: 1px solid #f1aeb5;
-    color: #842029;
-}
-
-.client-flash-info {
-    background: #dae2f2;
-    border: 1px solid #c5d0e6;
-    color: #1e3a8a;
-}
-
-.client-flash-text {
-    flex: 1 1 auto;
-}
-
-.client-flash-close {
-    border: 0;
-    background: transparent;
-    color: inherit;
-    opacity: 0.75;
-    padding: 0;
-    line-height: 1;
-    flex-shrink: 0;
-    cursor: pointer;
-}
-
-.client-flash-close:hover {
-    opacity: 1;
 }
 
 .client-page {

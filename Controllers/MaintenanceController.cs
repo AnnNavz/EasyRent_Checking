@@ -250,7 +250,7 @@ namespace EasyRent_Checking.Controllers
 			return RedirectToAction(nameof(Setup));
 		}
 
-		public async Task<IActionResult> Setup(int? vehicleId, string? preset)
+		public async Task<IActionResult> Setup(int? vehicleId)
 		{
 			var vehicles = await GetUnsetVehiclesAsync();
 			if (vehicles.Count == 0)
@@ -260,46 +260,42 @@ namespace EasyRent_Checking.Controllers
 			}
 
 			var selected = vehicles.FirstOrDefault(v => v.VehicleId == vehicleId) ?? vehicles[0];
-			var selectedPreset = string.IsNullOrWhiteSpace(preset)
-				? PmsRules.DefaultPreset(selected.Type)
-				: preset;
 
 			var input = new MaintenanceScheduleInput
 			{
 				VehicleId = selected.VehicleId,
-				Preset = selectedPreset,
-				Rows = RowsFromRules(PmsRules.ForPreset(selectedPreset))
+				Rows = EmptyScheduleRows()
 			};
 
-			PopulateSetupView(vehicles, input);
-			return View(input);
+			return View(await BuildSetupViewModelAsync(vehicles, input));
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Setup(MaintenanceScheduleInput input)
+		public async Task<IActionResult> Setup([Bind(Prefix = "Schedule")] MaintenanceScheduleInput schedule)
 		{
 			var vehicles = await GetUnsetVehiclesAsync();
-			var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.VehicleId == input.VehicleId);
+			var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.VehicleId == schedule.VehicleId);
 			if (vehicle == null)
 			{
 				return NotFound();
 			}
 
-			if (await _context.MaintenancePlans.AnyAsync(p => p.VehicleId == input.VehicleId))
+			if (await _context.MaintenancePlans.AnyAsync(p => p.VehicleId == schedule.VehicleId))
 			{
 				TempData["ErrorMessage"] = "This vehicle already has a maintenance schedule.";
 				return RedirectToAction(nameof(Index));
 			}
 
-			ValidateScheduleRows(input, requireIncluded: true);
+			ValidateScheduleRows(schedule, requireIncluded: true);
 			if (!ModelState.IsValid)
 			{
-				PopulateSetupView(vehicles.Count > 0 ? vehicles : new List<Vehicle> { vehicle }, input);
-				return View(input);
+				return View(await BuildSetupViewModelAsync(
+					vehicles.Count > 0 ? vehicles : new List<Vehicle> { vehicle },
+					schedule));
 			}
 
-			foreach (var row in input.Rows.Where(r => r.Included))
+			foreach (var row in schedule.Rows.Where(r => r.Included))
 			{
 				var plan = new MaintenancePlan
 				{
@@ -349,7 +345,6 @@ namespace EasyRent_Checking.Controllers
 			var input = new MaintenanceScheduleInput
 			{
 				VehicleId = vehicle.VehicleId,
-				Preset = PmsRules.DefaultPreset(vehicle.Type),
 				Rows = plans
 					.OrderBy(p => p.Type)
 					.Select(p => new MaintenanceScheduleRow
@@ -462,6 +457,15 @@ namespace EasyRent_Checking.Controllers
 			});
 			await _context.SaveChangesAsync();
 			await VehicleStatusSync.ApplyAsync(_context, plan.VehicleId);
+
+			var activeLog = await _context.MaintenanceLogs
+				.Where(m => m.MaintenancePlanId == plan.MaintenancePlanId && m.Status == MaintenanceStatus.InProgress)
+				.OrderByDescending(m => m.MaintenanceLogId)
+				.FirstOrDefaultAsync();
+			if (activeLog != null)
+			{
+				await TransitIssueSync.SyncForMaintenanceLogAsync(_context, activeLog.MaintenanceLogId);
+			}
 
 			_logs.Record(
 				SystemLogAction.Started,
@@ -586,6 +590,7 @@ namespace EasyRent_Checking.Controllers
 				plan.MaintenancePlanId);
 			await _context.SaveChangesAsync();
 			await VehicleStatusSync.ApplyAsync(_context, plan.VehicleId);
+			await TransitIssueSync.SyncForMaintenanceLogAsync(_context, log.MaintenanceLogId);
 
 			return RedirectToAction(nameof(RecordSuccess), new { id });
 		}
@@ -809,20 +814,100 @@ namespace EasyRent_Checking.Controllers
 			return await _context.Vehicles.CountAsync(v => !scheduledIds.Contains(v.VehicleId));
 		}
 
-		private void PopulateSetupView(IReadOnlyList<Vehicle> vehicles, MaintenanceScheduleInput input)
+		private async Task<MaintenanceSetupViewModel> BuildSetupViewModelAsync(
+			IReadOnlyList<Vehicle> vehicles,
+			MaintenanceScheduleInput input)
 		{
-			ViewData["VehicleOptions"] = new SelectList(
-				vehicles.Select(v => new
-				{
-					v.VehicleId,
-					Label = v.Brand + " " + v.Model + " (" + v.PlateNumber + ")"
-				}),
-				"VehicleId",
-				"Label",
-				input.VehicleId);
+			return new MaintenanceSetupViewModel
+			{
+				Schedule = input,
+				Vehicles = await BuildVehicleSelectionItemsAsync(vehicles)
+			};
+		}
 
-			ViewData["VehicleTypesJson"] = System.Text.Json.JsonSerializer.Serialize(
-				vehicles.ToDictionary(v => v.VehicleId.ToString(), v => PmsRules.DefaultPreset(v.Type)));
+		private async Task<List<IncidentVehicleSelectionItem>> BuildVehicleSelectionItemsAsync(
+			IReadOnlyList<Vehicle> vehicles)
+		{
+			var activeTransits = await _context.Transits.AsNoTracking()
+				.Include(t => t.Driver)
+				.Where(t => t.TripStatus == TripStatus.InTransit || t.TripStatus == TripStatus.Scheduled)
+				.ToListAsync();
+
+			var transitByVehicle = activeTransits
+				.GroupBy(t => t.VehicleID)
+				.ToDictionary(
+					g => g.Key,
+					g => g.OrderByDescending(t => t.TripStatus == TripStatus.InTransit).First());
+
+			return vehicles
+				.Select(v =>
+				{
+					transitByVehicle.TryGetValue(v.VehicleId, out var activeTransit);
+					var (fleetStatusLabel, fleetStatusClass) = ResolveFleetVehicleStatus(v);
+					var driver = activeTransit?.Driver;
+					var isOnActiveTransit = activeTransit != null;
+
+					return new IncidentVehicleSelectionItem
+					{
+						VehicleId = v.VehicleId,
+						Brand = v.Brand,
+						Model = v.Model,
+						Type = v.Type,
+						PassengersCount = v.PassengersCount,
+						PlateNumber = v.PlateNumber,
+						ImagePath = v.ImagePath,
+						IsOnActiveTransit = isOnActiveTransit,
+						FleetStatusLabel = fleetStatusLabel,
+						FleetStatusClass = fleetStatusClass,
+						StatusLabel = isOnActiveTransit ? "In Transit" : fleetStatusLabel,
+						StatusClass = isOnActiveTransit ? "is-in-transit" : fleetStatusClass,
+						DriverName = driver?.Name,
+						DriverImagePath = driver?.ImagePath,
+						DriverInitials = BuildInitials(driver?.Name),
+						SearchKey = string.Join(' ',
+							v.PlateNumber,
+							v.Brand,
+							v.Model,
+							fleetStatusLabel,
+							driver?.Name,
+							isOnActiveTransit ? "In Transit" : string.Empty).ToLowerInvariant()
+					};
+				})
+				.ToList();
+		}
+
+		private static (string Label, string CssClass) ResolveFleetVehicleStatus(Vehicle vehicle)
+		{
+			if (!vehicle.IsActive
+				|| vehicle.Status is VehicleStatus.Unavailable or VehicleStatus.InMaintenance)
+			{
+				return ("Unavailable", "is-unavailable");
+			}
+
+			if (vehicle.Status == VehicleStatus.Available)
+			{
+				return ("Available", "is-available");
+			}
+
+			return ("Unavailable", "is-unavailable");
+		}
+
+		private static string BuildInitials(string? name)
+		{
+			if (string.IsNullOrWhiteSpace(name))
+			{
+				return "—";
+			}
+
+			var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length == 1)
+			{
+				return parts[0].Length >= 2
+					? parts[0][..2].ToUpperInvariant()
+					: parts[0].ToUpperInvariant();
+			}
+
+			return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
 		}
 
 		private void ValidateScheduleRows(MaintenanceScheduleInput input, bool requireIncluded)
@@ -859,14 +944,12 @@ namespace EasyRent_Checking.Controllers
 			}
 		}
 
-		private static List<MaintenanceScheduleRow> RowsFromRules(IEnumerable<PmsRule> rules)
-			=> rules.Select(r => new MaintenanceScheduleRow
+		private static List<MaintenanceScheduleRow> EmptyScheduleRows()
+			=> PmsRules.DefaultScheduleTemplate.Select(r => new MaintenanceScheduleRow
 			{
 				Type = r.Type,
 				Trigger = r.Trigger,
-				IntervalKilometers = r.IntervalKilometers,
-				IntervalMonths = r.IntervalMonths,
-				Included = true
+				Included = false
 			}).ToList();
 	}
 }

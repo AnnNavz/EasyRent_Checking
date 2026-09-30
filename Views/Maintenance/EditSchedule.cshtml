@@ -17,7 +17,6 @@
     <form asp-action="EditSchedule" asp-route-id="@Model.VehicleId" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="VehicleId" />
-        <input type="hidden" asp-for="Preset" />
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
         <div class="pms-setup-card">

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EasyRent_Checking.Models
 {
-	public class Rental
+	public class Rental : IValidatableObject
 	{
 		[Key]
 		public int RentalId { get; set; }
@@ -22,7 +22,7 @@ namespace EasyRent_Checking.Models
 
 		[Required(ErrorMessage = "Contact number is required.")]
 		[DataType(DataType.PhoneNumber)]
-		[StringLength(20, ErrorMessage = "Contact number cannot exceed 20 characters.")]
+		[StringLength(11, MinimumLength = 11, ErrorMessage = "Contact number must be exactly 11 digits.")]
 		[RegularExpression(FieldRules.PhMobile, ErrorMessage = FieldRules.PhMobileMessage)]
 		[Display(Name = "Contact Number")]
 		public string ContactNumber { get; set; } = string.Empty;
@@ -52,6 +52,54 @@ namespace EasyRent_Checking.Models
 		[Column(TypeName = "decimal(18,2)")]
 		public decimal? CancellationFee { get; set; }
 
+		/// <summary>Why staff cancelled this booking (company-initiated resolution).</summary>
+		[StringLength(500)]
+		[Display(Name = "Cancellation Reason")]
+		public string? CompanyCancellationReason { get; set; }
+
+		/// <summary>Reason provided by the customer when cancelling.</summary>
+		[StringLength(500)]
+		[Display(Name = "Customer Cancellation Reason")]
+		public string? CustomerCancellationReason { get; set; }
+
+		[Display(Name = "Refund Requested At")]
+		[DataType(DataType.DateTime)]
+		public DateTime? RefundRequestedAt { get; set; }
+
+		[Column(TypeName = "decimal(18,2)")]
+		[Display(Name = "Refund Requested Amount")]
+		public decimal? RefundRequestedAmount { get; set; }
+
+		[Display(Name = "Cancellation Fee Paid At")]
+		[DataType(DataType.DateTime)]
+		public DateTime? CancellationFeePaidAt { get; set; }
+
+		/// <summary>Amount refunded to the customer when the booking was cancelled by staff.</summary>
+		[Column(TypeName = "decimal(18,2)")]
+		[Display(Name = "Refund Amount")]
+		public decimal? RefundAmount { get; set; }
+
+		[Display(Name = "Refunded At")]
+		[DataType(DataType.DateTime)]
+		public DateTime? RefundedAt { get; set; }
+
+		[Display(Name = "Refund Rejected At")]
+		[DataType(DataType.DateTime)]
+		public DateTime? RefundRejectedAt { get; set; }
+
+		[StringLength(500)]
+		[Display(Name = "Refund Rejection Reason")]
+		public string? RefundRejectionReason { get; set; }
+
+		[StringLength(255)]
+		[Display(Name = "Refund Receipt")]
+		public string? RefundReceiptImagePath { get; set; }
+
+		[NotMapped]
+		[Display(Name = "Upload Refund Receipt")]
+		[DataType(DataType.Upload)]
+		public IFormFile? RefundReceiptImageFile { get; set; }
+
 		/// <summary>Locked-in rental total (base + succeeding fee − discount) at booking time. Source of truth for payments.</summary>
 		[Required]
 		[Column(TypeName = "decimal(18,2)")]
@@ -69,14 +117,75 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Total Succeeding Fee")]
 		public decimal SucceedingFeeTotal { get; set; }
 
-		public RentalDetails? Details { get; set; }
+		[Required(ErrorMessage = "Pickup location is required.")]
+		[StringLength(200, ErrorMessage = "Pickup location cannot exceed 200 characters.")]
+		[Display(Name = "Pickup Location")]
+		public string PickupLocation { get; set; } = string.Empty;
 
+		[Required(ErrorMessage = "Drop-off location is required.")]
+		[StringLength(200, ErrorMessage = "Drop-off location cannot exceed 200 characters.")]
+		[Display(Name = "Drop-off Location")]
+		public string DropoffLocation { get; set; } = string.Empty;
+
+		[Required(ErrorMessage = "Pickup date is required.")]
+		[DataType(DataType.Date)]
+		[Display(Name = "Pickup Date")]
+		public DateOnly PickupDate { get; set; }
+
+		[Required(ErrorMessage = "Return date is required.")]
+		[DataType(DataType.Date)]
+		[Display(Name = "Return Date")]
+		public DateOnly ReturnDate { get; set; }
+
+		[Required(ErrorMessage = "Pickup time is required.")]
+		[DataType(DataType.Time)]
+		[Display(Name = "Pickup Time")]
+		public TimeOnly PickupTime { get; set; }
+
+		[Required(ErrorMessage = "Return time is required.")]
+		[DataType(DataType.Time)]
+		[Display(Name = "Return Time")]
+		public TimeOnly ReturnTime { get; set; }
+
+		[Required(ErrorMessage = "Passenger count is required.")]
+		[Range(1, 60, ErrorMessage = "Passenger count must be between 1 and 60.")]
+		[Display(Name = "Passenger Count")]
+		public int PassengerCount { get; set; }
+
+		[Display(Name = "Senior/PWD Discount (if applicable)")]
+		public Discount Discount { get; set; } = Discount.No;
+
+		[StringLength(255)]
+		[Display(Name = "Discount Picture Path")]
+		public string? DiscountImagePath { get; set; }
+
+		[NotMapped]
+		[Display(Name = "Upload Discount Picture")]
+		[DataType(DataType.Upload)]
+		public IFormFile? DiscountImageFile { get; set; }
+
+		/// <summary>
+		/// Vehicle lines materialized on admin approve. Until then, selected ids live in <see cref="PendingVehicleIdsJson"/>.
+		/// </summary>
 		public ICollection<RentalVehicle> RentalVehicles { get; set; } = new List<RentalVehicle>();
+
+		/// <summary>JSON array of vehicle ids chosen at booking submit while status is still pending.</summary>
+		[StringLength(500)]
+		public string? PendingVehicleIdsJson { get; set; }
 
 		[NotMapped]
 		public bool IsUnpaidReserve =>
 			RentalOption == RentalOption.Reserve
 			&& RentalStatus == RentalStatus.Pending
 			&& PaymentDueAt != null;
+
+		public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+			=> FieldRules.ValidateReturnAfterPickup(
+				PickupDate,
+				PickupTime,
+				ReturnDate,
+				ReturnTime,
+				nameof(ReturnDate),
+				nameof(ReturnTime));
 	}
 }

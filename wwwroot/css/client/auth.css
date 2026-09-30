@@ -574,7 +574,7 @@
     border: 1px solid #e5e7eb;
     border-radius: 14px;
     padding: 2rem 2rem 1.65rem;
-    box-shadow: none;
+    box-shadow: var(--er-elevation-md);
 }
 
 .auth-label-login {
@@ -698,7 +698,7 @@
     background: #F9FAFF;
     border: 1px solid #e5e7eb;
     border-radius: 14px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    box-shadow: var(--er-elevation-md);
 }
 
 .auth-page-register .auth-card-register {
@@ -781,6 +781,10 @@
 
 .auth-page-forgot .auth-card-login {
     margin-bottom: 1rem;
+    background: #F9FAFF;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: var(--er-elevation-md);
 }
 
 .auth-help-box {

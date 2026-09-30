@@ -91,10 +91,7 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Odometer" class="vehicle-wizard-label">Odometer (km)</label>
-                    <div class="input-group vehicle-input-suffix">
-                        <input asp-for="Odometer" class="form-control vehicle-wizard-input" type="number" min="0" step="1" />
-                        <span class="input-group-text">km</span>
-                    </div>
+                    <input asp-for="Odometer" class="form-control vehicle-wizard-input" type="number" min="0" step="1" />
                     <span asp-validation-for="Odometer" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
@@ -103,19 +100,13 @@
                     <span asp-validation-for="PassengersCount" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="BasePrice" class="vehicle-wizard-label">Base Price</label>
-                    <div class="input-group">
-                        <span class="input-group-text">₱</span>
-                        <input asp-for="BasePrice" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
-                    </div>
+                    <label asp-for="BasePrice" class="vehicle-wizard-label">Base Price (₱)</label>
+                    <input asp-for="BasePrice" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
                     <span asp-validation-for="BasePrice" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="SucceedingFee" class="vehicle-wizard-label">Succeeding Fee</label>
-                    <div class="input-group">
-                        <span class="input-group-text">₱</span>
-                        <input asp-for="SucceedingFee" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
-                    </div>
+                    <label asp-for="SucceedingFee" class="vehicle-wizard-label">Succeeding Fee (₱)</label>
+                    <input asp-for="SucceedingFee" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
                     <span class="small text-muted mt-1 d-block">Per hour after the first 8 hours</span>
                     <span asp-validation-for="SucceedingFee" class="text-danger small mt-1 d-block"></span>
                 </div>

@@ -1,4 +1,5 @@
 using System.Linq;
+using EasyRent_Checking.Models;
 
 namespace EasyRent_Checking.Services
 {
@@ -6,20 +7,7 @@ namespace EasyRent_Checking.Services
 	{
 		/// <summary>Normalize PH mobiles to 11-digit 09xxxxxxxxx form.</summary>
 		public static string Normalize(string? phone)
-		{
-			if (string.IsNullOrWhiteSpace(phone))
-			{
-				return string.Empty;
-			}
-
-			var digits = new string(phone.Where(char.IsDigit).ToArray());
-			if (digits.StartsWith("63") && digits.Length >= 12)
-			{
-				digits = "0" + digits[2..];
-			}
-
-			return digits;
-		}
+			=> FieldRules.NormalizePhMobile(phone);
 
 		/// <summary>Common stored variants for the same PH mobile (exact + normalized + +63…).</summary>
 		public static IReadOnlyList<string> Variants(string? phone)

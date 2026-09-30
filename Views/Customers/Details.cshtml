@@ -7,9 +7,9 @@
     ViewData["Title"] = "Customer Details";
     ViewData["ActivePage"] = "Customers";
 
-    var isPending = Model.Status == Status.Pending;
-    var isActive = Model.Status == Status.Active;
-    var isInactive = Model.Status == Status.Inactive;
+    var isPending = Model.User!.Status == Status.Pending;
+    var isActive = Model.User!.Status == Status.Active;
+    var isInactive = Model.User!.Status == Status.Inactive;
     var email = Model.User?.Email ?? "—";
     var createdAt = Model.User?.CreatedAt;
     var customerLabel = Model.CustomerId.ToString("D8");
@@ -22,9 +22,9 @@
 
     string StatusLabel(Status status) => status switch
     {
-        Status.Active => "Approved",
+        Status.Active => "Active",
         Status.Inactive => "Inactive",
-        _ => "Pending"
+        _ => "Unverified"
     };
 
     string StatusBadgeClass(Status status) => status switch
@@ -49,6 +49,7 @@
             "NationalID" => "National ID",
             "DriverLicense" => "Driver's License",
             "VotersID" => "Voter's ID",
+            "PostalID" => "Postal ID",
             "UMID" => "UMID",
             "Passport" => "Passport",
             _ => type
@@ -74,17 +75,17 @@
                     <span class="reservation-view-id-label">Customer ID</span>
                     <h1 class="reservation-view-id mb-0">@customerLabel</h1>
                 </div>
-                <span class="booking-status-badge @StatusBadgeClass(Model.Status)">
-                    <i class="bi @StatusIcon(Model.Status)"></i>@StatusLabel(Model.Status)
+                <span class="booking-status-badge @StatusBadgeClass(Model.User!.Status)">
+                    <i class="bi @StatusIcon(Model.User!.Status)"></i>@StatusLabel(Model.User!.Status)
                 </span>
             </div>
 
             <div class="reservation-view-card mb-4">
                 <div class="customer-details-personal">
                     <div class="customer-details-avatar" aria-hidden="true">
-                        @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+                        @if (!string.IsNullOrEmpty(Model.User!.ProfileImagePath))
                         {
-                            <img src="~/images/@Model.ProfileImagePath" alt="" />
+                            <img src="~/images/@Model.User!.ProfileImagePath" alt="" />
                         }
                         else
                         {
@@ -94,7 +95,7 @@
                     <div class="customer-details-personal-grid">
                         <div>
                             <span class="reservation-view-label">Full Name</span>
-                            <span class="reservation-view-value">@Model.FullName</span>
+                            <span class="reservation-view-value">@Model.User!.FullName</span>
                         </div>
                         <div>
                             <span class="reservation-view-label">Email Address</span>
@@ -102,7 +103,7 @@
                         </div>
                         <div>
                             <span class="reservation-view-label">Contact Number</span>
-                            <span class="reservation-view-value">@Model.ContactNumber</span>
+                            <span class="reservation-view-value">@Model.User!.ContactNumber</span>
                         </div>
                     </div>
                 </div>
@@ -203,12 +204,12 @@
                 @if (isPending)
                 {
                     <form asp-action="Approve" asp-route-customerid="@Model.CustomerId" method="post" class="mb-2"
-                          data-confirm="Approve this customer?"
-                          data-confirm-text="They will be able to sign in and complete bookings."
-                          data-confirm-button="Approve Customer"
+                          data-confirm="Activate this customer account?"
+                          data-confirm-text="Use this only for leftover unverified accounts. New customers activate automatically after email verification."
+                          data-confirm-button="Activate Account"
                           data-confirm-tone="approve">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn reservation-btn-approve w-100">Approve Customer</button>
+                        <button type="submit" class="btn reservation-btn-approve w-100">Activate Account</button>
                     </form>
                     <form asp-action="Reject" asp-route-customerid="@Model.CustomerId" method="post"
                           data-confirm="Reject this customer account?"

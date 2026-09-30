@@ -1,10 +1,12 @@
 @model EasyRent_Checking.ViewModels.RentalInputModel
+@using EasyRent_Checking.Models
 @using System.Globalization
 @{
     var totalFare = ViewData["TotalFare"] as decimal? ?? 0m;
     var paymentDetailsFromStep = ViewData["PaymentDetailsFromStep"] as int? ?? 3;
     var paymentDetailsBackStep = ViewData["PaymentDetailsBackStep"] as int? ?? 2;
     var hideReminders = ViewData["HidePaymentReminders"] as bool? == true;
+    var simplifyWalkIn = ViewData["SimplifyWalkInPayment"] as bool? == true;
 
     string FormatPeso(decimal amount) =>
         "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
@@ -106,11 +108,11 @@
             <div class="payment-channel-details">
                 <div class="payment-channel-detail-row">
                     <span>Office:</span>
-                    <strong>EasyRent Vehicle Rental</strong>
+                    <strong>TRUST RENT A CAR</strong>
                 </div>
                 <div class="payment-channel-detail-row">
                     <span>Address:</span>
-                    <strong>Cebu City, Philippines</strong>
+                    <strong>Z5-003 Sitio Molila, Upper Mohon, Talisay City, Cebu, Philippines 6045</strong>
                 </div>
                 <div class="payment-channel-detail-row">
                     <span>Amount Due:</span>
@@ -121,29 +123,36 @@
     </div>
 
     <div class="rent-step-card payment-step2-card">
-        <div class="rent-card-head">
+        <div class="rent-card-head @(simplifyWalkIn ? "js-non-walkin-only" : "")">
             <span class="rent-card-icon"><i class="bi bi-clipboard-check"></i></span>
             <h2 class="payment-step2-heading">Submit Payment Details</h2>
         </div>
-        <p class="rent-card-hint">
+        @if (simplifyWalkIn)
+        {
+            <p class="rent-card-hint js-walkin-only d-none">
+                Visit our office at the address above to pay. You can add any notes below before continuing.
+            </p>
+        }
+        <p class="rent-card-hint @(simplifyWalkIn ? "js-non-walkin-only" : "")">
             After sending the payment, fill in the details below and submit for verification. Our team will confirm within 24 hours.
         </p>
 
         <div class="row g-3">
             <div class="col-md-6 js-cashless-only">
                 <label asp-for="AccountName" class="form-label payment-field-label rent-field-label">Account Name</label>
-                <input asp-for="AccountName" id="AccountName" class="form-control form-control-thin payment-field-input rent-field-input" placeholder="e.g. Jane Doe" />
+                <input asp-for="AccountName" id="AccountName" class="form-control form-control-thin payment-field-input rent-field-input" placeholder="@FieldRules.NamePlaceholder" />
             </div>
             <div class="col-md-6 js-cashless-only">
                 <label asp-for="TransactionReference" class="form-label payment-field-label rent-field-label">Reference/Transaction Number</label>
                 <input asp-for="TransactionReference" id="TransactionReference" class="form-control form-control-thin payment-field-input rent-field-input" placeholder="e.g. 123456789" />
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 @(simplifyWalkIn ? "js-non-walkin-only" : "")">
                 <label class="form-label payment-field-label rent-field-label">Amount Sent (₱)</label>
                 <input asp-for="AmountPaid" id="input-AmountPaid" class="form-control form-control-thin payment-field-input rent-field-input" type="number" step="0.01" min="0" placeholder="Input the exact amount" />
-                <span class="payment-field-help rent-field-help">Must match the total: <strong id="amountMatchLabel">@FormatPeso(totalFare)</strong></span>
+                <span class="payment-field-help rent-field-help">Must be at least: <strong id="amountMatchLabel">@FormatPeso(totalFare)</strong></span>
+                <span asp-validation-for="AmountPaid" class="text-danger small d-block"></span>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 @(simplifyWalkIn ? "js-non-walkin-only" : "")">
                 <label asp-for="PaymentDate" class="form-label payment-field-label rent-field-label">Date &amp; Time of Payment</label>
                 <div class="rent-date-field">
                     <input asp-for="PaymentDate" id="input-PaymentDate" class="form-control form-control-thin payment-field-input rent-field-input" type="datetime-local" />
@@ -180,7 +189,7 @@
 
         @if (!hideReminders)
         {
-            <div class="payment-reminders">
+            <div class="payment-reminders @(simplifyWalkIn ? "js-non-walkin-only" : "")">
                 <div class="payment-reminders-title">
                     <i class="bi bi-info-circle"></i>
                     <span>Important Reminders</span>

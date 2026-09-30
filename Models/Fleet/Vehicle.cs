@@ -43,6 +43,9 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Status")]
 		public VehicleStatus Status { get; set; }
 
+		[Display(Name = "Active")]
+		public bool IsActive { get; set; } = true;
+
 		[Display(Name = "Odometer (km)")]
 		[Range(0, 9999999, ErrorMessage = "Odometer must be between 0 and 9,999,999 km.")]
 		public int Odometer { get; set; }

@@ -145,12 +145,12 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label asp-for="CustomerName" class="rent-field-label">Customer Name</label>
-                        <input asp-for="CustomerName" id="CustomerName" class="rent-field-input" placeholder="e.g. Jane Doe" />
+                        <input asp-for="CustomerName" id="CustomerName" class="rent-field-input" placeholder="@FieldRules.NamePlaceholder" />
                         <span asp-validation-for="CustomerName" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
                         <label asp-for="ContactNumber" class="rent-field-label">Contact Information</label>
-                        <input asp-for="ContactNumber" id="ContactNumber" class="rent-field-input" placeholder="09123456789 or +639123456789" />
+                        <input asp-for="ContactNumber" id="ContactNumber" class="rent-field-input" placeholder="09123456789" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" />
                         <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
@@ -643,6 +643,14 @@
                 };
             }
 
+            function getSelectedCapacity() {
+                const capacities = selectedVehicleIds.map(function (id) {
+                    const meta = getVehicleMeta(id);
+                    return meta ? meta.capacity : 0;
+                });
+                return capacities.length ? Math.max.apply(null, capacities) : 0;
+            }
+
             function renderVehicleGallery() {
                 if (!bookingVehiclesGallery) return;
                 if (!selectedVehicleIds.length) {
@@ -753,10 +761,12 @@
             }
 
             function updateCapacityHint() {
-                const option = getPrimaryVehicleOption();
-                const capacity = option && option.dataset.capacity ? option.dataset.capacity : null;
-                if (capacity) {
-                    capacityHint.textContent = 'Maximum capacity (first vehicle): ' + capacity + ' passengers.';
+                const capacity = getSelectedCapacity();
+                if (capacity > 0) {
+                    const count = selectedVehicleIds.length;
+                    capacityHint.textContent = count > 1
+                        ? ('Maximum capacity: ' + capacity + ' passengers (largest of ' + count + ' vehicles).')
+                        : ('Maximum capacity: ' + capacity + ' passengers.');
                     rebuildPassengerOptions(capacity, passengerInput.value || initialPassengerCount);
                 } else {
                     capacityHint.textContent = 'Maximum capacity: add a vehicle.';
@@ -1102,8 +1112,8 @@
                     alert('Please enter contact information.');
                     return false;
                 }
-                if (!/^(09|\+639)\d{9}$/.test(contactInput.value.trim())) {
-                    alert('Please enter a valid PH mobile number (09XXXXXXXXX or +639XXXXXXXXX).');
+                if (!/^09\d{9}$/.test(contactInput.value.trim())) {
+                    alert('Please enter a valid 11-digit phone number (e.g., 09123456789).');
                     return false;
                 }
                 if (!pickupLocationInput.value.trim() || !dropoffLocationInput.value.trim()) {
@@ -1125,9 +1135,9 @@
                     return false;
                 }
                 const count = parseInt(passengerInput.value, 10);
-                const maxCap = parseInt((getPrimaryVehicleOption() && getPrimaryVehicleOption().dataset.capacity) || '60', 10);
+                const maxCap = getSelectedCapacity() || 60;
                 if (!count || count < 1 || count > maxCap) {
-                    alert('Please select a passenger count within vehicle capacity.');
+                    alert('Please select a passenger count within the selected vehicles\' capacity.');
                     return false;
                 }
                 if (discountSelect.value === 'Yes' && !(fileInput.files && fileInput.files[0])) {
@@ -1249,6 +1259,9 @@
                 if (amountPaidInput && !amountPaidInput.value) {
                     amountPaidInput.value = amount.toFixed(2);
                 }
+                if (amountPaidInput) {
+                    amountPaidInput.min = amount.toFixed(2);
+                }
             }
 
             function setChannelPanel(method) {
@@ -1313,8 +1326,10 @@
                     return false;
                 }
                 const paid = parseFloat(amountPaidInput?.value || '0');
-                if (!paid || paid <= 0) {
-                    alert('Please enter the amount paid.');
+                const total = parseFloat(paymentTypeBlock?.dataset.totalFare || totalAmountInput?.value || '0');
+                const payError = BookingSummary.validateAmountPaid(paid, paymentTypeInput?.value, total);
+                if (payError) {
+                    alert(payError);
                     return false;
                 }
                 if (method !== 'Walk-in') {

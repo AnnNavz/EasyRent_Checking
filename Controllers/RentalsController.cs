@@ -47,9 +47,9 @@ namespace EasyRent_Checking.Controllers
 			ViewData["CurrentFilter"] = currentFilter;
 
 			var rentalsQuery = _context.Rentals
-				.Include(r => r.Customer)
-				.Include(r => r.Details)!
-					.ThenInclude(d => d!.Vehicle)
+				.Include(r => r.Customer).ThenInclude(c => c!.User)
+				.Include(r => r.RentalVehicles)
+					.ThenInclude(rv => rv.Vehicle)
 				.AsQueryable();
 
 			var today = DateOnly.FromDateTime(DateTime.Today);
@@ -58,25 +58,27 @@ namespace EasyRent_Checking.Controllers
 
 			var totalBookingsCount = await rentalsQuery.CountAsync();
 			var pendingApprovalsCount = await rentalsQuery.CountAsync(r => r.RentalStatus == RentalStatus.Pending);
+			var refundableCount = await rentalsQuery.CountAsync(r =>
+				r.RefundRequestedAt != null
+				&& r.RefundedAt == null
+				&& r.RefundRejectedAt == null
+				&& r.RentalStatus == RentalStatus.Cancelled);
 
-			var totalThisMonth = await rentalsQuery.CountAsync(r =>
-				r.Details != null && r.Details.PickupDate >= thisMonthStart);
+			var totalThisMonth = await rentalsQuery.CountAsync(r => r.PickupDate >= thisMonthStart);
 			var totalLastMonth = await rentalsQuery.CountAsync(r =>
-				r.Details != null
-				&& r.Details.PickupDate >= lastMonthStart
-				&& r.Details.PickupDate < thisMonthStart);
+				r.PickupDate >= lastMonthStart
+				&& r.PickupDate < thisMonthStart);
 			var pendingThisMonth = await rentalsQuery.CountAsync(r =>
 				r.RentalStatus == RentalStatus.Pending
-				&& r.Details != null
-				&& r.Details.PickupDate >= thisMonthStart);
+				&& r.PickupDate >= thisMonthStart);
 			var pendingLastMonth = await rentalsQuery.CountAsync(r =>
 				r.RentalStatus == RentalStatus.Pending
-				&& r.Details != null
-				&& r.Details.PickupDate >= lastMonthStart
-				&& r.Details.PickupDate < thisMonthStart);
+				&& r.PickupDate >= lastMonthStart
+				&& r.PickupDate < thisMonthStart);
 
 			ViewData["TotalBookingsCount"] = totalBookingsCount;
 			ViewData["PendingApprovalsCount"] = pendingApprovalsCount;
+			ViewData["RefundableCount"] = refundableCount;
 			ViewData["TotalBookingsChange"] = PctChange(totalThisMonth, totalLastMonth);
 			ViewData["PendingApprovalsChange"] = PctChange(pendingThisMonth, pendingLastMonth);
 
@@ -91,14 +93,22 @@ namespace EasyRent_Checking.Controllers
 				rentalsQuery = rentalsQuery.Where(r =>
 					r.CustomerName.Contains(term)
 					|| r.ContactNumber.Contains(term)
-					|| (r.Details != null && r.Details.Vehicle != null && (
-						r.Details.Vehicle.Brand.Contains(term)
-						|| r.Details.Vehicle.Model.Contains(term)
-						|| r.Details.Vehicle.PlateNumber.Contains(term)))
+					|| r.RentalVehicles.Any(rv => rv.Vehicle != null && (
+						rv.Vehicle.Brand.Contains(term)
+						|| rv.Vehicle.Model.Contains(term)
+						|| rv.Vehicle.PlateNumber.Contains(term)))
 					|| (hasBookingId && r.RentalId == bookingId));
 			}
 
-			if (!string.IsNullOrEmpty(currentFilter) && Enum.TryParse(currentFilter, true, out RentalStatus filterStatus))
+			if (string.Equals(currentFilter, "Refundable", StringComparison.OrdinalIgnoreCase))
+			{
+				rentalsQuery = rentalsQuery.Where(r =>
+					r.RefundRequestedAt != null
+					&& r.RefundedAt == null
+					&& r.RefundRejectedAt == null
+					&& r.RentalStatus == RentalStatus.Cancelled);
+			}
+			else if (!string.IsNullOrEmpty(currentFilter) && Enum.TryParse(currentFilter, true, out RentalStatus filterStatus))
 			{
 				rentalsQuery = rentalsQuery.Where(r => r.RentalStatus == filterStatus);
 			}
@@ -106,9 +116,11 @@ namespace EasyRent_Checking.Controllers
 			rentalsQuery = sortBy switch
 			{
 				"CustomerName" => rentalsQuery.OrderBy(r => r.CustomerName),
-				"PickupDate" => rentalsQuery.OrderBy(r => r.Details!.PickupDate).ThenBy(r => r.Details!.PickupTime),
+				"PickupDate" => rentalsQuery.OrderBy(r => r.PickupDate).ThenBy(r => r.PickupTime),
 				"Status" => rentalsQuery.OrderBy(r => r.RentalStatus),
-				"Vehicle" => rentalsQuery.OrderBy(r => r.Details!.Vehicle!.Brand).ThenBy(r => r.Details!.Vehicle!.Model),
+				"Vehicle" => rentalsQuery
+					.OrderBy(r => r.RentalVehicles.Select(rv => rv.Vehicle!.Brand).FirstOrDefault())
+					.ThenBy(r => r.RentalVehicles.Select(rv => rv.Vehicle!.Model).FirstOrDefault()),
 				_ => rentalsQuery.OrderByDescending(r => r.RentalId)
 			};
 
@@ -141,8 +153,7 @@ namespace EasyRent_Checking.Controllers
 			}
 
 			var rental = await _context.Rentals
-				.Include(r => r.Details)!
-					.ThenInclude(d => d!.Vehicle)
+				.Include(r => r.Customer).ThenInclude(c => c!.User)
 				.Include(r => r.RentalVehicles)
 					.ThenInclude(rv => rv.Vehicle)
 				.FirstOrDefaultAsync(m => m.RentalId == id);
@@ -151,11 +162,8 @@ namespace EasyRent_Checking.Controllers
 				return NotFound();
 			}
 
-			var latestPayment = await _context.Payments
-				.AsNoTracking()
-				.Where(p => p.RentalId == rental.RentalId)
-				.OrderByDescending(p => p.PaymentDate)
-				.FirstOrDefaultAsync();
+			var latestPayment = await RentalResolution.GetLatestRentalPaymentAsync(_context, rental.RentalId);
+			var cancellationFeePayment = await RentalResolution.GetCancellationFeePaymentAsync(_context, rental.RentalId);
 
 			var transits = await _context.Transits
 				.AsNoTracking()
@@ -166,48 +174,73 @@ namespace EasyRent_Checking.Controllers
 				.ToListAsync();
 
 			ViewData["LatestPayment"] = latestPayment;
+			ViewData["CancellationFeePayment"] = cancellationFeePayment;
 			ViewData["Transit"] = transits.FirstOrDefault();
 			ViewData["Transits"] = transits;
+			ViewData["SelectedVehicles"] = await RentalVehicleWorkflow.LoadSelectedVehiclesAsync(_context, rental);
+			ViewData["AmountPaid"] = await RentalResolution.GetAmountPaidAsync(_context, rental.RentalId);
+			ViewData["HasPendingRefundRequest"] = RentalResolution.HasPendingRefundRequest(rental);
+			ViewData["ProcessRefundModel"] = RentalResolution.HasPendingRefundRequest(rental)
+				? new ProcessCustomerRefundViewModel
+				{
+					RentalId = rental.RentalId,
+					RefundAmount = rental.RefundRequestedAmount ?? await RentalResolution.GetAmountPaidAsync(_context, rental.RentalId),
+					CustomerReason = rental.CustomerCancellationReason ?? "",
+					AmountPaid = await RentalResolution.GetAmountPaidAsync(_context, rental.RentalId),
+					RefundRequestedAmount = rental.RefundRequestedAmount ?? 0m
+				}
+				: null;
+			ViewData["RejectRefundModel"] = RentalResolution.HasPendingRefundRequest(rental)
+				? new RejectCustomerRefundViewModel
+				{
+					RentalId = rental.RentalId,
+					CustomerReason = rental.CustomerCancellationReason ?? "",
+					RefundRequestedAmount = rental.RefundRequestedAmount ?? 0m
+				}
+				: null;
 			return View(rental);
 		}
 
 		// POST: Rentals/Approve/5
+		// Approves a pending booking and sends confirmation email
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Approve(int id)
 		{
+			// Step 1: Load rental with details and vehicles
 			var rental = await _context.Rentals
-				.Include(r => r.Details)!
-					.ThenInclude(d => d!.Vehicle)
+				.Include(r => r.RentalVehicles)
 				.FirstOrDefaultAsync(r => r.RentalId == id);
 			if (rental == null)
 			{
 				return NotFound();
 			}
 
+			// Step 2: Check for pending refund requests
+			if (RentalResolution.HasPendingRefundRequest(rental))
+			{
+				TempData["SuccessMessage"] = "This booking has a pending refund request. Process the refund before confirming.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
 			if (rental.RentalStatus == RentalStatus.Expired)
 			{
-				TempData["SuccessMessage"] = "This reservation already expired and cannot be approved.";
+				TempData["SuccessMessage"] = "This reservation already expired and cannot be confirmed.";
 				return RedirectToAction(nameof(Details), new { id });
 			}
 
 			var hasPayment = await _context.Payments.AnyAsync(p => p.RentalId == id);
 			if (rental.RentalOption == RentalOption.Reserve && !hasPayment)
 			{
-				TempData["SuccessMessage"] = "This reserve still has no payment. Ask the customer to pay before approving.";
+				TempData["SuccessMessage"] = "This hold still has no payment. The booking confirms automatically when payment is recorded.";
 				return RedirectToAction(nameof(Details), new { id });
 			}
 
-			rental.RentalStatus = RentalStatus.Approved;
-			_logs.Record(
-				SystemLogAction.Approved,
-				SystemLogCategory.Booking,
-				$"Approved booking BK-{rental.RentalId:D5} for {rental.CustomerName}.",
-				"Rental",
-				rental.RentalId);
-			await _context.SaveChangesAsync();
-			await EnsureTransitForRentalAsync(id);
-			await _bookingEmailService.SendRentalConfirmedAsync(rental, rental.Details);
+			await RentalConfirmation.ConfirmPaidBookingAsync(
+				_context,
+				_logs,
+				_bookingEmailService,
+				rental);
 
 			var transit = await _context.Transits
 				.AsNoTracking()
@@ -223,26 +256,38 @@ namespace EasyRent_Checking.Controllers
 		}
 
 		// POST: Rentals/Reject/5
+		// Rejects a pending booking and marks it as cancelled
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Reject(int id)
 		{
+			// Step 1: Load the rental
 			var rental = await _context.Rentals.FindAsync(id);
 			if (rental == null)
 			{
 				return NotFound();
 			}
 
+			// Step 2: Check for pending refund requests
+			if (RentalResolution.HasPendingRefundRequest(rental))
+			{
+				TempData["SuccessMessage"] = "This booking has a pending refund request. Process the refund before rejecting.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			// Step 3: Update rental status to Cancelled with no cancellation fee
 			rental.RentalStatus = RentalStatus.Cancelled;
 			rental.CancelledAt = DateTime.Now;
 			rental.CancellationFee = 0m;
 
+			// Step 4: Cancel associated transit if not already completed
 			var transit = await _context.Transits.FirstOrDefaultAsync(t => t.RentalID == id);
 			if (transit != null && transit.TripStatus is not TripStatus.Completed)
 			{
 				transit.TripStatus = TripStatus.Cancelled;
 			}
 
+			// Step 5: Log the rejection action
 			_logs.Record(
 				SystemLogAction.Rejected,
 				SystemLogCategory.Booking,
@@ -250,69 +295,516 @@ namespace EasyRent_Checking.Controllers
 				"Rental",
 				rental.RentalId);
 			await _context.SaveChangesAsync();
+			
+			// Step 6: Show success message and redirect
 			TempData["SuccessMessage"] = "Booking rejected and marked as cancelled.";
 			return RedirectToAction(nameof(Details), new { id });
 		}
 
-		private async Task EnsureTransitForRentalAsync(int rentalId)
+		// GET: Rentals/Resolve/5
+		public async Task<IActionResult> Resolve(int id, int? transitid, string? returnUrl)
 		{
-			var rentalVehicles = await _context.RentalVehicles
-				.AsNoTracking()
-				.Where(rv => rv.RentalId == rentalId)
-				.OrderBy(rv => rv.SortOrder)
-				.ThenBy(rv => rv.RentalVehicleId)
-				.ToListAsync();
-
-			if (rentalVehicles.Count == 0)
+			var rental = await LoadRentalForResolutionAsync(id);
+			if (rental == null)
 			{
-				var details = await _context.RentalDetails
-					.AsNoTracking()
-					.FirstOrDefaultAsync(d => d.RentalID == rentalId);
-				if (details == null)
-				{
-					return;
-				}
-
-				rentalVehicles.Add(new RentalVehicle
-				{
-					RentalId = rentalId,
-					VehicleId = details.VehicleId,
-					RentalVehicleId = 0
-				});
+				return NotFound();
 			}
 
-			var existingVehicleIds = await _context.Transits
+			var transits = await _context.Transits
 				.AsNoTracking()
-				.Where(t => t.RentalID == rentalId)
-				.Select(t => t.VehicleID)
+				.Include(t => t.Vehicle)
+				.Where(t => t.RentalID == id)
+				.OrderBy(t => t.TransitID)
 				.ToListAsync();
 
-			foreach (var line in rentalVehicles)
+			if (!RentalResolution.CanResolve(rental, transits))
 			{
-				if (existingVehicleIds.Contains(line.VehicleId))
-				{
-					continue;
-				}
-
-				_context.Transits.Add(new Transit
-				{
-					RentalID = rentalId,
-					VehicleID = line.VehicleId,
-					RentalVehicleId = line.RentalVehicleId > 0 ? line.RentalVehicleId : null,
-					TripStatus = TripStatus.Scheduled
-				});
+				TempData["ErrorMessage"] = "This booking can no longer be resolved (trip already started or booking not approved).";
+				return RedirectToAction(nameof(Details), new { id });
 			}
 
-			await _context.SaveChangesAsync();
+			var transit = transitid.HasValue
+				? transits.FirstOrDefault(t => t.TransitID == transitid.Value)
+				: transits.FirstOrDefault(t => t.TripStatus is TripStatus.Scheduled or TripStatus.Delayed);
+
+			var currentVehicleId = transit?.VehicleID
+				?? RentalVehicleWorkflow.GetPrimaryVehicleId(rental);
+			var currentVehicle = transit?.Vehicle
+				?? await _context.Vehicles.AsNoTracking().FirstOrDefaultAsync(v => v.VehicleId == currentVehicleId);
+			if (currentVehicle == null)
+			{
+				TempData["ErrorMessage"] = "Assigned vehicle could not be found.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			var amountPaid = await RentalResolution.GetAmountPaidAsync(_context, id);
+			var model = new ResolveBookingViewModel
+			{
+				RentalId = id,
+				TransitId = transit?.TransitID,
+				ReturnUrl = returnUrl,
+				BookingLabel = $"BK-{id:D5}",
+				CustomerName = rental.CustomerName,
+				CurrentVehicleId = currentVehicleId,
+				CurrentVehicleLabel = $"{currentVehicle.Brand} {currentVehicle.Model} ({currentVehicle.PlateNumber})".Trim(),
+				AmountPaid = amountPaid,
+				RefundAmount = amountPaid,
+				PickupDate = rental.PickupDate,
+				PickupTime = rental.PickupTime,
+				PickupLocation = rental.PickupLocation,
+				ReplacementVehicles = await RentalResolution.GetReplacementCandidatesAsync(
+					_context,
+					rental,
+					currentVehicleId)
+			};
+
+			ViewData["Title"] = "Resolve Booking";
+			ViewData["ActivePage"] = "Rentals";
+			ViewData["ResolveActiveTab"] = model.ReplacementVehicles.Count > 0 ? "replace" : "refund";
+			return View(model);
 		}
 
-		private async Task ReplaceRentalVehiclesAsync(Rental rental, RentalDetails details, IReadOnlyList<int> vehicleIds)
+		// POST: Rentals/ReplaceVehicle/5
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> ReplaceVehicle(
+			int id,
+			[Bind("RentalId,TransitId,ReturnUrl,Reason,ReplacementVehicleId,Notes")] ResolveBookingViewModel model)
+		{
+			if (id != model.RentalId)
+			{
+				return NotFound();
+			}
+
+			ModelState.Remove(nameof(model.RefundReceiptImageFile));
+			ModelState.Remove(nameof(model.RefundAmount));
+
+			if (model.ReplacementVehicleId is not > 0)
+			{
+				ModelState.AddModelError(nameof(model.ReplacementVehicleId), "Please select a replacement vehicle.");
+			}
+
+			var rentalPreview = await LoadRentalForResolutionAsync(id);
+			var transitPreview = model.TransitId.HasValue
+				? await _context.Transits.AsNoTracking().FirstOrDefaultAsync(t => t.TransitID == model.TransitId.Value)
+				: null;
+			model.CurrentVehicleId = transitPreview?.VehicleID
+				?? (rentalPreview != null ? RentalVehicleWorkflow.GetPrimaryVehicleId(rentalPreview) : 0);
+
+			if (!ModelState.IsValid)
+			{
+				return await ReloadResolveViewAsync(model, "replace");
+			}
+
+			var rental = await LoadRentalForResolutionAsync(id);
+			if (rental == null)
+			{
+				return NotFound();
+			}
+
+			var transits = await _context.Transits
+				.Where(t => t.RentalID == id)
+				.ToListAsync();
+
+			if (!RentalResolution.CanResolve(rental, transits))
+			{
+				TempData["ErrorMessage"] = "This booking can no longer be resolved.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			var transit = model.TransitId.HasValue
+				? transits.FirstOrDefault(t => t.TransitID == model.TransitId.Value)
+				: transits.FirstOrDefault(t => t.TripStatus is TripStatus.Scheduled or TripStatus.Delayed);
+
+			var currentVehicleId = transit?.VehicleID
+				?? RentalVehicleWorkflow.GetPrimaryVehicleId(rental);
+			var previousVehicle = await _context.Vehicles.AsNoTracking()
+				.FirstOrDefaultAsync(v => v.VehicleId == currentVehicleId);
+			if (previousVehicle == null)
+			{
+				TempData["ErrorMessage"] = "Current vehicle could not be found.";
+				return RedirectToAction(nameof(Resolve), new { id, transitid = model.TransitId, returnUrl = model.ReturnUrl });
+			}
+
+			var result = await RentalResolution.ReplaceVehicleAsync(
+				_context,
+				rental,
+				transit,
+				currentVehicleId,
+				model.ReplacementVehicleId!.Value,
+				model.Reason);
+
+			if (!result.Success || result.NewVehicle == null)
+			{
+				model.CurrentVehicleId = currentVehicleId;
+				ModelState.AddModelError(string.Empty, result.Error ?? "Could not replace the vehicle.");
+				return await ReloadResolveViewAsync(model, "replace");
+			}
+
+			await TransitIssueSync.ResolveForRentalAsync(
+				_context,
+				id,
+				model.TransitId,
+				"ReplaceVehicle",
+				model.Reason);
+			await VehicleStatusSync.ApplyAsync(_context, currentVehicleId);
+			await VehicleStatusSync.ApplyAsync(_context, model.ReplacementVehicleId!.Value);
+
+			_logs.Record(
+				SystemLogAction.Updated,
+				SystemLogCategory.Booking,
+				$"Replaced vehicle on BK-{rental.RentalId:D5} ({model.Reason}).",
+				"Rental",
+				rental.RentalId);
+			await _context.SaveChangesAsync();
+
+			await _bookingEmailService.SendVehicleReplacedAsync(
+				rental,
+				previousVehicle,
+				result.NewVehicle,
+				model.Reason);
+
+			TempData["SuccessMessage"] = "Vehicle replaced. The customer was emailed about the change.";
+			return RedirectAfterResolve(id, model.TransitId, model.ReturnUrl);
+		}
+
+		// POST: Rentals/CancelWithRefund/5
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> CancelWithRefund(
+			int id,
+			[Bind("RentalId,TransitId,ReturnUrl,Reason,RefundAmount,RefundReceiptImageFile,Notes")] ResolveBookingViewModel model)
+		{
+			if (id != model.RentalId)
+			{
+				return NotFound();
+			}
+
+			ModelState.Remove(nameof(model.ReplacementVehicleId));
+
+			var rental = await LoadRentalForResolutionAsync(id);
+			if (rental == null)
+			{
+				return NotFound();
+			}
+
+			var transits = await _context.Transits
+				.AsNoTracking()
+				.Where(t => t.RentalID == id)
+				.ToListAsync();
+
+			if (!RentalResolution.CanResolve(rental, transits))
+			{
+				TempData["ErrorMessage"] = "This booking can no longer be resolved.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			var amountPaid = await RentalResolution.GetAmountPaidAsync(_context, id);
+			if (model.RefundAmount < 0 || model.RefundAmount > amountPaid)
+			{
+				ModelState.AddModelError(
+					nameof(model.RefundAmount),
+					amountPaid > 0
+						? $"Refund cannot exceed the amount paid (₱{amountPaid:N2})."
+						: "Refund amount must be zero when nothing was paid.");
+			}
+
+			if (model.RefundAmount > 0 && model.RefundReceiptImageFile == null)
+			{
+				ModelState.AddModelError(
+					nameof(model.RefundReceiptImageFile),
+					"Please upload the refund receipt.");
+			}
+
+			if (!ModelState.IsValid)
+			{
+				model.AmountPaid = amountPaid;
+				var transitPreview = model.TransitId.HasValue
+					? await _context.Transits.AsNoTracking().FirstOrDefaultAsync(t => t.TransitID == model.TransitId.Value)
+					: null;
+				model.CurrentVehicleId = transitPreview?.VehicleID
+					?? RentalVehicleWorkflow.GetPrimaryVehicleId(rental);
+				return await ReloadResolveViewAsync(model, "refund");
+			}
+
+			string? receiptPath = null;
+			if (model.RefundReceiptImageFile != null && model.RefundReceiptImageFile.Length > 0)
+			{
+				receiptPath = await ImageStorage.SaveAsync(
+					_webHostEnvironment,
+					model.RefundReceiptImageFile,
+					ImageStorage.RefundReceiptsFolder);
+			}
+
+			await RentalResolution.CancelWithRefundAsync(
+				_context,
+				rental,
+				model.RefundAmount,
+				model.Reason,
+				receiptPath,
+				model.Notes);
+
+			await TransitIssueSync.ResolveForRentalAsync(
+				_context,
+				id,
+				model.TransitId,
+				"RefundCustomer",
+				model.Reason);
+
+			_logs.Record(
+				SystemLogAction.Cancelled,
+				SystemLogCategory.Booking,
+				$"Cancelled BK-{rental.RentalId:D5} with refund ₱{model.RefundAmount:N2} ({model.Reason}).",
+				"Rental",
+				rental.RentalId);
+			await _context.SaveChangesAsync();
+
+			await _bookingEmailService.SendRefundIssuedAsync(
+				rental,
+				model.RefundAmount,
+				model.Reason,
+				receiptPath,
+				_webHostEnvironment);
+
+			TempData["SuccessMessage"] = model.RefundAmount > 0
+				? $"Booking cancelled. Refund of ₱{model.RefundAmount:N2} recorded and emailed to the customer."
+				: "Booking cancelled at no charge.";
+			return RedirectAfterResolve(id, model.TransitId, model.ReturnUrl);
+		}
+
+		// POST: Rentals/ProcessCustomerRefund/5
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> ProcessCustomerRefund(
+			int id,
+			[Bind("RentalId,RefundAmount,RefundReceiptImageFile,Notes")] ProcessCustomerRefundViewModel model)
+		{
+			if (id != model.RentalId)
+			{
+				return NotFound();
+			}
+
+			var rental = await _context.Rentals
+				.Include(r => r.RentalVehicles)
+				.FirstOrDefaultAsync(r => r.RentalId == id);
+			if (rental == null)
+			{
+				return NotFound();
+			}
+
+			if (!RentalResolution.HasPendingRefundRequest(rental))
+			{
+				TempData["ErrorMessage"] = "This booking does not have a pending refund request.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			var amountPaid = await RentalResolution.GetAmountPaidAsync(_context, id);
+			var maxRefund = rental.RefundRequestedAmount ?? amountPaid;
+			if (model.RefundAmount < 0 || model.RefundAmount > maxRefund)
+			{
+				ModelState.AddModelError(
+					nameof(model.RefundAmount),
+					maxRefund > 0
+						? $"Refund cannot exceed the requested amount (₱{maxRefund:N2})."
+						: "Refund amount must be zero when nothing was paid.");
+			}
+
+			if (model.RefundAmount > 0 && model.RefundReceiptImageFile == null)
+			{
+				ModelState.AddModelError(
+					nameof(model.RefundReceiptImageFile),
+					"Please upload the refund receipt.");
+			}
+
+			if (!ModelState.IsValid)
+			{
+				TempData["ErrorMessage"] = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage
+					?? "Please complete all refund fields.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			string? receiptPath = null;
+			if (model.RefundReceiptImageFile != null && model.RefundReceiptImageFile.Length > 0)
+			{
+				receiptPath = await ImageStorage.SaveAsync(
+					_webHostEnvironment,
+					model.RefundReceiptImageFile,
+					ImageStorage.RefundReceiptsFolder);
+			}
+
+			try
+			{
+				await RentalResolution.ProcessCustomerRefundAsync(
+					_context,
+					rental,
+					model.RefundAmount,
+					receiptPath,
+					model.Notes);
+			}
+			catch (InvalidOperationException ex)
+			{
+				TempData["ErrorMessage"] = ex.Message;
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			var reason = rental.CustomerCancellationReason ?? "the customer cancelled the booking";
+			_logs.Record(
+				SystemLogAction.Cancelled,
+				SystemLogCategory.Booking,
+				$"Processed customer refund for BK-{rental.RentalId:D5}: ₱{model.RefundAmount:N2}.",
+				"Rental",
+				rental.RentalId);
+
+			await _bookingEmailService.SendRefundIssuedAsync(
+				rental,
+				model.RefundAmount,
+				reason,
+				receiptPath,
+				_webHostEnvironment);
+
+			TempData["SuccessMessage"] = model.RefundAmount > 0
+				? $"Refund approved. ₱{model.RefundAmount:N2} was recorded and emailed to the customer."
+				: "Refund request approved with no payment returned.";
+			return RedirectToAction(nameof(Details), new { id });
+		}
+
+		// POST: Rentals/RejectCustomerRefund/5
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> RejectCustomerRefund(
+			int id,
+			[Bind("RentalId,Reason,OtherDetails")] RejectCustomerRefundViewModel model)
+		{
+			if (id != model.RentalId)
+			{
+				return NotFound();
+			}
+
+			if (string.Equals(model.Reason, "Other", StringComparison.OrdinalIgnoreCase)
+				&& string.IsNullOrWhiteSpace(model.OtherDetails))
+			{
+				ModelState.AddModelError(nameof(model.OtherDetails), "Please provide details for the rejection reason.");
+			}
+
+			if (!RejectCustomerRefundViewModel.ReasonOptions.Contains(model.Reason))
+			{
+				ModelState.AddModelError(nameof(model.Reason), "Please select a valid rejection reason.");
+			}
+
+			var rental = await _context.Rentals
+				.Include(r => r.RentalVehicles)
+				.FirstOrDefaultAsync(r => r.RentalId == id);
+			if (rental == null)
+			{
+				return NotFound();
+			}
+
+			if (!RentalResolution.HasPendingRefundRequest(rental))
+			{
+				TempData["ErrorMessage"] = "This refund request is no longer pending review.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			if (!ModelState.IsValid)
+			{
+				TempData["ErrorMessage"] = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage
+					?? "Please complete all rejection fields.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			var storedReason = model.BuildStoredReason();
+			if (string.IsNullOrWhiteSpace(storedReason))
+			{
+				TempData["ErrorMessage"] = "A rejection reason is required.";
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			try
+			{
+				await RentalResolution.RejectCustomerRefundAsync(_context, rental, storedReason);
+			}
+			catch (InvalidOperationException ex)
+			{
+				TempData["ErrorMessage"] = ex.Message;
+				return RedirectToAction(nameof(Details), new { id });
+			}
+
+			_logs.Record(
+				SystemLogAction.Rejected,
+				SystemLogCategory.Booking,
+				$"Rejected customer refund for BK-{rental.RentalId:D5}: {storedReason}.",
+				"Rental",
+				rental.RentalId);
+
+			await _bookingEmailService.SendRefundRejectedAsync(rental, storedReason);
+
+			TempData["SuccessMessage"] = "Refund request rejected. The customer was notified by email.";
+			return RedirectToAction(nameof(Details), new { id });
+		}
+
+		private async Task<Rental?> LoadRentalForResolutionAsync(int rentalId)
+			=> await _context.Rentals
+				.Include(r => r.RentalVehicles)
+				.FirstOrDefaultAsync(r => r.RentalId == rentalId);
+
+		private async Task<IActionResult> ReloadResolveViewAsync(ResolveBookingViewModel model, string activeTab = "replace")
+		{
+			var rental = await LoadRentalForResolutionAsync(model.RentalId);
+			if (rental == null)
+			{
+				return NotFound();
+			}
+
+			var currentVehicle = await _context.Vehicles.AsNoTracking()
+				.FirstOrDefaultAsync(v => v.VehicleId == model.CurrentVehicleId);
+
+			model.BookingLabel = $"BK-{model.RentalId:D5}";
+			model.CustomerName = rental.CustomerName;
+			model.AmountPaid = await RentalResolution.GetAmountPaidAsync(_context, model.RentalId);
+			model.CurrentVehicleLabel = currentVehicle != null
+				? $"{currentVehicle.Brand} {currentVehicle.Model} ({currentVehicle.PlateNumber})".Trim()
+				: model.CurrentVehicleLabel;
+			model.PickupDate = rental.PickupDate;
+			model.PickupTime = rental.PickupTime;
+			model.PickupLocation = rental.PickupLocation;
+			model.ReplacementVehicles = await RentalResolution.GetReplacementCandidatesAsync(
+				_context,
+				rental,
+				model.CurrentVehicleId);
+
+			ViewData["Title"] = "Resolve Booking";
+			ViewData["ActivePage"] = "Rentals";
+			ViewData["ResolveActiveTab"] = activeTab;
+			return View("Resolve", model);
+		}
+
+		private IActionResult RedirectAfterResolve(int rentalId, int? transitId, string? returnUrl)
+		{
+			if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+			{
+				return Redirect(returnUrl);
+			}
+
+			if (transitId.HasValue)
+			{
+				return RedirectToAction("Details", "Transits", new { transitid = transitId.Value });
+			}
+
+			return RedirectToAction(nameof(Details), new { id = rentalId });
+		}
+
+		private async Task EnsureTransitForRentalAsync(int rentalId)
+			=> await RentalConfirmation.EnsureTransitsAsync(_context, rentalId);
+
+		private async Task SyncVehicleSelectionAsync(
+			Rental rental,
+			IReadOnlyList<int> vehicleIds,
+			bool materializeLines)
 		{
 			var vehicles = await _context.Vehicles.AsNoTracking()
 				.Where(v => vehicleIds.Contains(v.VehicleId))
 				.ToListAsync();
 
-			// Preserve requested order.
 			var ordered = vehicleIds
 				.Select(id => vehicles.FirstOrDefault(v => v.VehicleId == id))
 				.Where(v => v != null)
@@ -324,24 +816,18 @@ namespace EasyRent_Checking.Controllers
 				return;
 			}
 
-			RentalFareCalculator.ApplyTo(rental, ordered, details);
-
-			var existing = await _context.RentalVehicles
-				.Where(rv => rv.RentalId == rental.RentalId)
-				.ToListAsync();
-			if (existing.Count > 0)
+			if (materializeLines)
 			{
-				_context.RentalVehicles.RemoveRange(existing);
+				await RentalVehicleWorkflow.MaterializeAsync(_context, rental, vehicleIds);
 			}
-
-			var lines = RentalFareCalculator.BuildRentalVehicles(ordered, details);
-			foreach (var line in lines)
+			else
 			{
-				line.RentalId = rental.RentalId;
-				_context.RentalVehicles.Add(line);
+				await RentalVehicleWorkflow.SyncPendingSelectionAsync(
+					_context,
+					rental,
+					ordered,
+					vehicleIds);
 			}
-
-			details.VehicleId = ordered[0].VehicleId;
 		}
 
 		// GET: Rentals/Create
@@ -380,7 +866,7 @@ namespace EasyRent_Checking.Controllers
 		// POST: Rentals/Create
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create([Bind("RentalId,RentalDetailsID,VehicleId,VehicleIds,CustomerName,ContactNumber,PickupLocation,DropoffLocation,PickupDate,ReturnDate,PickupTime,ReturnTime,PassengerCount,Notes,Discount,DiscountImagePath,DiscountImageFile,RentalStatus,RentalOption,PaymentType,PaymentMethod,TotalAmount,AmountPaid,AccountName,TransactionReference,PaymentDate,ReceiptImageFile,PaymentNotes")] RentalInputModel model)
+		public async Task<IActionResult> Create([Bind("RentalId,VehicleId,VehicleIds,CustomerName,ContactNumber,PickupLocation,DropoffLocation,PickupDate,ReturnDate,PickupTime,ReturnTime,PassengerCount,Notes,Discount,DiscountImagePath,DiscountImageFile,RentalStatus,RentalOption,PaymentType,PaymentMethod,TotalAmount,AmountPaid,AccountName,TransactionReference,PaymentDate,ReceiptImageFile,PaymentNotes")] RentalInputModel model)
 		{
 			NormalizeVehicleIds(model);
 			await ValidateRentalInputAsync(model, excludeRentalId: null);
@@ -409,7 +895,8 @@ namespace EasyRent_Checking.Controllers
 			}
 			else
 			{
-				ValidatePaymentInput(model);
+				var bookingTotal = await ResolveBookingTotalAsync(model);
+				ValidatePaymentInput(model, bookingTotal);
 			}
 
 			if (ModelState.IsValid)
@@ -417,13 +904,12 @@ namespace EasyRent_Checking.Controllers
 				await SaveDiscountImageAsync(model);
 
 				var rental = new Rental();
-				var details = new RentalDetails();
 
 				if (isPayLater)
 				{
 					// Walk-in pay-later hold — pending until payment is completed.
 					model.RentalStatus = RentalStatus.Pending;
-					model.ApplyTo(rental, details);
+					model.ApplyTo(rental);
 					rental.RentalOption = RentalOption.Reserve;
 					rental.PaymentDueAt = DateTime.Now.AddDays(RentalRules.ReservePaymentWindowDays);
 				}
@@ -431,7 +917,7 @@ namespace EasyRent_Checking.Controllers
 				{
 					// Walk-in with payment — approved immediately.
 					model.RentalStatus = RentalStatus.Approved;
-					model.ApplyTo(rental, details);
+					model.ApplyTo(rental);
 					rental.RentalOption = RentalOption.Book;
 					rental.PaymentDueAt = null;
 				}
@@ -441,9 +927,10 @@ namespace EasyRent_Checking.Controllers
 				_context.Rentals.Add(rental);
 				await _context.SaveChangesAsync();
 
-				details.RentalID = rental.RentalId;
-				_context.RentalDetails.Add(details);
-				await ReplaceRentalVehiclesAsync(rental, details, model.GetNormalizedVehicleIds());
+				await SyncVehicleSelectionAsync(
+					rental,
+					model.GetNormalizedVehicleIds(),
+					materializeLines: !isPayLater);
 				_logs.Record(
 					SystemLogAction.Created,
 					SystemLogCategory.Booking,
@@ -453,7 +940,7 @@ namespace EasyRent_Checking.Controllers
 
 				if (!isPayLater)
 				{
-					await SavePaymentForRentalAsync(model, rental, details);
+					await SavePaymentForRentalAsync(model, rental);
 					await _context.SaveChangesAsync();
 					await EnsureTransitForRentalAsync(rental.RentalId);
 					TempData["SuccessMessage"] = "Rental and payment created successfully.";
@@ -510,8 +997,6 @@ namespace EasyRent_Checking.Controllers
 			}
 
 			var rental = await _context.Rentals
-				.Include(r => r.Details)!
-					.ThenInclude(d => d!.Vehicle)
 				.Include(r => r.RentalVehicles)
 				.FirstOrDefaultAsync(r => r.RentalId == id);
 			if (rental == null)
@@ -525,11 +1010,11 @@ namespace EasyRent_Checking.Controllers
 				.OrderByDescending(p => p.PaymentId)
 				.FirstOrDefaultAsync();
 
-			var model = RentalInputModel.FromEntities(rental, rental.Details, payment, rental.RentalVehicles);
+			var model = RentalInputModel.FromEntities(rental, payment, rental.RentalVehicles);
 			await PopulateVehicleListAsync(model.VehicleId);
 			ViewData["TotalFare"] = model.TotalAmount > 0
 				? model.TotalAmount
-				: (rental.Details?.Vehicle?.BasePrice ?? 0m);
+				: (rental.RentalVehicles.OrderBy(rv => rv.SortOrder).Select(rv => rv.Vehicle?.BasePrice).FirstOrDefault() ?? 0m);
 			ViewData["DepositPercent"] = 5m;
 			ViewData["ShowPayLaterOption"] = true;
 			ViewData["HidePaymentReminders"] = true;
@@ -540,7 +1025,7 @@ namespace EasyRent_Checking.Controllers
 		// POST: Rentals/Edit/5
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Edit(int id, [Bind("RentalId,RentalDetailsID,VehicleId,VehicleIds,CustomerName,ContactNumber,PickupLocation,DropoffLocation,PickupDate,ReturnDate,PickupTime,ReturnTime,PassengerCount,Notes,Discount,DiscountImagePath,DiscountImageFile,RentalStatus,RentalOption,PaymentId,PaymentType,PaymentMethod,TotalAmount,AmountPaid,AccountName,TransactionReference,PaymentDate,ReceiptImageFile,PaymentNotes")] RentalInputModel model)
+		public async Task<IActionResult> Edit(int id, [Bind("RentalId,VehicleId,VehicleIds,CustomerName,ContactNumber,PickupLocation,DropoffLocation,PickupDate,ReturnDate,PickupTime,ReturnTime,PassengerCount,Notes,Discount,DiscountImagePath,DiscountImageFile,RentalStatus,RentalOption,PaymentId,PaymentType,PaymentMethod,TotalAmount,AmountPaid,AccountName,TransactionReference,PaymentDate,ReceiptImageFile,PaymentNotes")] RentalInputModel model)
 		{
 			if (id != model.RentalId)
 			{
@@ -555,14 +1040,13 @@ namespace EasyRent_Checking.Controllers
 					.Select(p => p.ReceiptImagePath)
 					.FirstOrDefaultAsync()
 				: null;
-			ValidatePaymentInput(model, requireReceiptIfCashless: string.IsNullOrWhiteSpace(existingReceipt));
+			ValidatePaymentInput(model, await ResolveBookingTotalAsync(model), requireReceiptIfCashless: string.IsNullOrWhiteSpace(existingReceipt));
 
 			if (ModelState.IsValid)
 			{
 				try
 				{
 					var rental = await _context.Rentals
-						.Include(r => r.Details)
 						.Include(r => r.RentalVehicles)
 						.FirstOrDefaultAsync(r => r.RentalId == id);
 					if (rental == null)
@@ -570,19 +1054,15 @@ namespace EasyRent_Checking.Controllers
 						return NotFound();
 					}
 
-					var details = rental.Details;
-					if (details == null)
-					{
-						details = new RentalDetails { RentalID = rental.RentalId };
-						_context.RentalDetails.Add(details);
-					}
-
 					await SaveDiscountImageAsync(model);
-					model.ApplyTo(rental, details);
+					model.ApplyTo(rental);
 					rental.CustomerId = await ResolveCustomerIdByContactAsync(model.ContactNumber);
-					await ReplaceRentalVehiclesAsync(rental, details, model.GetNormalizedVehicleIds());
+					await SyncVehicleSelectionAsync(
+						rental,
+						model.GetNormalizedVehicleIds(),
+						materializeLines: rental.RentalStatus == RentalStatus.Approved);
 
-					await SavePaymentForRentalAsync(model, rental, details);
+					await SavePaymentForRentalAsync(model, rental);
 					_logs.Record(
 						SystemLogAction.Updated,
 						SystemLogCategory.Booking,
@@ -591,7 +1071,17 @@ namespace EasyRent_Checking.Controllers
 						rental.RentalId);
 					await _context.SaveChangesAsync();
 
-					if (rental.RentalStatus == RentalStatus.Approved)
+					var hasPayment = await _context.Payments.AnyAsync(p =>
+						p.RentalId == rental.RentalId && p.AmountPaid > 0);
+					if (rental.RentalStatus == RentalStatus.Pending && hasPayment)
+					{
+						await RentalConfirmation.ConfirmPaidBookingAsync(
+							_context,
+							_logs,
+							_bookingEmailService,
+							rental);
+					}
+					else if (rental.RentalStatus == RentalStatus.Approved)
 					{
 						await EnsureTransitForRentalAsync(rental.RentalId);
 					}
@@ -625,8 +1115,8 @@ namespace EasyRent_Checking.Controllers
 			}
 
 			var rental = await _context.Rentals
-				.Include(r => r.Details)!
-					.ThenInclude(d => d!.Vehicle)
+				.Include(r => r.RentalVehicles)
+					.ThenInclude(rv => rv.Vehicle)
 				.FirstOrDefaultAsync(m => m.RentalId == id);
 			if (rental == null)
 			{
@@ -642,7 +1132,7 @@ namespace EasyRent_Checking.Controllers
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			var rental = await _context.Rentals
-				.Include(r => r.Details)
+				.Include(r => r.RentalVehicles)
 				.FirstOrDefaultAsync(r => r.RentalId == id);
 			if (rental != null)
 			{
@@ -688,45 +1178,8 @@ namespace EasyRent_Checking.Controllers
 			return Json(new { unavailableDates });
 		}
 
-		private async Task<List<string>> GetUnavailableDatesAsync(int vehicleId)
-		{
-			if (vehicleId <= 0)
-			{
-				return new List<string>();
-			}
-
-			var rangesFromLines = await (
-				from rv in _context.RentalVehicles.AsNoTracking()
-				join rental in _context.Rentals.AsNoTracking() on rv.RentalId equals rental.RentalId
-				join details in _context.RentalDetails.AsNoTracking() on rental.RentalId equals details.RentalID
-				where rv.VehicleId == vehicleId
-					&& rental.RentalStatus != RentalStatus.Cancelled
-					&& rental.RentalStatus != RentalStatus.Expired
-				select new { details.PickupDate, details.ReturnDate }
-			).ToListAsync();
-
-			var rangesFromLegacy = await (
-				from details in _context.RentalDetails.AsNoTracking()
-				join rental in _context.Rentals.AsNoTracking()
-					on details.RentalID equals rental.RentalId
-				where details.VehicleId == vehicleId
-					&& !_context.RentalVehicles.Any(rv => rv.RentalId == details.RentalID)
-					&& rental.RentalStatus != RentalStatus.Cancelled
-					&& rental.RentalStatus != RentalStatus.Expired
-				select new { details.PickupDate, details.ReturnDate }
-			).ToListAsync();
-
-			var unavailableDates = new List<string>();
-			foreach (var range in rangesFromLines.Concat(rangesFromLegacy))
-			{
-				for (var day = range.PickupDate; day <= range.ReturnDate; day = day.AddDays(1))
-				{
-					unavailableDates.Add(day.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
-				}
-			}
-
-			return unavailableDates.Distinct().OrderBy(d => d).ToList();
-		}
+		private Task<List<string>> GetUnavailableDatesAsync(int vehicleId) =>
+			RentalVehicleWorkflow.GetUnavailableDatesAsync(_context, vehicleId);
 
 		private int ResolveCreateWizardStep(RentalInputModel model)
 		{
@@ -807,35 +1260,14 @@ namespace EasyRent_Checking.Controllers
 				&& model.PickupDate >= today
 				&& model.ReturnDate >= model.PickupDate)
 			{
-				var conflictFromLines =
-					from rv in _context.RentalVehicles
-					join rental in _context.Rentals on rv.RentalId equals rental.RentalId
-					join details in _context.RentalDetails on rental.RentalId equals details.RentalID
-					where vehicleIds.Contains(rv.VehicleId)
-						&& rental.RentalStatus != RentalStatus.Cancelled
-						&& rental.RentalStatus != RentalStatus.Expired
-						&& details.PickupDate <= model.ReturnDate
-						&& details.ReturnDate >= model.PickupDate
-					select rv.RentalId;
+				var hasConflict = await RentalVehicleWorkflow.HasScheduleConflictAsync(
+					_context,
+					vehicleIds,
+					model.PickupDate,
+					model.ReturnDate,
+					excludeRentalId);
 
-				var conflictFromLegacy =
-					from details in _context.RentalDetails
-					join rental in _context.Rentals on details.RentalID equals rental.RentalId
-					where vehicleIds.Contains(details.VehicleId)
-						&& !_context.RentalVehicles.Any(rv => rv.RentalId == details.RentalID)
-						&& rental.RentalStatus != RentalStatus.Cancelled
-						&& rental.RentalStatus != RentalStatus.Expired
-						&& details.PickupDate <= model.ReturnDate
-						&& details.ReturnDate >= model.PickupDate
-					select details.RentalID;
-
-				var conflictQuery = conflictFromLines.Concat(conflictFromLegacy);
-				if (excludeRentalId.HasValue)
-				{
-					conflictQuery = conflictQuery.Where(id => id != excludeRentalId.Value);
-				}
-
-				if (await conflictQuery.AnyAsync())
+				if (hasConflict)
 				{
 					ModelState.AddModelError(nameof(model.PickupDate), "Selected dates overlap an existing rental for one of the selected vehicles.");
 				}
@@ -868,7 +1300,29 @@ namespace EasyRent_Checking.Controllers
 			return all.OrderBy(d => d).ToList();
 		}
 
-		private void ValidatePaymentInput(RentalInputModel model, bool requireReceiptIfCashless = true)
+		private async Task<decimal> ResolveBookingTotalAsync(RentalInputModel model)
+		{
+			var vehicleIds = model.GetNormalizedVehicleIds();
+			if (vehicleIds.Count == 0)
+			{
+				return model.TotalAmount;
+			}
+
+			var vehicles = await _context.Vehicles
+				.Where(v => vehicleIds.Contains(v.VehicleId))
+				.ToListAsync();
+			var orderedVehicles = vehicleIds
+				.Select(id => vehicles.FirstOrDefault(v => v.VehicleId == id))
+				.Where(v => v != null)
+				.Cast<Vehicle>()
+				.ToList();
+
+			return orderedVehicles.Count == 0
+				? model.TotalAmount
+				: PaymentAmountRules.CalculateBookingTotal(orderedVehicles, model);
+		}
+
+		private void ValidatePaymentInput(RentalInputModel model, decimal bookingTotal, bool requireReceiptIfCashless = true)
 		{
 			if (string.IsNullOrWhiteSpace(model.PaymentType))
 			{
@@ -880,9 +1334,10 @@ namespace EasyRent_Checking.Controllers
 				ModelState.AddModelError(nameof(model.PaymentMethod), "Please select a payment method.");
 			}
 
-			if (model.AmountPaid <= 0)
+			var amountError = PaymentAmountRules.ValidateAmountPaid(model.AmountPaid, model.PaymentType, bookingTotal);
+			if (amountError != null)
 			{
-				ModelState.AddModelError(nameof(model.AmountPaid), "Amount paid must be greater than zero.");
+				ModelState.AddModelError(nameof(model.AmountPaid), amountError);
 			}
 
 			var isCashless = !string.Equals(model.PaymentMethod, "Walk-in", StringComparison.OrdinalIgnoreCase);
@@ -909,8 +1364,7 @@ namespace EasyRent_Checking.Controllers
 
 		private async Task SavePaymentForRentalAsync(
 			RentalInputModel model,
-			Rental rental,
-			RentalDetails details)
+			Rental rental)
 		{
 			if (rental.TotalAmount <= 0)
 			{
@@ -919,10 +1373,6 @@ namespace EasyRent_Checking.Controllers
 					.OrderBy(rv => rv.SortOrder)
 					.Select(rv => rv.VehicleId)
 					.ToListAsync();
-				if (vehicleIds.Count == 0 && details.VehicleId > 0)
-				{
-					vehicleIds.Add(details.VehicleId);
-				}
 
 				var vehicles = await _context.Vehicles.AsNoTracking()
 					.Where(v => vehicleIds.Contains(v.VehicleId))
@@ -934,7 +1384,7 @@ namespace EasyRent_Checking.Controllers
 					.ToList();
 				if (ordered.Count > 0)
 				{
-					RentalFareCalculator.ApplyTo(rental, ordered, details);
+					RentalFareCalculator.ApplyTo(rental, ordered);
 				}
 			}
 
@@ -1000,8 +1450,8 @@ namespace EasyRent_Checking.Controllers
 
 			var candidates = await _context.CustomerProfiles
 				.AsNoTracking()
-				.Where(c => variants.Contains(c.ContactNumber))
-				.Select(c => new { c.CustomerId, c.ContactNumber })
+				.Where(c => variants.Contains(c.User!.ContactNumber))
+				.Select(c => new { c.CustomerId, c.User!.ContactNumber })
 				.ToListAsync();
 
 			if (candidates.Count == 0)
@@ -1010,7 +1460,7 @@ namespace EasyRent_Checking.Controllers
 				var normalized = PhoneNumber.Normalize(contactNumber);
 				candidates = await _context.CustomerProfiles
 					.AsNoTracking()
-					.Select(c => new { c.CustomerId, c.ContactNumber })
+					.Select(c => new { c.CustomerId, c.User!.ContactNumber })
 					.ToListAsync();
 				candidates = candidates
 					.Where(c => PhoneNumber.Normalize(c.ContactNumber) == normalized)
@@ -1031,6 +1481,7 @@ namespace EasyRent_Checking.Controllers
 		private async Task PopulateVehicleListAsync(int? selectedVehicleId = null)
 		{
 			var vehicles = await _context.Vehicles
+				.Where(v => v.IsActive || (selectedVehicleId.HasValue && v.VehicleId == selectedVehicleId.Value))
 				.OrderBy(v => v.Brand)
 				.ThenBy(v => v.Model)
 				.ToListAsync();

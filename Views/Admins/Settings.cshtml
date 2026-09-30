@@ -1,4 +1,5 @@
 @model EasyRent_Checking.ViewModels.AccountSettingsViewModel
+@using EasyRent_Checking.Models
 @using System.Globalization
 
 @{
@@ -11,6 +12,9 @@
     var isSecurity = Model.Tab == "security";
     var editingName = Model.EditField == "name";
     var editingEmail = Model.EditField == "email";
+    var editingPhone = Model.EditField == "phone";
+    var editingAddress = Model.EditField == "address";
+    var isStaff = User.IsInRole(nameof(UserRole.Staff));
 }
 
 <div class="account-hub admin-account-settings">
@@ -75,7 +79,7 @@
                     {
                         <form asp-action="UpdateFullName" method="post" class="account-field-edit">
                             @Html.AntiForgeryToken()
-                            <input name="fullName" value="@Model.FullName" class="account-field-input" maxlength="100" autocomplete="name" />
+                            <input name="fullName" value="@Model.FullName" class="account-field-input" maxlength="100" autocomplete="name" placeholder="@FieldRules.NamePlaceholder" />
                             <button type="submit" class="account-btn-save">Save</button>
                             <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
                         </form>
@@ -102,6 +106,42 @@
                     {
                         <div class="account-field-value">@Model.Email</div>
                         <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="email" class="account-btn-edit">Edit</a>
+                    }
+                </div>
+
+                <div class="account-field-row @(editingPhone ? "is-editing" : null)">
+                    <span class="account-field-label">Contact Number</span>
+                    @if (editingPhone)
+                    {
+                        <form asp-action="UpdatePhone" method="post" class="account-field-edit">
+                            @Html.AntiForgeryToken()
+                            <input name="contactNumber" value="@Model.ContactNumber" class="account-field-input" maxlength="11" inputmode="numeric" autocomplete="tel" placeholder="09123456789" />
+                            <button type="submit" class="account-btn-save">Save</button>
+                            <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="account-field-value">@(string.IsNullOrWhiteSpace(Model.ContactNumber) ? "—" : Model.ContactNumber)</div>
+                        <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="phone" class="account-btn-edit">Edit</a>
+                    }
+                </div>
+
+                <div class="account-field-row @(editingAddress ? "is-editing" : null)">
+                    <span class="account-field-label">Address</span>
+                    @if (editingAddress)
+                    {
+                        <form asp-action="UpdateAddress" method="post" class="account-field-edit">
+                            @Html.AntiForgeryToken()
+                            <input name="address" value="@Model.Address" class="account-field-input" maxlength="255" autocomplete="street-address" placeholder="Street, Barangay, City" />
+                            <button type="submit" class="account-btn-save">Save</button>
+                            <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="account-field-value">@(string.IsNullOrWhiteSpace(Model.Address) ? "—" : Model.Address)</div>
+                        <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="address" class="account-btn-edit">Edit</a>
                     }
                 </div>
             </article>
@@ -213,11 +253,21 @@
                     <div class="account-danger-icon" aria-hidden="true"><i class="bi bi-pause-circle"></i></div>
                     <div>
                         <h3>Deactivate Account</h3>
-                        <p>Temporarily deactivate your account. You can reactivate it anytime by signing in again.</p>
+                        <p>
+                            @(isStaff
+                                ? "Temporarily deactivate your account. An administrator must reactivate it before you can sign in again."
+                                : "Temporarily deactivate your account. You can reactivate it anytime by signing in again.")
+                        </p>
                     </div>
                     @if (Model.CanCloseAccount)
                     {
-                        <form asp-action="DeactivateAccount" method="post" data-confirm="Deactivate your account?" data-confirm-text="You can sign in again anytime to reactivate it." data-confirm-button="Deactivate" data-confirm-tone="warn" data-confirm-icon="bi-pause-circle" data-confirm-submit-icon="bi-pause-circle">
+                        <form asp-action="DeactivateAccount" method="post"
+                              data-confirm="Deactivate your account?"
+                              data-confirm-text="@(isStaff ? "An administrator must reactivate your account before you can sign in again." : "You can sign in again anytime to reactivate it.")"
+                              data-confirm-button="Deactivate"
+                              data-confirm-tone="warn"
+                              data-confirm-icon="bi-pause-circle"
+                              data-confirm-submit-icon="bi-pause-circle">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="account-btn-outline-danger">Deactivate</button>
                         </form>
@@ -259,7 +309,7 @@
                 </div>
                 <div>
                     <dt>Role</dt>
-                    <dd>Administrator</dd>
+                    <dd>@(isStaff ? "Staff" : "Administrator")</dd>
                 </div>
                 <div>
                     <dt>Email</dt>

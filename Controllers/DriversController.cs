@@ -52,16 +52,21 @@ namespace EasyRent_Checking.Controllers
 
 			var totalDriversCount = await driversQuery.CountAsync();
 			var activeDriversCount = await driversQuery.CountAsync(d => d.IsActive && d.ExpiryDate >= systemDate);
+			var expiredLicensesCount = await driversQuery.CountAsync(d => d.ExpiryDate < systemDate);
 			var totalDriversAtMonthStart = await driversQuery.CountAsync(d => d.CreatedAt < monthStart);
 			var activeDriversAtMonthStart = await driversQuery.CountAsync(d =>
 				d.CreatedAt < monthStart
 				&& d.IsActive
 				&& d.ExpiryDate >= DateOnly.FromDateTime(monthStart));
+			var expiredLicensesAtMonthStart = await driversQuery.CountAsync(d =>
+				d.ExpiryDate < DateOnly.FromDateTime(monthStart));
 
 			ViewData["TotalDriversCount"] = totalDriversCount;
 			ViewData["ActiveDriversCount"] = activeDriversCount;
+			ViewData["ExpiredLicensesCount"] = expiredLicensesCount;
 			ViewData["TotalDriversChange"] = PctChange(totalDriversCount, totalDriversAtMonthStart);
 			ViewData["ActiveDriversChange"] = PctChange(activeDriversCount, activeDriversAtMonthStart);
+			ViewData["ExpiredLicensesChange"] = PctChange(expiredLicensesCount, expiredLicensesAtMonthStart);
 
 			// 3. Search Bar Functional Handler
 			if (!string.IsNullOrEmpty(searchString))
@@ -139,23 +144,13 @@ namespace EasyRent_Checking.Controllers
                 .Take(20)
                 .ToListAsync();
 
-            var rentalIds = transits.Select(t => t.RentalID).Distinct().ToList();
-            var rentalDetailsByRentalId = await _context.RentalDetails
-                .AsNoTracking()
-                .Where(d => rentalIds.Contains(d.RentalID))
-                .ToDictionaryAsync(d => d.RentalID);
-
             var activityHistory = transits
-                .Select(t =>
-                {
-                    rentalDetailsByRentalId.TryGetValue(t.RentalID, out var details);
-                    return MapTransitToActivity(t, details, t.Rental);
-                })
+                .Select(t => MapTransitToActivity(t, t.Rental))
                 .ToList();
 
             var driverReviews = await _context.Feedbacks
                 .AsNoTracking()
-                .Include(f => f.Customer)
+                .Include(f => f.Customer).ThenInclude(c => c!.User)
                 .Where(f => f.Transit != null
                     && f.Transit.DriverID == id
                     && f.DriverProfessionalism != null
@@ -167,7 +162,7 @@ namespace EasyRent_Checking.Controllers
             var reviewItems = driverReviews
                 .Select(f => new DriverReviewItem
                 {
-                    CustomerName = f.Customer?.FullName ?? "Customer",
+                    CustomerName = f.Customer?.User?.FullName ?? "Customer",
                     Comment = f.Comment,
                     CreatedAt = f.CreatedAt,
                     Professionalism = f.DriverProfessionalism!.Value,
@@ -223,7 +218,7 @@ namespace EasyRent_Checking.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        private static DriverActivityLogItem MapTransitToActivity(Transit transit, RentalDetails? details, Rental? rental)
+        private static DriverActivityLogItem MapTransitToActivity(Transit transit, Rental? rental)
         {
             var bookingRef = $"#FL-{transit.RentalID}";
 
@@ -237,19 +232,19 @@ namespace EasyRent_Checking.Controllers
             };
 
             string description;
-            if (details != null)
+            if (rental != null)
             {
-                var dayCount = details.ReturnDate.DayNumber - details.PickupDate.DayNumber + 1;
+                var dayCount = rental.ReturnDate.DayNumber - rental.PickupDate.DayNumber + 1;
 
                 description = transit.TripStatus switch
                 {
                     TripStatus.Completed when dayCount > 1 =>
-                        $"Successful trip to {details.PickupLocation} for the first day and {details.DropoffLocation} for the second day of the reservation.",
-                    TripStatus.Completed when !string.IsNullOrWhiteSpace(rental?.Notes) =>
-                        $"Successful trip to {details.DropoffLocation} for {rental.Notes.Trim().TrimEnd('.')} for one day.",
+                        $"Successful trip to {rental.PickupLocation} for the first day and {rental.DropoffLocation} for the second day of the reservation.",
+                    TripStatus.Completed when !string.IsNullOrWhiteSpace(rental.Notes) =>
+                        $"Successful trip to {rental.DropoffLocation} for {rental.Notes.Trim().TrimEnd('.')} for one day.",
                     TripStatus.Completed =>
-                        $"Successful trip to {details.DropoffLocation} for one day.",
-                    _ => $"Trip from {details.PickupLocation} to {details.DropoffLocation}."
+                        $"Successful trip to {rental.DropoffLocation} for one day.",
+                    _ => $"Trip from {rental.PickupLocation} to {rental.DropoffLocation}."
                 };
             }
             else
@@ -261,7 +256,7 @@ namespace EasyRent_Checking.Controllers
 
             return new DriverActivityLogItem
             {
-                OccurredAt = ResolveActivityDate(transit, details),
+                OccurredAt = ResolveActivityDate(transit, rental),
                 Title = title,
                 Description = description,
                 TripStatus = transit.TripStatus
@@ -308,18 +303,18 @@ namespace EasyRent_Checking.Controllers
                 : path;
         }
 
-        private static DateTime ResolveActivityDate(Transit transit, RentalDetails? details)
+        private static DateTime ResolveActivityDate(Transit transit, Rental? rental)
         {
-            if (details == null)
+            if (rental == null)
             {
                 return DateTime.Now;
             }
 
             return transit.TripStatus switch
             {
-                TripStatus.Completed => details.ReturnDate.ToDateTime(details.ReturnTime),
-                TripStatus.InTransit => details.PickupDate.ToDateTime(details.PickupTime),
-                _ => details.PickupDate.ToDateTime(details.PickupTime)
+                TripStatus.Completed => rental.ReturnDate.ToDateTime(rental.ReturnTime),
+                TripStatus.InTransit => rental.PickupDate.ToDateTime(rental.PickupTime),
+                _ => rental.PickupDate.ToDateTime(rental.PickupTime)
             };
         }
 
@@ -336,6 +331,7 @@ namespace EasyRent_Checking.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("DriverId,Name,Address,ContactNo,LicenseNo,ExpiryDate,ImagePath,ImageFile,FrontLicenseImagePath,FrontLicenseImageFile,BackLicenseImagePath,BackLicenseImageFile")] Driver driver)
         {
+            driver.ContactNo = FieldRules.NormalizePhMobile(driver.ContactNo);
             if (ModelState.IsValid)
             {
 				if (driver.ImageFile != null)
@@ -425,6 +421,7 @@ namespace EasyRent_Checking.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("DriverId,Name,Address,ContactNo,LicenseNo,ExpiryDate,ImagePath,ImageFile,FrontLicenseImagePath,FrontLicenseImageFile,BackLicenseImagePath,BackLicenseImageFile")] Driver driver, string? returnUrl)
         {
+			driver.ContactNo = FieldRules.NormalizePhMobile(driver.ContactNo);
 			if (id != driver.DriverId)
 			{
 				return NotFound();

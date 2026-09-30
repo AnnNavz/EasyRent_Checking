@@ -7,13 +7,20 @@
     ViewData["Title"] = "Booking Request Sent";
     ViewData["ActiveNav"] = "Vehicles";
 
-    var details = Model.Details;
+    var details = Model;
+    var selectedVehicles = ViewData["SelectedVehicles"] as List<Vehicle> ?? new List<Vehicle>();
     var rentalVehicles = (Model.RentalVehicles ?? Enumerable.Empty<RentalVehicle>())
         .Where(rv => rv.Vehicle != null)
         .OrderBy(rv => rv.SortOrder)
         .ThenBy(rv => rv.RentalVehicleId)
         .ToList();
-    var vehicle = rentalVehicles.FirstOrDefault()?.Vehicle ?? details?.Vehicle;
+    if (rentalVehicles.Count == 0 && selectedVehicles.Count > 0)
+    {
+        rentalVehicles = selectedVehicles
+            .Select((v, index) => new RentalVehicle { Vehicle = v, VehicleId = v.VehicleId, SortOrder = index })
+            .ToList();
+    }
+    var vehicle = rentalVehicles.FirstOrDefault()?.Vehicle;
     string vehicleTitle = rentalVehicles.Count > 1
         ? $"{rentalVehicles.Count} vehicles"
         : (vehicle != null ? $"{vehicle.Model} {vehicle.Brand}".Trim() : "Vehicle");
@@ -27,7 +34,8 @@
         ? $"{details.ReturnDate.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)} • {FormatTime(details.ReturnTime)}"
         : "—";
     string submittedLabel = $"Completed Today, {DateTime.Now.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
-    bool isReserve = Model.RentalOption == RentalOption.Reserve;
+    bool isReserve = Model.RentalOption == RentalOption.Reserve && Model.RentalStatus == RentalStatus.Pending;
+    bool isConfirmed = Model.RentalStatus == RentalStatus.Approved;
     int? vehicleId = vehicle?.VehicleId;
 }
 
@@ -78,17 +86,21 @@
     <div class="booking-request-sent-card">
         <div class="booking-request-sent-hero">
             <div class="booking-request-sent-icon" aria-hidden="true">
-                <i class="bi bi-arrow-repeat"></i>
+                <i class="bi @(isConfirmed ? "bi-check-lg" : "bi-hourglass-split")"></i>
             </div>
-            <h1 class="booking-request-sent-title">Booking Request Sent</h1>
+            <h1 class="booking-request-sent-title">@(isConfirmed ? "Booking Confirmed" : "Hold Saved")</h1>
             <p class="booking-request-sent-subtitle">
-                @if (rentalVehicles.Count > 1)
+                @if (isReserve)
                 {
-                    @:Your request for @rentalVehicles.Count vehicles (@string.Join(", ", rentalVehicles.Select(rv => $"{rv.Vehicle!.Brand} {rv.Vehicle.Model}"))) is now being reviewed by our staff.
+                    @:Your vehicles are on hold. Complete payment before the due date to confirm the booking.
+                }
+                else if (rentalVehicles.Count > 1)
+                {
+                    @:Your booking for @rentalVehicles.Count vehicles (@string.Join(", ", rentalVehicles.Select(rv => $"{rv.Vehicle!.Brand} {rv.Vehicle.Model}"))) is confirmed.
                 }
                 else
                 {
-                    @:Your request for the @vehicleTitle is now being reviewed by our staff.
+                    @:Your booking for the @vehicleTitle is confirmed. Staff will prepare the vehicle and assign a driver.
                 }
             </p>
         </div>
@@ -129,29 +141,34 @@
                 </div>
             </li>
 
-            <li class="booking-request-timeline-item is-current">
+            <li class="booking-request-timeline-item @(isConfirmed ? "is-done" : "is-current")">
                 <span class="booking-request-timeline-marker" aria-hidden="true">
-                    <i class="bi bi-arrow-clockwise"></i>
+                    <i class="bi @(isConfirmed ? "bi-check-lg" : "bi-wallet2")"></i>
                 </span>
                 <div class="booking-request-timeline-body">
-                    <h2 class="booking-request-timeline-title">Step 2: Staff Review &amp; Confirmation</h2>
+                    <h2 class="booking-request-timeline-title">@(isConfirmed ? "Step 2: Payment Confirmed" : "Step 2: Complete Payment")</h2>
                     <p class="booking-request-timeline-text">
-                        Staff is currently checking vehicle and driver availability for your selected date.
-                        You can still change your reservation details while your status has not been approved.
+                        @if (isConfirmed)
+                        {
+                            @:Your payment was recorded and the booking is confirmed. No extra staff approval is required.
+                        }
+                        else
+                        {
+                            @:This is a pay-later hold. Pay now to confirm the booking and keep the vehicles reserved.
+                        }
                     </p>
-                    <div class="booking-request-step-actions">
-                        <div class="booking-request-eta">
-                            <i class="bi bi-clock"></i>
-                            <span>Estimated approval time: <strong>5-20 minutes</strong></span>
+                    @if (!isConfirmed)
+                    {
+                        <div class="booking-request-step-actions">
+                            <a asp-action="PayRental" asp-route-id="@Model.RentalId" class="btn booking-request-edit-btn">
+                                Proceed to Payment
+                            </a>
                         </div>
-                        <a asp-action="MyBookingDetails" asp-route-id="@Model.RentalId" class="btn booking-request-edit-btn">
-                            Edit Reservation Details
-                        </a>
-                    </div>
+                    }
                 </div>
             </li>
 
-            <li class="booking-request-timeline-item is-pending">
+            <li class="booking-request-timeline-item @(isConfirmed ? "is-current" : "is-pending")">
                 <span class="booking-request-timeline-marker" aria-hidden="true">
                     <i class="bi bi-person-fill"></i>
                 </span>
@@ -169,11 +186,11 @@
             <p class="booking-request-next-text">
                 @if (isReserve)
                 {
-                    <text>Please stay on this page, check My Bookings for status or check your email. After Staff Approval, a &ldquo;Proceed to Payment&rdquo; button will appear so you can secure your booking.</text>
+                    <text>Complete payment from My Bookings before the due date. Paying confirms the booking automatically.</text>
                 }
                 else
                 {
-                    <text>Please stay on this page, check My Bookings for status or check your email. After Staff Approval, your booking will be confirmed and a driver can be assigned for your trip.</text>
+                    <text>Check My Bookings or your email for the receipt. Staff will assign a driver and prepare the vehicle for your trip.</text>
                 }
             </p>
         </div>

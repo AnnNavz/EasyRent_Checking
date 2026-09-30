@@ -1,0 +1,122 @@
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    var rental = ViewData["Rental"] as Rental;
+    var vehicle = ViewData["Vehicle"] as Vehicle;
+    var vehicles = ViewData["SelectedVehicles"] as List<Vehicle> ?? new List<Vehicle>();
+    if (vehicles.Count == 0 && vehicle != null)
+    {
+        vehicles = new List<Vehicle> { vehicle };
+    }
+
+    var details = rental;
+    var totalFare = ViewData["TotalFare"] as decimal? ?? rental?.TotalAmount ?? 0m;
+    var dueLabel = rental?.PaymentDueAt?.ToString("MMM d, yyyy h:mm tt", CultureInfo.InvariantCulture) ?? "soon";
+
+    string FormatPeso(decimal amount) =>
+        "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
+
+    string FormatDateTime(DateOnly? date, TimeOnly? time)
+    {
+        if (date == null || time == null) return "—";
+        return $"{date.Value.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)} • {time.Value.ToString("h:mmtt", CultureInfo.InvariantCulture)}";
+    }
+}
+
+<aside class="booking-details-aside pay-rental-aside">
+    <div class="pay-rental-deadline-card">
+        <div class="pay-rental-deadline-icon" aria-hidden="true">
+            <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div>
+            <h2 class="pay-rental-deadline-title">Rental hold active</h2>
+            <p class="pay-rental-deadline-text">
+                Pay before <strong>@dueLabel</strong> to keep booking
+                <strong>BK-@(rental?.RentalId.ToString("D5") ?? "—")</strong>.
+            </p>
+        </div>
+    </div>
+
+    @if (vehicles.Count > 1)
+    {
+        <div class="booking-aside-vehicles">
+            <div class="booking-aside-vehicles-head">
+                <h2 class="booking-aside-vehicles-title">Vehicles</h2>
+                <span class="booking-aside-vehicles-count">@vehicles.Count selected</span>
+            </div>
+            <div class="booking-aside-vehicles-stack">
+                @foreach (var v in vehicles)
+                {
+                    var vType = VehicleTypes.DisplayUpper(v.Type);
+                    <article class="booking-aside-vehicle-card">
+                        <div class="booking-aside-vehicle-image" aria-hidden="true">
+                            @if (!string.IsNullOrEmpty(v.ImagePath))
+                            {
+                                <img src="~/images/@v.ImagePath" alt="@v.Brand @v.Model" />
+                            }
+                            else
+                            {
+                                <i class="bi bi-car-front-fill"></i>
+                            }
+                        </div>
+                        <div class="booking-aside-vehicle-meta">
+                            <span class="booking-aside-vehicle-type">@vType</span>
+                            <strong>@v.Brand @v.Model</strong>
+                            <p>@v.PlateNumber • @v.PassengersCount seater</p>
+                        </div>
+                    </article>
+                }
+            </div>
+        </div>
+    }
+    else if (vehicle != null)
+    {
+        <div class="booking-aside-vehicle-preview">
+            <div class="booking-aside-vehicle-preview-image" aria-hidden="true">
+                @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+                {
+                    <img src="~/images/@vehicle.ImagePath" alt="@vehicle.Brand @vehicle.Model" />
+                }
+                else
+                {
+                    <i class="bi bi-car-front-fill"></i>
+                }
+            </div>
+            <div class="booking-aside-vehicle-preview-meta">
+                <strong>@vehicle.Brand @vehicle.Model</strong>
+                <p>@VehicleTypes.DisplayUpper(vehicle.Type) • @vehicle.PassengersCount seater</p>
+            </div>
+        </div>
+    }
+
+    <div class="booking-aside-summary-card">
+        <dl class="booking-aside-info">
+            <div class="booking-aside-row">
+                <dt>Pick-up</dt>
+                <dd class="booking-aside-value-stack">
+                    <span>@FormatDateTime(details?.PickupDate, details?.PickupTime)</span>
+                </dd>
+            </div>
+            <div class="booking-aside-row">
+                <dt>Return</dt>
+                <dd class="booking-aside-value-stack">
+                    <span>@FormatDateTime(details?.ReturnDate, details?.ReturnTime)</span>
+                </dd>
+            </div>
+            <div class="booking-aside-row">
+                <dt>Pick-up Location</dt>
+                <dd class="booking-aside-value-wrap">@(details?.PickupLocation ?? "—")</dd>
+            </div>
+            <div class="booking-aside-row">
+                <dt>Drop-off Location</dt>
+                <dd class="booking-aside-value-wrap">@(details?.DropoffLocation ?? "—")</dd>
+            </div>
+        </dl>
+
+        <div class="pay-rental-total-bar">
+            <span>Amount due</span>
+            <strong>@FormatPeso(totalFare)</strong>
+        </div>
+    </div>
+</aside>

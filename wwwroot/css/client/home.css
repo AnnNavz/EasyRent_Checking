@@ -15,7 +15,7 @@ html {
     --home-panel: #dae2f2;
     --home-muted: #7b8494;
     --home-text: #1a2b5d;
-    --home-shadow: 0 12px 32px rgba(26, 43, 93, 0.08);
+    --home-shadow: 0 12px 32px rgba(26, 43, 93, 0.14);
     color: var(--home-text);
     background: #eff5fd;
 }

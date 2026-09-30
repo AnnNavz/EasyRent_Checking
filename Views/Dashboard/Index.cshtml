@@ -1,4 +1,4 @@
-﻿@model EasyRent_Checking.ViewModels.DashboardViewModel
+@model EasyRent_Checking.ViewModels.DashboardViewModel
 @using System.Globalization
 @using System.Text.Json
 @{
@@ -16,8 +16,8 @@
         : (fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0]);
     var incidentWindow = Model.Period == "month" ? "This month" : "This week";
 
-    string FormatChange(decimal change) =>
-        (change >= 0 ? "↑ " : "↓ ") + Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "% vs last month";
+    string FormatChangeRate(decimal change) =>
+        (change >= 0 ? "↑ " : "↓ ") + Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
     var costLabels = Model.MaintenanceCosts.Select(c => c.Label).ToList();
     var costValues = Model.MaintenanceCosts.Select(c => c.Amount).ToList();
@@ -55,7 +55,7 @@
                 <span class="dash-kpi-label">Revenue</span>
                 <div class="dash-kpi-value">₱@Model.MonthlyRevenue.ToString("N2", ph)</div>
             </div>
-            <span class="dash-kpi-badge @(Model.RevenueChange >= 0 ? "is-up" : "is-down")">@FormatChange(Model.RevenueChange)</span>
+            <span class="dash-kpi-badge @(Model.RevenueChange >= 0 ? "is-up" : "is-down")">@FormatChangeRate(Model.RevenueChange)<span class="dash-kpi-badge-compare"> vs last month</span></span>
         </div>
 
         <div class="dash-kpi-card">
@@ -64,16 +64,16 @@
                 <span class="dash-kpi-label">Active Trips</span>
                 <div class="dash-kpi-value">@Model.ActiveTrips</div>
             </div>
-            <span class="dash-kpi-badge @(Model.ActiveTripsChange >= 0 ? "is-up" : "is-down")">@FormatChange(Model.ActiveTripsChange)</span>
+            <span class="dash-kpi-badge @(Model.ActiveTripsChange >= 0 ? "is-up" : "is-down")">@FormatChangeRate(Model.ActiveTripsChange)<span class="dash-kpi-badge-compare"> vs last month</span></span>
         </div>
 
         <div class="dash-kpi-card">
             <div class="dash-kpi-icon"><i class="bi bi-clipboard-check"></i></div>
             <div class="dash-kpi-body">
-                <span class="dash-kpi-label">Booking Requests</span>
+                <span class="dash-kpi-label">Unpaid Holds</span>
                 <div class="dash-kpi-value">@Model.BookingRequests</div>
             </div>
-            <span class="dash-kpi-badge @(Model.BookingRequestsChange >= 0 ? "is-up" : "is-down")">@FormatChange(Model.BookingRequestsChange)</span>
+            <span class="dash-kpi-badge @(Model.BookingRequestsChange >= 0 ? "is-up" : "is-down")">@FormatChangeRate(Model.BookingRequestsChange)<span class="dash-kpi-badge-compare"> vs last month</span></span>
         </div>
 
         <div class="dash-kpi-card">
@@ -82,7 +82,7 @@
                 <span class="dash-kpi-label">Total Bookings</span>
                 <div class="dash-kpi-value">@Model.TotalBookings</div>
             </div>
-            <span class="dash-kpi-badge @(Model.TotalBookingsChange >= 0 ? "is-up" : "is-down")">@FormatChange(Model.TotalBookingsChange)</span>
+            <span class="dash-kpi-badge @(Model.TotalBookingsChange >= 0 ? "is-up" : "is-down")">@FormatChangeRate(Model.TotalBookingsChange)<span class="dash-kpi-badge-compare"> vs last month</span></span>
         </div>
     </div>
 

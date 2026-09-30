@@ -1,13 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using EasyRent_Checking.Models;
+using EasyRent_Checking.Services;
 
 namespace EasyRent_Checking.ViewModels
 {
 	public class RentalInputModel : IValidatableObject
 	{
 		public int RentalId { get; set; }
-		public int RentalDetailsID { get; set; }
 
 		[Required(ErrorMessage = "Customer name is required.")]
 		[StringLength(100, ErrorMessage = "Customer name cannot exceed 100 characters.")]
@@ -16,7 +16,7 @@ namespace EasyRent_Checking.ViewModels
 
 		[Required(ErrorMessage = "Contact number is required.")]
 		[DataType(DataType.PhoneNumber)]
-		[StringLength(20, ErrorMessage = "Contact number cannot exceed 20 characters.")]
+		[StringLength(11, MinimumLength = 11, ErrorMessage = "Contact number must be exactly 11 digits.")]
 		[RegularExpression(FieldRules.PhMobile, ErrorMessage = FieldRules.PhMobileMessage)]
 		[Display(Name = "Contact Number")]
 		public string ContactNumber { get; set; } = string.Empty;
@@ -134,26 +134,23 @@ namespace EasyRent_Checking.ViewModels
 
 		public static RentalInputModel FromEntities(
 			Rental rental,
-			RentalDetails? details = null,
 			Payment? payment = null,
 			IEnumerable<RentalVehicle>? rentalVehicles = null)
 		{
-			details ??= rental.Details;
 			var vehicleIds = (rentalVehicles ?? rental.RentalVehicles ?? Enumerable.Empty<RentalVehicle>())
 				.OrderBy(v => v.SortOrder)
 				.ThenBy(v => v.RentalVehicleId)
 				.Select(v => v.VehicleId)
 				.Distinct()
 				.ToList();
-			if (vehicleIds.Count == 0 && details?.VehicleId > 0)
+			if (vehicleIds.Count == 0)
 			{
-				vehicleIds.Add(details.VehicleId);
+				vehicleIds = RentalVehicleWorkflow.ResolveVehicleIds(rental, rentalVehicles);
 			}
 
 			return new RentalInputModel
 			{
 				RentalId = rental.RentalId,
-				RentalDetailsID = details?.RentalDetailsID ?? 0,
 				CustomerName = rental.CustomerName,
 				ContactNumber = rental.ContactNumber,
 				Notes = rental.Notes,
@@ -162,17 +159,17 @@ namespace EasyRent_Checking.ViewModels
 				PaymentDueAt = rental.PaymentDueAt,
 				VehicleId = vehicleIds.FirstOrDefault() > 0
 					? vehicleIds.First()
-					: (details?.VehicleId ?? 0),
+					: 0,
 				VehicleIds = vehicleIds,
-				PickupLocation = details?.PickupLocation ?? string.Empty,
-				DropoffLocation = details?.DropoffLocation ?? string.Empty,
-				PickupDate = details?.PickupDate ?? default,
-				ReturnDate = details?.ReturnDate ?? default,
-				PickupTime = details?.PickupTime ?? default,
-				ReturnTime = details?.ReturnTime ?? default,
-				PassengerCount = details?.PassengerCount ?? 1,
-				Discount = details?.Discount ?? Discount.No,
-				DiscountImagePath = details?.DiscountImagePath,
+				PickupLocation = rental.PickupLocation,
+				DropoffLocation = rental.DropoffLocation,
+				PickupDate = rental.PickupDate,
+				ReturnDate = rental.ReturnDate,
+				PickupTime = rental.PickupTime,
+				ReturnTime = rental.ReturnTime,
+				PassengerCount = rental.PassengerCount,
+				Discount = rental.Discount,
+				DiscountImagePath = rental.DiscountImagePath,
 				PaymentId = payment?.PaymentId ?? 0,
 				PaymentType = payment?.PaymentType,
 				PaymentMethod = payment?.PaymentMethod,
@@ -205,7 +202,7 @@ namespace EasyRent_Checking.ViewModels
 			return ids;
 		}
 
-		public void ApplyTo(Rental rental, RentalDetails details)
+		public void ApplyTo(Rental rental)
 		{
 			rental.CustomerName = CustomerName;
 			rental.ContactNumber = ContactNumber;
@@ -218,17 +215,16 @@ namespace EasyRent_Checking.ViewModels
 			VehicleId = vehicleIds.FirstOrDefault();
 			VehicleIds = vehicleIds.ToList();
 
-			details.VehicleId = VehicleId;
-			details.PickupLocation = PickupLocation;
-			details.DropoffLocation = DropoffLocation;
-			details.PickupDate = PickupDate;
-			details.ReturnDate = ReturnDate;
-			details.PickupTime = PickupTime;
-			details.ReturnTime = ReturnTime;
-			details.PassengerCount = PassengerCount;
-			details.Discount = Discount;
-			details.DiscountImagePath = DiscountImagePath;
-			details.DiscountImageFile = DiscountImageFile;
+			rental.PickupLocation = PickupLocation;
+			rental.DropoffLocation = DropoffLocation;
+			rental.PickupDate = PickupDate;
+			rental.ReturnDate = ReturnDate;
+			rental.PickupTime = PickupTime;
+			rental.ReturnTime = ReturnTime;
+			rental.PassengerCount = PassengerCount;
+			rental.Discount = Discount;
+			rental.DiscountImagePath = DiscountImagePath;
+			rental.DiscountImageFile = DiscountImageFile;
 		}
 
 		public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

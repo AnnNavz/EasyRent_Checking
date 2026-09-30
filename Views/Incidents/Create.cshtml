@@ -1,118 +1,386 @@
-@model EasyRent_Checking.Models.IncidentReport
+@model EasyRent_Checking.ViewModels.IncidentCreateViewModel
 @using EasyRent_Checking.Models
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using System.Reflection
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Report Accident";
+    ViewData["Title"] = "Record Incident";
     ViewData["ActivePage"] = "Incidents";
     ViewData["SectionTitle"] = "Incident Reports";
     ViewData["SectionUrl"] = Url.Action("Index", "Incidents");
 
-    var transit = ViewBag.Transit as Transit;
-    var vehicle = transit?.Vehicle;
-    var occurredValue = Model.OccurredAt == default
-        ? DateTime.Now.ToString("yyyy-MM-ddTHH:mm")
-        : Model.OccurredAt.ToString("yyyy-MM-ddTHH:mm");
+    var report = Model.Report;
+    var transit = Model.Transit;
+    var selectedVehicleId = report.VehicleId;
+    var occurredDateValue = report.OccurredAt == default
+        ? DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        : report.OccurredAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var isFreshForm = !ViewData.ModelState.Keys.Any(k => k.StartsWith("Report.", StringComparison.Ordinal));
+
+    string EnumLabel(Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString()).FirstOrDefault();
+        var display = member?.GetCustomAttribute<DisplayAttribute>()?.GetName();
+        return display ?? value.ToString();
+    }
 }
 
-<div class="container-fluid px-4 py-3">
-    <div class="details-page-actions mb-3">
-        @if (transit != null)
-        {
-            <a asp-controller="Transits" asp-action="Details" asp-route-transitid="@transit.TransitID" class="btn btn-page-back">Back</a>
-        }
-        else
-        {
-            <a asp-action="Index" class="btn btn-page-back">Back</a>
-        }
+<div class="container-fluid px-4 py-3 incident-record-page">
+    <div class="incident-record-header mb-4">
+        <div>
+            <h1 class="incident-record-title">Record Incident</h1>
+            <p class="incident-record-subtitle">Fill out the details below to report an incident.</p>
+        </div>
+        <div class="incident-record-info-banner">
+            <span class="incident-record-info-icon" aria-hidden="true"><i class="bi bi-info-lg"></i></span>
+            <span>Submitting this report will attach the incident details to the selected vehicle's record for immediate assessment.</span>
+        </div>
     </div>
 
-    <div class="reservation-view-card" style="max-width: 720px;">
-        <div class="reservation-view-section-title mb-3">
-            <i class="bi bi-exclamation-triangle"></i>
-            <span>
-                @(transit != null
-                    ? $"Report Accident — BK-{transit.RentalID.ToString("D5")}"
-                    : "Report Incident")
-            </span>
+    @if (transit != null)
+    {
+        <div class="incident-record-trip-note mb-3">
+            Linked to trip <strong>BK-@transit.RentalID.ToString("D5")</strong>
+            @(transit.Vehicle != null ? $" · {transit.Vehicle.Brand} {transit.Vehicle.Model}" : "")
         </div>
+    }
+
+    <form asp-action="Create"
+          asp-route-transitid="@transit?.TransitID"
+          method="post"
+          id="incidentRecordForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
         @if (transit != null)
         {
-            <p class="text-muted small mb-3">
-                @(vehicle != null ? $"{vehicle.Brand} {vehicle.Model} · {vehicle.PlateNumber}" : "Vehicle")
-                @(transit.Driver != null ? $" · {transit.Driver.Name}" : "")
-            </p>
+            <input type="hidden" asp-for="Report.TransitID" />
+            <input type="hidden" asp-for="Report.DriverID" />
         }
 
-        <form asp-action="Create" asp-route-transitid="@transit?.TransitID" method="post" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <div class="incident-record-card incident-vehicle-card mb-4">
+            @if (!Model.LockVehicleSelection)
+            {
+                var fleetVehicleCount = Model.Vehicles.Count;
+                var transitVehicleCount = Model.Vehicles.Count(v => v.IsOnActiveTransit);
+                var defaultVehicleTab = Model.Vehicles.Any(v => v.VehicleId == selectedVehicleId && v.IsOnActiveTransit)
+                    ? "transit"
+                    : "fleet";
 
-            @if (transit != null)
-            {
-                <input type="hidden" asp-for="VehicleId" />
-                <input type="hidden" asp-for="TransitID" />
-                <input type="hidden" asp-for="DriverID" />
-            }
-            else
-            {
-                <div class="mb-3">
-                    <label asp-for="VehicleId" class="form-label"></label>
-                    <select asp-for="VehicleId" class="form-select" asp-items="ViewBag.VehicleId">
-                        <option value="">Select vehicle...</option>
-                    </select>
-                    <span asp-validation-for="VehicleId" class="text-danger"></span>
+                <div class="incident-vehicle-tabs" role="tablist" aria-label="Vehicle groups">
+                    <button type="button"
+                            class="incident-vehicle-tab @(defaultVehicleTab == "fleet" ? "is-active" : "")"
+                            data-vehicle-tab-target="fleet"
+                            role="tab"
+                            aria-selected="@(defaultVehicleTab == "fleet" ? "true" : "false")">
+                        Vehicles
+                        <span class="incident-vehicle-tab-count">@fleetVehicleCount</span>
+                    </button>
+                    <button type="button"
+                            class="incident-vehicle-tab @(defaultVehicleTab == "transit" ? "is-active" : "")"
+                            data-vehicle-tab-target="transit"
+                            role="tab"
+                            aria-selected="@(defaultVehicleTab == "transit" ? "true" : "false")">
+                        In Transit
+                        <span class="incident-vehicle-tab-count">@transitVehicleCount</span>
+                    </button>
+                </div>
+
+                <div class="incident-vehicle-toolbar">
+                    <label class="incident-vehicle-search">
+                        <i class="bi bi-search incident-vehicle-search-icon" aria-hidden="true"></i>
+                        <input type="search"
+                               id="vehicleSearchInput"
+                               placeholder="Search Vehicles"
+                               autocomplete="off"
+                               aria-label="Search Vehicles" />
+                    </label>
                 </div>
             }
 
-            <div class="mb-3">
-                <label asp-for="Type" class="form-label"></label>
-                <select asp-for="Type" class="form-select" asp-items="Html.GetEnumSelectList<IncidentType>()"></select>
-                <span asp-validation-for="Type" class="text-danger"></span>
-            </div>
+            @{
+                var vehicleError = ViewData.ModelState["VehicleId"]?.Errors.FirstOrDefault()?.ErrorMessage
+                    ?? ViewData.ModelState["Report.VehicleId"]?.Errors.FirstOrDefault()?.ErrorMessage;
+            }
+            @if (!string.IsNullOrEmpty(vehicleError))
+            {
+                <div class="text-danger small mb-2">@vehicleError</div>
+            }
 
-            <div class="mb-3">
-                <label asp-for="Severity" class="form-label"></label>
-                <select asp-for="Severity" class="form-select" asp-items="Html.GetEnumSelectList<IncidentSeverity>()"></select>
-                <span asp-validation-for="Severity" class="text-danger"></span>
-            </div>
+            @if (Model.Vehicles.Count == 0)
+            {
+                <div class="incident-vehicle-empty">No vehicles are available to report an incident for.</div>
+            }
+            else
+            {
+                <div class="incident-vehicle-list" id="vehicleSelectionList">
+                    @foreach (var vehicle in Model.Vehicles)
+                    {
+                        var isSelected = selectedVehicleId == vehicle.VehicleId;
+                        var typeLabel = VehicleTypes.Display(vehicle.Type);
+                        var seatsLabel = vehicle.PassengersCount == 1 ? "1 seater" : $"{vehicle.PassengersCount} seater";
+                        <label class="incident-vehicle-option @(isSelected ? "is-selected" : "")"
+                               data-vehicle-search="@vehicle.SearchKey"
+                               data-vehicle-in-transit="@(vehicle.IsOnActiveTransit ? "true" : "false")">
+                            <input type="radio"
+                                   class="incident-vehicle-radio"
+                                   name="Report.VehicleId"
+                                   value="@vehicle.VehicleId"
+                                   @(isSelected ? "checked" : null)
+                                   @(Model.LockVehicleSelection ? "disabled" : "required")
+                                   />
+                            <span class="incident-vehicle-thumb" aria-hidden="true">
+                                @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+                                {
+                                    <img src="~/images/@vehicle.ImagePath" alt="" />
+                                }
+                                else
+                                {
+                                    <i class="bi bi-car-front-fill"></i>
+                                }
+                            </span>
+                            <div class="incident-vehicle-identity">
+                                <span class="incident-vehicle-status incident-vehicle-fleet-status @vehicle.FleetStatusClass">@vehicle.FleetStatusLabel</span>
+                                @if (vehicle.IsOnActiveTransit)
+                                {
+                                    <span class="incident-vehicle-status incident-vehicle-transit-status is-in-transit">In Transit</span>
+                                }
+                                <strong class="incident-vehicle-name">@vehicle.DisplayName</strong>
+                                <span class="incident-vehicle-meta">@typeLabel • @seatsLabel</span>
+                            </div>
+                            <div class="incident-vehicle-meta-col">
+                                <span class="incident-vehicle-meta-label"><i class="bi bi-123"></i> Plate Number</span>
+                                <span class="incident-vehicle-meta-value">@vehicle.PlateNumber</span>
+                            </div>
+                            @if (vehicle.IsOnActiveTransit)
+                            {
+                                <div class="incident-vehicle-meta-col incident-vehicle-transit-driver">
+                                    <span class="incident-vehicle-meta-label"><i class="bi bi-person"></i> Assigned Driver</span>
+                                    <span class="incident-vehicle-driver">
+                                        <span class="incident-vehicle-driver-avatar" aria-hidden="true">
+                                            @if (!string.IsNullOrEmpty(vehicle.DriverImagePath))
+                                            {
+                                                <img src="~/images/@vehicle.DriverImagePath" alt="" />
+                                            }
+                                            else
+                                            {
+                                                @vehicle.DriverInitials
+                                            }
+                                        </span>
+                                        <span class="incident-vehicle-meta-value">@(vehicle.DriverName ?? "—")</span>
+                                    </span>
+                                </div>
+                            }
+                        </label>
+                    }
+                </div>
+                @if (!Model.LockVehicleSelection)
+                {
+                    <div class="incident-vehicle-empty incident-vehicle-tab-empty" id="vehicleTabEmptyState" hidden>
+                        No vehicles match your search in this tab.
+                    </div>
+                }
+            }
 
-            <div class="mb-3">
-                <label asp-for="OccurredAt" class="form-label"></label>
-                <input asp-for="OccurredAt" type="datetime-local" class="form-control" value="@occurredValue" />
-                <span asp-validation-for="OccurredAt" class="text-danger"></span>
-            </div>
+            @if (Model.LockVehicleSelection && selectedVehicleId > 0)
+            {
+                <input type="hidden" asp-for="Report.VehicleId" />
+            }
+        </div>
 
-            <div class="mb-3">
-                <label asp-for="Location" class="form-label"></label>
-                <input asp-for="Location" class="form-control" />
-                <span asp-validation-for="Location" class="text-danger"></span>
+        <div class="incident-record-card mb-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="Report_Type" class="incident-record-field-label">Type</label>
+                    <select name="Report.Type" id="Report_Type" class="form-select incident-record-input" required>
+                        @if (isFreshForm)
+                        {
+                            <option value="" disabled selected>Select type of incident</option>
+                        }
+                        else
+                        {
+                            <option value="" disabled>Select type of incident</option>
+                        }
+                        @foreach (IncidentType type in Enum.GetValues<IncidentType>())
+                        {
+                            if (!isFreshForm && report.Type == type)
+                            {
+                                <option value="@type" selected="selected">@EnumLabel(type)</option>
+                            }
+                            else
+                            {
+                                <option value="@type">@EnumLabel(type)</option>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="Report.Type" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label for="Report_Severity" class="incident-record-field-label">Severity</label>
+                    <select name="Report.Severity" id="Report_Severity" class="form-select incident-record-input" required>
+                        @if (isFreshForm)
+                        {
+                            <option value="" disabled selected>Select severity</option>
+                        }
+                        else
+                        {
+                            <option value="" disabled>Select severity</option>
+                        }
+                        @foreach (IncidentSeverity severity in Enum.GetValues<IncidentSeverity>())
+                        {
+                            if (!isFreshForm && report.Severity == severity)
+                            {
+                                <option value="@severity" selected="selected">@EnumLabel(severity)</option>
+                            }
+                            else
+                            {
+                                <option value="@severity">@EnumLabel(severity)</option>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="Report.Severity" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Report.OccurredAt" class="incident-record-field-label">Occurred At</label>
+                    <div class="incident-record-input-wrap">
+                        <input asp-for="Report.OccurredAt"
+                               type="date"
+                               class="form-control incident-record-input"
+                               value="@occurredDateValue" />
+                        <i class="bi bi-calendar3 incident-record-input-icon" aria-hidden="true"></i>
+                    </div>
+                    <span asp-validation-for="Report.OccurredAt" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Report.Location" class="incident-record-field-label">Location</label>
+                    <input asp-for="Report.Location"
+                           class="form-control incident-record-input"
+                           placeholder="Enter the incident location" />
+                    <span asp-validation-for="Report.Location" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Report.Description" class="incident-record-field-label">Description</label>
+                    <textarea asp-for="Report.Description"
+                              class="form-control incident-record-textarea"
+                              rows="4"
+                              placeholder="What happened? Please provide as much detail as possible"></textarea>
+                    <span asp-validation-for="Report.Description" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <div class="incident-record-checkbox">
+                        <input asp-for="Report.IsUndrivable" class="form-check-input" id="Report_IsUndrivable" />
+                        <label asp-for="Report.IsUndrivable" class="form-check-label" for="Report_IsUndrivable"></label>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <div class="mb-3">
-                <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" class="form-control" rows="3" placeholder="What happened?"></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3 form-check">
-                <input asp-for="IsUndrivable" class="form-check-input" />
-                <label asp-for="IsUndrivable" class="form-check-label"></label>
-                <div class="small text-muted">If checked, this vehicle is set to Unavailable until the report is closed or dismissed.</div>
-            </div>
-
-            <div class="mb-4">
-                <label asp-for="ImageFile" class="form-label"></label>
-                <input asp-for="ImageFile" type="file" class="form-control" accept=".png,.jpg,.jpeg,image/*" />
-                <span asp-validation-for="ImageFile" class="text-danger"></span>
-            </div>
-
-            <button type="submit" class="btn reservation-btn-reject">Submit Report</button>
-        </form>
-    </div>
+        <div class="incident-record-actions">
+            @if (transit != null)
+            {
+                <a asp-controller="Transits" asp-action="Details" asp-route-transitid="@transit.TransitID" class="btn incident-record-cancel-btn">Cancel</a>
+            }
+            else
+            {
+                <a asp-action="Index" class="btn incident-record-cancel-btn">Cancel</a>
+            }
+            <button type="submit" class="btn incident-record-submit-btn">Submit Report</button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        (function () {
+            const searchInput = document.getElementById('vehicleSearchInput');
+            const vehicleList = document.getElementById('vehicleSelectionList');
+            const tabButtons = document.querySelectorAll('[data-vehicle-tab-target]');
+            const tabEmptyState = document.getElementById('vehicleTabEmptyState');
+            const activeTabButton = document.querySelector('[data-vehicle-tab-target].is-active');
+            let currentTab = activeTabButton?.dataset.vehicleTabTarget || 'fleet';
+
+            function updateSelectedState() {
+                if (!vehicleList) return;
+                vehicleList.querySelectorAll('.incident-vehicle-option').forEach(function (option) {
+                    const input = option.querySelector('input[type="radio"]');
+                    option.classList.toggle('is-selected', input && input.checked);
+                });
+            }
+
+            function updateTabPresentation() {
+                if (!vehicleList) return;
+
+                vehicleList.querySelectorAll('.incident-vehicle-option').forEach(function (option) {
+                    const showFleet = currentTab === 'fleet';
+                    const showTransit = currentTab === 'transit';
+
+                    option.querySelectorAll('.incident-vehicle-fleet-status').forEach(function (el) {
+                        el.hidden = !showFleet;
+                    });
+                    option.querySelectorAll('.incident-vehicle-transit-status').forEach(function (el) {
+                        el.hidden = !showTransit;
+                    });
+
+                    const transitDriver = option.querySelector('.incident-vehicle-transit-driver');
+                    if (transitDriver) transitDriver.hidden = !showTransit;
+                });
+
+                vehicleList.classList.toggle('is-transit-tab', currentTab === 'transit');
+            }
+
+            function applyVehicleFilters() {
+                if (!vehicleList) return;
+                const term = (searchInput?.value || '').trim().toLowerCase();
+                let visibleCount = 0;
+
+                vehicleList.querySelectorAll('.incident-vehicle-option').forEach(function (option) {
+                    const searchKey = option.dataset.vehicleSearch || '';
+                    const inTransit = option.dataset.vehicleInTransit === 'true';
+                    const matchesSearch = !term || searchKey.includes(term);
+                    const matchesTab = currentTab === 'fleet' || inTransit;
+                    const isVisible = matchesSearch && matchesTab;
+                    option.style.display = isVisible ? '' : 'none';
+                    if (isVisible) {
+                        visibleCount += 1;
+                    }
+                });
+
+                updateTabPresentation();
+
+                if (tabEmptyState) {
+                    tabEmptyState.hidden = visibleCount > 0;
+                }
+            }
+
+            function setActiveTab(tab) {
+                currentTab = tab;
+                tabButtons.forEach(function (button) {
+                    const isActive = button.dataset.vehicleTabTarget === tab;
+                    button.classList.toggle('is-active', isActive);
+                    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                });
+                applyVehicleFilters();
+            }
+
+            if (vehicleList) {
+                vehicleList.addEventListener('change', updateSelectedState);
+                updateSelectedState();
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', applyVehicleFilters);
+            }
+
+            tabButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    setActiveTab(button.dataset.vehicleTabTarget || 'fleet');
+                });
+            });
+
+            applyVehicleFilters();
+        })();
+    </script>
 }

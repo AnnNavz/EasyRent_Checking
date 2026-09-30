@@ -52,12 +52,10 @@
         return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
     }
 
-    string FormatDuration(RentalDetails? details)
+    string FormatDuration(Rental rental)
     {
-        if (details == null) return "—";
-
-        var start = details.PickupDate.ToDateTime(details.PickupTime);
-        var end = details.ReturnDate.ToDateTime(details.ReturnTime);
+        var start = rental.PickupDate.ToDateTime(rental.PickupTime);
+        var end = rental.ReturnDate.ToDateTime(rental.ReturnTime);
         var span = end - start;
         if (span.TotalMinutes <= 0) return "—";
 
@@ -71,18 +69,42 @@
         return days == 1 ? "1 day" : $"{days} days";
     }
 
-    string StatusBadgeClass(RentalStatus status) => status switch
+    string StatusBadgeClass(Rental item)
     {
-        RentalStatus.Approved => "booking-status-approved",
-        RentalStatus.Cancelled => "booking-status-cancelled",
-        RentalStatus.Expired => "booking-status-expired",
-        _ => "booking-status-pending"
-    };
+        if (item.RefundRequestedAt != null && item.RefundedAt == null && item.RefundRejectedAt == null && item.RentalStatus == RentalStatus.Cancelled)
+        {
+            return "booking-status-refundable";
+        }
+
+        return item.RentalStatus switch
+        {
+            RentalStatus.Approved => "booking-status-approved",
+            RentalStatus.Cancelled => "booking-status-cancelled",
+            RentalStatus.Expired => "booking-status-expired",
+            RentalStatus.Refunded => "booking-status-refunded",
+            RentalStatus.RefundRejected => "booking-status-refund-rejected",
+            _ => "booking-status-pending"
+        };
+    }
+
+    string StatusLabel(Rental item)
+    {
+        if (item.RefundRequestedAt != null && item.RefundedAt == null && item.RefundRejectedAt == null && item.RentalStatus == RentalStatus.Cancelled)
+        {
+            return "Pending Refund Review";
+        }
+
+        return item.RentalStatus switch
+        {
+            RentalStatus.RefundRejected => "Refund Rejected",
+            _ => item.RentalStatus.ToString()
+        };
+    }
 }
 
 <div class="inquiries-index-page">
     <div class="row g-4 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="inquiry-metric-card">
                 <div class="inquiry-metric-icon" aria-hidden="true">
                     <i class="bi bi-clipboard-check"></i>
@@ -100,13 +122,13 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="inquiry-metric-card">
                 <div class="inquiry-metric-icon is-gold" aria-hidden="true">
                     <i class="bi bi-clipboard2-pulse"></i>
                 </div>
                 <div class="inquiry-metric-body">
-                    <span class="inquiry-metric-label">Pending Approval</span>
+                    <span class="inquiry-metric-label">Unpaid Holds</span>
                     <div class="inquiry-metric-value">@(ViewData["PendingApprovalsCount"] ?? "0")</div>
                 </div>
                 <div class="inquiry-metric-trend">
@@ -115,6 +137,24 @@
                         @FormatTrend(pendingApprovalsChange)
                     </span>
                     <span class="inquiry-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="inquiry-metric-card">
+                <div class="inquiry-metric-icon is-green" aria-hidden="true">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <div class="inquiry-metric-body">
+                    <span class="inquiry-metric-label">Refundable</span>
+                    <div class="inquiry-metric-value">@(ViewData["RefundableCount"] ?? "0")</div>
+                </div>
+                <div class="inquiry-metric-trend">
+                    <span class="inquiry-metric-badge is-neutral">
+                        <i class="bi bi-hourglass-split"></i>
+                        Pending review
+                    </span>
+                    <span class="inquiry-metric-compare">customer requests</span>
                 </div>
             </div>
         </div>
@@ -127,7 +167,7 @@
         <div class="inquiry-index-toolbar mb-4">
             <div class="inquiry-index-toolbar-filters">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
                     </button>
                     <ul class="dropdown-menu">
@@ -141,7 +181,7 @@
                 </div>
 
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentFilterName
                     </button>
                     <ul class="dropdown-menu">
@@ -161,8 +201,7 @@
                        name="searchString"
                        value="@ViewData["CurrentSearch"]"
                        class="form-control inquiry-index-search-input"
-                       placeholder="Search inquiries..." />
-                <i class="bi bi-mic inquiry-index-mic-icon" aria-hidden="true"></i>
+                       placeholder="Search Inquiries" />
                 @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
                 {
                     <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]"
@@ -204,9 +243,9 @@
                                         @if (item.CustomerId.HasValue)
                                         {
                                             <a asp-controller="Customers" asp-action="Details" asp-route-customerid="@item.CustomerId" class="booking-customer-avatar" aria-label="View @item.CustomerName profile">
-                                                @if (!string.IsNullOrEmpty(item.Customer?.ProfileImagePath))
+                                                @if (!string.IsNullOrEmpty(item.Customer?.User?.ProfileImagePath))
                                                 {
-                                                    <img src="~/images/@item.Customer.ProfileImagePath" alt="" />
+                                                    <img src="~/images/@item.Customer.User!.ProfileImagePath" alt="" />
                                                 }
                                                 else
                                                 {
@@ -225,9 +264,15 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if (item.Details?.Vehicle != null)
+                                    @{
+                                        var indexVehicle = item.RentalVehicles?
+                                            .OrderBy(rv => rv.SortOrder)
+                                            .Select(rv => rv.Vehicle)
+                                            .FirstOrDefault();
+                                    }
+                                    @if (indexVehicle != null)
                                     {
-                                        <span class="booking-vehicle-name">@item.Details.Vehicle.Brand @item.Details.Vehicle.Model</span>
+                                        <span class="booking-vehicle-name">@indexVehicle.Brand @indexVehicle.Model</span>
                                     }
                                     else
                                     {
@@ -235,13 +280,11 @@
                                     }
                                 </td>
                                 <td>
-                                    @(item.Details != null
-                                        ? AdminDates.FormatRange(item.Details.PickupDate, item.Details.ReturnDate)
-                                        : "—")
+                                    @AdminDates.FormatRange(item.PickupDate, item.ReturnDate)
                                 </td>
-                                <td>@FormatDuration(item.Details)</td>
+                                <td>@FormatDuration(item)</td>
                                 <td>
-                                    <span class="booking-status-badge @StatusBadgeClass(item.RentalStatus)">@item.RentalStatus</span>
+                                    <span class="booking-status-badge @StatusBadgeClass(item)">@StatusLabel(item)</span>
                                 </td>
                                 <td class="text-center">
                                     <div class="dropdown">

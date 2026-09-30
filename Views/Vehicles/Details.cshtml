@@ -27,6 +27,26 @@
         _ => status.ToString()
     };
 
+    string FleetStatusLabel(Vehicle? fleetVehicle)
+    {
+        if (fleetVehicle == null)
+        {
+            return "—";
+        }
+
+        if (!fleetVehicle.IsActive)
+        {
+            return "Deactivated";
+        }
+
+        if (fleetVehicle.RegistrationExpiry.Date < DateTime.Today)
+        {
+            return "Expired";
+        }
+
+        return StatusLabel(fleetVehicle.Status);
+    }
+
     string StatusDotClass(VehicleStatus status) => status switch
     {
         VehicleStatus.Available => "",
@@ -34,6 +54,21 @@
         VehicleStatus.InMaintenance => "is-maintenance",
         _ => "is-unavailable"
     };
+
+    string FleetStatusDotClass(Vehicle? fleetVehicle)
+    {
+        if (fleetVehicle == null || !fleetVehicle.IsActive)
+        {
+            return "is-deactivated";
+        }
+
+        if (fleetVehicle.RegistrationExpiry.Date < DateTime.Today)
+        {
+            return "is-expired";
+        }
+
+        return StatusDotClass(fleetVehicle.Status);
+    }
 
     string DueStatusClass(PmsDueKind kind) => kind switch
     {
@@ -91,6 +126,7 @@
     var description = string.IsNullOrWhiteSpace(vehicle?.Description)
         ? "No description has been added for this vehicle yet."
         : vehicle!.Description;
+    var isFleetActive = vehicle?.IsActive ?? false;
 }
 
 @section Styles {
@@ -136,11 +172,11 @@
                 </div>
                 <div class="vehicle-detail-tile">
                     <span class="vehicle-detail-tile-icon">
-                        <span class="vehicle-status-dot @StatusDotClass(vehicle?.Status ?? VehicleStatus.Unavailable)"></span>
+                        <span class="vehicle-status-dot @FleetStatusDotClass(vehicle)"></span>
                     </span>
                     <div>
                         <span class="vehicle-detail-tile-label">Status</span>
-                        <span class="vehicle-detail-tile-value">@StatusLabel(vehicle?.Status ?? VehicleStatus.Unavailable)</span>
+                        <span class="vehicle-detail-tile-value">@FleetStatusLabel(vehicle)</span>
                     </div>
                 </div>
             </div>
@@ -150,9 +186,6 @@
     <ul class="nav nav-tabs vehicle-details-tabs" id="vehicleDetailTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="information-tab" data-bs-toggle="tab" data-bs-target="#information-pane" type="button" role="tab" aria-selected="true">Information</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-selected="false">Documents</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance-pane" type="button" role="tab" aria-selected="false">Maintenance</button>
@@ -249,44 +282,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab">
-            <div class="vehicle-section-head">
-                <div>
-                    <h2 class="vehicle-section-title">Vehicle Documents</h2>
-                    <p class="vehicle-section-desc">View and manage all documents related to this vehicle.</p>
-                </div>
-                <a asp-action="Edit" asp-route-id="@vehicle?.VehicleId" asp-route-returnUrl="@detailsReturnUrl" class="btn vehicle-section-btn">
-                    <i class="bi bi-upload"></i> Upload Document
-                </a>
-            </div>
-
-            @if (hasImage)
-            {
-                <div class="vehicle-doc-grid">
-                    <div class="vehicle-doc-card">
-                        <div class="vehicle-doc-card-top">
-                            <h3 class="vehicle-doc-title">Vehicle Photo</h3>
-                        </div>
-                        <div class="vehicle-doc-meta">Image</div>
-                        <div class="vehicle-doc-uploaded">Current fleet photo on file</div>
-                        <a href="~/images/@vehicle!.ImagePath" target="_blank" rel="noopener" class="vehicle-doc-download">Download</a>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="vehicle-empty">
-                    <i class="bi bi-file-earmark-text"></i>
-                    No documents uploaded for this vehicle yet.
-                </div>
-            }
-
-            <div class="vehicle-info-banner">
-                <i class="bi bi-info-circle-fill"></i>
-                <p>Keep vehicle documents up to date and ensure they are valid. Expired documents may affect availability.</p>
             </div>
         </div>
 
@@ -401,6 +396,37 @@
             }
         </div>
     </div>
+
+    @if (vehicle != null)
+    {
+        <div class="vehicle-details-status-footer">
+            <div class="vehicle-details-status-footer-text">
+                <h6 class="vehicle-details-status-footer-title">Fleet Status</h6>
+                <p class="mb-0">
+                    @if (isFleetActive)
+                    {
+                        @:Deactivating removes this vehicle from client browsing and new bookings. Its profile and history stay saved.
+                    }
+                    else
+                    {
+                        @:This vehicle is currently deactivated and cannot be booked by customers.
+                    }
+                </p>
+            </div>
+            <form asp-action="ToggleActive" asp-route-id="@vehicle.VehicleId" method="post" class="vehicle-details-status-footer-action"
+                  data-confirm="@(isFleetActive ? "Deactivate this vehicle?" : "Reactivate this vehicle?")"
+                  data-confirm-text="@(isFleetActive ? "It will no longer appear in client browsing or new bookings. Its profile and history stay saved." : "It will be available for browsing and bookings again.")"
+                  data-confirm-button="@(isFleetActive ? "Deactivate Vehicle" : "Activate Vehicle")"
+                  data-confirm-tone="@(isFleetActive ? "danger" : "approve")"
+                  data-confirm-icon="@(isFleetActive ? "bi-slash-circle" : "bi-check-circle")"
+                  data-confirm-submit-icon="@(isFleetActive ? "bi-slash-circle" : "bi-check-lg")">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn @(isFleetActive ? "vehicle-details-btn-deactivate" : "vehicle-details-btn-activate")">
+                    @(isFleetActive ? "Deactivate Vehicle" : "Activate Vehicle")
+                </button>
+            </form>
+        </div>
+    }
 </div>
 
 @section Scripts {
@@ -408,7 +434,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             var hash = (window.location.hash || '').replace('#', '');
             var tabId = hash === 'history' ? 'history-tab'
-                : hash === 'documents' ? 'documents-tab'
                 : hash === 'maintenance' ? 'maintenance-tab'
                 : null;
             if (!tabId) return;

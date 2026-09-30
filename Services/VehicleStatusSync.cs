@@ -19,7 +19,7 @@ namespace EasyRent_Checking.Services
 
 			var hasOpenUndrivableIncident = await context.IncidentReports.AnyAsync(i =>
 				i.VehicleId == vehicleId
-				&& i.IsUndrivable
+				&& (i.IsUndrivable || i.Type == IncidentType.Breakdown)
 				&& (i.Status == IncidentStatus.Reported
 					|| i.Status == IncidentStatus.UnderReview
 					|| i.Status == IncidentStatus.InRepair));

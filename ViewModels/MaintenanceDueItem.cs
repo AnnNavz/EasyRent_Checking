@@ -89,7 +89,6 @@ namespace EasyRent_Checking.ViewModels
 	public class MaintenanceScheduleInput
 	{
 		public int VehicleId { get; set; }
-		public string Preset { get; set; } = PmsRules.PresetSuv;
 		public List<MaintenanceScheduleRow> Rows { get; set; } = new();
 	}
 }

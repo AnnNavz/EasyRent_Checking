@@ -1,78 +1,111 @@
 @model EasyRent_Checking.Models.Transit
 @using EasyRent_Checking.Models
+@using EasyRent_Checking.ViewModels
+@using System.Globalization
 
 @{
     Layout = "_LayoutAdminDashboard";
     ViewData["Title"] = "Complete Trip";
     ViewData["ActivePage"] = "Transit";
-    ViewData["SectionTitle"] = "Transit Management";
+    ViewData["SectionTitle"] = "Active Trips";
     ViewData["SectionUrl"] = Url.Action("Index", "Transits");
+
+    var details = Model.Rental;
+    var scheduledReturnTime = details?.ReturnTime.ToString("HH:mm", CultureInfo.InvariantCulture) ?? "";
+    var scheduledReturnTimeLabel = details?.ReturnTime.ToString("h:mm tt", CultureInfo.InvariantCulture) ?? "—";
+    var timestampedPhotos = new TimestampedVehiclePhotosViewModel
+    {
+        GridId = "postTripPhotoGrid",
+        AddButtonId = "postTripPhotoAddBtn",
+        TemplateId = "postTripPhotoCardTemplate",
+        InputId = "postTripImageInput",
+        InputName = "PostTripImageFile",
+        InputListName = "PostTripImageFiles"
+    };
 }
 
-<div class="container-fluid px-4 py-3">
-    <div class="details-page-actions mb-3">
-        <a asp-action="Details" asp-route-transitid="@Model.TransitID" class="btn btn-page-back">Back</a>
+<div class="container-fluid px-4 py-3 transit-preparation-page">
+    <div class="transit-prep-header mb-4">
+        <div>
+            <h1 class="transit-prep-title">Complete Trip</h1>
+            <p class="transit-prep-subtitle">Record return details and timestamped vehicle photos</p>
+        </div>
     </div>
 
-    <div class="reservation-view-card" style="max-width: 720px;">
-        <div class="reservation-view-section-title mb-3">
-            <i class="bi bi-flag"></i>
-            <span>Complete Trip — BK-@Model.RentalID.ToString("D5")</span>
+    <form asp-action="CompleteTrip"
+          asp-route-transitid="@Model.TransitID"
+          method="post"
+          enctype="multipart/form-data"
+          id="transitCompleteForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="TransitID" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="transit-prep-card mb-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="ReturnTime" class="transit-prep-field-label"></label>
+                    <input asp-for="ReturnTime" type="time" class="form-control transit-prep-input" />
+                    <span class="transit-prep-field-help">Scheduled return time: @scheduledReturnTimeLabel</span>
+                    <span asp-validation-for="ReturnTime" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="FuelLevelEnd" class="transit-prep-field-label"></label>
+                    <select asp-for="FuelLevelEnd" class="form-select transit-prep-input" asp-items="Html.GetEnumSelectList<FuelLevel>()">
+                        <option value="">Select fuel level...</option>
+                    </select>
+                    <span asp-validation-for="FuelLevelEnd" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="OdometerEnd" class="transit-prep-field-label"></label>
+                    <div class="transit-prep-input-wrap has-suffix">
+                        <input asp-for="OdometerEnd" class="form-control transit-prep-input" type="number" min="0" step="1" />
+                        <span class="transit-prep-input-suffix">km</span>
+                    </div>
+                    @if (Model.OdometerStart != null)
+                    {
+                        <span class="transit-prep-field-help">Start reading: @Model.OdometerStart.Value.ToString("N0") km</span>
+                    }
+                    else if (Model.Vehicle != null)
+                    {
+                        <span class="transit-prep-field-help">Current vehicle reading: @Model.Vehicle.Odometer.ToString("N0") km</span>
+                    }
+                    <span asp-validation-for="OdometerEnd" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="VehicleConditionEnd" class="transit-prep-field-label"></label>
+                    <textarea asp-for="VehicleConditionEnd" class="form-control transit-prep-textarea" rows="3" placeholder="Note any new damage or issues..."></textarea>
+                    <span asp-validation-for="VehicleConditionEnd" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <partial name="_TimestampedVehiclePhotos" model="timestampedPhotos" />
+            <span asp-validation-for="PostTripImageFile" class="text-danger small d-block mt-2"></span>
         </div>
 
-        <form asp-action="CompleteTrip" asp-route-transitid="@Model.TransitID" method="post" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="TransitID" />
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-            <div class="mb-3">
-                <label asp-for="ReturnTime" class="form-label"></label>
-                <input asp-for="ReturnTime" type="time" class="form-control" />
-                <span asp-validation-for="ReturnTime" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="FuelLevelEnd" class="form-label"></label>
-                <select asp-for="FuelLevelEnd" class="form-select" asp-items="Html.GetEnumSelectList<FuelLevel>()">
-                    <option value="">Select fuel level...</option>
-                </select>
-                <span asp-validation-for="FuelLevelEnd" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="OdometerEnd" class="form-label"></label>
-                <div class="input-group">
-                    <input asp-for="OdometerEnd" class="form-control" type="number" min="0" step="1" />
-                    <span class="input-group-text">km</span>
-                </div>
-                @if (Model.OdometerStart != null)
-                {
-                    <span class="small text-muted">Start reading: @Model.OdometerStart.Value.ToString("N0") km. Enter the number on the dashboard at return.</span>
-                }
-                else if (Model.Vehicle != null)
-                {
-                    <span class="small text-muted">Current vehicle reading: @Model.Vehicle.Odometer.ToString("N0") km. Enter the number on the dashboard at return.</span>
-                }
-                <span asp-validation-for="OdometerEnd" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="VehicleConditionEnd" class="form-label"></label>
-                <textarea asp-for="VehicleConditionEnd" class="form-control" rows="3" placeholder="Note any new damage or issues..."></textarea>
-                <span asp-validation-for="VehicleConditionEnd" class="text-danger"></span>
-            </div>
-
-            <div class="mb-4">
-                <label asp-for="PostTripImageFile" class="form-label"></label>
-                <input asp-for="PostTripImageFile" type="file" class="form-control" accept=".png,.jpg,.jpeg,image/*" />
-                <span asp-validation-for="PostTripImageFile" class="text-danger"></span>
-            </div>
-
-            <button type="submit" class="btn reservation-btn-approve">Confirm Complete Trip</button>
-        </form>
-    </div>
+        <div class="transit-prep-actions">
+            <a asp-action="Details" asp-route-transitid="@Model.TransitID" class="btn btn-page-back">Cancel</a>
+            <button type="submit" class="btn btn-reservation-edit">Confirm Complete Trip</button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script src="~/js/timestamped-vehicle-photos.js" asp-append-version="true"></script>
+    <script src="~/js/transit-time-confirm.js" asp-append-version="true"></script>
+    <script>
+        if (window.initTimestampedVehiclePhotos) {
+            window.initTimestampedVehiclePhotos('postTripPhotoGrid', 'postTripPhotoAddBtn', 'postTripPhotoCardTemplate');
+        }
+
+        if (window.initTransitTimeConfirm) {
+            window.initTransitTimeConfirm('transitCompleteForm', 'ReturnTime', {
+                scheduledTime: '@scheduledReturnTime',
+                confirmTitle: 'Return time is not aligned with the scheduled booking time.',
+                confirmButton: 'Confirm Complete Trip',
+                scheduledLabel: 'Scheduled return time'
+            });
+        }
+    </script>
 }

@@ -71,6 +71,9 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Pre-Trip Image")]
 		public string? PreTripImagePath { get; set; }
 
+		[StringLength(2000)]
+		public string? PreTripImagePathsJson { get; set; }
+
 		[NotMapped]
 		[Display(Name = "Upload Pre-Trip Image")]
 		[DataType(DataType.Upload)]
@@ -79,6 +82,9 @@ namespace EasyRent_Checking.Models
 		[StringLength(255)]
 		[Display(Name = "Post-Trip Image")]
 		public string? PostTripImagePath { get; set; }
+
+		[StringLength(2000)]
+		public string? PostTripImagePathsJson { get; set; }
 
 		[NotMapped]
 		[Display(Name = "Upload Post-Trip Image")]

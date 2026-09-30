@@ -3,62 +3,220 @@
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Complete Repair";
+    ViewData["Title"] = "Complete Report";
     ViewData["ActivePage"] = "Incidents";
     ViewData["SectionTitle"] = "Incident Reports";
     ViewData["SectionUrl"] = Url.Action("Index", "Incidents");
 
     var vehicle = Model.Vehicle;
+    var reportId = IncidentReport.FormatReference(Model.IncidentReportId);
+    var vehicleName = vehicle != null ? $"{vehicle.Brand} {vehicle.Model}".Trim() : "—";
+    var vehicleTypeLabel = vehicle != null ? VehicleTypes.Display(vehicle.Type) : "—";
+    var seatsLabel = vehicle != null
+        ? (vehicle.PassengersCount == 1 ? "1 seater" : $"{vehicle.PassengersCount} seater")
+        : "—";
+
+    string VehicleStatusLabel(Vehicle? v)
+    {
+        if (v == null)
+        {
+            return "—";
+        }
+
+        if (!v.IsActive || v.Status is VehicleStatus.Unavailable or VehicleStatus.InMaintenance)
+        {
+            return "Unavailable";
+        }
+
+        if (v.Status == VehicleStatus.Rented)
+        {
+            return "In Transit";
+        }
+
+        return "Available";
+    }
+
+    string VehicleStatusClass(Vehicle? v)
+    {
+        var label = VehicleStatusLabel(v);
+        return label switch
+        {
+            "Available" => "is-available",
+            "In Transit" => "is-in-transit",
+            _ => "is-unavailable"
+        };
+    }
 }
 
-<div class="container-fluid px-4 py-3">
-    <div class="details-page-actions mb-3">
-        <a asp-action="Details" asp-route-id="@Model.IncidentReportId" class="btn btn-page-back">Back</a>
+<div class="container-fluid px-4 py-3 incident-complete-page">
+    <div class="incident-complete-header mb-4">
+        <h1 class="incident-complete-title">Complete Report</h1>
+        <p class="incident-complete-subtitle">Fill out the details below to report an incident.</p>
     </div>
 
-    <div class="reservation-view-card" style="max-width: 720px;">
-        <div class="reservation-view-section-title mb-3">
-            <i class="bi bi-wrench-adjustable"></i>
-            <span>Complete Repair — INC-@Model.IncidentReportId.ToString("D5")</span>
-        </div>
+    <form asp-action="CompleteRepair"
+          asp-route-id="@Model.IncidentReportId"
+          method="post"
+          enctype="multipart/form-data"
+          id="incidentCompleteForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <p class="text-muted small mb-3">
-            @(vehicle != null ? $"{vehicle.Brand} {vehicle.Model} · {vehicle.PlateNumber}" : "Vehicle")
-        </p>
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-7">
+                <div class="incident-complete-card">
+                    <div class="mb-3">
+                        <label for="workDone" class="incident-complete-field-label">Work Done</label>
+                        <textarea id="workDone"
+                                  name="workDone"
+                                  class="form-control incident-complete-textarea"
+                                  rows="4"
+                                  placeholder="What was repaired?">@Model.WorkDone</textarea>
+                        <span asp-validation-for="WorkDone" class="text-danger small"></span>
+                    </div>
 
-        <form asp-action="CompleteRepair" asp-route-id="@Model.IncidentReportId" method="post" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="mb-3">
+                        <label for="cost" class="incident-complete-field-label">Cost (₱)</label>
+                        <input id="cost"
+                               name="cost"
+                               class="form-control incident-complete-input"
+                               type="number"
+                               step="0.01"
+                               min="0"
+                               placeholder="Enter amount"
+                               value="@(Model.Cost?.ToString("0.##") ?? "")" />
+                        <span asp-validation-for="Cost" class="text-danger small"></span>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="WorkDone" class="form-label"></label>
-                <textarea asp-for="WorkDone" name="workDone" class="form-control" rows="4" placeholder="What was repaired?"></textarea>
-                <span asp-validation-for="WorkDone" class="text-danger"></span>
-            </div>
+                    <div class="mb-3">
+                        <label class="incident-complete-field-label">Upload Payment Screenshot / Receipt</label>
+                        <div class="incident-complete-upload-zone" id="receiptUploadZone">
+                            <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
+                            <span class="incident-complete-upload-main">Drag &amp; drop or click to upload</span>
+                            <span class="incident-complete-upload-sub">PNG, JPG, or JPEG (max 5MB)</span>
+                            <input type="file"
+                                   name="imageFile"
+                                   id="receiptImageInput"
+                                   class="incident-complete-file-input"
+                                   accept=".png,.jpg,.jpeg,image/png,image/jpeg" />
+                        </div>
+                        <div class="incident-complete-file-row d-none" id="receiptFileRow">
+                            <span class="incident-complete-file-name" id="receiptFileName"></span>
+                            <button type="button" class="incident-complete-file-remove" id="receiptRemoveBtn">Remove</button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.ImagePath))
+                        {
+                            <p class="incident-complete-upload-note mb-0 mt-2">A photo is already on this report. Upload only if you want to replace it.</p>
+                        }
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="Cost" class="form-label"></label>
-                <div class="input-group">
-                    <span class="input-group-text">₱</span>
-                    <input asp-for="Cost" name="cost" class="form-control" type="number" step="0.01" min="0" />
+                    <div class="mb-0">
+                        <label for="remarks" class="incident-complete-field-label">Remarks</label>
+                        <textarea id="remarks"
+                                  name="remarks"
+                                  class="form-control incident-complete-textarea"
+                                  rows="4"
+                                  placeholder="Add any additional remarks or notes (optional)">@Model.Remarks</textarea>
+                    </div>
                 </div>
-                <span asp-validation-for="Cost" class="text-danger"></span>
+
+                <div class="incident-complete-actions">
+                    <a asp-action="Details" asp-route-id="@Model.IncidentReportId" class="btn incident-complete-cancel-btn">Cancel</a>
+                    <button type="submit" class="btn incident-complete-submit-btn">Save and Close Incident</button>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Photo</label>
-                <input name="imageFile" type="file" class="form-control" accept=".png,.jpg,.jpeg,image/*" />
-                @if (!string.IsNullOrEmpty(Model.ImagePath))
-                {
-                    <span class="small text-muted">A photo is already on this report. Upload only if you want to replace it.</span>
-                }
-            </div>
+            <div class="col-lg-5">
+                <div class="incident-complete-summary-card mb-3">
+                    <span class="incident-complete-summary-label">Incident ID</span>
+                    <div class="incident-complete-summary-id">@reportId</div>
+                </div>
 
-            <button type="submit" class="btn reservation-btn-approve">Save and Close Incident</button>
-        </form>
-    </div>
+                <div class="incident-complete-summary-card">
+                    <div class="incident-complete-vehicle-row">
+                        <div class="incident-complete-vehicle-thumb" aria-hidden="true">
+                            @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
+                            {
+                                <img src="~/images/@vehicle.ImagePath" alt="@vehicleName" />
+                            }
+                            else
+                            {
+                                <i class="bi bi-truck-front"></i>
+                            }
+                        </div>
+                        <div class="incident-complete-vehicle-copy">
+                            <span class="incident-complete-vehicle-status @VehicleStatusClass(vehicle)">@VehicleStatusLabel(vehicle)</span>
+                            <strong class="incident-complete-vehicle-name">@vehicleName</strong>
+                            <span class="incident-complete-vehicle-meta">@vehicleTypeLabel • @seatsLabel</span>
+                        </div>
+                    </div>
+
+                    <div class="incident-complete-meta-list">
+                        <div class="incident-complete-meta-row">
+                            <span class="incident-complete-meta-label">Driver Assigned</span>
+                            <span class="incident-complete-meta-value">@(Model.Driver?.Name ?? "—")</span>
+                        </div>
+                        <div class="incident-complete-meta-row">
+                            <span class="incident-complete-meta-label">Plate Number</span>
+                            <span class="incident-complete-meta-value">@(vehicle?.PlateNumber ?? "—")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        (function () {
+            const uploadZone = document.getElementById('receiptUploadZone');
+            const fileInput = document.getElementById('receiptImageInput');
+            const fileRow = document.getElementById('receiptFileRow');
+            const fileNameEl = document.getElementById('receiptFileName');
+            const removeBtn = document.getElementById('receiptRemoveBtn');
+
+            function showFile(file) {
+                if (!file || !fileRow || !fileNameEl) return;
+                fileNameEl.textContent = file.name;
+                fileRow.classList.remove('d-none');
+            }
+
+            function clearFile() {
+                if (!fileInput || !fileRow) return;
+                fileInput.value = '';
+                fileRow.classList.add('d-none');
+                if (fileNameEl) fileNameEl.textContent = '';
+            }
+
+            if (uploadZone && fileInput) {
+                uploadZone.addEventListener('click', function () { fileInput.click(); });
+                uploadZone.addEventListener('dragover', function (event) {
+                    event.preventDefault();
+                    uploadZone.classList.add('is-dragover');
+                });
+                uploadZone.addEventListener('dragleave', function () {
+                    uploadZone.classList.remove('is-dragover');
+                });
+                uploadZone.addEventListener('drop', function (event) {
+                    event.preventDefault();
+                    uploadZone.classList.remove('is-dragover');
+                    const file = event.dataTransfer?.files?.[0];
+                    if (!file) return;
+                    fileInput.files = event.dataTransfer.files;
+                    showFile(file);
+                });
+                fileInput.addEventListener('change', function () {
+                    const file = fileInput.files?.[0];
+                    if (file) showFile(file);
+                    else clearFile();
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', clearFile);
+            }
+        })();
+    </script>
 }

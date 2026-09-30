@@ -94,5 +94,10 @@ namespace EasyRent_Checking.Models
 		[DataType(DataType.DateTime)]
 		[Display(Name = "Closed At")]
 		public DateTime? ClosedAt { get; set; }
+
+		public const string ReferencePrefix = "IRT";
+
+		public static string FormatReference(int incidentReportId)
+			=> $"{ReferencePrefix}-{incidentReportId:D5}";
 	}
 }

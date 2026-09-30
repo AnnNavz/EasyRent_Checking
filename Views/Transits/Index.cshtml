@@ -1,17 +1,18 @@
-@model IEnumerable<EasyRent_Checking.Models.Transit>
+@model IEnumerable<EasyRent_Checking.ViewModels.TransitIndexItemViewModel>
 @using EasyRent_Checking.Models
 @using System.Globalization
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Booking Management";
+    ViewData["Title"] = "Active Trips";
     ViewData["ActivePage"] = "Transit";
-    ViewData["SectionTitle"] = "Booking Management";
+    ViewData["SectionTitle"] = "Active Trips";
 
-    var paymentsByRental = ViewBag.PaymentsByRentalId as Dictionary<int, Payment>
-        ?? new Dictionary<int, Payment>();
+    var currentSearch = ViewData["CurrentSearch"]?.ToString() ?? "";
+    var currentSort = ViewData["CurrentSort"]?.ToString() ?? "";
+    var currentFilter = ViewData["CurrentFilter"]?.ToString() ?? "";
 
-    string currentSortName = ViewData["CurrentSort"]?.ToString() switch
+    string currentSortName = currentSort switch
     {
         "CustomerName" => "Customer",
         "TripStatus" => "Trip Status",
@@ -19,7 +20,7 @@
         _ => "Sorting by"
     };
 
-    string currentFilterName = ViewData["CurrentFilter"]?.ToString() switch
+    string currentFilterName = currentFilter switch
     {
         "InTransit" => "In Transit",
         "Completed" => "Completed",
@@ -42,8 +43,24 @@
         return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
     }
 
-    string FormatPeso(decimal amount) =>
-        "₱" + Math.Max(0, amount).ToString("N2", CultureInfo.GetCultureInfo("en-PH"));
+    string FormatDuration(Rental? rental)
+    {
+        if (rental == null) return "—";
+
+        var start = rental.PickupDate.ToDateTime(rental.PickupTime);
+        var end = rental.ReturnDate.ToDateTime(rental.ReturnTime);
+        var span = end - start;
+        if (span.TotalMinutes <= 0) return "—";
+
+        if (span.TotalHours < 24)
+        {
+            var hours = Math.Max(1, (int)Math.Round(span.TotalHours));
+            return hours == 1 ? "1 hour" : $"{hours} hours";
+        }
+
+        var days = Math.Max(1, (int)Math.Round(span.TotalDays));
+        return days == 1 ? "1 day" : $"{days} days";
+    }
 
     string TripStatusLabel(TripStatus status) => status switch
     {
@@ -65,187 +82,213 @@
     };
 }
 
-<div class="row g-4 mb-4">
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">Total Bookings</span>
-                <div class="metric-value">@(ViewData["TotalBookingsCount"] ?? "0")</div>
+<div class="inquiries-index-page transits-index-page">
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="transit-metric-card">
+                <div class="transit-metric-icon" aria-hidden="true">
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                </div>
+                <div class="transit-metric-body">
+                    <span class="transit-metric-label">Total Bookings</span>
+                    <div class="transit-metric-value">@(ViewData["TotalBookingsCount"] ?? "0")</div>
+                    <span class="transit-metric-note">With active trip records</span>
+                </div>
             </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="transit-metric-card">
+                <div class="transit-metric-icon is-gold" aria-hidden="true">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="transit-metric-body">
+                    <span class="transit-metric-label">Approved</span>
+                    <div class="transit-metric-value">@(ViewData["ApprovedCount"] ?? "0")</div>
+                    <span class="transit-metric-note">Ready for trip workflow</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="transit-metric-card">
+                <div class="transit-metric-icon" aria-hidden="true">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div class="transit-metric-body">
+                    <span class="transit-metric-label">On-going</span>
+                    <div class="transit-metric-value">@(ViewData["OngoingCount"] ?? "0")</div>
+                    <span class="transit-metric-note">Currently in transit</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="transit-metric-card">
+                <div class="transit-metric-icon is-success" aria-hidden="true">
+                    <i class="bi bi-flag-fill"></i>
+                </div>
+                <div class="transit-metric-body">
+                    <span class="transit-metric-label">Completed</span>
+                    <div class="transit-metric-value">@(ViewData["CompletedCount"] ?? "0")</div>
+                    <span class="transit-metric-note">Trips finished</span>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">Approved</span>
-                <div class="metric-value">@(ViewData["ApprovedCount"] ?? "0")</div>
-            </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">Completed</span>
-                <div class="metric-value">@(ViewData["CompletedCount"] ?? "0")</div>
-            </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card p-4 d-flex justify-content-between align-items-center">
-            <div>
-                <span class="metric-label">On-going</span>
-                <div class="metric-value">@(ViewData["OngoingCount"] ?? "0")</div>
-            </div>
-            <div class="metric-icon-box" aria-hidden="true"></div>
-        </div>
-    </div>
-</div>
 
-<form asp-action="Index" method="get" class="w-100">
-    <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
-    <input type="hidden" name="currentFilter" value="@ViewData["CurrentFilter"]" />
+    <form asp-action="Index" method="get" class="w-100">
+        <input type="hidden" name="sortBy" value="@currentSort" />
+        <input type="hidden" name="currentFilter" value="@currentFilter" />
 
-    <div class="card index-toolbar-card mb-4">
-        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div class="d-flex align-items-center gap-2">
+        <div class="inquiry-index-toolbar mb-4">
+            <div class="inquiry-index-toolbar-filters">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="?sortBy=BookingId&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Booking ID</a></li>
-                        <li><a class="dropdown-item" href="?sortBy=CustomerName&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Customer</a></li>
-                        <li><a class="dropdown-item" href="?sortBy=TripStatus&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Trip Status</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=BookingId&searchString=@currentSearch&currentFilter=@currentFilter">Booking ID</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=CustomerName&searchString=@currentSearch&currentFilter=@currentFilter">Customer</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=TripStatus&searchString=@currentSearch&currentFilter=@currentFilter">Trip Status</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
-                        <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
+                        <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@currentSearch&currentFilter=@currentFilter">Clear Sorting</a></li>
                     </ul>
                 </div>
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentFilterName
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="?currentFilter=InTransit&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">In Transit</a></li>
-                        <li><a class="dropdown-item" href="?currentFilter=Completed&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Completed</a></li>
-                        <li><a class="dropdown-item" href="?currentFilter=Scheduled&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Scheduled</a></li>
-                        <li><a class="dropdown-item" href="?currentFilter=Delayed&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Delayed</a></li>
-                        <li><a class="dropdown-item" href="?currentFilter=Cancelled&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Cancelled</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=InTransit&searchString=@currentSearch&sortBy=@currentSort">In Transit</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Scheduled&searchString=@currentSearch&sortBy=@currentSort">Scheduled</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Delayed&searchString=@currentSearch&sortBy=@currentSort">Delayed</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Completed&searchString=@currentSearch&sortBy=@currentSort">Completed</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=Cancelled&searchString=@currentSearch&sortBy=@currentSort">Cancelled</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
-                        <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
+                        <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@currentSearch&sortBy=@currentSort">Clear Filters</a></li>
                     </ul>
                 </div>
             </div>
 
-            <div class="d-flex align-items-center gap-3 flex-grow-1 flex-sm-grow-0">
-                <div class="position-relative flex-grow-1">
-                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                    <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="form-control ps-5 pe-5 rounded-3 border bg-light text-secondary search-bar-input" placeholder="Search" />
-                    <i class="bi bi-mic position-absolute top-50 end-0 translate-middle-y me-3 text-muted" aria-hidden="true"></i>
-                </div>
+            <div class="inquiry-index-toolbar-search">
+                <i class="bi bi-search inquiry-index-search-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="searchString"
+                       value="@currentSearch"
+                       class="form-control inquiry-index-search-input"
+                       placeholder="Search trips" />
+                @if (!string.IsNullOrEmpty(currentSearch))
+                {
+                    <a href="?searchString=&sortBy=@currentSort&currentFilter=@currentFilter"
+                       class="inquiry-index-search-clear"
+                       aria-label="Clear search">&times;</a>
+                }
             </div>
         </div>
-    </div>
-</form>
+    </form>
 
-<div class="index-table-panel mb-4">
-    <div class="table-responsive">
-        <table class="table admin-table mb-0 align-middle">
-            <thead>
-                <tr>
-                    <th>Booking ID</th>
-                    <th>Customer</th>
-                    <th>Payment Options</th>
-                    <th>Amount Paid</th>
-                    <th>Payment Status</th>
-                    <th>Trip Status</th>
-                    <th class="text-center" style="width: 60px;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model != null && Model.Any())
-                {
-                    @foreach (var item in Model)
+    <div class="index-table-panel mb-4">
+        <div class="table-responsive">
+            <table class="table admin-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Customer</th>
+                        <th>Vehicle</th>
+                        <th>Dates</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th class="text-center" style="width: 60px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
                     {
-                        var bookingLabel = $"BK-{item.RentalID:D4}";
-                        var customerName = item.Rental?.CustomerName ?? "—";
-                        var contact = item.Rental?.ContactNumber ?? "—";
-                        paymentsByRental.TryGetValue(item.RentalID, out Payment? payment);
-                        var paymentOption = string.IsNullOrWhiteSpace(payment?.PaymentType) ? "—" : payment.PaymentType;
-                        var amountPaid = payment?.AmountPaid ?? 0m;
-                        var isPaid = payment != null
-                            && item.Rental?.RentalStatus == RentalStatus.Approved
-                            && payment.AmountPaid >= payment.TotalAmount;
-                        <tr>
-                            <td class="fw-semibold text-dark font-monospace">@bookingLabel</td>
-                            <td>
-                                <div class="booking-customer-cell">
-                                    @if (item.Rental?.CustomerId is int customerId)
+                        @foreach (var row in Model)
+                        {
+                            var item = row.Transit;
+                            var rentalTrip = item.Rental;
+                            var bookingLabel = $"BK-{item.RentalID:D4}";
+                            var customerName = item.Rental?.CustomerName ?? "—";
+                            var contact = item.Rental?.ContactNumber ?? "—";
+                            <tr>
+                                <td class="fw-semibold text-dark font-monospace">@bookingLabel</td>
+                                <td>
+                                    <div class="booking-customer-cell">
+                                        @if (item.Rental?.CustomerId is int customerId)
+                                        {
+                                            <a asp-controller="Customers" asp-action="Details" asp-route-customerid="@customerId" class="booking-customer-avatar" aria-label="View @customerName profile">
+                                                @if (!string.IsNullOrEmpty(item.Rental.Customer?.User?.ProfileImagePath))
+                                                {
+                                                    <img src="~/images/@item.Rental.Customer.User!.ProfileImagePath" alt="" />
+                                                }
+                                                else
+                                                {
+                                                    @GetInitials(customerName)
+                                                }
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="booking-customer-avatar" aria-hidden="true">@GetInitials(customerName)</span>
+                                        }
+                                        <div class="booking-customer-meta">
+                                            <span class="booking-customer-name">@customerName</span>
+                                            <span class="booking-customer-phone">@contact</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (string.Equals(row.VehicleLabel, "Unassigned", StringComparison.Ordinal))
                                     {
-                                        <a asp-controller="Customers" asp-action="Details" asp-route-customerid="@customerId" class="booking-customer-avatar" aria-label="View @customerName profile">
-                                            @if (!string.IsNullOrEmpty(item.Rental.Customer?.ProfileImagePath))
-                                            {
-                                                <img src="~/images/@item.Rental.Customer.ProfileImagePath" alt="" />
-                                            }
-                                            else
-                                            {
-                                                @GetInitials(customerName)
-                                            }
-                                        </a>
+                                        <span class="text-muted">Unassigned</span>
                                     }
                                     else
                                     {
-                                        <span class="booking-customer-avatar" aria-hidden="true">@GetInitials(customerName)</span>
+                                        <span class="booking-vehicle-name">@row.VehicleLabel</span>
                                     }
-                                    <div class="booking-customer-meta">
-                                        <span class="booking-customer-name">@customerName</span>
-                                        <span class="booking-customer-phone">@contact</span>
+                                </td>
+                                <td>
+                                    @(rentalTrip != null
+                                        ? AdminDates.FormatRange(rentalTrip.PickupDate, rentalTrip.ReturnDate)
+                                        : "—")
+                                </td>
+                                <td>@FormatDuration(rentalTrip)</td>
+                                <td>
+                                    <span class="booking-status-badge @TripStatusBadgeClass(item.TripStatus)">@TripStatusLabel(item.TripStatus)</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Trip actions">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                            <li><a class="dropdown-item" asp-action="Details" asp-route-transitid="@item.TransitID"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Rentals" asp-action="Details" asp-route-id="@item.RentalID"><i class="bi bi-bookmark me-2"></i> Rental</a></li>
+                                            <li><hr class="dropdown-menu-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.TransitID', '@bookingLabel')">
+                                                    <i class="bi bi-trash me-2"></i> Delete
+                                                </button>
+                                            </li>
+                                        </ul>
                                     </div>
-                                </div>
-                            </td>
-                            <td>@paymentOption</td>
-                            <td class="fw-semibold text-dark">@FormatPeso(amountPaid)</td>
-                            <td>
-                                <span class="payment-paid-label @(isPaid ? "is-paid" : "is-unpaid")">@(isPaid ? "Paid" : "Unpaid")</span>
-                            </td>
-                            <td>
-                                <span class="booking-status-badge @TripStatusBadgeClass(item.TripStatus)">@TripStatusLabel(item.TripStatus)</span>
-                            </td>
-                            <td class="text-center">
-                                <div class="dropdown">
-                                    <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Transit actions">
-                                        <i class="bi bi-three-dots"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                        <li><a class="dropdown-item" asp-action="Details" asp-route-transitid="@item.TransitID"><i class="bi bi-info-circle me-2"></i> Details</a></li>
-                                        <li><a class="dropdown-item" asp-controller="Rentals" asp-action="Details" asp-route-id="@item.RentalID"><i class="bi bi-bookmark me-2"></i> Rental</a></li>
-                                        <li><hr class="dropdown-menu-divider"></li>
-                                        <li>
-                                            <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.TransitID', '@bookingLabel')">
-                                                <i class="bi bi-trash me-2"></i> Delete
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted fw-medium">
+                                <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                No matching active trips found.
                             </td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted fw-medium">
-                            <i class="bi bi-truck fs-2 d-block mb-2 text-secondary opacity-50"></i>
-                            No matching transit records located.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AdminPagination" />
     </div>
-    <partial name="_AdminPagination" />
 </div>
 
 @{

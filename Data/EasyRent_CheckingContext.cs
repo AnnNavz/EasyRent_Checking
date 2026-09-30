@@ -12,9 +12,7 @@ namespace EasyRent_Checking.Data
 
 		public DbSet<User> Users { get; set; } = default!;
 		public DbSet<CustomerProfile> CustomerProfiles { get; set; } = default!;
-		public DbSet<AdminProfile> AdminProfiles { get; set; } = default!;
 		public DbSet<Rental> Rentals { get; set; } = default!;
-		public DbSet<RentalDetails> RentalDetails { get; set; } = default!;
 		public DbSet<RentalVehicle> RentalVehicles { get; set; } = default!;
 		public DbSet<Payment> Payments { get; set; } = default!;
 		public DbSet<Driver> Drivers { get; set; } = default!;
@@ -24,6 +22,7 @@ namespace EasyRent_Checking.Data
 		public DbSet<MaintenanceLog> MaintenanceLogs { get; set; } = default!;
 		public DbSet<MaintenancePlan> MaintenancePlans { get; set; } = default!;
 		public DbSet<IncidentReport> IncidentReports { get; set; } = default!;
+		public DbSet<TransitIssueLink> TransitIssueLinks { get; set; } = default!;
 		public DbSet<VehicleFavorite> VehicleFavorites { get; set; } = default!;
 		public DbSet<SystemLog> SystemLogs { get; set; } = default!;
 
@@ -49,16 +48,6 @@ namespace EasyRent_Checking.Data
 					.OnDelete(DeleteBehavior.Cascade);
 			});
 
-			modelBuilder.Entity<AdminProfile>(entity =>
-			{
-				entity.HasKey(e => e.AdminId);
-
-				entity.HasOne(e => e.User)
-					.WithOne(u => u.AdminProfile)
-					.HasForeignKey<AdminProfile>(e => e.AdminId)
-					.OnDelete(DeleteBehavior.Cascade);
-			});
-
 			modelBuilder.Entity<Payment>(entity =>
 			{
 				entity.ToTable("Payment");
@@ -77,24 +66,6 @@ namespace EasyRent_Checking.Data
 					.OnDelete(DeleteBehavior.SetNull);
 
 				entity.HasIndex(e => e.CustomerId);
-			});
-
-			modelBuilder.Entity<RentalDetails>(entity =>
-			{
-				entity.ToTable("RentalDetails");
-				entity.HasKey(e => e.RentalDetailsID);
-
-				entity.HasOne(e => e.Rental)
-					.WithOne(r => r.Details)
-					.HasForeignKey<RentalDetails>(e => e.RentalID)
-					.OnDelete(DeleteBehavior.Cascade);
-
-				entity.HasOne(e => e.Vehicle)
-					.WithMany()
-					.HasForeignKey(e => e.VehicleId)
-					.OnDelete(DeleteBehavior.Restrict);
-
-				entity.HasIndex(e => e.RentalID).IsUnique();
 			});
 
 			modelBuilder.Entity<RentalVehicle>(entity =>
@@ -245,6 +216,31 @@ namespace EasyRent_Checking.Data
 				entity.HasIndex(e => e.TransitID);
 				entity.HasIndex(e => e.DriverID);
 				entity.HasIndex(e => e.Status);
+			});
+
+			modelBuilder.Entity<TransitIssueLink>(entity =>
+			{
+				entity.ToTable("TransitIssueLink");
+				entity.HasKey(e => e.TransitIssueLinkId);
+
+				entity.HasOne(e => e.Transit)
+					.WithMany()
+					.HasForeignKey(e => e.TransitID)
+					.OnDelete(DeleteBehavior.Cascade);
+
+				entity.HasOne(e => e.IncidentReport)
+					.WithMany()
+					.HasForeignKey(e => e.IncidentReportId)
+					.OnDelete(DeleteBehavior.SetNull);
+
+				entity.HasOne(e => e.MaintenanceLog)
+					.WithMany()
+					.HasForeignKey(e => e.MaintenanceLogId)
+					.OnDelete(DeleteBehavior.SetNull);
+
+				entity.HasIndex(e => e.TransitID);
+				entity.HasIndex(e => e.IncidentReportId);
+				entity.HasIndex(e => e.MaintenanceLogId);
 			});
 
 			modelBuilder.Entity<SystemLog>(entity =>

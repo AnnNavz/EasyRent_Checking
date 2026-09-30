@@ -1,0 +1,73 @@
+@model EasyRent_Checking.ViewModels.VehicleSelectionPickerViewModel
+@using EasyRent_Checking.Models
+
+@{
+    var vehicleError = ViewData.ModelState[Model.ValidationKey]?.Errors.FirstOrDefault()?.ErrorMessage;
+}
+
+<div class="incident-vehicle-toolbar">
+    <label class="incident-vehicle-search">
+        <i class="bi bi-search incident-vehicle-search-icon" aria-hidden="true"></i>
+        <input type="search"
+               id="vehicleSearchInput"
+               placeholder="Search Vehicles"
+               autocomplete="off"
+               aria-label="Search Vehicles" />
+    </label>
+</div>
+
+@if (!string.IsNullOrEmpty(vehicleError))
+{
+    <div class="text-danger small mb-2">@vehicleError</div>
+}
+
+@if (Model.Vehicles.Count == 0)
+{
+    <div class="incident-vehicle-empty">@Model.EmptyMessage</div>
+}
+else
+{
+    <div class="incident-vehicle-list" id="vehicleSelectionList">
+        @foreach (var vehicle in Model.Vehicles)
+        {
+            var isSelected = Model.SelectedVehicleId == vehicle.VehicleId;
+            var typeLabel = VehicleTypes.Display(vehicle.Type);
+            var seatsLabel = vehicle.PassengersCount == 1 ? "1 seater" : $"{vehicle.PassengersCount} seater";
+            <label class="incident-vehicle-option @(isSelected ? "is-selected" : "")"
+                   data-vehicle-search="@vehicle.SearchKey">
+                <input type="radio"
+                       class="incident-vehicle-radio"
+                       name="@Model.InputName"
+                       value="@vehicle.VehicleId"
+                       @(isSelected ? "checked" : null)
+                       required />
+                <span class="incident-vehicle-thumb" aria-hidden="true">
+                    @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+                    {
+                        <img src="~/images/@vehicle.ImagePath" alt="" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-car-front-fill"></i>
+                    }
+                </span>
+                <div class="incident-vehicle-identity">
+                    <span class="incident-vehicle-status incident-vehicle-fleet-status @vehicle.FleetStatusClass">@vehicle.FleetStatusLabel</span>
+                    @if (vehicle.IsOnActiveTransit)
+                    {
+                        <span class="incident-vehicle-status incident-vehicle-transit-status is-in-transit">In Transit</span>
+                    }
+                    <strong class="incident-vehicle-name">@vehicle.DisplayName</strong>
+                    <span class="incident-vehicle-meta">@typeLabel • @seatsLabel</span>
+                </div>
+                <div class="incident-vehicle-meta-col">
+                    <span class="incident-vehicle-meta-label"><i class="bi bi-123"></i> Plate Number</span>
+                    <span class="incident-vehicle-meta-value">@vehicle.PlateNumber</span>
+                </div>
+            </label>
+        }
+    </div>
+    <div class="incident-vehicle-empty incident-vehicle-tab-empty" id="vehicleTabEmptyState" hidden>
+        @Model.TabEmptyMessage
+    </div>
+}

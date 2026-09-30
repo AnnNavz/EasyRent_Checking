@@ -875,6 +875,157 @@ a.topbar-breadcrumb-section:hover,
     box-shadow: none !important;
 }
 
+/* --- Shared admin index toolbar (sort / filter / search / add) --- */
+.admin-index-toolbar,
+.inquiry-index-toolbar,
+.customer-index-toolbar,
+.vehicle-index-toolbar,
+.driver-index-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid #eef1f6;
+    border-radius: 16px;
+    padding: 0.85rem 1rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.11);
+}
+
+.admin-index-toolbar-filters,
+.inquiry-index-toolbar-filters,
+.customer-index-toolbar-filters,
+.vehicle-index-toolbar-filters,
+.driver-index-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.admin-index-toolbar-search,
+.inquiry-index-toolbar-search,
+.customer-index-toolbar-search,
+.vehicle-index-toolbar-search,
+.driver-index-toolbar-search {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 220px;
+}
+
+.admin-index-search-icon,
+.inquiry-index-search-icon,
+.customer-index-search-icon,
+.vehicle-index-search-icon,
+.driver-index-search-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667085;
+    font-size: 0.95rem;
+    pointer-events: none;
+    left: 0.95rem;
+}
+
+.admin-index-search-input,
+.inquiry-index-search-input,
+.customer-index-search-input,
+.vehicle-index-search-input,
+.driver-index-search-input {
+    height: 42px;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: #ffffff !important;
+    padding-left: 2.5rem;
+    padding-right: 1rem;
+    font-size: 0.85rem;
+    color: #344054;
+}
+
+.admin-index-search-input:focus,
+.inquiry-index-search-input:focus,
+.customer-index-search-input:focus,
+.vehicle-index-search-input:focus,
+.driver-index-search-input:focus {
+    border-color: #1a3275;
+    box-shadow: 0 0 0 0.15rem rgba(26, 50, 117, 0.12);
+}
+
+.admin-index-search-clear,
+.inquiry-index-search-clear,
+.customer-index-search-clear,
+.vehicle-index-search-clear,
+.driver-index-search-clear {
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667085;
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.admin-index-add-btn,
+.inquiry-index-add-btn,
+.customer-index-add-btn,
+.vehicle-index-add-btn,
+.driver-index-add-btn {
+    background: #1a3275 !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.admin-index-add-btn:hover,
+.inquiry-index-add-btn:hover,
+.customer-index-add-btn:hover,
+.vehicle-index-add-btn:hover,
+.driver-index-add-btn:hover {
+    background: #12234f !important;
+    color: #ffffff !important;
+}
+
+@media (max-width: 767.98px) {
+    .admin-index-toolbar,
+    .inquiry-index-toolbar,
+    .customer-index-toolbar,
+    .vehicle-index-toolbar,
+    .driver-index-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-index-toolbar-search,
+    .inquiry-index-toolbar-search,
+    .customer-index-toolbar-search,
+    .vehicle-index-toolbar-search,
+    .driver-index-toolbar-search,
+    .admin-index-add-btn,
+    .inquiry-index-add-btn,
+    .customer-index-add-btn,
+    .vehicle-index-add-btn,
+    .driver-index-add-btn {
+        width: 100%;
+    }
+
+    .admin-index-add-btn,
+    .inquiry-index-add-btn,
+    .customer-index-add-btn,
+    .vehicle-index-add-btn,
+    .driver-index-add-btn {
+        justify-content: center;
+    }
+}
+
 .index-table-panel {
     background: #fff;
     border-radius: 18px;
@@ -932,7 +1083,7 @@ a.topbar-breadcrumb-section:hover,
     align-items: center;
     justify-content: center;
     line-height: 1;
-    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+    box-shadow: 0 2px 8px rgba(16, 24, 40, 0.14);
     cursor: pointer;
 }
 
@@ -958,18 +1109,42 @@ body.admin-delete-modal-open .modal-backdrop.show {
 }
 
 /* --- Filter & Action Component Customizations --- */
-.btn-filter {
-    background-color: #f3f2f2 !important;
-    border-color: #e2e2e2 !important;
+.btn-filter,
+.admin-index-filter-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.35rem;
+    height: 42px;
+    padding: 0 1rem !important;
+    border: 1.5px solid #1a3275 !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    color: #1a3275 !important;
     font-size: 0.85rem;
-    border-radius: 8px !important;
+    font-weight: 700;
+    box-shadow: none !important;
+}
+
+.btn-filter:hover,
+.btn-filter:focus,
+.btn-filter.show,
+.admin-index-filter-btn:hover,
+.admin-index-filter-btn:focus,
+.admin-index-filter-btn.show {
+    background: #f8faff !important;
+    color: #1a3275 !important;
+    border-color: #1a3275 !important;
 }
 
 .search-bar-input {
     min-width: 260px;
-    height: 40px;
+    height: 42px;
     font-size: 0.85rem;
-    background-color: #fdfdfd !important;
+    border: 1px solid #e4e7ec !important;
+    border-radius: 10px !important;
+    background-color: #ffffff !important;
+    padding-left: 2.5rem;
+    padding-right: 1rem;
 }
 
 .btn-add-driver {
@@ -1530,7 +1705,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background-color: #ffffff !important;
     color: #333333 !important;
     border: 1px solid #999999 !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     padding: 0.5rem 1.5rem;
     font-weight: 600;
     font-size: 0.9rem;
@@ -1547,7 +1722,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background-color: #000000 !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     padding: 0.5rem 1.5rem;
     font-weight: 600;
     font-size: 0.9rem;
@@ -1564,7 +1739,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background-color: #ffffff !important;
     color: #333333 !important;
     border: 1px solid #333333 !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     padding: 0.6rem 1.75rem;
     font-weight: 600;
     font-size: 0.9rem;
@@ -1580,7 +1755,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background-color: #000000 !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     padding: 0.6rem 2.25rem;
     font-weight: 600;
     font-size: 0.9rem;
@@ -1810,7 +1985,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background-color: #000 !important;
     color: #fff !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     padding: 0.7rem 1.5rem;
     font-weight: 600;
     font-size: 0.9rem;
@@ -1828,7 +2003,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background-color: #fff !important;
     color: #111 !important;
     border: 1px solid #111 !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     padding: 0.7rem 1.5rem;
     font-weight: 600;
     font-size: 0.9rem;
@@ -1853,7 +2028,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background-color: #1E3A8A !important;
     color: #fff !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     padding: 0.5rem 1.35rem;
     font-weight: 600;
     font-size: 0.9rem;
@@ -2234,7 +2409,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background: var(--admin-success) !important;
     color: #fff !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     font-weight: 700;
     padding: 0.7rem 1rem;
     box-shadow: 0 2px 6px rgba(50, 185, 53, 0.3);
@@ -2249,7 +2424,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background: var(--admin-danger) !important;
     color: #fff !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     font-weight: 700;
     padding: 0.7rem 1rem;
     box-shadow: 0 2px 6px rgba(194, 31, 0, 0.28);
@@ -2277,7 +2452,7 @@ body.admin-delete-modal-open .modal-backdrop.show {
     background: #1E3A8A !important;
     color: #fff !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     font-weight: 700;
     padding: 0.7rem 1rem;
     text-decoration: none;

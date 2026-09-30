@@ -1,0 +1,101 @@
+@model EasyRent_Checking.ViewModels.AdminAccountInputModel
+@using EasyRent_Checking.Models
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    var isStaff = Model.Role == UserRole.Staff;
+    ViewData["Title"] = isStaff ? "Edit Staff Details" : "Edit Admin Details";
+    ViewData["ActivePage"] = "Admins";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/customer-create.css" asp-append-version="true" />
+}
+
+<div class="wizard-max-wrapper customer-create-wizard py-3">
+    <form asp-action="Edit" asp-route-adminid="@Model.AdminId" id="editAdminForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+        <input type="hidden" asp-for="AdminId" />
+        <input type="hidden" asp-for="Role" />
+
+        <div class="text-start mb-2">
+            <h5 class="customer-wizard-heading">Edit @(isStaff ? "Staff" : "Admin") Details</h5>
+            <p class="customer-wizard-subheading">Update the @(isStaff ? "staff" : "admin") member's name, contact number, address, email, and password.</p>
+        </div>
+
+        <div class="customer-wizard-card">
+            <div class="customer-wizard-section-head">
+                <span class="customer-wizard-section-icon"><i class="bi bi-person-fill"></i></span>
+                <h6 class="customer-wizard-section-title">Account Information</h6>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="customer-wizard-label">Full Name</label>
+                    <input asp-for="FullName" class="form-control customer-wizard-input" placeholder="@FieldRules.NamePlaceholder" />
+                    <span asp-validation-for="FullName" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Contact Number</label>
+                    <input asp-for="ContactNumber" class="form-control customer-wizard-input" placeholder="09123456789" maxlength="11" />
+                    <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Email Address</label>
+                    <input asp-for="Email" class="form-control customer-wizard-input" placeholder="name@example.com" />
+                    <span asp-validation-for="Email" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-12">
+                    <label class="customer-wizard-label">Address</label>
+                    <input asp-for="Address" class="form-control customer-wizard-input" placeholder="Street, Barangay, City" />
+                    <span asp-validation-for="Address" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-12">
+                    <p class="customer-password-hint">Leave blank to keep the current password. New passwords must be at least 8 characters and include a number.</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Password</label>
+                    <div class="customer-password-wrap">
+                        <input asp-for="Password" class="form-control customer-wizard-input customer-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                        <button type="button" class="customer-password-toggle" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="customer-wizard-label">Confirm Password</label>
+                    <div class="customer-password-wrap">
+                        <input asp-for="ConfirmPassword" class="form-control customer-wizard-input customer-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                        <button type="button" class="customer-password-toggle" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small mt-1 d-block"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="customer-wizard-actions">
+            <a asp-action="Details" asp-route-adminid="@Model.AdminId" class="btn customer-wizard-btn-back">Cancel</a>
+            <button type="submit" class="btn customer-wizard-btn-next">Save Changes</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.querySelectorAll('.customer-password-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = btn.parentElement.querySelector('.customer-password-input');
+            if (!input) return;
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

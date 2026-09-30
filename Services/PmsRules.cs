@@ -13,34 +13,15 @@ namespace EasyRent_Checking.Services
 		public const int DueSoonDays = 14;
 		public const int DueSoonKilometers = 500;
 		public const int DueNowKilometers = 100;
-		public const string PresetSuv = "SUV";
-		public const string PresetVan = "Van";
 
-		public static readonly PmsRule[] SuvSchedule =
+		public static readonly PmsRule[] DefaultScheduleTemplate =
 		[
-			new(MaintenanceType.OilChange, PmsTrigger.Mileage, 5000, null),
-			new(MaintenanceType.TireInspection, PmsTrigger.Time, null, 1),
-			new(MaintenanceType.BrakeInspection, PmsTrigger.Mileage, 10000, null),
-			new(MaintenanceType.GeneralCheckup, PmsTrigger.Time, null, 6),
-			new(MaintenanceType.AirFilterReplacement, PmsTrigger.Mileage, 15000, null)
+			new(MaintenanceType.OilChange, PmsTrigger.Mileage, null, null),
+			new(MaintenanceType.TireInspection, PmsTrigger.Time, null, null),
+			new(MaintenanceType.BrakeInspection, PmsTrigger.Mileage, null, null),
+			new(MaintenanceType.GeneralCheckup, PmsTrigger.Time, null, null),
+			new(MaintenanceType.AirFilterReplacement, PmsTrigger.Mileage, null, null)
 		];
-
-		public static readonly PmsRule[] VanSchedule =
-		[
-			new(MaintenanceType.OilChange, PmsTrigger.Mileage, 4000, null),
-			new(MaintenanceType.TireInspection, PmsTrigger.Time, null, 1),
-			new(MaintenanceType.BrakeInspection, PmsTrigger.Mileage, 8000, null),
-			new(MaintenanceType.GeneralCheckup, PmsTrigger.Time, null, 6),
-			new(MaintenanceType.AirFilterReplacement, PmsTrigger.Mileage, 10000, null)
-		];
-
-		public static PmsRule[] ForPreset(string? preset)
-			=> string.Equals(preset, PresetVan, StringComparison.OrdinalIgnoreCase)
-				? VanSchedule
-				: SuvSchedule;
-
-		public static string DefaultPreset(string? type)
-			=> VehicleTypes.IsVan(type) ? PresetVan : PresetSuv;
 
 		public static MaintenancePlan CreatePlan(int vehicleId, Vehicle vehicle, PmsRule rule)
 		{
@@ -177,7 +158,7 @@ namespace EasyRent_Checking.Services
 		}
 
 		public static bool CanStart(PmsDueKind kind)
-			=> kind is PmsDueKind.Overdue or PmsDueKind.DueNow or PmsDueKind.DueSoon;
+			=> true;
 
 		private static bool IsMatch(PmsTrigger trigger, bool dateMatch, bool kmMatch)
 			=> trigger switch

@@ -1,18 +1,23 @@
-@model EasyRent_Checking.ViewModels.FeedbackInputModel
+@model EasyRent_Checking.ViewModels.RateTripPageViewModel
 
 @{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
     ViewData["Title"] = "Rate & Review";
     ViewData["HubActive"] = "bookings";
 
-    var vehicleComfort = new StarRatingInputModel { Name = nameof(Model.VehicleComfort), Label = "Comfort", Value = Model.VehicleComfort };
-    var vehiclePerformance = new StarRatingInputModel { Name = nameof(Model.VehiclePerformance), Label = "Performance", Value = Model.VehiclePerformance };
-    var vehicleSafety = new StarRatingInputModel { Name = nameof(Model.VehicleSafety), Label = "Safety", Value = Model.VehicleSafety };
-    var driverProfessionalism = new StarRatingInputModel { Name = nameof(Model.DriverProfessionalism), Label = "Professionalism", Value = Model.DriverProfessionalism };
-    var driverDriving = new StarRatingInputModel { Name = nameof(Model.DriverDriving), Label = "Driving", Value = Model.DriverDriving };
-    var driverCourtesy = new StarRatingInputModel { Name = nameof(Model.DriverCourtesy), Label = "Courtesy", Value = Model.DriverCourtesy };
+    var multipleVehicles = Model.Items.Count > 1;
+    var driverNames = Model.Items
+        .Where(i => !string.IsNullOrWhiteSpace(i.DriverName))
+        .Select(i => i.DriverName!.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
 
-    var typeLabel = string.IsNullOrWhiteSpace(Model.VehicleTypeLabel) ? "Vehicle" : Model.VehicleTypeLabel;
+    string? headerDriverName = driverNames.Count switch
+    {
+        0 => null,
+        1 => driverNames[0],
+        _ => "Multiple drivers"
+    };
 }
 
 <div class="client-page account-hub is-wide-main rate-trip-hub">
@@ -26,27 +31,51 @@
         <div class="rate-trip-card">
             <header class="rate-trip-header">
                 <div class="rate-trip-vehicle">
-                    <div class="rate-trip-thumb" aria-hidden="true">
-                        @if (!string.IsNullOrEmpty(Model.VehicleImagePath))
-                        {
-                            <img src="~/images/@Model.VehicleImagePath" alt="@Model.VehicleTitle" />
-                        }
-                        else
-                        {
-                            <i class="bi bi-car-front"></i>
-                        }
-                    </div>
+                    @if (!multipleVehicles)
+                    {
+                        var single = Model.Items[0];
+                        <div class="rate-trip-thumb" aria-hidden="true">
+                            @if (!string.IsNullOrEmpty(single.VehicleImagePath))
+                            {
+                                <img src="~/images/@single.VehicleImagePath" alt="@single.VehicleTitle" />
+                            }
+                            else
+                            {
+                                <i class="bi bi-car-front"></i>
+                            }
+                        </div>
+                    }
+
                     <div>
                         <p class="rate-trip-eyebrow">Trip completed</p>
                         <h1 class="rate-trip-title">How was your ride?</h1>
                         <p class="rate-trip-meta">
-                            @typeLabel
+                            @if (multipleVehicles)
+                            {
+                                <span>@Model.Items.Count vehicles</span>
+                            }
+                            else
+                            {
+                                var single = Model.Items[0];
+                                var typeLabel = string.IsNullOrWhiteSpace(single.VehicleTypeLabel) ? "Vehicle" : single.VehicleTypeLabel;
+                                <span>@typeLabel</span>
+                            }
                             <span aria-hidden="true">•</span>
                             @Model.BookingLabel
-                            @if (!string.IsNullOrWhiteSpace(Model.DriverName))
+                            @if (!multipleVehicles && !string.IsNullOrWhiteSpace(headerDriverName))
                             {
                                 <span aria-hidden="true">•</span>
-                                <span>Driver: @Model.DriverName</span>
+                                <span>Driver: @headerDriverName</span>
+                            }
+                            else if (multipleVehicles && headerDriverName == "Multiple drivers")
+                            {
+                                <span aria-hidden="true">•</span>
+                                <span>@headerDriverName</span>
+                            }
+                            else if (multipleVehicles && !string.IsNullOrWhiteSpace(headerDriverName))
+                            {
+                                <span aria-hidden="true">•</span>
+                                <span>Driver: @headerDriverName</span>
                             }
                         </p>
                     </div>
@@ -55,52 +84,108 @@
 
             <form asp-action="RateTrip" asp-route-id="@Model.RentalId" method="post" class="rate-trip-form" id="rateTripForm">
                 @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="HasDriver" />
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                <section class="rate-trip-group">
-                    <h2 class="rate-trip-group-title">Rate this vehicle</h2>
-
-                    <partial name="_StarRatingInput" model="vehicleComfort" />
-                    <span asp-validation-for="VehicleComfort" class="text-danger rate-trip-category-error"></span>
-
-                    <partial name="_StarRatingInput" model="vehiclePerformance" />
-                    <span asp-validation-for="VehiclePerformance" class="text-danger rate-trip-category-error"></span>
-
-                    <partial name="_StarRatingInput" model="vehicleSafety" />
-                    <span asp-validation-for="VehicleSafety" class="text-danger rate-trip-category-error"></span>
-                </section>
-
-                @if (Model.HasDriver)
+                @for (var i = 0; i < Model.Items.Count; i++)
                 {
-                    <section class="rate-trip-group">
-                        <h2 class="rate-trip-group-title">
-                            @(string.IsNullOrWhiteSpace(Model.DriverName) ? "How was your driver on this trip?" : $"How was {Model.DriverName} on this trip?")
-                        </h2>
+                    var item = Model.Items[i];
+                    var itemPrefix = $"{nameof(Model.Items)}[{i}]";
 
-                        <partial name="_StarRatingInput" model="driverProfessionalism" />
-                        <span asp-validation-for="DriverProfessionalism" class="text-danger rate-trip-category-error"></span>
+                    <input type="hidden" asp-for="Items[i].TransitId" />
+                    <input type="hidden" asp-for="Items[i].HasDriver" />
 
-                        <partial name="_StarRatingInput" model="driverDriving" />
-                        <span asp-validation-for="DriverDriving" class="text-danger rate-trip-category-error"></span>
+                    <section class="rate-trip-vehicle-block@(i > 0 ? " rate-trip-vehicle-block-separated" : "")">
+                        @if (multipleVehicles)
+                        {
+                            <div class="rate-trip-vehicle-item-header">
+                                <div class="rate-trip-thumb rate-trip-thumb-small" aria-hidden="true">
+                                    @if (!string.IsNullOrEmpty(item.VehicleImagePath))
+                                    {
+                                        <img src="~/images/@item.VehicleImagePath" alt="@item.VehicleTitle" />
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-car-front"></i>
+                                    }
+                                </div>
+                                <div>
+                                    <h2 class="rate-trip-vehicle-item-title">@item.VehicleTitle</h2>
+                                    <p class="rate-trip-vehicle-item-meta">
+                                        @(string.IsNullOrWhiteSpace(item.VehicleTypeLabel) ? "Vehicle" : item.VehicleTypeLabel)
+                                        @if (!string.IsNullOrWhiteSpace(item.VehiclePlateNumber))
+                                        {
+                                            <span aria-hidden="true">•</span>
+                                            <span>@item.VehiclePlateNumber</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(item.DriverName))
+                                        {
+                                            <span aria-hidden="true">•</span>
+                                            <span>Driver: @item.DriverName</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        }
 
-                        <partial name="_StarRatingInput" model="driverCourtesy" />
-                        <span asp-validation-for="DriverCourtesy" class="text-danger rate-trip-category-error"></span>
+                        <section class="rate-trip-group">
+                            <h2 class="rate-trip-group-title">@(multipleVehicles ? $"Rate {item.VehicleTitle}" : "Rate this vehicle")</h2>
+
+                            @{
+                                var vehicleComfort = new StarRatingInputModel { Name = $"{itemPrefix}.{nameof(item.VehicleComfort)}", Label = "Comfort", Value = item.VehicleComfort };
+                                var vehiclePerformance = new StarRatingInputModel { Name = $"{itemPrefix}.{nameof(item.VehiclePerformance)}", Label = "Performance", Value = item.VehiclePerformance };
+                                var vehicleSafety = new StarRatingInputModel { Name = $"{itemPrefix}.{nameof(item.VehicleSafety)}", Label = "Safety", Value = item.VehicleSafety };
+                            }
+
+                            <partial name="_StarRatingInput" model="vehicleComfort" />
+                            <span asp-validation-for="Items[i].VehicleComfort" class="text-danger rate-trip-category-error"></span>
+
+                            <partial name="_StarRatingInput" model="vehiclePerformance" />
+                            <span asp-validation-for="Items[i].VehiclePerformance" class="text-danger rate-trip-category-error"></span>
+
+                            <partial name="_StarRatingInput" model="vehicleSafety" />
+                            <span asp-validation-for="Items[i].VehicleSafety" class="text-danger rate-trip-category-error"></span>
+                        </section>
+
+                        @if (item.HasDriver)
+                        {
+                            <section class="rate-trip-group">
+                                <h2 class="rate-trip-group-title">
+                                    @(string.IsNullOrWhiteSpace(item.DriverName) ? "How was your driver on this trip?" : $"How was {item.DriverName} on this trip?")
+                                </h2>
+
+                                @{
+                                    var driverProfessionalism = new StarRatingInputModel { Name = $"{itemPrefix}.{nameof(item.DriverProfessionalism)}", Label = "Professionalism", Value = item.DriverProfessionalism };
+                                    var driverDriving = new StarRatingInputModel { Name = $"{itemPrefix}.{nameof(item.DriverDriving)}", Label = "Driving", Value = item.DriverDriving };
+                                    var driverCourtesy = new StarRatingInputModel { Name = $"{itemPrefix}.{nameof(item.DriverCourtesy)}", Label = "Courtesy", Value = item.DriverCourtesy };
+                                }
+
+                                <partial name="_StarRatingInput" model="driverProfessionalism" />
+                                <span asp-validation-for="Items[i].DriverProfessionalism" class="text-danger rate-trip-category-error"></span>
+
+                                <partial name="_StarRatingInput" model="driverDriving" />
+                                <span asp-validation-for="Items[i].DriverDriving" class="text-danger rate-trip-category-error"></span>
+
+                                <partial name="_StarRatingInput" model="driverCourtesy" />
+                                <span asp-validation-for="Items[i].DriverCourtesy" class="text-danger rate-trip-category-error"></span>
+                            </section>
+                        }
+
+                        <div class="rate-trip-comment-block">
+                            <label asp-for="Items[i].Comment" class="rate-trip-label">Comments <span class="rate-trip-optional">(Optional)</span></label>
+                            <textarea asp-for="Items[i].Comment"
+                                      class="form-control rate-trip-comment"
+                                      rows="4"
+                                      maxlength="1000"
+                                      placeholder="Tell us about this vehicle, driver, or experience..."></textarea>
+                            <span asp-validation-for="Items[i].Comment" class="text-danger"></span>
+                        </div>
                     </section>
                 }
 
-                <div class="rate-trip-comment-block">
-                    <label asp-for="Comment" class="rate-trip-label">Comments <span class="rate-trip-optional">(Optional)</span></label>
-                    <textarea asp-for="Comment"
-                              class="form-control rate-trip-comment"
-                              rows="5"
-                              maxlength="1000"
-                              placeholder="Tell us about the vehicle, driver, or overall experience..."></textarea>
-                    <span asp-validation-for="Comment" class="text-danger"></span>
-                </div>
-
                 <div class="rate-trip-actions">
-                    <button type="submit" class="my-booking-btn-primary rate-trip-submit">Submit Review</button>
+                    <button type="submit" class="my-booking-btn-primary rate-trip-submit">
+                        @(multipleVehicles ? "Submit All Reviews" : "Submit Review")
+                    </button>
                 </div>
             </form>
         </div>

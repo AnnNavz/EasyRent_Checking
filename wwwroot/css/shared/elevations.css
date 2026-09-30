@@ -1,0 +1,7 @@
+/* Shared card/section elevation tokens. */
+
+:root {
+    --er-elevation-sm: 0 2px 8px rgba(15, 23, 42, 0.10);
+    --er-elevation-md: 0 6px 18px rgba(15, 23, 42, 0.13);
+    --er-elevation-lg: 0 10px 28px rgba(15, 23, 42, 0.15);
+}

@@ -1,74 +1,314 @@
-@model EasyRent_Checking.Models.Transit
+@model EasyRent_Checking.ViewModels.TransitPreparationViewModel
 @using EasyRent_Checking.Models
+@using EasyRent_Checking.ViewModels
+@using System.Globalization
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Start Trip";
+    ViewData["Title"] = "Vehicle Preparation & Driver Assignment";
     ViewData["ActivePage"] = "Transit";
-    ViewData["SectionTitle"] = "Transit Management";
+    ViewData["SectionTitle"] = "Active Trips";
     ViewData["SectionUrl"] = Url.Action("Index", "Transits");
+
+    var transit = Model.Transit;
+    var details = transit.Rental;
+    var bookingId = $"BK-{transit.RentalID:D5}";
+    var pickupDate = details?.PickupDate;
+    var pickupDateValue = pickupDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var pickupDateLabel = pickupDate?.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture) ?? "—";
+    var scheduledPickupTime = details?.PickupTime.ToString("HH:mm", CultureInfo.InvariantCulture) ?? "";
+    var scheduledPickupTimeLabel = details?.PickupTime.ToString("h:mm tt", CultureInfo.InvariantCulture) ?? "—";
+    var selectedDriverId = Model.SelectedDriverId;
+    var driverError = ViewData.ModelState["driverId"]?.Errors.FirstOrDefault()?.ErrorMessage;
+    var timestampedPhotos = new TimestampedVehiclePhotosViewModel
+    {
+        GridId = "transitPhotoGrid",
+        AddButtonId = "transitPhotoAddBtn",
+        TemplateId = "transitPhotoCardTemplate",
+        InputId = "preTripImageInput",
+        InputName = "Transit.PreTripImageFile",
+        InputListName = "PreTripImageFiles"
+    };
 }
 
-<div class="container-fluid px-4 py-3">
-    <div class="details-page-actions mb-3">
-        <a asp-action="Details" asp-route-transitid="@Model.TransitID" class="btn btn-page-back">Back</a>
+<div class="container-fluid px-4 py-3 transit-preparation-page">
+    <div class="transit-prep-header mb-4">
+        <div>
+            <h1 class="transit-prep-title">Vehicle Preparation &amp; Driver Assignment</h1>
+            <p class="transit-prep-subtitle">Assign the driver and capture timestamped photos</p>
+        </div>
+        <div class="transit-prep-info-banner">
+            <span class="transit-prep-info-icon" aria-hidden="true"><i class="bi bi-info-lg"></i></span>
+            <span>Please ensure all information provided is accurate and complete.</span>
+        </div>
     </div>
 
-    <div class="reservation-view-card" style="max-width: 720px;">
-        <div class="reservation-view-section-title mb-3">
-            <i class="bi bi-play-circle"></i>
-            <span>Start Trip — BK-@Model.RentalID.ToString("D5")</span>
+    <form asp-action="StartTrip"
+          asp-route-transitid="@transit.TransitID"
+          method="post"
+          enctype="multipart/form-data"
+          id="transitPreparationForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Transit.TransitID" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="transit-prep-card mb-4">
+            <div class="transit-prep-section-head">
+                <span class="transit-prep-section-icon"><i class="bi bi-car-front-fill"></i></span>
+                <div class="transit-prep-section-copy">
+                    <h2 class="transit-prep-section-title">Driver Assignment</h2>
+                    <p class="transit-prep-section-desc">Select the driver you would like to assign.</p>
+                </div>
+            </div>
+
+            <div class="transit-driver-toolbar">
+                <label class="transit-driver-search">
+                    <i class="bi bi-search transit-driver-search-icon" aria-hidden="true"></i>
+                    <input type="search"
+                           id="driverSearchInput"
+                           placeholder="Search Drivers"
+                           autocomplete="off"
+                           aria-label="Search Drivers" />
+                </label>
+                <div class="dropdown">
+                    <button class="btn transit-driver-filter-btn dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        Filters
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><button class="dropdown-item active" type="button" data-driver-sort="name">Sort by name</button></li>
+                        <li><button class="dropdown-item" type="button" data-driver-sort="rating">Sort by rating</button></li>
+                        <li><button class="dropdown-item" type="button" data-driver-sort="expiry">Sort by license expiry</button></li>
+                    </ul>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(driverError))
+            {
+                <div class="text-danger small mb-2">@driverError</div>
+            }
+
+            @if (Model.Drivers.Count == 0)
+            {
+                <div class="transit-driver-empty">No eligible drivers are available for this trip schedule.</div>
+            }
+            else
+            {
+                <div class="transit-driver-list" id="driverSelectionList">
+                    @foreach (var driver in Model.Drivers)
+                    {
+                        var isSelected = selectedDriverId == driver.DriverId;
+                        var reviewLabel = driver.ReviewCount == 1
+                            ? "Based on 1 verified review"
+                            : $"Based on {driver.ReviewCount} verified reviews";
+                        <label class="transit-driver-option @(isSelected ? "is-selected" : "")"
+                               data-driver-name="@driver.Name.ToLowerInvariant()"
+                               data-driver-rating="@driver.RatingTen.ToString(CultureInfo.InvariantCulture)"
+                               data-driver-expiry="@driver.ExpiryDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)">
+                            <input type="radio"
+                                   class="transit-driver-radio"
+                                   name="driverId"
+                                   value="@driver.DriverId"
+                                   @(isSelected ? "checked" : null)
+                                   required />
+                            <span class="transit-driver-avatar" aria-hidden="true">
+                                @if (!string.IsNullOrEmpty(driver.ImagePath))
+                                {
+                                    <img src="~/images/@driver.ImagePath" alt="" />
+                                }
+                                else
+                                {
+                                    @driver.Initials
+                                }
+                            </span>
+                            <div class="transit-driver-identity">
+                                <span class="transit-driver-status">Active</span>
+                                <strong class="transit-driver-name">@driver.Name</strong>
+                            </div>
+                            <div class="transit-driver-meta-col">
+                                <span class="transit-driver-meta-label">License Expiry</span>
+                                <span class="transit-driver-meta-value">@driver.ExpiryDate.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)</span>
+                            </div>
+                            <div class="transit-driver-meta-col transit-driver-rating-col">
+                                <span class="transit-driver-meta-label">Rating</span>
+                                @if (driver.ReviewCount > 0)
+                                {
+                                    <span class="transit-driver-rating-score">
+                                        <i class="bi bi-star-fill transit-driver-star" aria-hidden="true"></i>
+                                        @driver.RatingTen.ToString("0.0", CultureInfo.InvariantCulture)
+                                    </span>
+                                    <span class="transit-driver-rating-sub">@reviewLabel</span>
+                                }
+                                else
+                                {
+                                    <span class="transit-driver-meta-value">No verified reviews yet</span>
+                                }
+                            </div>
+                        </label>
+                    }
+                </div>
+            }
         </div>
 
-        <form asp-action="StartTrip" asp-route-transitid="@Model.TransitID" method="post" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="TransitID" />
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-            <div class="mb-3">
-                <label asp-for="DepartureTime" class="form-label"></label>
-                <input asp-for="DepartureTime" type="time" class="form-control" />
-                <span asp-validation-for="DepartureTime" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="FuelLevelStart" class="form-label"></label>
-                <select asp-for="FuelLevelStart" class="form-select" asp-items="Html.GetEnumSelectList<FuelLevel>()">
-                    <option value="">Select fuel level...</option>
-                </select>
-                <span asp-validation-for="FuelLevelStart" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="OdometerStart" class="form-label"></label>
-                <div class="input-group">
-                    <input asp-for="OdometerStart" class="form-control" type="number" min="0" step="1" />
-                    <span class="input-group-text">km</span>
+        <div class="transit-prep-card mb-4">
+            <div class="transit-prep-section-head mb-3">
+                <span class="transit-prep-section-icon"><i class="bi bi-file-earmark-text"></i></span>
+                <div>
+                    <h2 class="transit-prep-section-title">Trip Details</h2>
                 </div>
-                @if (Model.Vehicle != null)
-                {
-                    <span class="small text-muted">Current vehicle reading: @Model.Vehicle.Odometer.ToString("N0") km. Enter the number on the dashboard.</span>
-                }
-                <span asp-validation-for="OdometerStart" class="text-danger"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="VehicleConditionStart" class="form-label"></label>
-                <textarea asp-for="VehicleConditionStart" class="form-control" rows="3" placeholder="Note scratches, cleanliness, accessories..."></textarea>
-                <span asp-validation-for="VehicleConditionStart" class="text-danger"></span>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="transit-prep-field-label" for="departureDateDisplay">Departure Date</label>
+                    <div class="transit-prep-input-wrap">
+                        <input type="date"
+                               id="departureDateDisplay"
+                               class="form-control transit-prep-input"
+                               value="@pickupDateValue"
+                               readonly />
+                        <i class="bi bi-calendar3 transit-prep-input-icon" aria-hidden="true"></i>
+                    </div>
+                    <span class="transit-prep-field-help">Scheduled pick-up: @pickupDateLabel</span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Transit.DepartureTime" class="transit-prep-field-label"></label>
+                    <div class="transit-prep-input-wrap">
+                        <input asp-for="Transit.DepartureTime"
+                               type="time"
+                               class="form-control transit-prep-input" />
+                    </div>
+                    <span class="transit-prep-field-help">Scheduled pick-up time: @scheduledPickupTimeLabel</span>
+                    <span asp-validation-for="Transit.DepartureTime" class="text-danger small"></span>
+                </div>
             </div>
 
-            <div class="mb-4">
-                <label asp-for="PreTripImageFile" class="form-label"></label>
-                <input asp-for="PreTripImageFile" type="file" class="form-control" accept=".png,.jpg,.jpeg,image/*" />
-                <span asp-validation-for="PreTripImageFile" class="text-danger"></span>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Transit.FuelLevelStart" class="transit-prep-field-label"></label>
+                    <select asp-for="Transit.FuelLevelStart"
+                            class="form-select transit-prep-input"
+                            asp-items="Html.GetEnumSelectList<FuelLevel>()">
+                        <option value="">Select fuel level</option>
+                    </select>
+                    <span asp-validation-for="Transit.FuelLevelStart" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Transit.OdometerStart" class="transit-prep-field-label"></label>
+                    <div class="transit-prep-input-wrap has-suffix">
+                        <input asp-for="Transit.OdometerStart"
+                               class="form-control transit-prep-input"
+                               type="number"
+                               min="0"
+                               step="1"
+                               placeholder="Enter reading" />
+                        <span class="transit-prep-input-suffix">km</span>
+                    </div>
+                    @if (transit.Vehicle != null)
+                    {
+                        <span class="transit-prep-field-help">Current vehicle reading: @transit.Vehicle.Odometer.ToString("N0") km</span>
+                    }
+                    <span asp-validation-for="Transit.OdometerStart" class="text-danger small"></span>
+                </div>
             </div>
 
-            <button type="submit" class="btn reservation-btn-approve">Confirm Start Trip</button>
-        </form>
-    </div>
+            <div>
+                <label asp-for="Transit.VehicleConditionStart" class="transit-prep-field-label"></label>
+                <textarea asp-for="Transit.VehicleConditionStart"
+                          class="form-control transit-prep-textarea"
+                          rows="4"
+                          placeholder="Note scratches, cleanliness, accessories..."></textarea>
+                <span asp-validation-for="Transit.VehicleConditionStart" class="text-danger small"></span>
+            </div>
+
+            <partial name="_TimestampedVehiclePhotos" model="timestampedPhotos" />
+            <span asp-validation-for="Transit.PreTripImageFile" class="text-danger small d-block mt-2"></span>
+        </div>
+
+        <div class="transit-prep-actions">
+            <a asp-action="Details" asp-route-transitid="@transit.TransitID" class="btn btn-page-back">Cancel</a>
+            <button type="submit" class="btn btn-reservation-edit">Save Preparation</button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script src="~/js/timestamped-vehicle-photos.js" asp-append-version="true"></script>
+    <script src="~/js/transit-time-confirm.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const searchInput = document.getElementById('driverSearchInput');
+            const driverList = document.getElementById('driverSelectionList');
+            const sortButtons = document.querySelectorAll('[data-driver-sort]');
+            let currentSort = 'name';
+
+            function updateSelectedState() {
+                if (!driverList) return;
+                driverList.querySelectorAll('.transit-driver-option').forEach(function (option) {
+                    const input = option.querySelector('input[type="radio"]');
+                    option.classList.toggle('is-selected', input && input.checked);
+                });
+            }
+
+            function filterDrivers() {
+                if (!driverList || !searchInput) return;
+                const term = searchInput.value.trim().toLowerCase();
+                driverList.querySelectorAll('.transit-driver-option').forEach(function (option) {
+                    const name = option.dataset.driverName || '';
+                    option.style.display = !term || name.includes(term) ? '' : 'none';
+                });
+            }
+
+            function sortDrivers(mode) {
+                if (!driverList) return;
+                currentSort = mode;
+                const options = Array.from(driverList.querySelectorAll('.transit-driver-option'));
+                options.sort(function (a, b) {
+                    if (mode === 'rating') {
+                        return parseFloat(b.dataset.driverRating || '0') - parseFloat(a.dataset.driverRating || '0');
+                    }
+                    if (mode === 'expiry') {
+                        return (a.dataset.driverExpiry || '').localeCompare(b.dataset.driverExpiry || '');
+                    }
+                    return (a.dataset.driverName || '').localeCompare(b.dataset.driverName || '');
+                });
+                options.forEach(function (option) { driverList.appendChild(option); });
+                sortButtons.forEach(function (button) {
+                    button.classList.toggle('active', button.dataset.driverSort === mode);
+                });
+            }
+
+            if (driverList) {
+                driverList.addEventListener('change', updateSelectedState);
+                updateSelectedState();
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', filterDrivers);
+            }
+
+            sortButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    sortDrivers(button.dataset.driverSort || 'name');
+                });
+            });
+
+            if (window.initTimestampedVehiclePhotos) {
+                window.initTimestampedVehiclePhotos('transitPhotoGrid', 'transitPhotoAddBtn', 'transitPhotoCardTemplate');
+            }
+
+            if (window.initTransitTimeConfirm) {
+                window.initTransitTimeConfirm('transitPreparationForm', 'Transit_DepartureTime', {
+                    scheduledTime: '@scheduledPickupTime',
+                    confirmTitle: 'Departure time is not aligned with the scheduled pick-up time.',
+                    confirmButton: 'Save Preparation',
+                    scheduledLabel: 'Scheduled pick-up time'
+                });
+            }
+        })();
+    </script>
 }

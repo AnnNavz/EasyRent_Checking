@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Delete";
-    var details = Model?.Details;
+    var details = Model;
 }
 
 <h1>Delete</h1>
@@ -14,7 +14,10 @@
     <dl class="row">
         <dt class="col-sm-2">Vehicle</dt>
         <dd class="col-sm-10">
-            @(details?.Vehicle != null ? $"{details.Vehicle.Brand} {details.Vehicle.Model} ({details.Vehicle.Type})" : "Unassigned")
+            @{
+                var deleteVehicle = Model?.RentalVehicles?.OrderBy(rv => rv.SortOrder).Select(rv => rv.Vehicle).FirstOrDefault();
+            }
+            @(deleteVehicle != null ? $"{deleteVehicle.Brand} {deleteVehicle.Model} ({deleteVehicle.Type})" : "Unassigned")
         </dd>
 
         <dt class="col-sm-2">@Html.DisplayNameFor(model => model.CustomerName)</dt>

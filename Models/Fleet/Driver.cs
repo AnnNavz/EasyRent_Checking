@@ -19,7 +19,7 @@ namespace EasyRent_Checking.Models
 
 		[Required(ErrorMessage = "Contact number is required.")]
 		[DataType(DataType.PhoneNumber)]
-		[StringLength(20, ErrorMessage = "Contact number cannot exceed 20 characters.")]
+		[StringLength(11, MinimumLength = 11, ErrorMessage = "Contact number must be exactly 11 digits.")]
 		[RegularExpression(FieldRules.PhMobile, ErrorMessage = FieldRules.PhMobileMessage)]
 		[Display(Name = "Contact Number")]
 		public string ContactNo { get; set; } = string.Empty;

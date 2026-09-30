@@ -12,8 +12,9 @@
         return;
     }
 
-    ViewData["Title"] = "Pay Rental";
+    ViewData["Title"] = "Complete Payment";
     ViewData["ActiveNav"] = "";
+    ViewData["HubActive"] = "bookings";
     ViewData["TotalFare"] = Model.TotalAmount;
     ViewData["DepositPercent"] = 5m;
     ViewData["PaymentTypeFromStep"] = 1;
@@ -25,77 +26,50 @@
     ViewData["IsReserveFlow"] = false;
     ViewData["PaymentSummaryOnly"] = true;
     ViewData["SummaryPaymentEditStep"] = "2";
+    ViewData["HidePaymentReminders"] = true;
+    ViewData["SimplifyWalkInPayment"] = true;
 
     string vehicleTitle = $"{vehicle.Brand} {vehicle.Model}";
-    string dueLabel = rental.PaymentDueAt?.ToString("MMM d, yyyy h:mm tt") ?? "soon";
+    string dueLabel = rental.PaymentDueAt?.ToString("MMM d, yyyy h:mm tt", CultureInfo.InvariantCulture) ?? "soon";
     var discountImageUrl = string.IsNullOrWhiteSpace(Model.DiscountImagePath)
         ? null
         : Url.Content("~/images/" + Model.DiscountImagePath);
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/client/rental.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/client/bookings.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/payment-wizard.css" asp-append-version="true" />
-    <style>
-        .client-pay-reservation-page .wizard-step-panel {
-            display: none !important;
-            pointer-events: none !important;
-            visibility: hidden;
-        }
-        .client-pay-reservation-page .wizard-step-panel.active {
-            display: block !important;
-            pointer-events: auto !important;
-            visibility: visible;
-            position: relative;
-            z-index: 1;
-        }
-        .client-pay-reservation-page .btn-request-reservation {
-            background-color: #1E3A8A !important;
-            border-color: #1E3A8A !important;
-            color: #fff !important;
-            cursor: pointer;
-        }
-        .client-pay-reservation-page .payment-option-card,
-        .client-pay-reservation-page .payment-select-card {
-            position: relative;
-            z-index: 2;
-            pointer-events: auto !important;
-            cursor: pointer;
-        }
-        .client-pay-reservation-page .payment-upload-zone {
-            position: relative;
-            isolation: isolate;
-        }
-        .client-pay-reservation-page .payment-upload-input {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2;
-        }
-    </style>
 }
 
-<div class="client-page client-reservation-page client-pay-reservation-page py-4">
-    <div class="wizard-max-wrapper mx-auto" style="max-width: 920px;">
-        <div class="mb-4">
-            <a asp-action="MyBookingDetails" asp-route-id="@rental.RentalId" class="booking-details-back">
-                <i class="bi bi-arrow-left"></i> Back to Booking Details
-            </a>
-            <h1 class="h4 fw-bold mt-3 mb-1">Complete Payment for @vehicleTitle</h1>
-            <p class="text-muted small mb-0">
-                Rental <strong>BK-@rental.RentalId.ToString("D5")</strong> is held until
-                <strong>@dueLabel</strong>. Submit payment before then.
-            </p>
-        </div>
+<div class="client-page account-hub is-booking-details client-pay-rental-page">
+    <partial name="_AccountHubNav" />
+
+    <section class="account-hub-main">
+        <a asp-action="MyBookingDetails" asp-route-id="@rental.RentalId" class="booking-details-back">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            Back to Booking Details
+        </a>
+
+        <header class="pay-rental-hero">
+            <div class="pay-rental-hero-copy">
+                <p class="pay-rental-hero-eyebrow">Pay later booking</p>
+                <h1 class="pay-rental-hero-title">Complete payment for @vehicleTitle</h1>
+                <p class="pay-rental-hero-text">
+                    Your hold on <strong>BK-@rental.RentalId.ToString("D5")</strong> is active until
+                    <strong>@dueLabel</strong>. Choose how you want to pay and submit your payment details for verification.
+                </p>
+            </div>
+        </header>
 
         @if (!ViewData.ModelState.IsValid)
         {
-            <div class="alert alert-danger small" asp-validation-summary="All"></div>
+            <div class="pay-rental-alert" role="alert">
+                <div asp-validation-summary="All"></div>
+            </div>
         }
 
-        <div class="client-reservation-stepper mb-4" aria-label="Payment progress">
+        <div class="client-reservation-stepper pay-rental-stepper" aria-label="Payment progress">
             <div class="client-reservation-step active" data-step="1">
                 <span class="client-reservation-step-dot">1</span>
                 <span class="client-reservation-step-label">Payment<br>Type</span>
@@ -112,7 +86,7 @@
             </div>
         </div>
 
-        <form asp-action="PayRental" asp-route-id="@rental.RentalId" method="post" enctype="multipart/form-data" id="reservationWizardForm">
+        <form asp-action="PayRental" asp-route-id="@rental.RentalId" method="post" enctype="multipart/form-data" id="reservationWizardForm" class="pay-rental-form">
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
             <input type="hidden" asp-for="RentalId" />
@@ -137,14 +111,16 @@
             <div class="wizard-step-panel active" id="reservationStep1">
                 <partial name="_ClientPaymentMethodStep" model="Model" />
             </div>
-            <div class="wizard-step-panel" id="reservationStep2" hidden>
+            <div class="wizard-step-panel" id="reservationStep2">
                 <partial name="_ClientPaymentDetailsStep" model="Model" />
             </div>
-            <div class="wizard-step-panel" id="reservationStep3" hidden>
+            <div class="wizard-step-panel" id="reservationStep3">
                 <partial name="_BookingSummaryStep" />
             </div>
         </form>
-    </div>
+    </section>
+
+    <partial name="_PayRentalSidebar" />
 </div>
 
 @section Scripts {
@@ -191,7 +167,10 @@
                 if (matchLabel) matchLabel.textContent = label;
                 const reminderAmount = document.getElementById('reminderExactAmount');
                 if (reminderAmount) reminderAmount.textContent = label;
-                if (amountPaidInput) amountPaidInput.value = amount.toFixed(2);
+                if (amountPaidInput) {
+                    amountPaidInput.value = amount.toFixed(2);
+                    amountPaidInput.min = amount.toFixed(2);
+                }
             }
 
             function setChannelPanel(method) {
@@ -202,11 +181,18 @@
                 document.querySelectorAll('.js-cashless-only').forEach(function (el) {
                     el.style.display = !method || isWalkin ? 'none' : '';
                 });
+                document.querySelectorAll('.js-non-walkin-only').forEach(function (el) {
+                    el.style.display = isWalkin ? 'none' : '';
+                });
+                document.querySelectorAll('.js-walkin-only').forEach(function (el) {
+                    el.style.display = isWalkin ? '' : 'none';
+                    el.classList.toggle('d-none', !isWalkin);
+                });
             }
 
             function selectPaymentType(type) {
                 const value = type === 'Partial Payment' ? 'Partial Payment' : 'Full Payment';
-                document.querySelectorAll('.payment-option-card').forEach(function (c) {
+                document.querySelectorAll('.payment-option-card[data-payment-type]').forEach(function (c) {
                     c.classList.toggle('is-selected', c.getAttribute('data-payment-type') === value);
                 });
                 if (paymentTypeInput) paymentTypeInput.value = value;
@@ -221,10 +207,10 @@
                     return;
                 }
 
-                const methodCard = e.target.closest('.payment-select-card[data-payment-method], .payment-method-row[data-payment-method], .payment-method-tab[data-payment-method]');
+                const methodCard = e.target.closest('.payment-method-tab[data-payment-method]');
                 if (methodCard) {
                     e.preventDefault();
-                    document.querySelectorAll('.payment-select-card[data-payment-method], .payment-method-row[data-payment-method], .payment-method-tab[data-payment-method]').forEach(function (c) {
+                    document.querySelectorAll('.payment-method-tab[data-payment-method]').forEach(function (c) {
                         c.classList.remove('is-selected');
                     });
                     methodCard.classList.add('is-selected');
@@ -250,26 +236,31 @@
                     alert('Please select a payment method.');
                     return false;
                 }
+                if (method === 'Walk-in') {
+                    if (amountPaidInput) amountPaidInput.value = expectedPayAmount().toFixed(2);
+                    if (paymentDateInput) paymentDateInput.value = new Date().toISOString().slice(0, 16);
+                    return true;
+                }
                 const paid = parseFloat(amountPaidInput?.value || '0');
-                if (!paid || paid <= 0) {
-                    alert('Please enter the amount paid.');
+                const total = parseFloat(totalAmountInput?.value || paymentBlock?.dataset.totalFare || '0');
+                const payError = BookingSummary.validateAmountPaid(paid, paymentTypeInput?.value, total);
+                if (payError) {
+                    alert(payError);
                     return false;
                 }
-                if (method !== 'Walk-in') {
-                    if (!accountNameInput?.value.trim()) {
-                        alert('Please enter the account name used for payment.');
-                        return false;
-                    }
-                    const ref = document.getElementById('TransactionReference');
-                    if (!ref?.value.trim()) {
-                        alert('Please enter the transaction/reference number.');
-                        return false;
-                    }
-                    const receipt = document.getElementById('input-ReceiptFile');
-                    if (!receipt?.files?.length) {
-                        alert('Please upload your payment receipt.');
-                        return false;
-                    }
+                if (!accountNameInput?.value.trim()) {
+                    alert('Please enter the account name used for payment.');
+                    return false;
+                }
+                const ref = document.getElementById('TransactionReference');
+                if (!ref?.value.trim()) {
+                    alert('Please enter the transaction/reference number.');
+                    return false;
+                }
+                const receipt = document.getElementById('input-ReceiptFile');
+                if (!receipt?.files?.length) {
+                    alert('Please upload your payment receipt.');
+                    return false;
                 }
                 if (!paymentDateInput?.value) {
                     alert('Please enter the payment date and time.');
@@ -300,23 +291,15 @@
                     baseHours: 8,
                     paymentType: paymentTypeInput?.value || '',
                     paymentMethod: paymentMethodInput?.value || '',
-                    amountPaid: parseFloat(amountPaidInput?.value || '0'),
+                    amountPaid: (paymentMethodInput?.value === 'Walk-in')
+                        ? expectedPayAmount()
+                        : parseFloat(amountPaidInput?.value || '0'),
                     accountName: accountNameInput?.value || '',
                     transactionReference: document.getElementById('TransactionReference')?.value || '',
-                    paymentDate: paymentDateInput?.value || ''
+                    paymentDate: (paymentMethodInput?.value === 'Walk-in')
+                        ? new Date().toISOString().slice(0, 16)
+                        : (paymentDateInput?.value || '')
                 };
-            }
-
-            function syncPanelState(step) {
-                ['reservationStep1', 'reservationStep2', 'reservationStep3'].forEach(function (id, index) {
-                    const panel = document.getElementById(id);
-                    if (!panel) return;
-                    const active = (index + 1) === step;
-                    panel.classList.toggle('active', active);
-                    panel.hidden = !active;
-                    panel.style.display = active ? 'block' : 'none';
-                    panel.style.pointerEvents = active ? 'auto' : 'none';
-                });
             }
 
             selectPaymentType(paymentTypeInput?.value || 'Full Payment');
@@ -324,7 +307,7 @@
             if (window.BookingSummary) {
                 BookingSummary.initReceiptUpload();
                 BookingSummary.initWizard({
-                    stepSelector: '.client-reservation-stepper .client-reservation-step',
+                    stepSelector: '.pay-rental-stepper .client-reservation-step',
                     stepPanelIds: ['reservationStep1', 'reservationStep2', 'reservationStep3'],
                     submitStep: 3,
                     visualStepMap: { 1: 1, 2: 2, 3: 3 },
@@ -332,7 +315,6 @@
                     validateStep2: validateStep2,
                     collectSummaryData: collectSummaryData,
                     onStepChange: function (step) {
-                        syncPanelState(step);
                         if (step === 2) {
                             updatePayNowLabels();
                             setChannelPanel(paymentMethodInput?.value || '');
@@ -342,18 +324,7 @@
                         }
                     }
                 });
-            } else {
-                // Fallback if booking-summary.js failed to load: still allow step 1 → 2.
-                const continueBtn = document.getElementById('paymentTypeContinueBtn');
-                continueBtn?.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    if (!validateStep1()) return;
-                    syncPanelState(2);
-                    updatePayNowLabels();
-                });
             }
-
-            syncPanelState(1);
 
             if (paymentDateInput && !paymentDateInput.value) {
                 const now = new Date();

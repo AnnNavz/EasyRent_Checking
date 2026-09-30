@@ -1,21 +1,33 @@
-@model IEnumerable<EasyRent_Checking.Models.AdminProfile>
+@model IEnumerable<EasyRent_Checking.Models.User>
 @using EasyRent_Checking.Models
 @using System.Globalization
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Admin Management";
+    ViewData["Title"] = "Admin & Staff Management";
     ViewData["ActivePage"] = "Admins";
 
     var totalAdminsChange = ViewData["TotalAdminsChange"] as decimal? ?? 0m;
     var addedThisMonthChange = ViewData["AddedThisMonthChange"] as decimal? ?? 0m;
     var currentAdminId = ViewData["CurrentAdminId"] as int?;
     var canDeleteAdmins = ViewData["CanDeleteAdmins"] as bool? ?? false;
+    var staffList = ViewData["StaffList"] as IEnumerable<EasyRent_Checking.Models.User>;
+    var staffPageIndex = ViewData["StaffPageIndex"] as int? ?? 1;
+    var staffTotalPages = ViewData["StaffTotalPages"] as int? ?? 1;
+    var staffTotalCount = ViewData["StaffTotalCount"] as int? ?? 0;
+    var pageSize = ViewData["PageSize"] as int? ?? 10;
 
     string FormatTrend(decimal change) =>
         Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
     string currentSortName = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "Name" => "Name",
+        "Email" => "Email",
+        _ => "Sorting by"
+    };
+
+    string currentStaffSortName = ViewData["CurrentStaffSort"]?.ToString() switch
     {
         "Name" => "Name",
         "Email" => "Email",
@@ -38,7 +50,7 @@
 
 <div class="customers-index-page admins-index-page">
     <div class="row g-4 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="customer-metric-card">
                 <div class="customer-metric-icon is-total" aria-hidden="true">
                     <i class="bi bi-shield-lock-fill"></i>
@@ -56,7 +68,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="customer-metric-card">
                 <div class="customer-metric-icon is-new" aria-hidden="true">
                     <i class="bi bi-person-plus-fill"></i>
@@ -74,6 +86,23 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="customer-metric-card">
+                <div class="customer-metric-icon is-total" aria-hidden="true">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="customer-metric-body">
+                    <span class="customer-metric-label">Total Staff</span>
+                    <div class="customer-metric-value">@staffTotalCount</div>
+                </div>
+                <div class="customer-metric-trend">
+                    <span class="customer-metric-badge is-neutral">
+                        <i class="bi bi-dash"></i>
+                    </span>
+                    <span class="customer-metric-compare">Staff members</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <form asp-action="Index" method="get" class="w-100">
@@ -82,14 +111,14 @@
         <div class="customer-index-toolbar mb-4">
             <div class="customer-index-toolbar-filters">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="?sortBy=Name&amp;searchString=@ViewData["CurrentSearch"]">Name</a></li>
-                        <li><a class="dropdown-item" href="?sortBy=Email&amp;searchString=@ViewData["CurrentSearch"]">Email</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=Name&amp;staffSortBy=@ViewData["CurrentStaffSort"]&amp;searchString=@ViewData["CurrentSearch"]">Name</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=Email&amp;staffSortBy=@ViewData["CurrentStaffSort"]&amp;searchString=@ViewData["CurrentSearch"]">Email</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
-                        <li><a class="dropdown-item text-muted small" href="?sortBy=&amp;searchString=@ViewData["CurrentSearch"]">Clear Sorting</a></li>
+                        <li><a class="dropdown-item text-muted small" href="?sortBy=&amp;staffSortBy=@ViewData["CurrentStaffSort"]&amp;searchString=@ViewData["CurrentSearch"]">Clear Sorting</a></li>
                     </ul>
                 </div>
             </div>
@@ -101,10 +130,9 @@
                        value="@ViewData["CurrentSearch"]"
                        class="form-control customer-index-search-input"
                        placeholder="Search Admin" />
-                <i class="bi bi-mic customer-index-mic-icon" aria-hidden="true"></i>
                 @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
                 {
-                    <a href="?searchString=&amp;sortBy=@ViewData["CurrentSort"]"
+                    <a href="?searchString=&amp;sortBy=@ViewData["CurrentSort"]&amp;staffSortBy=@ViewData["CurrentStaffSort"]"
                        class="customer-index-search-clear"
                        aria-label="Clear search">&times;</a>
                 }
@@ -123,6 +151,7 @@
                     <tr>
                         <th>Admin Name</th>
                         <th>Email</th>
+                        <th>Contact</th>
                         <th>Role</th>
                         <th>Date Added</th>
                         <th class="text-end" style="width: 80px;" aria-label="Actions"></th>
@@ -136,7 +165,7 @@
                             var safeName = (item.FullName ?? "this admin")
                                 .Replace("\\", "\\\\")
                                 .Replace("'", "\\'");
-                            var isCurrent = currentAdminId.HasValue && item.AdminId == currentAdminId.Value;
+                            var isCurrent = currentAdminId.HasValue && item.UserId == currentAdminId.Value;
                             <tr>
                                 <td>
                                     <div class="table-customer-cell">
@@ -159,7 +188,8 @@
                                         </span>
                                     </div>
                                 </td>
-                                <td>@(item.User?.Email ?? "—")</td>
+                                <td>@(item.Email ?? "—")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.ContactNumber) ? "—" : item.ContactNumber)</td>
                                 <td>
                                     @if (item.IsSelfDeactivated)
                                     {
@@ -170,19 +200,23 @@
                                         <span class="customer-status-badge is-approved">Admin</span>
                                     }
                                 </td>
-                                <td>@AdminDates.Format(item.User?.CreatedAt)</td>
+                                <td>@AdminDates.Format(item.CreatedAt)</td>
                                 <td class="text-end">
                                     <div class="dropdown">
                                         <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Admin actions">
                                             <i class="bi bi-three-dots"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                            <li><a class="dropdown-item" asp-action="Details" asp-route-adminid="@item.AdminId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                            @if (!isCurrent)
+                                            {
+                                                <li><a class="dropdown-item" asp-action="Edit" asp-route-adminid="@item.UserId"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                            }
+                                            <li><a class="dropdown-item" asp-action="Details" asp-route-adminid="@item.UserId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
                                             @if (canDeleteAdmins && !isCurrent)
                                             {
                                                 <li><hr class="dropdown-menu-divider"></li>
                                                 <li>
-                                                    <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.AdminId', '@safeName')">
+                                                    <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.UserId', '@safeName')">
                                                         <i class="bi bi-trash me-2"></i> Delete
                                                     </button>
                                                 </li>
@@ -196,7 +230,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted fw-medium">
+                            <td colspan="6" class="text-center py-5 text-muted fw-medium">
                                 <i class="bi bi-shield-lock fs-2 d-block mb-2 text-secondary opacity-50"></i>
                                 No matching admins found.
                             </td>
@@ -206,6 +240,176 @@
             </table>
         </div>
         <partial name="_AdminPagination" />
+    </div>
+
+    <h5 class="mb-3 mt-4">Staff List</h5>
+    <form asp-action="Index" method="get" class="w-100">
+        <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+        <input type="hidden" name="staffSortBy" value="@ViewData["CurrentStaffSort"]" />
+
+        <div class="customer-index-toolbar mb-4">
+            <div class="customer-index-toolbar-filters">
+                <div class="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentStaffSortName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?staffSortBy=Name&amp;sortBy=@ViewData["CurrentSort"]&amp;searchString=@ViewData["CurrentSearch"]">Name</a></li>
+                        <li><a class="dropdown-item" href="?staffSortBy=Email&amp;sortBy=@ViewData["CurrentSort"]&amp;searchString=@ViewData["CurrentSearch"]">Email</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?staffSortBy=&amp;sortBy=@ViewData["CurrentSort"]&amp;searchString=@ViewData["CurrentSearch"]">Clear Sorting</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="customer-index-toolbar-search">
+                <i class="bi bi-search customer-index-search-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="searchString"
+                       value="@ViewData["CurrentSearch"]"
+                       class="form-control customer-index-search-input"
+                       placeholder="Search Staff" />
+                @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
+                {
+                    <a href="?searchString=&amp;sortBy=@ViewData["CurrentSort"]&amp;staffSortBy=@ViewData["CurrentStaffSort"]"
+                       class="customer-index-search-clear"
+                       aria-label="Clear search">&times;</a>
+                }
+            </div>
+            <a asp-action="CreateStaff" class="btn customer-index-add-btn">
+                <i class="bi bi-plus-lg"></i> Add Staff
+            </a>
+        </div>
+    </form>
+
+    <div class="index-table-panel mb-4">
+        <div class="table-responsive">
+            <table class="table admin-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Staff Name</th>
+                        <th>Email</th>
+                        <th>Contact</th>
+                        <th>Role</th>
+                        <th>Date Added</th>
+                        <th class="text-end" style="width: 80px;" aria-label="Actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (staffList != null && staffList.Any())
+                    {
+                        @foreach (var item in staffList)
+                        {
+                            var safeName = (item.FullName ?? "this staff")
+                                .Replace("\\", "\\\\")
+                                .Replace("'", "\\'");
+                            var isCurrent = currentAdminId.HasValue && item.UserId == currentAdminId.Value;
+                            <tr>
+                                <td>
+                                    <div class="table-customer-cell">
+                                        <div class="table-customer-avatar" aria-hidden="true">
+                                            @if (!string.IsNullOrEmpty(item.ProfileImagePath))
+                                            {
+                                                <img src="~/images/@item.ProfileImagePath" alt="" />
+                                            }
+                                            else
+                                            {
+                                                @GetInitials(item.FullName)
+                                            }
+                                        </div>
+                                        <span class="table-customer-name">
+                                            @item.FullName
+                                            @if (isCurrent)
+                                            {
+                                                <span class="admin-you-pill">You</span>
+                                            }
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>@(item.Email ?? "—")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.ContactNumber) ? "—" : item.ContactNumber)</td>
+                                <td>
+                                    @if (item.IsSelfDeactivated)
+                                    {
+                                        <span class="customer-status-badge is-inactive">Inactive</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="customer-status-badge is-approved">Staff</span>
+                                    }
+                                </td>
+                                <td>@AdminDates.Format(item.CreatedAt)</td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Staff actions">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                            <li><a class="dropdown-item" asp-action="Edit" asp-route-adminid="@item.UserId"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                            <li><a class="dropdown-item" asp-action="Details" asp-route-adminid="@item.UserId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                            <li><hr class="dropdown-menu-divider"></li>
+                                            <li>
+                                                <form asp-action="ToggleStaffActive" asp-route-staffid="@item.UserId" method="post" class="d-inline"
+                                                      data-confirm="@(item.IsSelfDeactivated ? "Reactivate this staff account?" : "Deactivate this staff account?")"
+                                                      data-confirm-button="@(item.IsSelfDeactivated ? "Reactivate Staff" : "Deactivate Staff")"
+                                                      data-confirm-tone="@(item.IsSelfDeactivated ? "approve" : "danger")">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="dropdown-item @(item.IsSelfDeactivated ? "" : "text-danger")">
+                                                        <i class="bi @(item.IsSelfDeactivated ? "bi-arrow-clockwise" : "bi-slash-circle") me-2"></i>
+                                                        @(item.IsSelfDeactivated ? "Reactivate" : "Deactivate")
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            @if (!isCurrent)
+                                            {
+                                                <li>
+                                                    <button type="button" class="dropdown-item text-danger" onclick="openDeleteStaffPopup('@item.UserId', '@safeName')">
+                                                        <i class="bi bi-trash me-2"></i> Delete
+                                                    </button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted fw-medium">
+                                No staff members found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (staffTotalPages > 1)
+        {
+            <nav aria-label="Staff pagination">
+                <ul class="pagination justify-content-end mt-3 mb-0">
+                    @if (staffPageIndex > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="?searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]&staffSortBy=@ViewData["CurrentStaffSort"]&staffPage=@(staffPageIndex - 1)">Previous</a>
+                        </li>
+                    }
+                    @for (int i = 1; i <= staffTotalPages; i++)
+                    {
+                        <li class="page-item @(i == staffPageIndex ? "active" : "")">
+                            <a class="page-link" href="?searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]&staffSortBy=@ViewData["CurrentStaffSort"]&staffPage=@i">@i</a>
+                        </li>
+                    }
+                    @if (staffPageIndex < staffTotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="?searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]&staffSortBy=@ViewData["CurrentStaffSort"]&staffPage=@(staffPageIndex + 1)">Next</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
     </div>
 </div>
 
@@ -217,3 +421,26 @@
     ViewData["DeleteEntityLabel"] = "admin";
 }
 <partial name="_DeleteConfirmModal" />
+
+@{
+    ViewData["DeleteModalId"] = "staffDeletePopup";
+    ViewData["DeleteHiddenInputId"] = "popupStaffId";
+    ViewData["DeleteHiddenInputName"] = "staffid";
+    ViewData["DeleteMessageId"] = "deleteStaffPopupMessage";
+    ViewData["DeleteEntityLabel"] = "staff";
+    ViewData["DeleteAction"] = "DeleteStaff";
+}
+<partial name="_DeleteConfirmModal" />
+
+<script>
+    function openDeletePopup(id, name) {
+        document.getElementById('popupAdminId').value = id;
+        document.getElementById('deletePopupMessage').textContent = 'Are you sure you want to delete admin ' + name + '?';
+        new bootstrap.Modal(document.getElementById('adminDeletePopup')).show();
+    }
+    function openDeleteStaffPopup(id, name) {
+        document.getElementById('popupStaffId').value = id;
+        document.getElementById('deleteStaffPopupMessage').textContent = 'Are you sure you want to delete staff ' + name + '?';
+        new bootstrap.Modal(document.getElementById('staffDeletePopup')).show();
+    }
+</script>

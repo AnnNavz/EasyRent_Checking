@@ -41,17 +41,23 @@ namespace EasyRent_Checking.Controllers
 			var vehiclesQuery = from v in _context.Vehicles select v;
 
 			// 2. Real-time KPI Card Computations
+			var today = DateTime.Today;
 			var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 			var totalVehiclesCount = await vehiclesQuery.CountAsync();
-			var activeVehiclesCount = await vehiclesQuery.CountAsync(v => v.Status == VehicleStatus.Available);
+			var activeVehiclesCount = await vehiclesQuery.CountAsync(v => v.IsActive && v.Status == VehicleStatus.Available);
+			var expiredRegistrationsCount = await vehiclesQuery.CountAsync(v => v.RegistrationExpiry.Date < today);
 			var totalVehiclesAtMonthStart = await vehiclesQuery.CountAsync(v => v.RegistrationDate < monthStart);
 			var activeVehiclesAtMonthStart = await vehiclesQuery.CountAsync(v =>
-				v.RegistrationDate < monthStart && v.Status == VehicleStatus.Available);
+				v.RegistrationDate < monthStart && v.IsActive && v.Status == VehicleStatus.Available);
+			var expiredRegistrationsAtMonthStart = await vehiclesQuery.CountAsync(v =>
+				v.RegistrationExpiry.Date < monthStart);
 
 			ViewData["TotalVehiclesCount"] = totalVehiclesCount;
 			ViewData["ActiveVehiclesCount"] = activeVehiclesCount;
+			ViewData["ExpiredRegistrationsCount"] = expiredRegistrationsCount;
 			ViewData["TotalVehiclesChange"] = PctChange(totalVehiclesCount, totalVehiclesAtMonthStart);
 			ViewData["ActiveVehiclesChange"] = PctChange(activeVehiclesCount, activeVehiclesAtMonthStart);
+			ViewData["ExpiredRegistrationsChange"] = PctChange(expiredRegistrationsCount, expiredRegistrationsAtMonthStart);
 
 			// 3. Handle Live Input Search Logic
 			if (!string.IsNullOrEmpty(searchString))
@@ -66,11 +72,19 @@ namespace EasyRent_Checking.Controllers
 			{
 				if (currentFilter == "Active")
 				{
-					vehiclesQuery = vehiclesQuery.Where(v => v.Status == VehicleStatus.Available);
+					vehiclesQuery = vehiclesQuery.Where(v => v.IsActive && v.Status == VehicleStatus.Available);
 				}
 				else if (currentFilter == "Maintenance")
 				{
 					vehiclesQuery = vehiclesQuery.Where(v => v.Status == VehicleStatus.InMaintenance);
+				}
+				else if (currentFilter == "Deactivated")
+				{
+					vehiclesQuery = vehiclesQuery.Where(v => !v.IsActive);
+				}
+				else if (currentFilter == "ExpiredRegistration")
+				{
+					vehiclesQuery = vehiclesQuery.Where(v => v.RegistrationExpiry.Date < today);
 				}
 				else if (Enum.TryParse(currentFilter, true, out VehicleStatus filterStatus))
 				{
@@ -84,6 +98,7 @@ namespace EasyRent_Checking.Controllers
 				"Model" => vehiclesQuery.OrderBy(v => v.Model),
 				"Brand" => vehiclesQuery.OrderBy(v => v.Brand),
 				"PlateNumber" => vehiclesQuery.OrderBy(v => v.PlateNumber),
+				"RegistrationExpiry" => vehiclesQuery.OrderBy(v => v.RegistrationExpiry),
 				_ => vehiclesQuery.OrderByDescending(v => v.VehicleId)
 			};
 
@@ -158,14 +173,13 @@ namespace EasyRent_Checking.Controllers
 			var bookingRows = await (
 				from t in _context.Transits.AsNoTracking()
 				join r in _context.Rentals.AsNoTracking() on t.RentalID equals r.RentalId
-				join d in _context.RentalDetails.AsNoTracking() on r.RentalId equals d.RentalID
 				where t.VehicleID == vehicle.VehicleId
 				orderby t.TransitID descending
-				select new { t, r, d }
+				select new { t, r }
 			).Take(50).ToListAsync();
 
 			var bookingHistory = bookingRows
-				.Select(row => MapBookingHistory(row.t, row.r, row.d))
+				.Select(row => MapBookingHistory(row.t, row.r))
 				.ToList();
 
 			return View(new VehicleDetailsViewModel
@@ -176,10 +190,40 @@ namespace EasyRent_Checking.Controllers
 			});
         }
 
-		private static VehicleBookingHistoryItem MapBookingHistory(Transit transit, Rental rental, RentalDetails details)
+		// POST: Vehicles/ToggleActive/5
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> ToggleActive(int id)
 		{
-			var start = details.PickupDate.ToDateTime(details.PickupTime);
-			var end = details.ReturnDate.ToDateTime(details.ReturnTime);
+			var vehicle = await _context.Vehicles.FindAsync(id);
+			if (vehicle == null)
+			{
+				return NotFound();
+			}
+
+			vehicle.IsActive = !vehicle.IsActive;
+			var vehicleLabel = $"{vehicle.Brand} {vehicle.Model}".Trim();
+			_logs.Record(
+				vehicle.IsActive ? SystemLogAction.Reactivated : SystemLogAction.Deactivated,
+				SystemLogCategory.Vehicle,
+				vehicle.IsActive
+					? $"Reactivated vehicle {vehicleLabel} ({vehicle.PlateNumber})."
+					: $"Deactivated vehicle {vehicleLabel} ({vehicle.PlateNumber}).",
+				"Vehicle",
+				vehicle.VehicleId);
+			await _context.SaveChangesAsync();
+
+			TempData["SuccessMessage"] = vehicle.IsActive
+				? $"{vehicleLabel} has been reactivated."
+				: $"{vehicleLabel} has been deactivated.";
+
+			return RedirectToAction(nameof(Details), new { id });
+		}
+
+		private static VehicleBookingHistoryItem MapBookingHistory(Transit transit, Rental rental)
+		{
+			var start = rental.PickupDate.ToDateTime(rental.PickupTime);
+			var end = rental.ReturnDate.ToDateTime(rental.ReturnTime);
 			if (end < start)
 			{
 				end = start;
@@ -200,7 +244,7 @@ namespace EasyRent_Checking.Controllers
 				RentalId = rental.RentalId,
 				BookingLabel = $"BK-{rental.RentalId:D5}",
 				CustomerName = rental.CustomerName,
-				TripDates = FormatTripDates(details.PickupDate, details.ReturnDate),
+				TripDates = FormatTripDates(rental.PickupDate, rental.ReturnDate),
 				Duration = totalHours == 1 ? "1 hour" : $"{totalHours} hours",
 				SortDate = start,
 				Status = status,
@@ -239,7 +283,7 @@ namespace EasyRent_Checking.Controllers
         public async Task<IActionResult> Create()
         {
             await PopulateVehicleTypeOptionsAsync();
-            return View(new Vehicle { Status = VehicleStatus.Available, Type = VehicleTypes.Suv });
+            return View(new Vehicle { Status = VehicleStatus.Available, IsActive = true, Type = VehicleTypes.Suv, PassengersCount = 4 });
         }
 
         // POST: Vehicles/Create
@@ -247,9 +291,10 @@ namespace EasyRent_Checking.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,CustomType,Status,Odometer,RegistrationDate,RegistrationExpiry,BasePrice,SucceedingFee,PassengersCount,Description,ImagePath,ImageFile")] Vehicle vehicle)
+        public async Task<IActionResult> Create([Bind("VehicleId,Model,PlateNumber,Brand,Color,Type,CustomType,Status,IsActive,Odometer,RegistrationDate,RegistrationExpiry,BasePrice,SucceedingFee,PassengersCount,Description,ImagePath,ImageFile")] Vehicle vehicle)
         {
             ApplyVehicleType(vehicle);
+            vehicle.IsActive = true;
             if (ModelState.IsValid)
             {
                 if (vehicle.ImageFile != null)

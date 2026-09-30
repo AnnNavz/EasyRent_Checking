@@ -549,6 +549,32 @@
         }
     }
 
+    function getMinimumDue(paymentType, totalAmount) {
+        var total = Number(totalAmount || 0);
+        if (total <= 0) return 0;
+        if (String(paymentType || '').toLowerCase() === 'partial payment') {
+            return Math.round(total * 0.05 * 100) / 100;
+        }
+        return total;
+    }
+
+    function validateAmountPaid(amountPaid, paymentType, totalAmount) {
+        var paid = Number(amountPaid || 0);
+        if (!paid || paid <= 0) {
+            return 'Please enter the amount paid.';
+        }
+
+        var minimum = getMinimumDue(paymentType, totalAmount);
+        if (minimum > 0 && paid < minimum) {
+            if (String(paymentType || '').toLowerCase() === 'partial payment') {
+                return 'Amount paid must be at least the partial deposit of ' + formatPeso(minimum) + '.';
+            }
+            return 'Amount paid must be at least ' + formatPeso(minimum) + '.';
+        }
+
+        return null;
+    }
+
     window.BookingSummary = {
         populate: populateBookingSummary,
         initWizard: initBookingWizard,
@@ -556,6 +582,8 @@
         showImagePreview: showImagePreview,
         clearImagePreview: clearImagePreview,
         calcHours: calcHours,
-        formatPeso: formatPeso
+        formatPeso: formatPeso,
+        getMinimumDue: getMinimumDue,
+        validateAmountPaid: validateAmountPaid
     };
 })(window);

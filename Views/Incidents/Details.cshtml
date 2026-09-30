@@ -6,7 +6,7 @@
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Incident Details";
+    ViewData["Title"] = "View Details";
     ViewData["ActivePage"] = "Incidents";
     ViewData["SectionTitle"] = "Incident Reports";
     ViewData["SectionUrl"] = Url.Action("Index", "Incidents");
@@ -18,43 +18,115 @@
         return display ?? value.ToString();
     }
 
-    string StatusClass(IncidentStatus status) => status switch
+    string StatusBadgeClass(IncidentStatus status) => status switch
     {
-        IncidentStatus.Reported => "trip-status-delayed",
-        IncidentStatus.UnderReview => "trip-status-in-transit",
-        IncidentStatus.InRepair => "trip-status-scheduled",
-        IncidentStatus.Closed => "trip-status-completed",
-        IncidentStatus.Dismissed => "trip-status-cancelled",
-        _ => "trip-status-scheduled"
+        IncidentStatus.Reported => "incident-details-status is-reported",
+        IncidentStatus.UnderReview => "incident-details-status is-under-review",
+        IncidentStatus.InRepair => "incident-details-status is-in-repair",
+        IncidentStatus.Closed => "incident-details-status is-closed",
+        IncidentStatus.Dismissed => "incident-details-status is-dismissed",
+        _ => "incident-details-status is-reported"
     };
 
+    string StatusIcon(IncidentStatus status) => status switch
+    {
+        IncidentStatus.Reported => "bi-clock",
+        IncidentStatus.UnderReview => "bi-search",
+        IncidentStatus.InRepair => "bi-tools",
+        IncidentStatus.Closed => "bi-check-circle",
+        IncidentStatus.Dismissed => "bi-x-circle",
+        _ => "bi-clock"
+    };
+
+    string TypeIcon(IncidentType type) => type switch
+    {
+        IncidentType.Accident => "bi-car-front-fill",
+        IncidentType.Damage => "bi-exclamation-diamond",
+        IncidentType.Breakdown => "bi-wrench-adjustable",
+        IncidentType.Theft => "bi-shield-exclamation",
+        _ => "bi-exclamation-triangle"
+    };
+
+    string FormatPhoneDisplay(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            return "—";
+        }
+
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        if (digits.Length == 11 && digits.StartsWith("09"))
+        {
+            return $"{digits[..4]} {digits[4..7]} {digits[7..]}";
+        }
+
+        return phone;
+    }
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "?";
+        }
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0][..2].ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
+        }
+
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    string FormatTimestamp(DateTime value) =>
+        value.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)
+        + " • "
+        + value.ToString("h:mm tt", CultureInfo.InvariantCulture);
+
     var vehicle = Model.Vehicle;
-    var vehicleName = vehicle != null ? $"{vehicle.Brand} {vehicle.Model}".Trim() : "—";
+    var vehicleName = vehicle != null ? $"{vehicle.Model} {vehicle.Brand}".Trim() : "—";
+    var vehicleTypeLabel = vehicle != null ? VehicleTypes.Display(vehicle.Type) : "—";
     var ph = CultureInfo.GetCultureInfo("en-PH");
-    var reportId = $"INC-{Model.IncidentReportId.ToString("D5")}";
+    var reportId = IncidentReport.FormatReference(Model.IncidentReportId);
+    var driverName = Model.Driver?.Name ?? "No driver on report";
+    var driverPhone = FormatPhoneDisplay(Model.Driver?.ContactNo);
 }
 
-<div class="container-fluid px-4 py-3 reservation-details-page">
-    <div class="details-page-actions mb-3">
-        <a asp-action="Index" class="btn btn-page-back">Back</a>
-        @if (Model.Status == IncidentStatus.InRepair)
-        {
-            <a asp-action="CompleteRepair" asp-route-id="@Model.IncidentReportId" class="btn reservation-btn-approve">Complete Repair</a>
-        }
-    </div>
-
-    <div class="row g-4">
+<div class="container-fluid px-4 py-3 reservation-details-page incident-details-page">
+    <div class="row g-4 align-items-start">
         <div class="col-lg-8">
-            <div class="reservation-view-card mb-4">
-                <div class="reservation-view-idbar">
-                    <div>
-                        <span class="reservation-view-id-label">Incident ID</span>
-                        <h1 class="reservation-view-id">@reportId</h1>
-                    </div>
-                    <span class="booking-status-badge @StatusClass(Model.Status)">@EnumLabel(Model.Status)</span>
+            <div class="reservation-details-id-card mb-3">
+                <div class="reservation-details-id-main">
+                    <span class="reservation-view-id-label">Incident ID</span>
+                    <h1 class="reservation-view-id mb-0">@reportId</h1>
                 </div>
+                <span class="@StatusBadgeClass(Model.Status)">
+                    <i class="bi @StatusIcon(Model.Status)"></i>@EnumLabel(Model.Status)
+                </span>
+            </div>
 
+            <div class="reservation-view-card mb-4">
                 <div class="reservation-view-people">
+                    <div class="reservation-view-person">
+                        <div class="reservation-view-avatar" aria-hidden="true">
+                            @if (!string.IsNullOrEmpty(Model.Driver?.ImagePath))
+                            {
+                                <img src="~/images/@Model.Driver.ImagePath" alt="" class="incident-details-avatar-img" />
+                            }
+                            else
+                            {
+                                @GetInitials(Model.Driver?.Name)
+                            }
+                        </div>
+                        <div>
+                            <div class="reservation-view-vehicle-label">Driver Assigned</div>
+                            <div class="reservation-view-person-name">@driverName</div>
+                            <div class="reservation-view-person-meta">@driverPhone</div>
+                        </div>
+                    </div>
                     <div class="reservation-view-vehicle">
                         <div class="reservation-view-vehicle-thumb" aria-hidden="true">
                             @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
@@ -63,104 +135,129 @@
                             }
                             else
                             {
-                                <div class="reservation-view-placeholder">
-                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                                        <line x1="0" y1="0" x2="100" y2="100" />
-                                        <line x1="100" y1="0" x2="0" y2="100" />
-                                    </svg>
-                                </div>
+                                <i class="bi bi-truck-front"></i>
                             }
                         </div>
                         <div>
-                            <div class="reservation-view-vehicle-label">Vehicle</div>
+                            <div class="reservation-view-vehicle-label">Selected Vehicle</div>
                             <div class="reservation-view-vehicle-name">@vehicleName</div>
-                            <div class="reservation-view-vehicle-type">@(vehicle?.PlateNumber ?? "—")</div>
-                        </div>
-                    </div>
-                    <div class="reservation-view-person">
-                        <div class="reservation-view-avatar" aria-hidden="true">
-                            <i class="bi bi-person-badge"></i>
-                        </div>
-                        <div>
-                            <div class="reservation-view-person-name">@(Model.Driver?.Name ?? "No driver on report")</div>
-                            <div class="reservation-view-person-meta">@(Model.Driver?.ContactNo ?? "—")</div>
+                            <div class="reservation-view-vehicle-type">@vehicleTypeLabel</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="reservation-view-grid">
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Type</span>
-                        <span class="reservation-view-value">@EnumLabel(Model.Type)</span>
+                <div class="incident-details-description-block">
+                    <span class="reservation-view-label">Description</span>
+                    <div class="reservation-view-notes">@Model.Description</div>
+                </div>
+
+                <div class="reservation-view-facts incident-details-facts">
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi @TypeIcon(Model.Type)"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Type</span>
+                            <span class="reservation-view-value">@EnumLabel(Model.Type)</span>
+                        </div>
                     </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Severity</span>
-                        <span class="reservation-view-value">@EnumLabel(Model.Severity)</span>
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-exclamation-diamond"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Severity</span>
+                            <span class="reservation-view-value">@EnumLabel(Model.Severity)</span>
+                        </div>
                     </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Occurred At</span>
-                        <span class="reservation-view-value">@Model.OccurredAt.ToString("MMM d, yyyy h:mm tt", CultureInfo.InvariantCulture)</span>
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-calendar3"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Occurred At</span>
+                            <span class="reservation-view-value">@FormatTimestamp(Model.OccurredAt)</span>
+                        </div>
                     </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Location</span>
-                        <span class="reservation-view-value">@Model.Location</span>
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-geo-alt"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Location</span>
+                            <span class="reservation-view-value">@Model.Location</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="reservation-view-card mb-4">
                 <div class="reservation-view-section-title">
-                    <i class="bi bi-clipboard"></i>
-                    <span>Report Details</span>
+                    <span class="reservation-view-section-icon"><i class="bi bi-image"></i></span>
+                    <span>Image Uploaded</span>
+                </div>
+                <div class="incident-details-image-frame">
+                    @if (!string.IsNullOrEmpty(Model.ImagePath))
+                    {
+                        <a href="~/images/@Model.ImagePath" target="_blank" rel="noopener">
+                            <img src="~/images/@Model.ImagePath" alt="Incident photo" />
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="incident-details-image-empty">
+                            <i class="bi bi-image"></i>
+                            <p>No image uploaded for this report.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-section-title">
+                    <span class="reservation-view-section-icon"><i class="bi bi-file-earmark-text"></i></span>
+                    <span>Additional Information</span>
                 </div>
 
-                <div class="reservation-view-grid reservation-view-grid-two mb-3">
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Cannot go out</span>
-                        <span class="reservation-view-value">@(Model.IsUndrivable ? "Yes" : "No")</span>
+                <div class="incident-details-info-list">
+                    <div class="incident-details-info-row">
+                        <span class="incident-details-info-label">Cannot go out</span>
+                        <span class="incident-details-info-value">@(Model.IsUndrivable ? "Yes" : "No")</span>
                     </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Photo</span>
-                        @if (!string.IsNullOrEmpty(Model.ImagePath))
-                        {
-                            <a href="~/images/@Model.ImagePath" target="_blank" rel="noopener">View image</a>
-                        }
-                        else
-                        {
-                            <span class="reservation-view-value">—</span>
-                        }
+                    <div class="incident-details-info-row">
+                        <span class="incident-details-info-label">Work Done</span>
+                        <span class="incident-details-info-value">@(string.IsNullOrWhiteSpace(Model.WorkDone) ? "—" : Model.WorkDone)</span>
                     </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Cost</span>
-                        <span class="reservation-view-value">@(Model.Cost != null ? Model.Cost.Value.ToString("C", ph) : "—")</span>
+                    @if (Model.Cost != null)
+                    {
+                        <div class="incident-details-info-row">
+                            <span class="incident-details-info-label">Repair Cost</span>
+                            <span class="incident-details-info-value">@Model.Cost.Value.ToString("C", ph)</span>
+                        </div>
+                    }
+                    <div class="incident-details-info-row is-block">
+                        <span class="incident-details-info-label">Remarks</span>
+                        <span class="incident-details-info-value">@(string.IsNullOrWhiteSpace(Model.Remarks) ? "—" : Model.Remarks)</span>
                     </div>
-                </div>
-
-                <div class="reservation-view-field mb-3">
-                    <span class="reservation-view-label">Description</span>
-                    <div class="reservation-view-notes">@Model.Description</div>
-                </div>
-
-                <div class="reservation-view-field mb-0">
-                    <span class="reservation-view-label">Work Done</span>
-                    <div class="reservation-view-notes">@(string.IsNullOrWhiteSpace(Model.WorkDone) ? "—" : Model.WorkDone)</div>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-4">
+            <div class="details-page-actions reservation-details-side-actions mb-3">
+                <a asp-action="Index" class="btn btn-page-back">Back</a>
+                @if (Model.Status == IncidentStatus.InRepair)
+                {
+                    <a asp-action="CompleteRepair" asp-route-id="@Model.IncidentReportId" class="btn btn-reservation-edit">Complete Repair</a>
+                }
+            </div>
+
             <div class="reservation-view-side-card mb-4">
                 <h6 class="reservation-view-side-title">Linked Trip</h6>
                 @if (Model.Transit != null)
                 {
-                    <p class="small mb-3">BK-@Model.Transit.RentalID.ToString("D5") · @(Model.Transit.Rental?.CustomerName ?? "—")</p>
+                    <p class="incident-details-linked-trip mb-3">
+                        BK-@Model.Transit.RentalID.ToString("D5") · @(Model.Transit.Rental?.CustomerName ?? "—")
+                    </p>
                     <a asp-controller="Transits" asp-action="Details" asp-route-transitid="@Model.Transit.TransitID" class="btn reservation-btn-payment w-100">
                         View Trip
                     </a>
                 }
                 else
                 {
-                    <p class="small text-muted mb-0">No trip linked. This was filed off-trip.</p>
+                    <p class="incident-details-linked-trip mb-0">No trip linked. This was filed off-trip.</p>
                 }
             </div>
 
@@ -174,7 +271,7 @@
                           data-confirm-button="Start Review"
                           data-confirm-tone="approve">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn reservation-btn-approve w-100 mb-2">Start Review</button>
+                        <button type="submit" class="btn incident-details-btn-review w-100 mb-2">Start Review</button>
                     </form>
                     <form asp-action="Dismiss" asp-route-id="@Model.IncidentReportId" method="post"
                           data-confirm="Dismiss this incident?"
@@ -184,7 +281,7 @@
                           data-confirm-icon="bi-x-circle"
                           data-confirm-submit-icon="bi-x-lg">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn reservation-btn-reject w-100">Dismiss</button>
+                        <button type="submit" class="btn incident-details-btn-dismiss w-100">Dismiss</button>
                     </form>
                 }
                 else if (Model.Status == IncidentStatus.UnderReview)
@@ -195,7 +292,7 @@
                           data-confirm-button="Start Repair"
                           data-confirm-tone="approve">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn reservation-btn-approve w-100 mb-2">Start Repair</button>
+                        <button type="submit" class="btn incident-details-btn-review w-100 mb-2">Start Repair</button>
                     </form>
                     <form asp-action="Close" asp-route-id="@Model.IncidentReportId" method="post"
                           data-confirm="Close without shop work?"
@@ -213,21 +310,21 @@
                           data-confirm-icon="bi-x-circle"
                           data-confirm-submit-icon="bi-x-lg">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn reservation-btn-reject w-100">Dismiss</button>
+                        <button type="submit" class="btn incident-details-btn-dismiss w-100">Dismiss</button>
                     </form>
                 }
                 else if (Model.Status == IncidentStatus.InRepair)
                 {
-                    <a asp-action="CompleteRepair" asp-route-id="@Model.IncidentReportId" class="btn reservation-btn-approve w-100 mb-2">
+                    <a asp-action="CompleteRepair" asp-route-id="@Model.IncidentReportId" class="btn incident-details-btn-review w-100 mb-2">
                         Complete Repair
                     </a>
-                    <p class="small text-muted mb-0">Record work done and cost, then close the report.</p>
+                    <p class="incident-details-action-note mb-0">Record work done and cost, then close the report.</p>
                 }
                 else
                 {
-                    <p class="small text-muted mb-0">
+                    <p class="incident-details-action-note mb-0">
                         @(Model.Status == IncidentStatus.Closed ? "This report is closed." : "This report was dismissed.")
-                        @(Model.ClosedAt != null ? " " + Model.ClosedAt.Value.ToString("MMM d, yyyy h:mm tt", CultureInfo.InvariantCulture) : "")
+                        @(Model.ClosedAt != null ? " " + FormatTimestamp(Model.ClosedAt.Value) : "")
                     </p>
                 }
             </div>

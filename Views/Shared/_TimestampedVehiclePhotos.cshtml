@@ -1,0 +1,60 @@
+@model EasyRent_Checking.ViewModels.TimestampedVehiclePhotosViewModel
+
+<div class="transit-photo-section">
+    <h3 class="transit-photo-section-title">Timestamped Vehicle Photos</h3>
+    <p class="transit-photo-section-desc">Capture all sides of the vehicle (up to @Model.MaxPhotos photos). Photo will include timestamped automatically.</p>
+
+    <div class="transit-photo-grid" id="@Model.GridId" data-max-photos="@Model.MaxPhotos">
+        <div class="transit-photo-card" data-photo-card>
+            <div class="transit-photo-dropzone" data-photo-dropzone>
+                <div class="transit-photo-upload-empty" data-photo-upload-empty>
+                    <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
+                    <span class="transit-photo-upload-sub">PNG, JPG, or JPEG (max)</span>
+                </div>
+                <div class="transit-photo-preview" data-photo-preview hidden>
+                    <img data-photo-preview-img alt="" />
+                    <span class="transit-photo-timestamp" data-photo-timestamp></span>
+                </div>
+                <input type="file"
+                       name="@Model.InputName"
+                       id="@Model.InputId"
+                       class="transit-photo-file-input"
+                       accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                       data-primary-photo-input />
+            </div>
+            <div class="transit-photo-file-bar" data-photo-file-bar hidden>
+                <span class="transit-photo-file-name" data-photo-file-name></span>
+                <button type="button" class="transit-photo-remove-btn" data-photo-remove-btn>Remove</button>
+            </div>
+        </div>
+
+        <button type="button" class="transit-photo-add-card" id="@Model.AddButtonId">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            Add another image
+        </button>
+    </div>
+
+    <template id="@Model.TemplateId">
+        <div class="transit-photo-card" data-photo-card>
+            <div class="transit-photo-dropzone" data-photo-dropzone>
+                <div class="transit-photo-upload-empty" data-photo-upload-empty>
+                    <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
+                    <span class="transit-photo-upload-sub">PNG, JPG, or JPEG (max)</span>
+                </div>
+                <div class="transit-photo-preview" data-photo-preview hidden>
+                    <img data-photo-preview-img alt="" />
+                    <span class="transit-photo-timestamp" data-photo-timestamp></span>
+                </div>
+                <input type="file"
+                       class="transit-photo-file-input"
+                       accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                       name="@Model.InputListName"
+                       data-extra-photo-input />
+            </div>
+            <div class="transit-photo-file-bar" data-photo-file-bar hidden>
+                <span class="transit-photo-file-name" data-photo-file-name></span>
+                <button type="button" class="transit-photo-remove-btn" data-photo-remove-btn>Remove</button>
+            </div>
+        </div>
+    </template>
+</div>

@@ -1,0 +1,180 @@
+/* Shared EasyRent form field appearance (matches incident report inputs). */
+
+:root {
+    --er-field-border: #d0d5dd;
+    --er-field-bg: #f9fafb;
+    --er-field-radius: 10px;
+    --er-field-color: #344054;
+    --er-field-font-size: 0.88rem;
+    --er-field-padding: 0.65rem 0.85rem;
+    --er-field-min-height: 44px;
+    --er-field-focus-border: #1e296a;
+    --er-field-focus-shadow: 0 0 0 3px rgba(30, 41, 106, 0.12);
+    --er-field-focus-bg: #ffffff;
+    --er-field-placeholder: #98a2b3;
+}
+
+.admin-shell textarea.form-control,
+.client-body textarea.form-control,
+.client-body-login textarea.form-control,
+.admin-shell .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not(.admin-index-search-input):not(.vehicle-index-search-input):not(.driver-index-search-input):not(.customer-index-search-input):not(.inquiry-index-search-input),
+.client-body .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+.client-body-login .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+.admin-shell .form-select,
+.client-body .form-select,
+.client-body-login .form-select,
+.admin-shell .form-control-thin,
+.admin-shell .incident-record-input,
+.admin-shell .incident-record-textarea,
+.admin-shell .vehicle-wizard-input,
+.admin-shell .rent-field-input,
+.admin-shell .rent-field-textarea,
+.admin-shell .payment-field-input,
+.client-body .auth-input,
+.client-body .auth-select,
+.client-body-login .auth-input,
+.client-body-login .auth-select,
+.client-body .account-field-input,
+.client-body .rent-field-input,
+.client-body .rent-field-textarea,
+.client-body .payment-field-input,
+.client-body .airbnb-date-input,
+.client-body .airbnb-time-input,
+.client-body .rate-trip-comment {
+    border: 1px solid var(--er-field-border) !important;
+    border-radius: var(--er-field-radius) !important;
+    background: var(--er-field-bg) !important;
+    color: var(--er-field-color) !important;
+    font-size: var(--er-field-font-size) !important;
+    padding: var(--er-field-padding) !important;
+    min-height: var(--er-field-min-height);
+    box-shadow: none !important;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.admin-shell textarea.form-control,
+.client-body textarea.form-control,
+.client-body-login textarea.form-control,
+.admin-shell .incident-record-textarea,
+.admin-shell .rent-field-textarea,
+.client-body .rent-field-textarea,
+.client-body .rate-trip-comment {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.admin-shell .form-select,
+.client-body .form-select,
+.client-body-login .form-select,
+.admin-shell .form-select.vehicle-wizard-input,
+.admin-shell .form-select.rent-field-input,
+.admin-shell .form-select.incident-record-input,
+.client-body .form-select.rent-field-input,
+.client-body .auth-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234A5568' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.85rem center !important;
+    background-size: 12px 12px !important;
+    padding-right: 2.4rem !important;
+    cursor: pointer;
+}
+
+.admin-shell .form-control::placeholder,
+.client-body .form-control::placeholder,
+.client-body-login .form-control::placeholder,
+.admin-shell .rent-field-input::placeholder,
+.client-body .rent-field-input::placeholder,
+.client-body .auth-input::placeholder,
+.client-body-login .auth-input::placeholder {
+    color: var(--er-field-placeholder);
+    opacity: 1;
+}
+
+.admin-shell textarea.form-control:focus,
+.client-body textarea.form-control:focus,
+.client-body-login textarea.form-control:focus,
+.admin-shell .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not(.admin-index-search-input):not(.vehicle-index-search-input):not(.driver-index-search-input):not(.customer-index-search-input):not(.inquiry-index-search-input):focus,
+.client-body .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):focus,
+.client-body-login .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):focus,
+.admin-shell .form-select:focus,
+.client-body .form-select:focus,
+.client-body-login .form-select:focus,
+.admin-shell .form-control-thin:focus,
+.admin-shell .incident-record-input:focus,
+.admin-shell .incident-record-textarea:focus,
+.admin-shell .vehicle-wizard-input:focus,
+.admin-shell .rent-field-input:focus,
+.admin-shell .rent-field-textarea:focus,
+.admin-shell .payment-field-input:focus,
+.client-body .auth-input:focus,
+.client-body .auth-select:focus,
+.client-body-login .auth-input:focus,
+.client-body-login .auth-select:focus,
+.client-body .account-field-input:focus,
+.client-body .rent-field-input:focus,
+.client-body .rent-field-textarea:focus,
+.client-body .payment-field-input:focus,
+.client-body .airbnb-date-input:focus,
+.client-body .airbnb-time-input:focus,
+.client-body .rate-trip-comment:focus {
+    border-color: var(--er-field-focus-border) !important;
+    box-shadow: var(--er-field-focus-shadow) !important;
+    background: var(--er-field-focus-bg) !important;
+}
+
+/* Keep icon padding for auth fields. */
+.client-body .auth-input,
+.client-body-login .auth-input {
+    padding-left: 2.55rem !important;
+    padding-right: 2.5rem !important;
+}
+
+.client-body .auth-select,
+.client-body-login .auth-select {
+    padding-left: 0.95rem !important;
+    padding-right: 2.4rem !important;
+}
+
+/* Date fields with trailing icons. */
+.admin-shell .incident-record-input-wrap .incident-record-input,
+.admin-shell .vehicle-date-input-wrap .vehicle-wizard-input {
+    padding-right: 2.5rem !important;
+}
+
+.admin-shell .input-group .vehicle-wizard-input,
+.admin-shell .input-group.vehicle-input-suffix .vehicle-wizard-input {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.admin-shell .input-group-text {
+    border: 1px solid var(--er-field-border);
+    border-left: 0;
+    background: var(--er-field-bg);
+    color: var(--er-field-color);
+    font-size: var(--er-field-font-size);
+}
+
+.admin-shell .form-control.input-validation-error,
+.client-body .form-control.input-validation-error,
+.client-body-login .form-control.input-validation-error,
+.admin-shell .vehicle-wizard-input.input-validation-error,
+.client-body .rent-field-input.input-validation-error {
+    border-color: #dc3545 !important;
+}
+
+.admin-shell .form-control:disabled,
+.client-body .form-control:disabled,
+.client-body-login .form-control:disabled,
+.admin-shell .form-select:disabled,
+.client-body .form-select:disabled,
+.client-body-login .form-select:disabled,
+.client-body .account-field-input:disabled,
+.client-body .rent-field-input:disabled {
+    background: #f2f4f7 !important;
+    color: #98a2b3 !important;
+    opacity: 1;
+}

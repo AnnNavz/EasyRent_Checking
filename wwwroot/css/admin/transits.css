@@ -1,0 +1,265 @@
+/* Active trip management — index & details sidebar */
+
+.transits-index-page {
+    background-color: #ffffff;
+}
+
+/* Metric cards */
+.transits-index-page .transit-metric-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    min-height: 110px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    border: 1px solid #eef2f6;
+}
+
+.transits-index-page .transit-metric-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #1a3275;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.transits-index-page .transit-metric-icon.is-gold {
+    background: #f5b301;
+    color: #ffffff;
+}
+
+.transits-index-page .transit-metric-icon.is-success {
+    background: #32b935;
+    color: #ffffff;
+}
+
+.transits-index-page .transit-metric-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.transits-index-page .transit-metric-label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #667085;
+    margin-bottom: 0.15rem;
+}
+
+.transits-index-page .transit-metric-value {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a3275;
+    line-height: 1.1;
+}
+
+.transits-index-page .transit-metric-note {
+    display: block;
+    font-size: 0.72rem;
+    color: #98a2b3;
+    margin-top: 0.15rem;
+}
+
+/* Details sidebar */
+.transit-details-page .transit-side-summary {
+    background: linear-gradient(135deg, #1a3275 0%, #243f8a 100%);
+    border-radius: 16px;
+    padding: 1.15rem 1.25rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 28px rgba(26, 50, 117, 0.22);
+}
+
+.transit-details-page .transit-side-summary-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.85;
+    margin-bottom: 0.35rem;
+}
+
+.transit-details-page .transit-side-summary-step {
+    font-family: var(--font-title);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.65rem;
+}
+
+.transit-details-page .transit-side-summary-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.transit-details-page .transit-side-summary-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.transit-details-page .transit-progress-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 1.15rem 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.11);
+}
+
+.transit-details-page .transit-progress-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.transit-details-page .transit-progress-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #eef4ff;
+    color: #1a3275;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.transit-details-page .transit-progress-card-title {
+    font-family: var(--font-title);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a3275;
+    margin: 0;
+}
+
+.transit-details-page .transit-progress-card-sub {
+    display: block;
+    font-size: 0.75rem;
+    color: #667085;
+}
+
+.transit-details-page .booking-progress-step.is-current {
+    background: #f8fbff;
+    border-radius: 12px;
+    margin-left: -0.35rem;
+    margin-right: -0.35rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+}
+
+.transit-details-page .booking-progress-step.is-current .booking-progress-body strong {
+    color: #1a3275;
+}
+
+.transit-details-page .transit-side-action-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 1rem 1.15rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.11);
+}
+
+.transit-details-page .transit-side-action-card.is-warning {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.transit-details-page .transit-side-action-card.is-danger {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.transit-details-page .transit-side-action-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-bottom: 0.75rem;
+}
+
+.transit-details-page .transit-side-action-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+}
+
+.transit-details-page .transit-side-action-icon.is-payment {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.transit-details-page .transit-side-action-icon.is-incident {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.transit-details-page .transit-side-action-icon.is-resolve {
+    background: #fee2e2;
+    color: #b42318;
+}
+
+.transit-details-page .transit-side-action-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a3275;
+    margin: 0 0 0.15rem;
+}
+
+.transit-details-page .transit-side-action-text {
+    font-size: 0.8rem;
+    color: #667085;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.transit-details-page .transit-payment-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-left: auto;
+}
+
+.transit-details-page .transit-payment-status-pill.is-paid {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.transit-details-page .transit-payment-status-pill.is-unpaid {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+@media (max-width: 767.98px) {
+    .transits-index-page .transit-metric-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+}

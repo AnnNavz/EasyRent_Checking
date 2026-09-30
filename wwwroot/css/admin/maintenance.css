@@ -4,7 +4,7 @@
     overflow: hidden;
     border: 1px solid #e5e7eb;
     border-radius: 18px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
 }
 
 .pms-index-page .driver-metric-icon {
@@ -24,6 +24,11 @@
 
 .pms-index-page .driver-metric-icon.is-success {
     background: #32b935;
+    color: #ffffff;
+}
+
+.pms-index-page .driver-metric-icon.is-orange {
+    background: #f97316;
     color: #ffffff;
 }
 
@@ -183,8 +188,8 @@
 }
 
 .pms-status.is-progress {
-    background: #dbeafe;
-    color: #175cd3;
+    background: #fff4e5;
+    color: #c2410c;
 }
 
 .pms-status.is-upcoming {
@@ -261,34 +266,34 @@
 
 .pms-btn-record,
 .pms-btn-details {
-    border-radius: 8px !important;
-    font-size: 0.8rem !important;
+    border-radius: 10px !important;
+    font-size: 0.85rem !important;
     font-weight: 700 !important;
-    padding: 0.32rem 0.85rem !important;
+    padding: 0.55rem 1.15rem !important;
     min-width: 78px;
 }
 
 .pms-btn-record {
-    background: #1a3275 !important;
-    border: 1px solid #1a3275 !important;
+    background: var(--admin-navy, #1E3A8A) !important;
+    border: 1px solid var(--admin-navy, #1E3A8A) !important;
     color: #fff !important;
 }
 
 .pms-btn-record:hover {
-    background: #12234f !important;
-    border-color: #12234f !important;
+    background: var(--admin-navy-deep, #172e6e) !important;
+    border-color: var(--admin-navy-deep, #172e6e) !important;
     color: #fff !important;
 }
 
 .pms-btn-details {
     background: #fff !important;
-    border: 1px solid #1a3275 !important;
-    color: #1a3275 !important;
+    border: 1.5px solid var(--admin-navy, #1E3A8A) !important;
+    color: var(--admin-navy, #1E3A8A) !important;
 }
 
 .pms-btn-details:hover {
-    background: #eef2fb !important;
-    color: #12234f !important;
+    background: #eff6ff !important;
+    color: var(--admin-navy-deep, #172e6e) !important;
 }
 
 @media (max-width: 991.98px) {
@@ -366,7 +371,23 @@
     border-radius: 14px;
     padding: 1.35rem 1.5rem 1.5rem;
     margin-bottom: 1.15rem;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10);
+}
+
+.pms-record-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.pms-record-card-head h6 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #1a3275;
 }
 
 .pms-record-label {
@@ -396,26 +417,6 @@ textarea.pms-record-input {
 .pms-record-input:focus {
     border-color: #1a3275;
     box-shadow: 0 0 0 0.15rem rgba(26, 50, 117, 0.12);
-}
-
-.pms-record-input-group {
-    box-shadow: none;
-}
-
-.pms-record-input-group .pms-record-input {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.pms-record-suffix {
-    background: #fff;
-    border: 1px solid #e4e7ec;
-    border-left: 0;
-    color: #667085;
-    font-weight: 700;
-    font-size: 0.85rem;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
 }
 
 .pms-record-wizard .pms-record-upload {
@@ -488,10 +489,10 @@ textarea.pms-record-input {
 }
 
 .pms-record-edit-btn {
-    border: 1px solid #1a3275;
+    border: 1.5px solid var(--admin-navy, #1E3A8A);
     background: #fff;
-    color: #1a3275;
-    border-radius: 8px;
+    color: var(--admin-navy, #1E3A8A);
+    border-radius: 10px;
     padding: 0.32rem 0.75rem;
     font-size: 0.78rem;
     font-weight: 700;
@@ -501,7 +502,7 @@ textarea.pms-record-input {
 }
 
 .pms-record-edit-btn:hover {
-    background: #eef2fb;
+    background: #eff6ff;
 }
 
 .pms-review-dl {
@@ -599,7 +600,7 @@ textarea.pms-record-input {
     border-radius: 14px;
     padding: 1.15rem 1.2rem 1.25rem;
     margin-bottom: 1rem;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10);
 }
 
 .pms-side-card-head {
@@ -715,18 +716,33 @@ textarea.pms-record-input {
 }
 
 .pms-record-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 44px;
     background: #fff !important;
-    border: 1px solid #1a3275 !important;
-    color: #1a3275 !important;
+    border: 1.5px solid var(--admin-navy, #1E3A8A) !important;
+    color: var(--admin-navy, #1E3A8A) !important;
     border-radius: 10px !important;
     padding: 0.55rem 1.35rem !important;
     font-size: 0.88rem;
     font-weight: 700;
 }
 
+.pms-record-btn-cancel:hover {
+    background: #eff6ff !important;
+    color: var(--admin-navy, #1E3A8A) !important;
+}
+
 .pms-record-btn-proceed {
-    background: #1a3275 !important;
-    border: 1px solid #1a3275 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 44px;
+    background: var(--admin-navy, #1E3A8A) !important;
+    border: 1.5px solid transparent !important;
     color: #fff !important;
     border-radius: 10px !important;
     padding: 0.55rem 1.35rem !important;
@@ -735,7 +751,8 @@ textarea.pms-record-input {
 }
 
 .pms-record-btn-proceed:hover {
-    background: #12234f !important;
+    background: var(--admin-navy-deep, #172e6e) !important;
+    color: #fff !important;
 }
 
 .pms-record-success .admin-success-heading {
@@ -826,7 +843,7 @@ textarea.pms-record-input {
     border-radius: 16px;
     padding: 1.2rem 1.35rem 1.3rem;
     margin-bottom: 1rem;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
 }
 
 .pms-details-card-head {
@@ -882,6 +899,7 @@ textarea.pms-record-input {
     display: flex;
     align-items: center;
     gap: 1.15rem;
+    padding-top: 0.15rem;
 }
 
 .pms-details-vehicle-photo {
@@ -991,22 +1009,47 @@ textarea.pms-record-input {
 .pms-details-btn-edit,
 .pms-details-btn-primary,
 .pms-details-btn-abort {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     border-radius: 10px !important;
     font-weight: 700 !important;
     font-size: 0.88rem !important;
     padding: 0.55rem 1.2rem !important;
+    text-decoration: none;
 }
 
 .pms-details-btn-back {
     background: #fff !important;
-    border: 1px solid #1a3275 !important;
-    color: #1a3275 !important;
+    border: 1.5px solid var(--admin-navy, #1E3A8A) !important;
+    color: var(--admin-navy, #1E3A8A) !important;
 }
 
-.pms-details-btn-edit,
+.pms-details-btn-back:hover {
+    background: #eff6ff !important;
+    color: var(--admin-navy, #1E3A8A) !important;
+}
+
+.pms-details-btn-edit {
+    background: #fff !important;
+    border: 1.5px solid var(--admin-navy, #1E3A8A) !important;
+    color: var(--admin-navy, #1E3A8A) !important;
+}
+
+.pms-details-btn-edit:hover {
+    background: #eff6ff !important;
+    color: var(--admin-navy-deep, #172e6e) !important;
+}
+
 .pms-details-btn-primary {
-    background: #1a3275 !important;
-    border: 1px solid #1a3275 !important;
+    background: var(--admin-navy, #1E3A8A) !important;
+    border: 1.5px solid transparent !important;
+    color: #fff !important;
+}
+
+.pms-details-btn-primary:hover {
+    background: var(--admin-navy-deep, #172e6e) !important;
     color: #fff !important;
 }
 
@@ -1021,14 +1064,14 @@ textarea.pms-record-input {
 }
 
 .pms-details-btn-abort {
-    background: #f97066 !important;
-    border: 1px solid #f97066 !important;
+    background: var(--admin-danger, #c21f00) !important;
+    border: 1.5px solid transparent !important;
     color: #fff !important;
 }
 
 .pms-details-btn-abort:hover {
-    background: #d92d20 !important;
-    border-color: #d92d20 !important;
+    background: var(--admin-danger-hover, #a81b00) !important;
+    color: #fff !important;
 }
 
 .pms-details-wait-note {
@@ -1104,7 +1147,16 @@ textarea.pms-record-input {
     border-radius: 20px;
     padding: 1.45rem 1.55rem 1.55rem;
     margin-bottom: 1.15rem;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
+}
+
+.pms-setup-page .pms-setup-vehicle-card {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    background: transparent;
 }
 
 .pms-setup-card-title {

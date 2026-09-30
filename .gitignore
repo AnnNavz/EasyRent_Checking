@@ -170,14 +170,22 @@ AutoTest.Net/
 DocProject/buildhelp/
 DocProject/Help/*.HxT
 DocProject/Help/*.HxC
-DocProject/Help/*.hhc
-DocProject/Help/*.hhk
-DocProject/Help/*.hhp
-DocProject/Help/Html2
-DocProject/Help/html
+*.rdl.data
+*.bim.layout
+*.bim_*.settings
+*.rptproj.rsuser
+*- [Bb]ackup.rdl
+*- [Bb]ackup ([0-9]).rdl
+*- [Bb]ackup ([0-9][0-9]).rdl
 
 # Click-Once directory
 publish/
+
+# Custom publish folders
+publish-test/
+
+# Runtime-generated files
+App_Data/
 
 # Publish Web Output
 *.[Pp]ublish.xml

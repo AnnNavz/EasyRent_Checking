@@ -1,19 +1,22 @@
-@model EasyRent_Checking.Models.AdminProfile
+@model EasyRent_Checking.ViewModels.AdminStaffMemberViewModel
 @using EasyRent_Checking.Models
 @using System.Globalization
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Admin Details";
+    ViewData["Title"] = Model.IsStaff ? "Staff Details" : "Admin Details";
     ViewData["ActivePage"] = "Admins";
 
     var email = Model.User?.Email ?? "—";
-    var createdAt = Model.User?.CreatedAt;
-    var adminLabel = Model.AdminId.ToString("D8");
+    var createdAt = Model.CreatedAt == default ? Model.User?.CreatedAt : Model.CreatedAt;
+    var memberLabel = Model.Id.ToString("D8");
     var currentAdminId = ViewData["CurrentAdminId"] as int?;
     var canDeleteAdmins = ViewData["CanDeleteAdmins"] as bool? ?? false;
-    var isCurrent = currentAdminId.HasValue && Model.AdminId == currentAdminId.Value;
-    var safeName = (Model.FullName ?? "this admin")
+    var isCurrent = currentAdminId.HasValue && Model.Id == currentAdminId.Value;
+    var isStaff = Model.IsStaff;
+    var roleLabel = isStaff ? "Staff" : "Admin";
+    var isInactive = Model.IsSelfDeactivated;
+    var safeName = (Model.FullName ?? (isStaff ? "this staff" : "this admin"))
         .Replace("\\", "\\\\")
         .Replace("'", "\\'");
 
@@ -47,11 +50,11 @@
         <div class="col-lg-8">
             <div class="reservation-details-id-card mb-3">
                 <div class="reservation-details-id-main">
-                    <span class="reservation-view-id-label">Admin ID</span>
-                    <h1 class="reservation-view-id mb-0">@adminLabel</h1>
+                    <span class="reservation-view-id-label">@(isStaff ? "Staff ID" : "Admin ID")</span>
+                    <h1 class="reservation-view-id mb-0">@memberLabel</h1>
                 </div>
-                <span class="booking-status-badge @(Model.IsSelfDeactivated ? "booking-status-cancelled" : "booking-status-approved")">
-                    <i class="bi @(Model.IsSelfDeactivated ? "bi-pause-circle" : "bi-shield-lock")"></i>@(Model.IsSelfDeactivated ? "Inactive" : "Admin")
+                <span class="booking-status-badge @(isInactive ? "booking-status-cancelled" : "booking-status-approved")">
+                    <i class="bi @(isInactive ? "bi-pause-circle" : "bi-shield-lock")"></i>@(isInactive ? "Inactive" : roleLabel)
                 </span>
             </div>
 
@@ -77,8 +80,16 @@
                             <span class="reservation-view-value">@email</span>
                         </div>
                         <div>
+                            <span class="reservation-view-label">Contact Number</span>
+                            <span class="reservation-view-value">@(string.IsNullOrWhiteSpace(Model.ContactNumber) ? "—" : Model.ContactNumber)</span>
+                        </div>
+                        <div>
+                            <span class="reservation-view-label">Address</span>
+                            <span class="reservation-view-value">@(string.IsNullOrWhiteSpace(Model.Address) ? "—" : Model.Address)</span>
+                        </div>
+                        <div>
                             <span class="reservation-view-label">Role</span>
-                            <span class="reservation-view-value">Admin</span>
+                            <span class="reservation-view-value">@roleLabel</span>
                         </div>
                         <div>
                             <span class="reservation-view-label">Member since</span>
@@ -92,6 +103,10 @@
         <div class="col-lg-4">
             <div class="details-page-actions reservation-details-side-actions mb-3">
                 <a asp-action="Index" class="btn btn-page-back">Back</a>
+                @if (!isCurrent)
+                {
+                    <a asp-action="Edit" asp-route-adminid="@Model.Id" class="btn btn-reservation-edit">Edit @(isStaff ? "Staff" : "Admin") Details</a>
+                }
             </div>
 
             <div class="reservation-view-side-card mb-4">
@@ -105,14 +120,42 @@
                             <strong>
                                 @(createdAt.HasValue ? FormatTimestamp(createdAt.Value) : "—")
                             </strong>
-                            <span>Admin account created</span>
+                            <span>@(roleLabel) account created</span>
                         </div>
                     </div>
                 </div>
 
-                @if (canDeleteAdmins && !isCurrent)
+                @if (isStaff && !isCurrent)
                 {
-                    <button type="button" class="btn reservation-btn-reject w-100" onclick="openDeletePopup('@Model.AdminId', '@safeName')">
+                    @if (!isInactive)
+                    {
+                        <form asp-action="ToggleStaffActive" asp-route-staffid="@Model.Id" method="post" class="mb-2"
+                              data-confirm="Deactivate this staff account?"
+                              data-confirm-text="They will not be able to sign in until an admin reactivates the account."
+                              data-confirm-button="Deactivate Staff"
+                              data-confirm-tone="danger"
+                              data-confirm-icon="bi-slash-circle"
+                              data-confirm-submit-icon="bi-slash-circle">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn reservation-btn-reject w-100">Deactivate Staff</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="ToggleStaffActive" asp-route-staffid="@Model.Id" method="post" class="mb-2"
+                              data-confirm="Reactivate this staff account?"
+                              data-confirm-text="They will be able to sign in to the admin area again."
+                              data-confirm-button="Reactivate Staff"
+                              data-confirm-tone="approve">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn reservation-btn-approve w-100">Reactivate Staff</button>
+                        </form>
+                    }
+                }
+
+                @if (canDeleteAdmins && !isCurrent && !isStaff)
+                {
+                    <button type="button" class="btn reservation-btn-reject w-100" onclick="openDeletePopup('@Model.Id', '@safeName')">
                         Delete Admin
                     </button>
                 }

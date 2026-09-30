@@ -42,7 +42,6 @@
     <form asp-action="Edit" enctype="multipart/form-data" id="reservationEditForm" novalidate>
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
         <input type="hidden" asp-for="RentalId" />
-        <input type="hidden" asp-for="RentalDetailsID" />
         <input type="hidden" asp-for="DiscountImagePath" />
         <input type="hidden" asp-for="PaymentId" />
 
@@ -97,12 +96,12 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="CustomerName" class="rent-field-label">Customer Name</label>
-                    <input asp-for="CustomerName" class="rent-field-input" placeholder="e.g. Jane Doe" />
+                    <input asp-for="CustomerName" class="rent-field-input" placeholder="@FieldRules.NamePlaceholder" />
                     <span asp-validation-for="CustomerName" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="ContactNumber" class="rent-field-label">Contact Information</label>
-                    <input asp-for="ContactNumber" class="rent-field-input" placeholder="09123456789 or +639123456789" />
+                    <input asp-for="ContactNumber" class="rent-field-input" placeholder="09123456789" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" />
                     <span asp-validation-for="ContactNumber" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
@@ -454,6 +453,34 @@
                 card.classList.toggle('is-selected', card.getAttribute('data-payment-method') === method);
             });
             setChannelPanel(method);
+
+            const editForm = document.getElementById('reservationEditForm');
+            const amountPaidInput = document.getElementById('input-AmountPaid');
+            const totalAmountInput = document.getElementById('input-TotalAmount');
+            const paymentBlock = document.querySelector('.payment-type-block');
+
+            function syncAmountPaidMinimum() {
+                if (!amountPaidInput || !window.BookingSummary) return;
+                const total = parseFloat(totalAmountInput?.value || paymentBlock?.dataset.totalFare || '0');
+                const minimum = BookingSummary.getMinimumDue(paymentTypeInput?.value, total);
+                amountPaidInput.min = minimum.toFixed(2);
+                const matchLabel = document.getElementById('amountMatchLabel');
+                if (matchLabel) matchLabel.textContent = BookingSummary.formatPeso(minimum);
+            }
+
+            document.querySelectorAll('.payment-option-card').forEach(function (card) {
+                card.addEventListener('click', syncAmountPaidMinimum);
+            });
+            syncAmountPaidMinimum();
+
+            editForm?.addEventListener('submit', function (e) {
+                const total = parseFloat(totalAmountInput?.value || paymentBlock?.dataset.totalFare || '0');
+                const payError = BookingSummary.validateAmountPaid(amountPaidInput?.value, paymentTypeInput?.value, total);
+                if (payError) {
+                    e.preventDefault();
+                    alert(payError);
+                }
+            });
         })();
     </script>
 }

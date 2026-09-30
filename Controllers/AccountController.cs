@@ -53,6 +53,7 @@ namespace EasyRent_Checking.Controllers
 		public async Task<IActionResult> Registration([Bind("FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,FrontValidIDImageFile,BackValidIDImageFile,FrontValidIDImagePath,BackValidIDImagePath,AgreeTerms")] CustomerAccountInputModel model, string? returnUrl)
 		{
 			model.Status = Status.Pending;
+			model.ContactNumber = FieldRules.NormalizePhMobile(model.ContactNumber);
 			PrepareAuthReminder(returnUrl);
 
 			if (string.IsNullOrWhiteSpace(model.Password))
@@ -113,7 +114,10 @@ namespace EasyRent_Checking.Controllers
 			var user = new User
 			{
 				Email = model.Email.Trim(),
+				FullName = model.FullName.Trim(),
+				ContactNumber = FieldRules.NormalizePhMobile(model.ContactNumber.Trim()),
 				Role = UserRole.Customer,
+				Status = Status.Pending,
 				CreatedAt = DateTime.Now,
 				EmailConfirmed = false,
 				EmailVerificationToken = token,
@@ -127,12 +131,9 @@ namespace EasyRent_Checking.Controllers
 			var profile = new CustomerProfile
 			{
 				CustomerId = user.UserId,
-				FullName = model.FullName.Trim(),
-				ContactNumber = model.ContactNumber.Trim(),
 				ValidIDtype = model.ValidIDtype,
 				FrontValidIDImagePath = model.FrontValidIDImagePath!,
-				BackValidIDImagePath = model.BackValidIDImagePath!,
-				Status = Status.Pending
+				BackValidIDImagePath = model.BackValidIDImagePath!
 			};
 
 			_context.CustomerProfiles.Add(profile);
@@ -150,13 +151,13 @@ namespace EasyRent_Checking.Controllers
 					user.Email,
 					"Verify your EasyRent email",
 					$"""
-					<p>Hi {profile.FullName},</p>
+					<p>Hi {user.FullName},</p>
 					<p>Thanks for registering with EasyRent. Please confirm your email address by clicking the link below:</p>
 					<p><a href="{confirmUrl}">Confirm email</a></p>
 					<p>This link expires in 24 hours.</p>
 					""");
 
-				TempData["SuccessMessage"] = "Account created. Please check your email to verify your account, then wait for admin approval before logging in.";
+				TempData["SuccessMessage"] = "Account created. Please check your email to verify your account, then you can log in and book.";
 			}
 			catch (Exception ex)
 			{
@@ -176,7 +177,9 @@ namespace EasyRent_Checking.Controllers
 				return RedirectToAction(nameof(Login));
 			}
 
-			var user = await _context.Users.FindAsync(userId);
+			var user = await _context.Users
+				.Include(u => u.CustomerProfile)
+				.FirstOrDefaultAsync(u => u.UserId == userId);
 			if (user == null
 				|| user.EmailVerificationToken != token
 				|| user.EmailVerificationTokenExpires == null
@@ -189,9 +192,13 @@ namespace EasyRent_Checking.Controllers
 			user.EmailConfirmed = true;
 			user.EmailVerificationToken = null;
 			user.EmailVerificationTokenExpires = null;
+			if (user.Role == UserRole.Customer && user.Status == Status.Pending)
+			{
+				user.Status = Status.Active;
+			}
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "Email verified successfully. You can log in after admin approval.";
+			TempData["SuccessMessage"] = "Email verified successfully. You can log in and start booking.";
 			return RedirectToAction(nameof(Login));
 		}
 
@@ -219,7 +226,6 @@ namespace EasyRent_Checking.Controllers
 
 			var user = await _context.Users
 				.Include(u => u.CustomerProfile)
-				.Include(u => u.AdminProfile)
 				.FirstOrDefaultAsync(u => u.Email == model.Email.Trim());
 
 			if (user == null)
@@ -269,30 +275,41 @@ namespace EasyRent_Checking.Controllers
 
 			if (user.Role == UserRole.Customer)
 			{
-				if (user.CustomerProfile == null || user.CustomerProfile.Status == Status.Pending)
+				if (user.CustomerProfile == null)
 				{
-					ModelState.AddModelError(string.Empty, "Your account is not approved yet. Please wait for admin approval.");
+					ModelState.AddModelError(string.Empty, "Your customer profile could not be found. Please contact EasyRent.");
 					return View(model);
 				}
 
-				if (user.CustomerProfile.Status != Status.Active)
+				if (user.Status == Status.Pending)
 				{
-					ModelState.AddModelError(string.Empty, "Your account is not approved yet. Please wait for admin approval.");
+					user.Status = Status.Active;
+					await _context.SaveChangesAsync();
+				}
+
+				if (user.Status != Status.Active)
+				{
+					ModelState.AddModelError(string.Empty, "Your account has been deactivated. Please contact EasyRent.");
 					return View(model);
 				}
 
-				if (user.CustomerProfile.IsSelfDeactivated)
+				if (user.IsSelfDeactivated)
 				{
-					user.CustomerProfile.IsSelfDeactivated = false;
+					user.IsSelfDeactivated = false;
 					await _context.SaveChangesAsync();
 					TempData["SuccessMessage"] = "Your account has been reactivated.";
 				}
 			}
 
-			if (user.Role is UserRole.Admin or UserRole.Staff
-				&& user.AdminProfile?.IsSelfDeactivated == true)
+			if (user.Role == UserRole.Staff && user.IsSelfDeactivated)
 			{
-				user.AdminProfile.IsSelfDeactivated = false;
+				ModelState.AddModelError(string.Empty, "Your staff account has been deactivated. Please contact an administrator.");
+				return View(model);
+			}
+
+			if (user.Role == UserRole.Admin && user.IsSelfDeactivated)
+			{
+				user.IsSelfDeactivated = false;
 				await _context.SaveChangesAsync();
 				TempData["SuccessMessage"] = "Your account has been reactivated.";
 			}
@@ -453,9 +470,9 @@ namespace EasyRent_Checking.Controllers
 				return RedirectToSettings("profile", "name");
 			}
 
-			profile.FullName = fullName.Trim();
+			customer.FullName = fullName.Trim();
 			await _context.SaveChangesAsync();
-			await SignInUserAsync(customer, profile.FullName);
+			await SignInUserAsync(customer, customer.FullName);
 			TempData["SuccessMessage"] = "Your name has been updated.";
 			return RedirectToSettings("profile");
 		}
@@ -489,7 +506,7 @@ namespace EasyRent_Checking.Controllers
 
 			customer.Email = email;
 			await _context.SaveChangesAsync();
-			await SignInUserAsync(customer, profile.FullName);
+			await SignInUserAsync(customer, customer.FullName);
 			TempData["SuccessMessage"] = "Your email has been updated.";
 			return RedirectToSettings("profile");
 		}
@@ -506,14 +523,14 @@ namespace EasyRent_Checking.Controllers
 				return RedirectAwayFromCustomerSettings();
 			}
 
-			contactNumber = (contactNumber ?? string.Empty).Trim();
+			contactNumber = FieldRules.NormalizePhMobile(contactNumber);
 			if (!FieldRules.IsPhMobile(contactNumber))
 			{
 				TempData["ErrorMessage"] = FieldRules.PhMobileMessage;
 				return RedirectToSettings("profile", "phone");
 			}
 
-			profile.ContactNumber = contactNumber;
+			customer.ContactNumber = contactNumber;
 			await _context.SaveChangesAsync();
 			TempData["SuccessMessage"] = "Your phone number has been updated.";
 			return RedirectToSettings("profile");
@@ -596,7 +613,7 @@ namespace EasyRent_Checking.Controllers
 				return RedirectToSettings("profile");
 			}
 
-			profile.ProfileImagePath = await ImageStorage.SaveAsync(
+			customer.ProfileImagePath = await ImageStorage.SaveAsync(
 				_webHostEnvironment,
 				profileImageFile,
 				ImageStorage.CustomersFolder);
@@ -676,7 +693,7 @@ namespace EasyRent_Checking.Controllers
 				return RedirectAwayFromCustomerSettings();
 			}
 
-			profile.IsSelfDeactivated = true;
+			customer.IsSelfDeactivated = true;
 			await _context.SaveChangesAsync();
 			ClearMfaPendingCookie();
 			await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -739,8 +756,6 @@ namespace EasyRent_Checking.Controllers
 
 			var email = model.Email.Trim();
 			var user = await _context.Users
-				.Include(u => u.CustomerProfile)
-				.Include(u => u.AdminProfile)
 				.FirstOrDefaultAsync(u => u.Email == email);
 
 			if (user != null)
@@ -756,12 +771,7 @@ namespace EasyRent_Checking.Controllers
 					new { userId = user.UserId, token },
 					Request.Scheme)!;
 
-				var displayName = user.Role switch
-				{
-					UserRole.Customer => user.CustomerProfile?.FullName ?? user.Email,
-					UserRole.Admin or UserRole.Staff => user.AdminProfile?.FullName ?? user.Email,
-					_ => user.Email
-				};
+				var displayName = GetDisplayName(user);
 
 				try
 				{
@@ -926,17 +936,17 @@ namespace EasyRent_Checking.Controllers
 			{
 				Tab = normalizedTab,
 				EditField = editField,
-				FullName = profile.FullName,
+				FullName = user.FullName,
 				Email = user.Email,
-				ContactNumber = profile.ContactNumber,
+				ContactNumber = user.ContactNumber,
 				ValidIDtype = profile.ValidIDtype,
 				ValidIdTypeLabel = FormatValidIdType(profile.ValidIDtype),
-				IsIdentityVerified = profile.Status == Status.Active
+				IsIdentityVerified = user.Status == Status.Active
 					&& !string.IsNullOrWhiteSpace(profile.FrontValidIDImagePath)
 					&& !string.IsNullOrWhiteSpace(profile.BackValidIDImagePath),
 				LoginMfaEnabled = user.LoginMfaEnabled,
-				AvatarInitials = GetInitials(profile.FullName),
-				ProfileImagePath = profile.ProfileImagePath,
+				AvatarInitials = GetInitials(user.FullName),
+				ProfileImagePath = user.ProfileImagePath,
 				MemberSince = user.CreatedAt,
 				TotalRentals = rentals.Count,
 				CompletedTrips = completedTrips,
@@ -972,6 +982,7 @@ namespace EasyRent_Checking.Controllers
 				nameof(ValidIDtype.UMID) => "UMID",
 				nameof(ValidIDtype.DriverLicense) => "Driver's License",
 				nameof(ValidIDtype.VotersID) => "Voter's ID",
+				nameof(ValidIDtype.PostalID) => "Postal ID",
 				_ => string.IsNullOrWhiteSpace(value) ? "Not set" : value
 			};
 		}
@@ -1080,7 +1091,6 @@ namespace EasyRent_Checking.Controllers
 
 			return await _context.Users
 				.Include(u => u.CustomerProfile)
-				.Include(u => u.AdminProfile)
 				.FirstOrDefaultAsync(u => u.UserId == pending.UserId);
 		}
 
@@ -1153,12 +1163,7 @@ namespace EasyRent_Checking.Controllers
 
 		private static string GetDisplayName(User user)
 		{
-			return user.Role switch
-			{
-				UserRole.Customer => user.CustomerProfile?.FullName ?? user.Email,
-				UserRole.Admin or UserRole.Staff => user.AdminProfile?.FullName ?? user.Email,
-				_ => user.Email
-			};
+			return string.IsNullOrWhiteSpace(user.FullName) ? user.Email : user.FullName;
 		}
 
 		private static string NormalizeOtpCode(string? code)

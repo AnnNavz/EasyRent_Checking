@@ -11,6 +11,7 @@
         "Vehicles" => "vehicle-create-success",
         "Customers" => "customer-create-success",
         "Maintenance" => "pms-record-success",
+        "Incidents" => "incident-create-success",
         _ => ""
     };
 }
@@ -27,6 +28,10 @@
     else if (Model.ActivePage == "Customers")
     {
         <link rel="stylesheet" href="~/css/admin/customer-create.css" asp-append-version="true" />
+    }
+    else if (Model.ActivePage == "Incidents")
+    {
+        <link rel="stylesheet" href="~/css/admin/rentals.css" asp-append-version="true" />
     }
 }
 

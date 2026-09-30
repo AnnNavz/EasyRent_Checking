@@ -1,6 +1,4 @@
-@model EasyRent_Checking.ViewModels.MaintenanceScheduleInput
-@using EasyRent_Checking.Services
-@using System.Text.Json
+@model EasyRent_Checking.ViewModels.MaintenanceSetupViewModel
 
 @{
     Layout = "_LayoutAdminDashboard";
@@ -8,18 +6,22 @@
     ViewData["ActivePage"] = "Maintenance";
     ViewData["ShowInclude"] = true;
 
-    var presetsJson = JsonSerializer.Serialize(new
+    var schedule = Model.Schedule;
+    var vehiclePicker = new VehicleSelectionPickerViewModel
     {
-        SUV = PmsRules.SuvSchedule,
-        Van = PmsRules.VanSchedule
-    });
-    var vehicleTypesJson = ViewData["VehicleTypesJson"]?.ToString() ?? "{}";
+        Vehicles = Model.Vehicles,
+        SelectedVehicleId = schedule.VehicleId,
+        InputName = "Schedule.VehicleId",
+        ValidationKey = "Schedule.VehicleId",
+        EmptyMessage = "No vehicles without a maintenance schedule are available.",
+        TabEmptyMessage = "No vehicles match your search."
+    };
 }
 
-<div class="pms-setup-page">
+<div class="pms-setup-page incident-record-page">
     <div class="pms-setup-heading">
         <h1>Set Up Maintenance</h1>
-        <p>Choose the vehicle and checkup set, then configure the maintenance intervals. The vehicle will appear on the due list only after this is saved.</p>
+        <p>Choose a vehicle and configure its maintenance intervals. The vehicle will appear on the due list only after this is saved.</p>
     </div>
 
     <form asp-action="Setup" method="post" id="pmsSetupForm">
@@ -27,25 +29,14 @@
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
         <div class="pms-setup-card">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label asp-for="VehicleId" class="pms-setup-label">Vehicle</label>
-                    <select asp-for="VehicleId" class="form-select pms-setup-input" asp-items="ViewBag.VehicleOptions" id="pmsVehicleId"></select>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Preset" class="pms-setup-label">Checkup Set</label>
-                    <select asp-for="Preset" class="form-select pms-setup-input" id="pmsPreset">
-                        <option value="@PmsRules.PresetSuv">SUV schedule</option>
-                        <option value="@PmsRules.PresetVan">Van schedule</option>
-                    </select>
-                    <span class="pms-setup-hint">Vans use shorter km intervals. You can still edit the numbers below.</span>
-                </div>
+            <div class="incident-record-card incident-vehicle-card pms-setup-vehicle-card mb-0">
+                <partial name="_VehicleSelectionPicker" model="vehiclePicker" />
             </div>
         </div>
 
         <div class="pms-setup-card">
             <h2 class="pms-setup-card-title">Maintenance Items</h2>
-            <partial name="_PmsScheduleTable" for="Rows" />
+            <partial name="_PmsScheduleTable" for="Schedule.Rows" />
         </div>
 
         <div class="pms-setup-footer">
@@ -63,39 +54,10 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/vehicle-selection-picker.js" asp-append-version="true"></script>
     <script>
-        const pmsPresets = @Html.Raw(presetsJson);
-        const pmsVehicleTypes = @Html.Raw(vehicleTypesJson);
-
-        function applyPmsPreset(name) {
-            const rules = pmsPresets[name] || pmsPresets.SUV;
-            document.querySelectorAll('[data-pms-row]').forEach(function (row) {
-                const type = Number(row.getAttribute('data-type'));
-                const rule = rules.find(function (item) { return item.Type === type; });
-                if (!rule) return;
-                const trigger = row.querySelector('[data-trigger]');
-                const km = row.querySelector('[data-km]');
-                const months = row.querySelector('[data-months]');
-                const included = row.querySelector('[data-included]');
-                if (trigger) trigger.value = String(rule.Trigger);
-                if (km) km.value = rule.IntervalKilometers ?? '';
-                if (months) months.value = rule.IntervalMonths ?? '';
-                if (included) included.checked = true;
-                syncPmsRow(row);
-            });
+        if (window.initVehicleSelectionPicker) {
+            window.initVehicleSelectionPicker();
         }
-
-        const vehicleSelect = document.getElementById('pmsVehicleId');
-        const presetSelect = document.getElementById('pmsPreset');
-
-        vehicleSelect?.addEventListener('change', function () {
-            const suggested = pmsVehicleTypes[vehicleSelect.value] || 'SUV';
-            presetSelect.value = suggested;
-            applyPmsPreset(suggested);
-        });
-
-        presetSelect?.addEventListener('change', function () {
-            applyPmsPreset(presetSelect.value);
-        });
     </script>
 }

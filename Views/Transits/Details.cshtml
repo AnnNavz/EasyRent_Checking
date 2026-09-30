@@ -1,29 +1,84 @@
-@model EasyRent_Checking.Models.Transit
+@model EasyRent_Checking.ViewModels.TransitDetailsViewModel
 @using EasyRent_Checking.Models
+@using EasyRent_Checking.Services
+@using EasyRent_Checking.ViewModels
 @using System.Globalization
-@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Transit > View Details";
+    ViewData["Title"] = "View Details";
     ViewData["ActivePage"] = "Transit";
-    ViewData["SectionTitle"] = "Transit Management";
+    ViewData["SectionTitle"] = "Active Trips";
     ViewData["SectionUrl"] = Url.Action("Index", "Transits");
 
-    var details = Model?.Rental?.Details;
-    var vehicle = Model?.Vehicle ?? details?.Vehicle;
-    var payment = ViewBag.LatestPayment as Payment;
-    var driverList = ViewBag.DriverList as SelectList;
-    var canAssignDriver = ViewBag.CanAssignDriver as bool? == true;
-    var canStartTrip = ViewBag.CanStartTrip as bool? == true;
-    var canCompleteTrip = ViewBag.CanCompleteTrip as bool? == true;
-    var canReportAccident = Model?.TripStatus is TripStatus.InTransit or TripStatus.Completed;
-
-    string FormatDateTime(DateOnly? date, TimeOnly? time)
+    var primaryTransit = Model.PrimaryTransit;
+    var details = primaryTransit?.Rental;
+    var rentalVehicles = Model.RentalVehicles;
+    var vehicleTrips = Model.VehicleTrips;
+    var allTransits = Model.AllTransits;
+    var payment = Model.LatestPayment;
+    var vehicleAlert = Model.VehicleAvailabilityAlert;
+    var issueAlerts = Model.IssueAlerts;
+    var hasBlockingIssue = Model.HasBlockingIssue;
+    var canResolveBooking = Model.CanResolveBooking;
+    var vehicle = primaryTransit?.Vehicle ?? rentalVehicles.FirstOrDefault()?.Vehicle;
+    var vehicleBlocked = vehicleAlert?.BlocksDispatch == true;
+    var vehicleWarning = vehicleAlert?.Level == TripVehicleAvailabilityLevel.Warning;
+    var canReportAccident = allTransits.Any(t => t.TripStatus is TripStatus.InTransit or TripStatus.Completed);
+    var rental = primaryTransit?.Rental;
+    var isMultiVehicle = vehicleTrips.Count > 1 || rentalVehicles.Count > 1;
+    string FormatDate(DateOnly? date)
     {
-        if (date == null || time == null) return "—";
-        return $"{date.Value.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)} | {time.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+        if (date == null) return "—";
+        return date.Value.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
     }
+
+    string FormatTimestamp(DateTime value) =>
+        value.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)
+        + " • "
+        + value.ToString("h:mm tt", CultureInfo.InvariantCulture);
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0][..1].ToUpperInvariant();
+        return (parts[0][0].ToString() + parts[^1][0]).ToUpperInvariant();
+    }
+
+    int GetDurationHours()
+    {
+        if (details == null) return 0;
+        var start = details.PickupDate.ToDateTime(details.PickupTime);
+        var end = details.ReturnDate.ToDateTime(details.ReturnTime);
+        return Math.Max(0, (int)Math.Round((end - start).TotalHours));
+    }
+
+    string FuelLabel(FuelLevel? level) => level switch
+    {
+        FuelLevel.Empty => "Empty",
+        FuelLevel.Quarter => "1/4",
+        FuelLevel.Half => "1/2",
+        FuelLevel.ThreeQuarters => "3/4",
+        FuelLevel.Full => "Full",
+        _ => "—"
+    };
+
+    string StatusBadgeClass(RentalStatus status) => status switch
+    {
+        RentalStatus.Approved => "booking-status-approved",
+        RentalStatus.Cancelled => "booking-status-cancelled",
+        RentalStatus.Expired => "booking-status-expired",
+        _ => "booking-status-pending"
+    };
+
+    string StatusIcon(RentalStatus status) => status switch
+    {
+        RentalStatus.Approved => "bi-check-circle",
+        RentalStatus.Cancelled => "bi-x-circle",
+        RentalStatus.Expired => "bi-hourglass-bottom",
+        _ => "bi-clock"
+    };
 
     string TripStatusLabel(TripStatus status) => status switch
     {
@@ -44,263 +99,711 @@
         _ => "trip-status-scheduled"
     };
 
-    string FuelLabel(FuelLevel? level) => level switch
-    {
-        FuelLevel.Empty => "Empty",
-        FuelLevel.Quarter => "1/4",
-        FuelLevel.Half => "1/2",
-        FuelLevel.ThreeQuarters => "3/4",
-        FuelLevel.Full => "Full",
-        _ => "—"
-    };
+    bool CanOpenPreparation(TripStatus status) =>
+        status is TripStatus.Scheduled or TripStatus.Delayed;
 
-    var bookingId = $"BK-{Model?.RentalID.ToString("D5") ?? "00000"}";
+    bool IsTripPrepared(Transit trip) =>
+        trip.DriverID != null
+        && trip.DepartureTime != null
+        && trip.FuelLevelStart != null
+        && trip.OdometerStart != null;
+
+    var prepareTrips = vehicleTrips.Where(v => v.CanPrepareTrip).ToList();
+    var dispatchTrips = vehicleTrips.Where(v => v.CanDispatchTrip).ToList();
+    var canDispatchAll = Model.CanDispatchAllTrips;
+    var completeTrips = vehicleTrips.Where(v => v.CanCompleteTrip).ToList();
+    var blockedPrepareTrips = vehicleTrips
+        .Where(v => CanOpenPreparation(v.Transit.TripStatus) && !IsTripPrepared(v.Transit) && v.VehicleAlert?.BlocksDispatch == true)
+        .ToList();
+
+    int GetProgressStep()
+    {
+        if (allTransits.All(t => t.TripStatus == TripStatus.Completed)) return 5;
+        if (allTransits.Any(t => t.TripStatus == TripStatus.InTransit)) return 4;
+        if (allTransits.Any(t => CanOpenPreparation(t.TripStatus) && !IsTripPrepared(t))) return 3;
+        if (canDispatchAll) return 4;
+        if (rental?.RentalStatus == RentalStatus.Approved) return 3;
+        return 2;
+    }
+
+    bool IsStepDone(int step, int currentStep)
+    {
+        if (allTransits.All(t => t.TripStatus == TripStatus.Completed)) return true;
+        if (step == 3) return !prepareTrips.Any();
+        return step < currentStep;
+    }
+
+    bool IsStepCurrent(int step, int currentStep)
+    {
+        if (allTransits.All(t => t.TripStatus == TripStatus.Completed)) return step == 5;
+        if (step == 3) return prepareTrips.Any();
+        if (step == 4) return canDispatchAll || completeTrips.Any();
+        return step == currentStep;
+    }
+
+    var hours = GetDurationHours();
+    var bookingId = $"BK-{primaryTransit?.RentalID.ToString("D4") ?? "0000"}";
+    var vehicleTypeLabel = vehicle != null ? VehicleTypes.Display(vehicle.Type) : "—";
+    var progressStep = GetProgressStep();
+    var submittedAt = payment?.PaymentDate;
+    var isApproved = rental?.RentalStatus == RentalStatus.Approved;
+    var isPaid = payment != null
+        && rental?.RentalStatus == RentalStatus.Approved
+        && payment.AmountPaid >= payment.TotalAmount;
+
+    string CurrentStepLabel(int step) => step switch
+    {
+        1 => "Booking submitted",
+        2 => "Booking confirmed",
+        3 => "Vehicle preparation",
+        4 => "Dispatch or in transit",
+        5 => "Trip completed",
+        _ => "In progress"
+    };
 }
 
-<div class="container-fluid px-4 py-3 reservation-details-page">
-    <div class="details-page-actions mb-3">
-        <a asp-action="Index" class="btn btn-page-back">Back</a>
-        @if (canCompleteTrip)
-        {
-            <a asp-action="CompleteTrip" asp-route-transitid="@Model?.TransitID" class="btn reservation-btn-approve">Complete Trip</a>
-        }
-        @if (canReportAccident)
-        {
-            <a asp-controller="Incidents" asp-action="Create" asp-route-transitid="@Model?.TransitID" class="btn reservation-btn-reject">Report Accident</a>
-        }
-    </div>
-
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="reservation-view-card mb-4">
-                <div class="reservation-view-idbar">
-                    <div>
-                        <span class="reservation-view-id-label">Booking ID</span>
-                        <h1 class="reservation-view-id">@bookingId</h1>
+<div class="container-fluid px-4 py-3 reservation-details-page transit-details-page">
+    @if (issueAlerts.Count > 0)
+    {
+        <section class="transit-issue-alerts mb-4" aria-label="Vehicle issue notifications">
+            @foreach (var issue in issueAlerts)
+            {
+                <article class="transit-issue-alert @(issue.BlocksTrip ? "is-blocked" : "is-warning")">
+                    <div class="transit-issue-alert-icon" aria-hidden="true">
+                        <i class="bi @(issue.Source == TransitIssueSource.Incident ? "bi-shield-exclamation" : "bi-wrench-adjustable-circle")"></i>
                     </div>
-                    <span class="booking-status-badge @TripStatusBadgeClass(Model!.TripStatus)">
-                        @TripStatusLabel(Model.TripStatus)
-                    </span>
-                </div>
-
-                <div class="reservation-view-people">
-                    <div class="reservation-view-person">
-                        <div class="reservation-view-avatar" aria-hidden="true">
-                            <i class="bi bi-person"></i>
-                        </div>
-                        <div>
-                            <div class="reservation-view-person-name">@(Model.Rental?.CustomerName ?? "—")</div>
-                            <div class="reservation-view-person-meta">@(Model.Rental?.ContactNumber ?? "—")</div>
-                        </div>
-                    </div>
-                    <div class="reservation-view-vehicle">
-                        <div class="reservation-view-vehicle-thumb" aria-hidden="true">
-                            @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
+                    <div class="transit-issue-alert-body">
+                        <div class="transit-issue-alert-head">
+                            <span class="transit-issue-alert-source">@issue.SourceLabel</span>
+                            @if (!string.IsNullOrWhiteSpace(issue.ReferenceLabel))
                             {
-                                <img src="~/images/@vehicle.ImagePath" alt="@vehicle.Model" />
+                                <span class="transit-issue-alert-ref">@issue.ReferenceLabel</span>
                             }
-                            else
+                            @if (issue.BlocksTrip)
                             {
-                                <div class="reservation-view-placeholder">
-                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                                        <line x1="0" y1="0" x2="100" y2="100" />
-                                        <line x1="100" y1="0" x2="0" y2="100" />
-                                    </svg>
-                                </div>
+                                <span class="transit-issue-alert-badge">Not fit for transit</span>
                             }
                         </div>
-                        <div>
-                            <div class="reservation-view-vehicle-label">Assigned Vehicle</div>
-                            <div class="reservation-view-vehicle-name">
-                                @(vehicle != null ? $"{vehicle.Model} {vehicle.Brand}" : "Unassigned")
+                        <h2 class="transit-issue-alert-title">@issue.VehicleLabel</h2>
+                        <p class="transit-issue-alert-desc">@issue.IssueDescription</p>
+                        <dl class="transit-issue-alert-meta">
+                            <div>
+                                <dt>Date reported</dt>
+                                <dd>@FormatTimestamp(issue.ReportedAt)</dd>
                             </div>
-                            <div class="reservation-view-vehicle-type">@(vehicle?.PlateNumber ?? "—")</div>
+                            <div>
+                                <dt>Current condition</dt>
+                                <dd>@issue.CurrentCondition</dd>
+                            </div>
+                        </dl>
+                        <div class="transit-issue-alert-actions">
+                            @if (!string.IsNullOrEmpty(issue.SourceUrl))
+                            {
+                                <a href="@issue.SourceUrl" class="btn btn-sm transit-vehicle-alert-link">View original report</a>
+                            }
                         </div>
                     </div>
-                </div>
-
-                <div class="reservation-view-grid">
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Pick-up</span>
-                        <span class="reservation-view-value">@FormatDateTime(details?.PickupDate, details?.PickupTime)</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Return</span>
-                        <span class="reservation-view-value">@FormatDateTime(details?.ReturnDate, details?.ReturnTime)</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Pickup Location</span>
-                        <span class="reservation-view-value">@(details?.PickupLocation ?? "—")</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Drop-off Location</span>
-                        <span class="reservation-view-value">@(details?.DropoffLocation ?? "—")</span>
-                    </div>
-                </div>
+                </article>
+            }
+        </section>
+    }
+    else if (vehicleAlert?.HasAlert == true)
+    {
+        <div class="transit-vehicle-alert @(vehicleBlocked ? "is-blocked" : "is-warning")" role="alert">
+            <div class="transit-vehicle-alert-icon" aria-hidden="true">
+                <i class="bi @(vehicleBlocked ? "bi-exclamation-octagon-fill" : "bi-exclamation-triangle-fill")"></i>
             </div>
-
-            <div class="reservation-view-card mb-4">
-                <div class="reservation-view-section-title">
-                    <i class="bi bi-speedometer2"></i>
-                    <span>Trip Details</span>
-                </div>
-
-                <div class="reservation-view-grid reservation-view-grid-two mb-3">
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Actual Departure</span>
-                        <span class="reservation-view-value">@(Model.DepartureTime?.ToString("h:mm tt") ?? "Not started")</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Actual Return</span>
-                        <span class="reservation-view-value">@(Model.ReturnTime?.ToString("h:mm tt") ?? "—")</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Fuel (Start)</span>
-                        <span class="reservation-view-value">@FuelLabel(Model.FuelLevelStart)</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Fuel (End)</span>
-                        <span class="reservation-view-value">@FuelLabel(Model.FuelLevelEnd)</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Odometer (Start)</span>
-                        <span class="reservation-view-value">@(Model.OdometerStart.HasValue ? Model.OdometerStart.Value.ToString("N0") + " km" : "—")</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Odometer (End)</span>
-                        <span class="reservation-view-value">@(Model.OdometerEnd.HasValue ? Model.OdometerEnd.Value.ToString("N0") + " km" : "—")</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Distance Driven</span>
-                        <span class="reservation-view-value">
-                            @(Model.OdometerStart.HasValue && Model.OdometerEnd.HasValue
-                                ? (Model.OdometerEnd.Value - Model.OdometerStart.Value).ToString("N0") + " km"
-                                : "—")
-                        </span>
-                    </div>
-                </div>
-
-                <div class="reservation-view-grid reservation-view-grid-two mb-3">
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Condition (Start)</span>
-                        <span class="reservation-view-value">@(string.IsNullOrWhiteSpace(Model.VehicleConditionStart) ? "—" : Model.VehicleConditionStart)</span>
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Condition (End)</span>
-                        <span class="reservation-view-value">@(string.IsNullOrWhiteSpace(Model.VehicleConditionEnd) ? "—" : Model.VehicleConditionEnd)</span>
-                    </div>
-                </div>
-
-                <div class="reservation-view-grid reservation-view-grid-two mb-3">
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Pre-Trip Image</span>
-                        @if (!string.IsNullOrEmpty(Model.PreTripImagePath))
-                        {
-                            <a href="~/images/@Model.PreTripImagePath" target="_blank" rel="noopener">View image</a>
-                        }
-                        else
-                        {
-                            <span class="reservation-view-value">—</span>
-                        }
-                    </div>
-                    <div class="reservation-view-field">
-                        <span class="reservation-view-label">Post-Trip Image</span>
-                        @if (!string.IsNullOrEmpty(Model.PostTripImagePath))
-                        {
-                            <a href="~/images/@Model.PostTripImagePath" target="_blank" rel="noopener">View image</a>
-                        }
-                        else
-                        {
-                            <span class="reservation-view-value">—</span>
-                        }
-                    </div>
+            <div class="transit-vehicle-alert-body">
+                <h2 class="transit-vehicle-alert-title">@vehicleAlert.Title</h2>
+                <p class="transit-vehicle-alert-message">@vehicleAlert.Message</p>
+                @if (details?.PickupDate != null)
+                {
+                    <p class="transit-vehicle-alert-schedule">
+                        Rental pickup: @FormatDate(details.PickupDate) · @details.PickupTime.ToString("h:mm tt", CultureInfo.InvariantCulture)
+                    </p>
+                }
+                <div class="transit-vehicle-alert-actions">
+                    @if (!string.IsNullOrEmpty(vehicleAlert.SourceUrl) && !string.IsNullOrEmpty(vehicleAlert.SourceLabel))
+                    {
+                        <a href="@vehicleAlert.SourceUrl" class="btn btn-sm transit-vehicle-alert-link">@vehicleAlert.SourceLabel</a>
+                    }
+                    @if (canResolveBooking && vehicleBlocked && hasBlockingIssue)
+                    {
+                        <a asp-controller="Rentals"
+                           asp-action="Resolve"
+                           asp-route-id="@primaryTransit?.RentalID"
+                           asp-route-transitid="@primaryTransit?.TransitID"
+                           asp-route-returnUrl="@Url.Action("Details", "Transits", new { transitid = primaryTransit?.TransitID })"
+                           class="btn btn-sm transit-vehicle-alert-resolve">
+                            Resolve booking
+                        </a>
+                    }
                 </div>
             </div>
         </div>
+    }
 
-        <div class="col-lg-4">
-            <div class="reservation-view-side-card mb-4">
-                <h6 class="reservation-view-side-title">Designated Driver</h6>
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+            <div class="reservation-details-id-card mb-3">
+                <div class="reservation-details-id-main">
+                    <span class="reservation-view-id-label">Booking ID</span>
+                    <h1 class="reservation-view-id mb-0">@bookingId</h1>
+                </div>
+                <span class="booking-status-badge @StatusBadgeClass(rental?.RentalStatus ?? RentalStatus.Pending)">
+                    <i class="bi @StatusIcon(rental?.RentalStatus ?? RentalStatus.Pending)"></i>@(rental?.RentalStatus ?? RentalStatus.Pending)
+                </span>
+            </div>
 
-                @if (Model.Driver != null)
-                {
-                    <div class="reservation-view-person mb-3">
-                        <div class="reservation-view-avatar" aria-hidden="true">
-                            <i class="bi bi-person-badge"></i>
-                        </div>
+            <div class="reservation-view-card mb-4">
+                <div class="reservation-view-people">
+                    <div class="reservation-view-person">
+                        <div class="reservation-view-avatar" aria-hidden="true">@GetInitials(rental?.CustomerName)</div>
                         <div>
-                            <div class="reservation-view-person-name">@Model.Driver.Name</div>
-                            <div class="reservation-view-person-meta">@Model.Driver.ContactNo</div>
+                            <div class="reservation-view-person-name">@(rental?.CustomerName ?? "—")</div>
+                            <div class="reservation-view-person-meta">@(rental?.ContactNumber ?? "—")</div>
                         </div>
                     </div>
-                }
-                else
-                {
-                    <p class="text-muted small mb-3">Not assigned yet.</p>
-                }
+                    <div class="reservation-view-vehicle @(isMultiVehicle ? "is-multi" : "")">
+                        @if (isMultiVehicle && rentalVehicles.Count > 0)
+                        {
+                            <div class="reservation-view-vehicle-multi">
+                                <div class="reservation-view-vehicle-label">Selected Vehicles (@rentalVehicles.Count)</div>
+                                <div class="reservation-view-vehicle-stack">
+                                    @foreach (var line in rentalVehicles)
+                                    {
+                                        var lineVehicle = line.Vehicle;
+                                        var lineLabel = lineVehicle != null
+                                            ? $"{lineVehicle.Model} {lineVehicle.Brand}".Trim()
+                                            : $"Vehicle #{line.VehicleId}";
+                                        var lineType = lineVehicle != null ? VehicleTypes.Display(lineVehicle.Type) : "—";
+                                        <div class="reservation-view-vehicle-item">
+                                            <div class="reservation-view-vehicle-thumb" aria-hidden="true">
+                                                @if (!string.IsNullOrEmpty(lineVehicle?.ImagePath))
+                                                {
+                                                    <img src="~/images/@lineVehicle.ImagePath" alt="@lineLabel" />
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-truck-front"></i>
+                                                }
+                                            </div>
+                                            <div class="reservation-view-vehicle-item-meta">
+                                                <div class="reservation-view-vehicle-name">@lineLabel</div>
+                                                <div class="reservation-view-vehicle-type">@lineType</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="reservation-view-vehicle-type is-shared-note">Multiple vehicles · shared schedule</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="reservation-view-vehicle-thumb" aria-hidden="true">
+                                @if (!string.IsNullOrEmpty(vehicle?.ImagePath))
+                                {
+                                    <img src="~/images/@vehicle.ImagePath" alt="@vehicle.Model" />
+                                }
+                                else
+                                {
+                                    <i class="bi bi-truck-front"></i>
+                                }
+                            </div>
+                            <div>
+                                <div class="reservation-view-vehicle-label">Selected Vehicle</div>
+                                <div class="reservation-view-vehicle-name">
+                                    @if (vehicle != null)
+                                    {
+                                        @($"{vehicle.Model} {vehicle.Brand}".Trim())
+                                    }
+                                    else
+                                    {
+                                        @:Unassigned
+                                    }
+                                </div>
+                                <div class="reservation-view-vehicle-type">@vehicleTypeLabel</div>
+                            </div>
+                        }
+                    </div>
+                </div>
 
-                @if (canAssignDriver)
-                {
-                    <form asp-action="AssignDriver" asp-route-transitid="@Model.TransitID" method="post"
-                          data-confirm="@(Model.DriverID == null ? "Assign this driver to the trip?" : "Change the assigned driver?")"
-                          data-confirm-text="@(Model.DriverID == null ? "This driver will be responsible for the trip once it starts." : "The current driver will be replaced on this trip.")"
-                          data-confirm-button="@(Model.DriverID == null ? "Assign Driver" : "Update Driver")"
-                          data-confirm-tone="approve">
-                        @Html.AntiForgeryToken()
-                        <label class="form-label small fw-semibold" for="driverId">@(Model.DriverID == null ? "Assign Driver" : "Change Driver")</label>
-                        <select name="driverId" id="driverId" class="form-select mb-3" asp-items="driverList" required>
-                            <option value="">Select driver...</option>
-                        </select>
-                        <button type="submit" class="btn reservation-btn-approve w-100">
-                            @(Model.DriverID == null ? "Assign Driver" : "Update Driver")
-                        </button>
-                    </form>
-                }
+                <div class="reservation-view-facts">
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-calendar3"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Pick-up Date</span>
+                            <span class="reservation-view-value">@FormatDate(details?.PickupDate)</span>
+                        </div>
+                    </div>
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-calendar3"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Return Date</span>
+                            <span class="reservation-view-value">@FormatDate(details?.ReturnDate)</span>
+                        </div>
+                    </div>
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-geo-alt"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Pick-up Location</span>
+                            <span class="reservation-view-value">@(details?.PickupLocation ?? "—")</span>
+                        </div>
+                    </div>
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-geo-alt"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Drop-off Location</span>
+                            <span class="reservation-view-value">@(details?.DropoffLocation ?? "—")</span>
+                        </div>
+                    </div>
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-clock"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Total Duration</span>
+                            <span class="reservation-view-value">@(hours == 1 ? "1 hour" : $"{hours} hours")</span>
+                        </div>
+                    </div>
+                    <div class="reservation-view-fact">
+                        <span class="reservation-view-fact-icon"><i class="bi bi-person-plus"></i></span>
+                        <div>
+                            <span class="reservation-view-label">Passenger Count</span>
+                            <span class="reservation-view-value">@(details != null ? $"{details.PassengerCount} Persons" : "—")</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="reservation-view-side-card mb-4">
-                <h6 class="reservation-view-side-title">Trip Actions</h6>
-                @if (canStartTrip)
-                {
-                    <a asp-action="StartTrip" asp-route-transitid="@Model.TransitID" class="btn reservation-btn-payment w-100 mb-2">
-                        Start Trip
-                    </a>
-                    <p class="small text-muted mb-0">Enter departure fuel, condition, and pre-trip photo.</p>
-                }
-                else if (canCompleteTrip)
-                {
-                    <a asp-action="CompleteTrip" asp-route-transitid="@Model.TransitID" class="btn reservation-btn-payment w-100 mb-2">
-                        Complete Trip
-                    </a>
-                    <p class="small text-muted @(canReportAccident ? "mb-2" : "mb-0")">Enter return fuel, condition, and post-trip photo.</p>
-                }
-                else if (Model.TripStatus == TripStatus.Completed)
-                {
-                    <p class="small text-muted @(canReportAccident ? "mb-2" : "mb-0")">This trip is already completed.</p>
-                }
-                else if (Model.DriverID == null)
-                {
-                    <p class="small text-muted mb-0">Assign a driver first to enable Start Trip.</p>
-                }
-                else
-                {
-                    <p class="small text-muted mb-0">No actions available for this status.</p>
-                }
-                @if (canReportAccident)
-                {
-                    <a asp-controller="Incidents" asp-action="Create" asp-route-transitid="@Model.TransitID" class="btn reservation-btn-reject w-100">Report Accident</a>
-                }
+            @foreach (var tripRow in vehicleTrips)
+            {
+                var trip = tripRow.Transit;
+                var tripVehicle = trip.Vehicle ?? rentalVehicles.FirstOrDefault(rv => rv.VehicleId == trip.VehicleID)?.Vehicle;
+                var tripVehicleLabel = tripVehicle != null
+                    ? $"{tripVehicle.Model} {tripVehicle.Brand}".Trim()
+                    : $"Vehicle #{trip.VehicleID}";
+                var departureLabel = trip.DepartureTime?.ToString("h:mm tt") ?? "Not Started";
+                var returnLabel = trip.ReturnTime?.ToString("h:mm tt");
+                var distanceLabel = trip.OdometerStart.HasValue && trip.OdometerEnd.HasValue
+                    ? (trip.OdometerEnd.Value - trip.OdometerStart.Value).ToString("N0") + " km"
+                    : null;
+
+                <div class="reservation-view-card mb-4 transit-vehicle-trip-card">
+                    <div class="reservation-view-section-title">
+                        <span class="reservation-view-section-icon"><i class="bi bi-file-earmark-text"></i></span>
+                        <span>Trip Details@(isMultiVehicle ? $" · {tripVehicleLabel}" : "")</span>
+                        @if (isMultiVehicle)
+                        {
+                            <span class="booking-status-badge @TripStatusBadgeClass(trip.TripStatus) ms-auto">@TripStatusLabel(trip.TripStatus)</span>
+                        }
+                    </div>
+
+                    <div class="transit-trip-metrics">
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Actual Departure</span>
+                            <span class="transit-trip-metric-value">@departureLabel</span>
+                        </div>
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Actual Return</span>
+                            @if (string.IsNullOrEmpty(returnLabel))
+                            {
+                                <span class="transit-trip-metric-value is-empty">
+                                    <span class="transit-trip-value-icon"><i class="bi bi-clock"></i></span>—
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="transit-trip-metric-value">@returnLabel</span>
+                            }
+                        </div>
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Fuel (Start)</span>
+                            @{
+                                var fuelStart = FuelLabel(trip.FuelLevelStart);
+                            }
+                            @if (fuelStart == "—")
+                            {
+                                <span class="transit-trip-metric-value is-empty">
+                                    <span class="transit-trip-value-icon"><i class="bi bi-clock"></i></span>—
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="transit-trip-metric-value">@fuelStart</span>
+                            }
+                        </div>
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Fuel (End)</span>
+                            @{
+                                var fuelEnd = FuelLabel(trip.FuelLevelEnd);
+                            }
+                            @if (fuelEnd == "—")
+                            {
+                                <span class="transit-trip-metric-value is-empty">
+                                    <span class="transit-trip-value-icon"><i class="bi bi-clock"></i></span>—
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="transit-trip-metric-value">@fuelEnd</span>
+                            }
+                        </div>
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Odometer (Start)</span>
+                            @if (trip.OdometerStart is not int odometerStart)
+                            {
+                                <span class="transit-trip-metric-value is-empty">
+                                    <span class="transit-trip-value-icon"><i class="bi bi-clock"></i></span>—
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="transit-trip-metric-value">@odometerStart.ToString("N0") km</span>
+                            }
+                        </div>
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Odometer (End)</span>
+                            @if (trip.OdometerEnd is not int odometerEnd)
+                            {
+                                <span class="transit-trip-metric-value is-empty">
+                                    <span class="transit-trip-value-icon"><i class="bi bi-clock"></i></span>—
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="transit-trip-metric-value">@odometerEnd.ToString("N0") km</span>
+                            }
+                        </div>
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Distance Driven</span>
+                            @if (string.IsNullOrEmpty(distanceLabel))
+                            {
+                                <span class="transit-trip-metric-value is-empty">
+                                    <span class="transit-trip-value-icon"><i class="bi bi-clock"></i></span>—
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="transit-trip-metric-value">@distanceLabel</span>
+                            }
+                        </div>
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Condition (Start)</span>
+                            @if (string.IsNullOrWhiteSpace(trip.VehicleConditionStart))
+                            {
+                                <span class="transit-trip-metric-value is-empty">
+                                    <span class="transit-trip-value-icon"><i class="bi bi-clock"></i></span>—
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="transit-trip-metric-value">@trip.VehicleConditionStart</span>
+                            }
+                        </div>
+                        <div class="transit-trip-metric">
+                            <span class="transit-trip-metric-label">Condition (End)</span>
+                            @if (string.IsNullOrWhiteSpace(trip.VehicleConditionEnd))
+                            {
+                                <span class="transit-trip-metric-value is-empty">
+                                    <span class="transit-trip-value-icon"><i class="bi bi-clock"></i></span>—
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="transit-trip-metric-value">@trip.VehicleConditionEnd</span>
+                            }
+                        </div>
+                        @if (trip.Driver != null)
+                        {
+                            <div class="transit-trip-metric">
+                                <span class="transit-trip-metric-label">Assigned Driver</span>
+                                <span class="transit-trip-metric-value">@trip.Driver.Name</span>
+                            </div>
+                        }
+                    </div>
+
+                    @{
+                        var preTripPhotos = TransitTripPhotos.GetPreTripPaths(trip);
+                        var postTripPhotos = TransitTripPhotos.GetPostTripPaths(trip);
+                    }
+
+                    <div class="transit-photo-block">
+                        <span class="transit-photo-label">Timestamped photos (Before)</span>
+                        @if (preTripPhotos.Count > 0)
+                        {
+                            <div class="transit-details-photo-grid">
+                                @foreach (var photoPath in preTripPhotos)
+                                {
+                                    <a href="~/images/@photoPath" target="_blank" rel="noopener" class="transit-photo-frame">
+                                        <img src="~/images/@photoPath" alt="Pre-trip vehicle photo" />
+                                    </a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="transit-photo-empty">Not uploaded yet</div>
+                        }
+                    </div>
+
+                    <div class="transit-photo-block">
+                        <span class="transit-photo-label">Timestamped photos (After)</span>
+                        @if (postTripPhotos.Count > 0)
+                        {
+                            <div class="transit-details-photo-grid">
+                                @foreach (var photoPath in postTripPhotos)
+                                {
+                                    <a href="~/images/@photoPath" target="_blank" rel="noopener" class="transit-photo-frame">
+                                        <img src="~/images/@photoPath" alt="Post-trip vehicle photo" />
+                                    </a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="transit-photo-empty">Not uploaded yet</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4 transit-details-sidebar">
+            <div class="details-page-actions reservation-details-side-actions mb-3">
+                <a asp-action="Index" class="btn btn-page-back">Back</a>
+                <a asp-controller="Rentals" asp-action="Edit" asp-route-id="@primaryTransit?.RentalID" class="btn btn-reservation-edit">Edit Reservation</a>
             </div>
+
+            <div class="transit-side-summary">
+                <span class="transit-side-summary-label">Current workflow step</span>
+                <div class="transit-side-summary-step">@CurrentStepLabel(progressStep)</div>
+                <div class="transit-side-summary-badges">
+                    <span class="transit-side-summary-badge">@vehicleTrips.Count vehicle@(vehicleTrips.Count == 1 ? "" : "s")</span>
+                    @if (isMultiVehicle)
+                    {
+                        <span class="transit-side-summary-badge">Multi-vehicle booking</span>
+                    }
+                    <span class="transit-side-summary-badge">@(isPaid ? "Paid" : "Unpaid")</span>
+                </div>
+            </div>
+
+            <div class="transit-progress-card">
+                <div class="transit-progress-card-header">
+                    <span class="transit-progress-card-icon" aria-hidden="true"><i class="bi bi-signpost-split-fill"></i></span>
+                    <div>
+                        <h2 class="transit-progress-card-title mb-0">Trip Workflow</h2>
+                        <span class="transit-progress-card-sub">Prepare, dispatch, and complete the booking</span>
+                    </div>
+                </div>
+
+                <ol class="booking-progress-timeline">
+                    <li class="booking-progress-step @(IsStepDone(1, progressStep) ? "is-done" : "") @(IsStepCurrent(1, progressStep) ? "is-current" : "")">
+                        <span class="booking-progress-dot" aria-hidden="true"></span>
+                        <div class="booking-progress-body">
+                            <strong>Booking Submitted</strong>
+                            @if (submittedAt.HasValue)
+                            {
+                                <span>@FormatTimestamp(submittedAt.Value)</span>
+                            }
+                        </div>
+                    </li>
+                    <li class="booking-progress-step @(IsStepDone(2, progressStep) ? "is-done" : "") @(IsStepCurrent(2, progressStep) ? "is-current" : "")">
+                        <span class="booking-progress-dot" aria-hidden="true"></span>
+                        <div class="booking-progress-body">
+                            <strong>Booking Confirmation</strong>
+                            @if (isApproved && submittedAt.HasValue)
+                            {
+                                <span>@FormatTimestamp(submittedAt.Value)</span>
+                            }
+                        </div>
+                    </li>
+                    <li class="booking-progress-step @(IsStepDone(3, progressStep) ? "is-done" : "") @(IsStepCurrent(3, progressStep) ? "is-current" : "")">
+                        <span class="booking-progress-dot" aria-hidden="true"></span>
+                        <div class="booking-progress-body">
+                            <strong>Vehicle Preparation &amp; Driver Assignment</strong>
+                            @if (IsStepCurrent(3, progressStep) && prepareTrips.Count > 0)
+                            {
+                                foreach (var tripRow in prepareTrips)
+                                {
+                                    var prepTrip = tripRow.Transit;
+                                    var prepVehicle = prepTrip.Vehicle;
+                                    var prepLabel = isMultiVehicle && prepVehicle != null
+                                        ? $"Prepare {prepVehicle.Model} {prepVehicle.Brand}".Trim()
+                                        : "Vehicle Preparation & Assign Driver";
+                                    <a asp-action="StartTrip" asp-route-transitid="@prepTrip.TransitID"
+                                       class="btn reservation-btn-payment w-100 @(prepareTrips.Count > 1 ? "mb-2" : "")"
+                                       onclick="@(hasBlockingIssue ? "return confirm('There is a blocking vehicle issue for this trip. Are you sure you want to proceed with vehicle preparation?');" : "")">
+                                        @prepLabel
+                                    </a>
+                                }
+                                <p class="booking-progress-help">Enter departure fuel, condition, and pre-trip photo.</p>
+                                @if (vehicleWarning)
+                                {
+                                    <p class="booking-progress-help is-warning-text">Maintenance is due around the rental date. Review the alert above before dispatch.</p>
+                                }
+                            }
+                            else if (IsStepCurrent(3, progressStep) && blockedPrepareTrips.Count > 0 && prepareTrips.Count == 0)
+                            {
+                                <button type="button" class="btn reservation-btn-payment w-100" disabled>
+                                    Vehicle Preparation &amp; Assign Driver
+                                </button>
+                                <p class="booking-progress-help is-danger-text">Trip preparation is blocked until the vehicle issue is resolved or the booking is updated.</p>
+                            }
+                            else if (IsStepDone(3, progressStep) && !prepareTrips.Any())
+                            {
+                                var assignedDrivers = allTransits
+                                    .Where(t => t.Driver != null)
+                                    .Select(t => t.Driver!.Name)
+                                    .Distinct()
+                                    .ToList();
+                                if (assignedDrivers.Count > 0)
+                                {
+                                    <span>@string.Join(", ", assignedDrivers) assigned</span>
+                                }
+                            }
+                        </div>
+                    </li>
+                    <li class="booking-progress-step @(IsStepDone(4, progressStep) ? "is-done" : "") @(IsStepCurrent(4, progressStep) ? "is-current" : "")">
+                        <span class="booking-progress-dot" aria-hidden="true"></span>
+                        <div class="booking-progress-body">
+                            <strong>Vehicle Dispatched</strong>
+                            @if (canDispatchAll)
+                            {
+                                <form asp-action="DispatchTrip"
+                                      asp-route-transitid="@primaryTransit?.TransitID"
+                                      method="post"
+                                      class="booking-progress-action-form">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn reservation-btn-payment w-100 mt-2" @(hasBlockingIssue ? "disabled" : "")>Start Trip</button>
+                                </form>
+                                @if (hasBlockingIssue)
+                                {
+                                    <p class="booking-progress-help is-danger-text">Trip dispatch is blocked due to a vehicle issue. Resolve the issue before starting the trip.</p>
+                                }
+                                @foreach (var tripRow in dispatchTrips)
+                                {
+                                    var dispatchTrip = tripRow.Transit;
+                                    var dispatchVehicle = dispatchTrip.Vehicle;
+                                    var editLabel = isMultiVehicle && dispatchVehicle != null
+                                        ? $"Edit preparation · {dispatchVehicle.Model} {dispatchVehicle.Brand}".Trim()
+                                        : "Edit preparation";
+                                    <a asp-action="StartTrip"
+                                       asp-route-transitid="@dispatchTrip.TransitID"
+                                       class="booking-progress-help d-inline-block mb-2">
+                                        @editLabel
+                                    </a>
+                                }
+                                <p class="booking-progress-help">
+                                    @if (isMultiVehicle)
+                                    {
+                                        @:All vehicles are prepared. Dispatch when the customer picks them up.
+                                    }
+                                    else
+                                    {
+                                        @:Dispatch the vehicle when the customer picks it up.
+                                    }
+                                </p>
+                            }
+                            else if (dispatchTrips.Count > 0 && dispatchTrips.Count < vehicleTrips.Count)
+                            {
+                                <p class="booking-progress-help">@dispatchTrips.Count of @vehicleTrips.Count vehicles prepared. Complete preparation for all vehicles before starting the trip.</p>
+                            }
+                            @if (completeTrips.Count > 0)
+                            {
+                                foreach (var tripRow in completeTrips)
+                                {
+                                    var activeTrip = tripRow.Transit;
+                                    var activeVehicle = activeTrip.Vehicle;
+                                    var completeLabel = isMultiVehicle && activeVehicle != null
+                                        ? $"Complete {activeVehicle.Model} {activeVehicle.Brand}".Trim()
+                                        : "Complete Trip";
+                                    <a asp-action="CompleteTrip" asp-route-transitid="@activeTrip.TransitID" class="btn reservation-btn-payment w-100 mt-2">
+                                        @completeLabel
+                                    </a>
+                                }
+                                <p class="booking-progress-help">Enter return fuel, condition, and post-trip photo.</p>
+                            }
+                        </div>
+                    </li>
+                    <li class="booking-progress-step @(IsStepDone(5, progressStep) ? "is-done" : "") @(IsStepCurrent(5, progressStep) ? "is-current" : "")">
+                        <span class="booking-progress-dot" aria-hidden="true"></span>
+                        <div class="booking-progress-body">
+                            <strong>Completed</strong>
+                            @if (allTransits.All(t => t.TripStatus == TripStatus.Completed))
+                            {
+                                <span>Trip finished</span>
+                            }
+                        </div>
+                    </li>
+                </ol>
+            </div>
+
+            @if (canResolveBooking && hasBlockingIssue)
+            {
+                <div class="transit-side-action-card is-danger">
+                    <div class="transit-side-action-head">
+                        <span class="transit-side-action-icon is-resolve" aria-hidden="true"><i class="bi bi-exclamation-octagon-fill"></i></span>
+                        <div>
+                            <h3 class="transit-side-action-title">Resolve Booking</h3>
+                            <p class="transit-side-action-text">
+                                This vehicle cannot continue the trip. Replace the unit or refund the customer.
+                            </p>
+                        </div>
+                    </div>
+                    <a asp-controller="Rentals"
+                       asp-action="Resolve"
+                       asp-route-id="@primaryTransit?.RentalID"
+                       asp-route-transitid="@primaryTransit?.TransitID"
+                       asp-route-returnUrl="@Url.Action("Details", "Transits", new { transitid = primaryTransit?.TransitID })"
+                       class="btn reservation-btn-reject w-100">
+                        Resolve booking
+                    </a>
+                </div>
+            }
+
+            @if (canReportAccident)
+            {
+                var incidentTrips = vehicleTrips
+                    .Where(v => v.Transit.TripStatus is TripStatus.InTransit or TripStatus.Completed)
+                    .ToList();
+
+                <div class="transit-side-action-card is-warning">
+                    <div class="transit-side-action-head">
+                        <span class="transit-side-action-icon is-incident" aria-hidden="true"><i class="bi bi-shield-exclamation"></i></span>
+                        <div>
+                            <h3 class="transit-side-action-title">Report Incident</h3>
+                            <p class="transit-side-action-text">Log an incident if something happens during the trip.</p>
+                        </div>
+                    </div>
+                    @foreach (var tripRow in incidentTrips)
+                    {
+                        var incidentTrip = tripRow.Transit;
+                        var incidentVehicle = incidentTrip.Vehicle;
+                        var incidentLabel = isMultiVehicle && incidentVehicle != null
+                            ? $"Report · {incidentVehicle.Model} {incidentVehicle.Brand}".Trim()
+                            : "Report Incident";
+                        <a asp-controller="Incidents"
+                           asp-action="Create"
+                           asp-route-transitid="@incidentTrip.TransitID"
+                           class="btn reservation-btn-reject w-100 @(incidentTrips.Count > 1 ? "mb-2" : "")">
+                            @incidentLabel
+                        </a>
+                    }
+                </div>
+            }
 
             @if (payment != null)
             {
-                <div class="reservation-view-side-card">
-                    <div class="reservation-payment-header">
-                        <h6 class="reservation-view-side-title mb-0">Payment</h6>
-                        <strong class="reservation-payment-status-text">@(Model.Rental?.RentalStatus.ToString() ?? "—")</strong>
+                <div class="transit-side-action-card">
+                    <div class="transit-side-action-head">
+                        <span class="transit-side-action-icon is-payment" aria-hidden="true"><i class="bi bi-credit-card-fill"></i></span>
+                        <div class="flex-grow-1">
+                            <h3 class="transit-side-action-title">Payment</h3>
+                            <p class="transit-side-action-text mb-0">Review booking approval and payment details.</p>
+                        </div>
+                        <span class="transit-payment-status-pill @(isPaid ? "is-paid" : "is-unpaid")">@(isPaid ? "Paid" : "Unpaid")</span>
                     </div>
                     <a asp-controller="Rentals" asp-action="Details" asp-route-id="@payment.RentalId" class="btn reservation-btn-payment w-100">
-                        View Booking &amp; Payment
+                        View booking &amp; payment
                     </a>
                 </div>
             }

@@ -2,6 +2,15 @@ using EasyRent_Checking.Models;
 
 namespace EasyRent_Checking.ViewModels
 {
+	public class MyBookingVehicleItem
+	{
+		public string Brand { get; set; } = string.Empty;
+		public string Model { get; set; } = string.Empty;
+		public string TypeLabel { get; set; } = string.Empty;
+		public string? ImagePath { get; set; }
+		public int PassengersCount { get; set; }
+	}
+
 	public class MyBookingListItem
 	{
 		public int RentalId { get; set; }
@@ -12,6 +21,7 @@ namespace EasyRent_Checking.ViewModels
 		public string VehicleTypeLabel { get; set; } = string.Empty;
 		public int PassengersCount { get; set; }
 		public string? VehicleImagePath { get; set; }
+		public List<MyBookingVehicleItem> Vehicles { get; set; } = new();
 		public DateOnly PickupDate { get; set; }
 		public TimeOnly PickupTime { get; set; }
 		public TimeOnly ReturnTime { get; set; }
@@ -21,11 +31,14 @@ namespace EasyRent_Checking.ViewModels
 		public string? PaymentMethod { get; set; }
 		public string? DriverName { get; set; }
 		public string? DriverInitials { get; set; }
+		public string? DriverImagePath { get; set; }
 		public bool IsPast { get; set; }
 		public TripStatus? TripStatus { get; set; }
 		public bool CanRate { get; set; }
 		public bool HasFeedback { get; set; }
 		public bool CanPay { get; set; }
+		public string ProgressLabel { get; set; } = string.Empty;
+		public string ProgressTone { get; set; } = "muted";
 	}
 
 	public class MyBookingsPageViewModel

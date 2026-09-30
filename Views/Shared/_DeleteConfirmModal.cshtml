@@ -6,6 +6,7 @@
     var entityTypeName = char.ToUpper(entityLabel[0]) + entityLabel[1..];
     var deleteButtonText = ViewData["DeleteConfirmButtonText"]?.ToString() ?? $"Yes, Delete {entityTypeName}";
     var hiddenInputName = ViewData["DeleteHiddenInputName"]?.ToString() ?? "id";
+    var deleteAction = ViewData["DeleteAction"]?.ToString() ?? "Delete";
 }
 
 <div class="modal fade admin-delete-modal" id="@modalId" tabindex="-1" aria-hidden="true">
@@ -22,7 +23,7 @@
                 This action cannot be undone. All related data will be permanently removed.
             </p>
 
-            <form method="post" asp-action="Delete" asp-controller="@ViewContext.RouteData.Values["controller"]">
+            <form method="post" asp-action="@deleteAction" asp-controller="@ViewContext.RouteData.Values["controller"]">
                 <input type="hidden" name="@hiddenInputName" id="@hiddenInputId" value="" />
 
                 <div class="admin-delete-actions">

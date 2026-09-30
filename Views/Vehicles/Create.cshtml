@@ -27,7 +27,7 @@
     </div>
 
     <form asp-action="Create" enctype="multipart/form-data" id="vehicleWizardForm">
-        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+        <div asp-validation-summary="All" class="text-danger small mb-3"></div>
 
         <!-- STEP 1: INFO -->
         <div class="wizard-step-panel active" id="stepPanel-1">
@@ -89,10 +89,7 @@
                     </div>
                     <div class="col-md-6">
                         <label asp-for="Odometer" class="vehicle-wizard-label">Odometer (km)</label>
-                        <div class="input-group vehicle-input-suffix">
-                            <input asp-for="Odometer" id="input-Odometer" class="form-control vehicle-wizard-input" type="number" min="0" step="1" />
-                            <span class="input-group-text">km</span>
-                        </div>
+                        <input asp-for="Odometer" id="input-Odometer" class="form-control vehicle-wizard-input" type="number" min="0" step="1" />
                         <span asp-validation-for="Odometer" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
@@ -101,19 +98,13 @@
                         <span asp-validation-for="PassengersCount" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="BasePrice" class="vehicle-wizard-label">Base Price</label>
-                        <div class="input-group">
-                            <span class="input-group-text">₱</span>
-                            <input asp-for="BasePrice" id="input-BasePrice" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
-                        </div>
+                        <label asp-for="BasePrice" class="vehicle-wizard-label">Base Price (₱)</label>
+                        <input asp-for="BasePrice" id="input-BasePrice" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 800" />
                         <span asp-validation-for="BasePrice" class="text-danger small mt-1 d-block"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="SucceedingFee" class="vehicle-wizard-label">Succeeding Fee</label>
-                        <div class="input-group">
-                            <span class="input-group-text">₱</span>
-                            <input asp-for="SucceedingFee" id="input-SucceedingFee" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
-                        </div>
+                        <label asp-for="SucceedingFee" class="vehicle-wizard-label">Succeeding Fee (₱)</label>
+                        <input asp-for="SucceedingFee" id="input-SucceedingFee" class="form-control vehicle-wizard-input" type="number" step="0.01" min="0.01" placeholder="e.g. 400" />
                         <span class="small text-muted mt-1 d-block">Per hour after the first 8 hours</span>
                         <span asp-validation-for="SucceedingFee" class="text-danger small mt-1 d-block"></span>
                     </div>
@@ -210,7 +201,7 @@
                         </span>
                     </div>
                     <div>
-                        <span class="vehicle-review-field-label">Odometer</span>
+                        <span class="vehicle-review-field-label">Odometer (km)</span>
                         <span id="review-Odometer" class="vehicle-review-field-value">-</span>
                     </div>
                     <div>
@@ -218,11 +209,11 @@
                         <span id="review-PassengersCount" class="vehicle-review-field-value">-</span>
                     </div>
                     <div>
-                        <span class="vehicle-review-field-label">Base Price</span>
+                        <span class="vehicle-review-field-label">Base Price (₱)</span>
                         <span id="review-BasePrice" class="vehicle-review-field-value">-</span>
                     </div>
                     <div>
-                        <span class="vehicle-review-field-label">Succeeding Fee</span>
+                        <span class="vehicle-review-field-label">Succeeding Fee (₱)</span>
                         <span id="review-SucceedingFee" class="vehicle-review-field-value">-</span>
                     </div>
                     <div class="vehicle-review-grid-full">
@@ -270,6 +261,7 @@
 <script src="~/js/vehicle-type-field.js" asp-append-version="true"></script>
 <script>
     let isEditMode = false;
+    let currentStep = 1;
     const totalSteps = 3;
 
     const step1Fields = ['Brand', 'Model', 'Color', 'Type', 'PlateNumber', 'Odometer', 'Status', 'RegistrationDate', 'RegistrationExpiry', 'BasePrice', 'SucceedingFee', 'PassengersCount'];
@@ -517,7 +509,9 @@
             : (typeEl?.value || 'N/A');
         document.getElementById('review-PlateNumber').innerText = document.getElementById('input-PlateNumber').value.trim() || 'N/A';
         const odometerValue = document.getElementById('input-Odometer').value.trim();
-        document.getElementById('review-Odometer').innerText = odometerValue ? `${Number(odometerValue).toLocaleString('en-PH')} km` : '0 km';
+        document.getElementById('review-Odometer').innerText = odometerValue
+            ? Number(odometerValue).toLocaleString('en-PH')
+            : '0';
 
         const statusEl = document.getElementById('input-Status');
         const statusText = statusEl.options[statusEl.selectedIndex]?.text || 'N/A';
@@ -525,10 +519,10 @@
         document.getElementById('review-RegistrationDate').innerText = formatReviewDate(document.getElementById('input-RegistrationDate').value);
         document.getElementById('review-RegistrationExpiry').innerText = formatReviewDate(document.getElementById('input-RegistrationExpiry').value);
         document.getElementById('review-BasePrice').innerText = document.getElementById('input-BasePrice').value
-            ? `₱${parseFloat(document.getElementById('input-BasePrice').value).toLocaleString('en-PH')}`
+            ? parseFloat(document.getElementById('input-BasePrice').value).toLocaleString('en-PH')
             : 'N/A';
         document.getElementById('review-SucceedingFee').innerText = document.getElementById('input-SucceedingFee').value
-            ? `₱${parseFloat(document.getElementById('input-SucceedingFee').value).toLocaleString('en-PH')}/hr`
+            ? `${parseFloat(document.getElementById('input-SucceedingFee').value).toLocaleString('en-PH')}/hr`
             : 'N/A';
         document.getElementById('review-PassengersCount').innerText = document.getElementById('input-PassengersCount').value.trim() || 'N/A';
         document.getElementById('review-Description').innerText = document.getElementById('input-Description').value.trim() || 'N/A';
@@ -601,6 +595,12 @@
         document.getElementById('vehicle-image-preview-box').addEventListener('click', function () {
             document.getElementById('input-File').click();
         });
+
+        const hasServerErrors = document.querySelector('.validation-summary-errors')
+            || document.querySelector('[data-valmsg-for].field-validation-error:not(:empty)');
+        if (hasServerErrors) {
+            setActiveStep(1);
+        }
     });
 </script>
 

@@ -4,7 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace EasyRent_Checking.Models
 {
 	/// <summary>
-	/// One vehicle line on a rental. Shared trip dates/locations live on <see cref="RentalDetails"/>.
+	/// One vehicle line on a rental (order line). Shared trip dates/locations live on <see cref="Rental"/>.
+	/// Rows are created when admin approves the booking, not when the customer submits the request.
 	/// </summary>
 	public class RentalVehicle
 	{

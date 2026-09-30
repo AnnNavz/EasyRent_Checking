@@ -20,7 +20,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
 }
 
 .vehicle-details-page .vehicle-details-photo img {
@@ -111,7 +111,7 @@
     border-radius: 12px;
     padding: 0.7rem 0.95rem;
     min-width: 150px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10);
 }
 
 .vehicle-details-page .vehicle-detail-tile-icon {
@@ -160,6 +160,100 @@
     background: #94a3b8;
 }
 
+.vehicle-details-page .vehicle-status-dot.is-deactivated {
+    background: #ef4444;
+}
+
+.vehicle-details-page .vehicle-status-dot.is-expired {
+    background: #ef4444;
+}
+
+.vehicle-details-page .vehicle-details-btn-deactivate {
+    background: #fff !important;
+    border: 1px solid #c21f00 !important;
+    color: #c21f00 !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.vehicle-details-page .vehicle-details-btn-deactivate:hover {
+    background: #fdeceb !important;
+    color: #a81b00 !important;
+}
+
+.vehicle-details-page .vehicle-details-btn-activate {
+    background: #32b935 !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.vehicle-details-page .vehicle-details-btn-activate:hover {
+    background: #2aa62d !important;
+    color: #fff !important;
+}
+
+.vehicle-details-page .vehicle-details-status-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f9fafb;
+}
+
+.vehicle-details-page .vehicle-details-status-footer-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.vehicle-details-page .vehicle-details-status-footer-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1d2939;
+    margin-bottom: 0.35rem;
+}
+
+.vehicle-details-page .vehicle-details-status-footer-text p {
+    color: #667085;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.vehicle-details-page .vehicle-details-status-footer-action {
+    flex-shrink: 0;
+}
+
+.vehicle-details-page .vehicle-registration-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.vehicle-details-page .vehicle-registration-status-badge.is-valid {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.vehicle-details-page .vehicle-registration-status-badge.is-expired {
+    background: #fef3f2;
+    color: #b42318;
+}
+
 .vehicle-details-page .vehicle-details-tabs {
     border-bottom: 1px solid #e5e7eb;
     margin-bottom: 1.5rem;
@@ -197,7 +291,7 @@
     border-radius: 14px;
     padding: 1.35rem 1.5rem;
     height: 100%;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.11);
 }
 
 .vehicle-details-page .vehicle-info-card-head {
@@ -330,7 +424,7 @@
     border: 1px solid #e5e7eb;
     border-radius: 14px;
     padding: 1.1rem 1.15rem 1.2rem;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10);
     display: flex;
     flex-direction: column;
     min-height: 170px;
@@ -422,7 +516,7 @@
     border: 1px solid #e5e7eb;
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10);
 }
 
 .vehicle-details-page .vehicle-maint-table thead th,
@@ -499,8 +593,8 @@
 }
 
 .vehicle-details-page .pms-status.is-progress {
-    background: #dbeafe;
-    color: #175cd3;
+    background: #fff4e5;
+    color: #c2410c;
 }
 
 .vehicle-details-page .pms-status.is-upcoming {

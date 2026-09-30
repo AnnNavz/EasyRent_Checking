@@ -6,7 +6,8 @@ namespace EasyRent_Checking.Models
 		Passport,
 		UMID,
 		DriverLicense,
-		VotersID
+		VotersID,
+		PostalID
 	}
 
 	public enum Status

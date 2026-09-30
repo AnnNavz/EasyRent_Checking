@@ -1,4 +1,4 @@
-﻿@model IEnumerable<EasyRent_Checking.Models.Vehicle>
+@model IEnumerable<EasyRent_Checking.Models.Vehicle>
 @using System.Globalization
 
 @{
@@ -8,22 +8,61 @@
 
     var totalVehiclesChange = ViewData["TotalVehiclesChange"] as decimal? ?? 0m;
     var activeVehiclesChange = ViewData["ActiveVehiclesChange"] as decimal? ?? 0m;
+    var expiredRegistrationsChange = ViewData["ExpiredRegistrationsChange"] as decimal? ?? 0m;
+    var today = DateTime.Today;
 
     string FormatTrend(decimal change) =>
         Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
-    string currentSortName = ViewData["CurrentSort"]?.ToString() == "Model" ? "Model" :
-                             ViewData["CurrentSort"]?.ToString() == "Brand" ? "Brand" :
-                             ViewData["CurrentSort"]?.ToString() == "PlateNumber" ? "Plate Number" : "Sorting by";
+    string currentSortName = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "Model" => "Model",
+        "Brand" => "Brand",
+        "PlateNumber" => "Plate Number",
+        "RegistrationExpiry" => "Registration Expiry",
+        _ => "Sorting by"
+    };
 
     string currentFilterName = ViewData["CurrentFilter"]?.ToString() switch
     {
         "Active" => "Active",
         "Rented" => "Rented",
         "Maintenance" => "In Maintenance",
-        "Unavailable" => "Unavailable",
+        "ExpiredRegistration" => "Expired",
         _ => "Filters"
     };
+
+    bool IsRegistrationExpired(Vehicle vehicle) => vehicle.RegistrationExpiry.Date < today;
+
+    string DisplayStatusLabel(Vehicle item)
+    {
+        if (!item.IsActive)
+        {
+            return "Deactivated";
+        }
+
+        if (IsRegistrationExpired(item))
+        {
+            return "Expired";
+        }
+
+        return StatusLabel(item.Status);
+    }
+
+    string DisplayStatusClass(Vehicle item)
+    {
+        if (!item.IsActive)
+        {
+            return "is-deactivated";
+        }
+
+        if (IsRegistrationExpired(item))
+        {
+            return "is-expired";
+        }
+
+        return StatusClass(item.Status);
+    }
 
     string StatusLabel(VehicleStatus status) => status switch
     {
@@ -51,7 +90,7 @@
 
 <div class="vehicles-index-page">
     <div class="row g-4 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="vehicle-metric-card">
                 <div class="vehicle-metric-icon" aria-hidden="true">
                     <i class="bi bi-truck-front-fill"></i>
@@ -69,7 +108,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="vehicle-metric-card">
                 <div class="vehicle-metric-icon is-gold" aria-hidden="true">
                     <i class="bi bi-car-front-fill"></i>
@@ -87,6 +126,24 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="vehicle-metric-card">
+                <div class="vehicle-metric-icon is-danger" aria-hidden="true">
+                    <i class="bi bi-calendar-x"></i>
+                </div>
+                <div class="vehicle-metric-body">
+                    <span class="vehicle-metric-label">Registration Expiry</span>
+                    <div class="vehicle-metric-value">@(ViewData["ExpiredRegistrationsCount"] ?? "0")</div>
+                </div>
+                <div class="vehicle-metric-trend">
+                    <span class="vehicle-metric-badge @(expiredRegistrationsChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(expiredRegistrationsChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(expiredRegistrationsChange)
+                    </span>
+                    <span class="vehicle-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <form asp-action="Index" method="get" class="w-100">
@@ -96,27 +153,28 @@
         <div class="vehicle-index-toolbar mb-4">
             <div class="vehicle-index-toolbar-filters">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
                     </button>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="?sortBy=Model&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Model</a></li>
                         <li><a class="dropdown-item" href="?sortBy=Brand&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Brand</a></li>
                         <li><a class="dropdown-item" href="?sortBy=PlateNumber&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Plate Number</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=RegistrationExpiry&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Registration Expiry</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
                         <li><a class="dropdown-item text-muted small" href="?sortBy=&searchString=@ViewData["CurrentSearch"]&currentFilter=@ViewData["CurrentFilter"]">Clear Sorting</a></li>
                     </ul>
                 </div>
 
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentFilterName
                     </button>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="?currentFilter=Active&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Active</a></li>
                         <li><a class="dropdown-item" href="?currentFilter=Rented&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Rented</a></li>
                         <li><a class="dropdown-item" href="?currentFilter=Maintenance&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">In Maintenance</a></li>
-                        <li><a class="dropdown-item" href="?currentFilter=Unavailable&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Unavailable</a></li>
+                        <li><a class="dropdown-item" href="?currentFilter=ExpiredRegistration&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Expired</a></li>
                         <li><hr class="dropdown-menu-divider"></li>
                         <li><a class="dropdown-item text-muted small" href="?currentFilter=&searchString=@ViewData["CurrentSearch"]&sortBy=@ViewData["CurrentSort"]">Clear Filters</a></li>
                     </ul>
@@ -129,8 +187,7 @@
                        name="searchString"
                        value="@ViewData["CurrentSearch"]"
                        class="form-control vehicle-index-search-input"
-                       placeholder="Search" />
-                <i class="bi bi-mic vehicle-index-mic-icon" aria-hidden="true"></i>
+                       placeholder="Search Vehicles" />
                 @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
                 {
                     <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]"
@@ -187,7 +244,7 @@
                                 <td>@Html.DisplayFor(modelItem => item.Color)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Type)</td>
                                 <td>
-                                    <span class="vehicle-status-badge @StatusClass(item.Status)">@StatusLabel(item.Status)</span>
+                                    <span class="vehicle-status-badge @DisplayStatusClass(item)">@DisplayStatusLabel(item)</span>
                                 </td>
                                 <td>@AdminDates.Format(item.RegistrationDate)</td>
                                 <td>@AdminDates.Format(item.RegistrationExpiry)</td>

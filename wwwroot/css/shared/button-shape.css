@@ -1,0 +1,19 @@
+/* Unified button shape — matches driver add button (driver-index-add-btn). */
+
+:root {
+    --app-btn-radius: 10px;
+}
+
+:is(body.admin-shell, body.client-body) :is(
+    button:not(.btn-close):not(.btn-check):not(.nav-link),
+    input[type="submit"],
+    input[type="button"],
+    input[type="reset"],
+    a.btn:not(.btn-link):not(.page-link),
+    .btn:not(.btn-link):not(.btn-close):not(.dropdown-toggle):not(.page-link):not(.nav-link),
+    [class*="-btn-"],
+    [class$="-btn"],
+    [class^="btn-"]:not(.btn-check)
+):not(.nav-link-admin):not(.nav-link-client):not(.client-nav-link):not(.incident-vehicle-tab):not(.rounded-circle):not(.rounded-pill) {
+    border-radius: var(--app-btn-radius) !important;
+}

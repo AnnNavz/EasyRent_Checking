@@ -1,4 +1,4 @@
-﻿@model EasyRent_Checking.ViewModels.CustomerAccountInputModel
+@model EasyRent_Checking.ViewModels.CustomerAccountInputModel
 @using EasyRent_Checking.Models
 
 @{
@@ -33,7 +33,7 @@
                 <label asp-for="FullName" class="auth-label auth-label-login">Full Name</label>
                 <div class="auth-input-wrap">
                     <i class="bi bi-person auth-input-icon auth-input-icon-login"></i>
-                    <input asp-for="FullName" class="auth-input auth-input-login" placeholder="John Doe" autocomplete="name" />
+                    <input asp-for="FullName" class="auth-input auth-input-login" placeholder="@FieldRules.NamePlaceholder" autocomplete="name" />
                 </div>
                 <span asp-validation-for="FullName" class="text-danger small"></span>
             </div>
@@ -43,7 +43,7 @@
                     <label asp-for="ContactNumber" class="auth-label auth-label-login">Contact Number</label>
                     <div class="auth-input-wrap">
                         <i class="bi bi-telephone auth-input-icon auth-input-icon-login"></i>
-                        <input asp-for="ContactNumber" class="auth-input auth-input-login" placeholder="09123456789 or +639123456789" autocomplete="tel" />
+                        <input asp-for="ContactNumber" class="auth-input auth-input-login" placeholder="09123456789" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" autocomplete="tel" />
                     </div>
                     <span asp-validation-for="ContactNumber" class="text-danger small"></span>
                 </div>
@@ -86,7 +86,7 @@
             </div>
 
             <div class="auth-field">
-                <label asp-for="ValidIDtype" class="auth-label auth-label-login">Choose what type of valid IDs</label>
+                <label asp-for="ValidIDtype" class="auth-label auth-label-login">Type of valid IDs</label>
                 <div class="auth-select-wrap">
                     <select asp-for="ValidIDtype" id="input-ValidIDtype" class="auth-select auth-select-login">
                         <option value="">Select ID type</option>
@@ -95,6 +95,7 @@
                         <option value="@nameof(ValidIDtype.UMID)">UMID</option>
                         <option value="@nameof(ValidIDtype.DriverLicense)">Driver License</option>
                         <option value="@nameof(ValidIDtype.VotersID)">Voters ID</option>
+                        <option value="@nameof(ValidIDtype.PostalID)">Postal ID</option>
                     </select>
                     <i class="bi bi-chevron-down auth-select-chevron auth-select-chevron-login"></i>
                 </div>

@@ -12,6 +12,7 @@ namespace EasyRent_Checking.ViewModels
 		public string FullName { get; set; } = string.Empty;
 		public string Email { get; set; } = string.Empty;
 		public string ContactNumber { get; set; } = string.Empty;
+		public string Address { get; set; } = string.Empty;
 		public string ValidIDtype { get; set; } = string.Empty;
 		public string ValidIdTypeLabel { get; set; } = string.Empty;
 		public bool IsIdentityVerified { get; set; }

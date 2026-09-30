@@ -47,10 +47,10 @@ public class CustomersController : Controller
 
 		var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 		var totalCustomersCount = await customersQuery.CountAsync();
-		var pendingCustomersCount = await customersQuery.CountAsync(c => c.Status == Status.Pending);
+		var pendingCustomersCount = await customersQuery.CountAsync(c => c.User!.Status == Status.Pending);
 		var totalAtMonthStart = await customersQuery.CountAsync(c => c.User != null && c.User.CreatedAt < monthStart);
 		var pendingAtMonthStart = await customersQuery.CountAsync(c =>
-			c.Status == Status.Pending && c.User != null && c.User.CreatedAt < monthStart);
+			c.User!.Status == Status.Pending && c.User != null && c.User.CreatedAt < monthStart);
 
 		ViewData["TotalCustomersCount"] = totalCustomersCount;
 		ViewData["PendingCustomersCount"] = pendingCustomersCount;
@@ -61,8 +61,8 @@ public class CustomersController : Controller
 		{
 			var term = searchString.Trim();
 			customersQuery = customersQuery.Where(c =>
-				c.FullName.Contains(term)
-				|| c.ContactNumber.Contains(term)
+				c.User!.FullName.Contains(term)
+				|| c.User!.ContactNumber.Contains(term)
 				|| (c.User != null && c.User.Email.Contains(term)));
 		}
 
@@ -70,19 +70,19 @@ public class CustomersController : Controller
 		{
 			if (currentFilter == "Approved")
 			{
-				customersQuery = customersQuery.Where(c => c.Status == Status.Active);
+				customersQuery = customersQuery.Where(c => c.User!.Status == Status.Active);
 			}
 			else if (Enum.TryParse(currentFilter, true, out Status filterStatus))
 			{
-				customersQuery = customersQuery.Where(c => c.Status == filterStatus);
+				customersQuery = customersQuery.Where(c => c.User!.Status == filterStatus);
 			}
 		}
 
 		customersQuery = sortBy switch
 		{
-			"Name" => customersQuery.OrderBy(c => c.FullName),
+			"Name" => customersQuery.OrderBy(c => c.User!.FullName),
 			"Email" => customersQuery.OrderBy(c => c.User!.Email),
-			"Status" => customersQuery.OrderBy(c => c.Status),
+			"Status" => customersQuery.OrderBy(c => c.User!.Status),
 			_ => customersQuery.OrderByDescending(c => c.CustomerId)
 		};
 
@@ -138,11 +138,11 @@ public class CustomersController : Controller
 			return NotFound();
 		}
 
-		customer.Status = Status.Active;
+		customer.User!.Status = Status.Active;
 		_logs.Record(
 			SystemLogAction.Approved,
 			SystemLogCategory.Customer,
-			$"Approved customer {customer.FullName}.",
+			$"Approved customer {customer.User.FullName}.",
 			"Customer",
 			customer.CustomerId);
 		await _context.SaveChangesAsync();
@@ -150,7 +150,7 @@ public class CustomersController : Controller
 		var loginUrl = Url.Action("Login", "Account", null, Request.Scheme);
 		await _bookingEmailService.SendAccountApprovedAsync(customer, loginUrl);
 
-		TempData["SuccessMessage"] = "Customer account approved and set to Active.";
+		TempData["SuccessMessage"] = "Customer account activated.";
 		return RedirectToAction(nameof(Details), new { customerid });
 	}
 
@@ -159,28 +159,31 @@ public class CustomersController : Controller
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> Reject(int customerid)
 	{
-		var customer = await _context.CustomerProfiles.FindAsync(customerid);
+		var customer = await _context.CustomerProfiles
+			.Include(c => c.User)
+			.FirstOrDefaultAsync(c => c.CustomerId == customerid);
 		if (customer == null)
 		{
 			return NotFound();
 		}
 
-		customer.Status = Status.Inactive;
+		customer.User!.Status = Status.Inactive;
 		_logs.Record(
-			SystemLogAction.Rejected,
+			SystemLogAction.Deactivated,
 			SystemLogCategory.Customer,
-			$"Rejected customer {customer.FullName}.",
+			$"Deactivated customer {customer.User.FullName}.",
 			"Customer",
 			customer.CustomerId);
 		await _context.SaveChangesAsync();
-		TempData["SuccessMessage"] = "Customer account rejected and set to Inactive.";
+		await _bookingEmailService.SendAccountDeactivatedAsync(customer);
+		TempData["SuccessMessage"] = "Customer account deactivated. A notification email was sent if an email is on file.";
 		return RedirectToAction(nameof(Details), new { customerid });
 	}
 
 	// GET: CUSTOMERS/Create
 	public IActionResult Create()
 	{
-		return View(new CustomerAccountInputModel { Status = Status.Pending });
+		return View(new CustomerAccountInputModel { Status = Status.Active });
 	}
 
 	// POST: CUSTOMERS/Create
@@ -188,6 +191,7 @@ public class CustomersController : Controller
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> Create([Bind("FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,FrontValidIDImagePath,BackValidIDImagePath,FrontValidIDImageFile,BackValidIDImageFile,Status")] CustomerAccountInputModel model)
 	{
+		model.ContactNumber = FieldRules.NormalizePhMobile(model.ContactNumber);
 		if (string.IsNullOrWhiteSpace(model.Password))
 		{
 			ModelState.AddModelError(nameof(model.Password), "Password is required.");
@@ -226,7 +230,10 @@ public class CustomersController : Controller
 		var user = new User
 		{
 			Email = model.Email.Trim(),
+			FullName = model.FullName.Trim(),
+			ContactNumber = FieldRules.NormalizePhMobile(model.ContactNumber),
 			Role = UserRole.Customer,
+			Status = model.Status,
 			CreatedAt = DateTime.Now,
 			EmailConfirmed = true
 		};
@@ -238,12 +245,9 @@ public class CustomersController : Controller
 		var profile = new CustomerProfile
 		{
 			CustomerId = user.UserId,
-			FullName = model.FullName.Trim(),
-			ContactNumber = model.ContactNumber.Trim(),
 			ValidIDtype = model.ValidIDtype,
 			FrontValidIDImagePath = model.FrontValidIDImagePath,
-			BackValidIDImagePath = model.BackValidIDImagePath,
-			Status = model.Status
+			BackValidIDImagePath = model.BackValidIDImagePath
 		};
 
 		_context.CustomerProfiles.Add(profile);
@@ -251,7 +255,7 @@ public class CustomersController : Controller
 		_logs.Record(
 			SystemLogAction.Created,
 			SystemLogCategory.Customer,
-			$"Created customer {profile.FullName}.",
+			$"Created customer {user.FullName}.",
 			"Customer",
 			profile.CustomerId);
 		await _context.SaveChangesAsync();
@@ -266,8 +270,10 @@ public class CustomersController : Controller
 			return NotFound();
 		}
 
-		var customer = await _context.CustomerProfiles.FindAsync(customerid);
-		if (customer == null)
+		var customer = await _context.CustomerProfiles
+			.Include(c => c.User)
+			.FirstOrDefaultAsync(c => c.CustomerId == customerid);
+		if (customer?.User == null)
 		{
 			return NotFound();
 		}
@@ -277,7 +283,7 @@ public class CustomersController : Controller
 			PageTitle = "Add New Customer",
 			ActivePage = "Customers",
 			Heading = "Customer Profile Created",
-			MessageHtml = $"<strong>{customer.FullName}</strong> has been successfully created and added to the system.",
+			MessageHtml = $"<strong>{customer.User.FullName}</strong> has been successfully created and added to the system.",
 			PrimaryActionText = "View Customer's Profile",
 			PrimaryActionUrl = Url.Action(nameof(Details), new { customerid = customer.CustomerId }) ?? "",
 			SecondaryActionText = "Add Another Customer",
@@ -311,6 +317,7 @@ public class CustomersController : Controller
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> Edit(int? customerid, [Bind("CustomerId,FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,FrontValidIDImagePath,BackValidIDImagePath,FrontValidIDImageFile,BackValidIDImageFile,Status")] CustomerAccountInputModel model)
 	{
+		model.ContactNumber = FieldRules.NormalizePhMobile(model.ContactNumber);
 		if (customerid != model.CustomerId)
 		{
 			return NotFound();
@@ -365,12 +372,12 @@ public class CustomersController : Controller
 			}
 
 			profile.User.Email = model.Email.Trim();
-			profile.FullName = model.FullName.Trim();
-			profile.ContactNumber = model.ContactNumber.Trim();
+			profile.User.FullName = model.FullName.Trim();
+			profile.User.ContactNumber = FieldRules.NormalizePhMobile(model.ContactNumber);
 			profile.ValidIDtype = model.ValidIDtype;
 			profile.FrontValidIDImagePath = model.FrontValidIDImagePath;
 			profile.BackValidIDImagePath = model.BackValidIDImagePath;
-			profile.Status = model.Status;
+			profile.User.Status = model.Status;
 
 			if (!string.IsNullOrWhiteSpace(model.Password))
 			{
@@ -380,7 +387,7 @@ public class CustomersController : Controller
 			_logs.Record(
 				SystemLogAction.Updated,
 				SystemLogCategory.Customer,
-				$"Updated customer {profile.FullName}.",
+				$"Updated customer {profile.User.FullName}.",
 				"Customer",
 				profile.CustomerId);
 			await _context.SaveChangesAsync();
@@ -431,7 +438,7 @@ public class CustomersController : Controller
 			_logs.Record(
 				SystemLogAction.Deleted,
 				SystemLogCategory.Customer,
-				$"Deleted customer {profile.FullName}.",
+				$"Deleted customer {profile.User.FullName}.",
 				"Customer",
 				profile.CustomerId);
 			// Cascade removes CustomerProfile with User.

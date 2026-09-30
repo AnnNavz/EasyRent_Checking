@@ -71,6 +71,10 @@
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="pms-details-card">
+                <div class="pms-details-card-head">
+                    <span class="pms-details-icon"><i class="bi bi-car-front-fill"></i></span>
+                    <h3>Vehicle</h3>
+                </div>
                 <div class="pms-details-vehicle-row">
                     <div class="pms-details-vehicle-photo">
                         @if (!string.IsNullOrEmpty(Model.Vehicle.ImagePath))
@@ -98,7 +102,7 @@
                             <span class="pms-details-icon"><i class="bi bi-speedometer2"></i></span>
                             <div>
                                 <span class="pms-details-icon-label">Current Odometer (km)</span>
-                                <span class="pms-details-icon-value">@Model.Vehicle.Odometer.ToString("N0") km</span>
+                                <span class="pms-details-icon-value">@Model.Vehicle.Odometer.ToString("N0")</span>
                             </div>
                         </div>
                     </div>
@@ -265,9 +269,10 @@
             }
             else if (PmsRules.CanStart(Model.DueKind))
             {
+                var isUpcoming = Model.DueKind == PmsDueKind.Upcoming;
                 <form asp-action="StartWork" asp-route-id="@Model.Plan.MaintenancePlanId" method="post"
-                      data-confirm="Start this checkup?"
-                      data-confirm-text="The vehicle will be marked In Maintenance and unavailable for booking."
+                      data-confirm="@(isUpcoming ? "Start this checkup early?" : "Start this checkup?")"
+                      data-confirm-text="@(isUpcoming ? "This checkup is not due yet. Starting it early will reset the maintenance schedule from the current odometer. The vehicle will be marked In Maintenance and unavailable for booking." : "The vehicle will be marked In Maintenance and unavailable for booking.")"
                       data-confirm-button="Start Checkup"
                       data-confirm-tone="approve">
                     @Html.AntiForgeryToken()

@@ -177,8 +177,8 @@
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="driver-metric-card">
-                <div class="driver-metric-icon is-success" aria-hidden="true">
-                    <i class="bi bi-wrench-adjustable"></i>
+                <div class="driver-metric-icon is-orange" aria-hidden="true">
+                    <i class="bi bi-tools"></i>
                 </div>
                 <div class="driver-metric-body">
                     <span class="driver-metric-label">In Progress</span>
@@ -203,7 +203,7 @@
         <div class="driver-index-toolbar mb-4">
             <div class="driver-index-toolbar-filters">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
                     </button>
                     <ul class="dropdown-menu">
@@ -221,7 +221,7 @@
                 @if (tab != "history")
                 {
                     <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                             @currentFilterName
                         </button>
                         <ul class="dropdown-menu">
@@ -243,8 +243,7 @@
                        name="searchString"
                        value="@currentSearch"
                        class="form-control driver-index-search-input"
-                       placeholder="Search maintenance..." />
-                <i class="bi bi-mic driver-index-mic-icon" aria-hidden="true"></i>
+                       placeholder="Search Maintenance" />
                 @if (!string.IsNullOrEmpty(currentSearch))
                 {
                     <a href="@IndexUrl(search: "")"
@@ -390,9 +389,10 @@
                                                                     }
                                                                     else if (CanStart(item.DueKind))
                                                                     {
+                                                                        var isUpcoming = item.DueKind == PmsDueKind.Upcoming;
                                                                         <form asp-action="StartWork" asp-route-id="@item.MaintenancePlanId" method="post" class="d-inline"
-                                                                              data-confirm="Start this checkup?"
-                                                                              data-confirm-text="The vehicle will be marked In Maintenance and unavailable for booking."
+                                                                              data-confirm="@(isUpcoming ? "Start this checkup early?" : "Start this checkup?")"
+                                                                              data-confirm-text="@(isUpcoming ? "This checkup is not due yet. Starting it early will reset the maintenance schedule from the current odometer. The vehicle will be marked In Maintenance and unavailable for booking." : "The vehicle will be marked In Maintenance and unavailable for booking.")"
                                                                               data-confirm-button="Start Checkup"
                                                                               data-confirm-tone="approve">
                                                                             @Html.AntiForgeryToken()
@@ -490,9 +490,10 @@
                                             }
                                             else if (CanStart(item.DueKind))
                                             {
+                                                var isUpcoming = item.DueKind == PmsDueKind.Upcoming;
                                                 <form asp-action="StartWork" asp-route-id="@item.MaintenancePlanId" method="post" class="d-inline"
-                                                      data-confirm="Start this checkup?"
-                                                      data-confirm-text="The vehicle will be marked In Maintenance and unavailable for booking."
+                                                      data-confirm="@(isUpcoming ? "Start this checkup early?" : "Start this checkup?")"
+                                                      data-confirm-text="@(isUpcoming ? "This checkup is not due yet. Starting it early will reset the maintenance schedule from the current odometer. The vehicle will be marked In Maintenance and unavailable for booking." : "The vehicle will be marked In Maintenance and unavailable for booking.")"
                                                       data-confirm-button="Start Checkup"
                                                       data-confirm-tone="approve">
                                                     @Html.AntiForgeryToken()

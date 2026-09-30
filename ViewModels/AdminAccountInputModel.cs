@@ -19,18 +19,44 @@ namespace EasyRent_Checking.ViewModels
 		[Display(Name = "Email Address")]
 		public string Email { get; set; } = string.Empty;
 
-		[Required(ErrorMessage = "Password is required.")]
+		[Required(ErrorMessage = "Contact number is required.")]
+		[DataType(DataType.PhoneNumber)]
+		[StringLength(11, MinimumLength = 11, ErrorMessage = "Contact number must be exactly 11 digits.")]
+		[RegularExpression(FieldRules.PhMobile, ErrorMessage = FieldRules.PhMobileMessage)]
+		[Display(Name = "Contact Number")]
+		public string ContactNumber { get; set; } = string.Empty;
+
+		[Required(ErrorMessage = "Address is required.")]
+		[StringLength(255, ErrorMessage = "Address cannot exceed 255 characters.")]
+		[Display(Name = "Address")]
+		public string Address { get; set; } = string.Empty;
+
 		[StringLength(100, MinimumLength = 8, ErrorMessage = FieldRules.PasswordLengthMessage)]
 		[RegularExpression(FieldRules.Password, ErrorMessage = FieldRules.PasswordMessage)]
 		[DataType(DataType.Password)]
 		[Display(Name = "Password")]
-		public string Password { get; set; } = string.Empty;
+		public string? Password { get; set; }
 
 		[NotMapped]
-		[Required(ErrorMessage = "Please confirm your password.")]
 		[DataType(DataType.Password)]
 		[Compare(nameof(Password), ErrorMessage = "The password and confirmation password do not match.")]
 		[Display(Name = "Confirm Password")]
-		public string ConfirmPassword { get; set; } = string.Empty;
+		public string? ConfirmPassword { get; set; }
+
+		[Display(Name = "Role")]
+		public UserRole Role { get; set; } = UserRole.Admin;
+
+		public static AdminAccountInputModel FromUser(User user)
+		{
+			return new AdminAccountInputModel
+			{
+				AdminId = user.UserId,
+				FullName = user.FullName,
+				Email = user.Email,
+				ContactNumber = user.ContactNumber,
+				Address = user.Address ?? string.Empty,
+				Role = user.Role == UserRole.Staff ? UserRole.Staff : UserRole.Admin
+			};
+		}
 	}
 }

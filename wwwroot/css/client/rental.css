@@ -17,6 +17,401 @@
     line-height: 1.35;
 }
 
+.rent-sidebar-vehicles {
+    background: #F9FAFF;
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
+    padding: 0.95rem 1rem 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.rent-sidebar-vehicles-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+}
+
+.rent-sidebar-vehicles-title {
+    margin: 0;
+    color: var(--client-navy);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.rent-sidebar-vehicles-count {
+    color: #6b7385;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.rent-sidebar-vehicles-note {
+    margin: 0 0 0.75rem;
+    color: #6b7385;
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.rent-sidebar-vehicles-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.rent-sidebar-vehicle-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.7rem;
+    background: #fff;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+}
+
+.rent-sidebar-vehicle-image {
+    width: 72px;
+    height: 54px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #eef1f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9aa3b5;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.rent-sidebar-vehicle-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.rent-sidebar-vehicle-meta {
+    min-width: 0;
+}
+
+.rent-sidebar-vehicle-meta strong {
+    display: block;
+    color: var(--client-navy);
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.rent-sidebar-vehicle-meta p {
+    margin: 0.15rem 0 0;
+    color: #6b7385;
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+.rent-sidebar-vehicle-rate {
+    color: #4b5563 !important;
+    font-size: 0.68rem !important;
+}
+
+.rent-btn-add-vehicle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    width: 100%;
+    border: 1px solid #c7d2e8;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--client-navy);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 0.72rem 1rem;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rent-btn-add-vehicle:hover,
+.rent-btn-add-vehicle:focus {
+    background: #f8fbff;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.25);
+    color: var(--client-navy);
+}
+
+.rent-vehicle-picker-modal .modal-content {
+    border: 1px solid #e8ecf3;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(26, 43, 93, 0.18);
+}
+
+.rent-vehicle-picker-modal .modal-header {
+    border-bottom: 1px solid #eef2f7;
+    padding: 1.1rem 1.25rem 0.95rem;
+}
+
+.rent-vehicle-picker-modal .modal-title {
+    color: var(--client-navy);
+    font-weight: 700;
+}
+
+.rent-vehicle-picker-subtitle {
+    color: #6b7385;
+    font-size: 0.78rem;
+}
+
+.rent-vehicle-picker-modal .modal-body {
+    padding: 1rem 1.25rem 1.1rem;
+}
+
+.rent-vehicle-picker-modal .modal-footer {
+    border-top: 1px solid #eef2f7;
+    padding: 0.85rem 1.25rem 1rem;
+}
+
+.rent-vehicle-picker-dialog {
+    max-width: 760px;
+}
+
+.rent-vehicle-picker-search {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    border: 1px solid #dbe3f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+.rent-vehicle-picker-search i {
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.rent-vehicle-picker-search input {
+    border: 0;
+    background: transparent;
+    width: 100%;
+    color: #1f2937;
+    font-size: 0.88rem;
+    outline: none;
+}
+
+.rent-vehicle-picker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 360px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.15rem;
+    margin-right: -0.15rem;
+}
+
+.rent-vehicle-picker-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rent-vehicle-picker-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.rent-vehicle-picker-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.rent-vehicle-picker-option {
+    display: grid;
+    grid-template-columns: 72px minmax(150px, 1.2fr) minmax(110px, 0.8fr) minmax(90px, 0.7fr) auto;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    border: 1px solid #e8ecf3;
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    background: #fff;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rent-vehicle-picker-option:hover:not(:disabled):not(.is-added) {
+    border-color: #93c5fd;
+    background: #f8fbff;
+    box-shadow: 0 0 0 1px rgba(30, 41, 106, 0.08);
+}
+
+.rent-vehicle-picker-option.is-added,
+.rent-vehicle-picker-option:disabled {
+    opacity: 0.72;
+    cursor: default;
+    background: #f8fafc;
+}
+
+.rent-vehicle-picker-thumb {
+    width: 72px;
+    height: 52px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #eef1f6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #98a2b3;
+    font-size: 1.2rem;
+}
+
+.rent-vehicle-picker-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.rent-vehicle-picker-identity {
+    min-width: 0;
+}
+
+.rent-vehicle-picker-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #1E296A;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.rent-vehicle-picker-name {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--client-navy);
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.rent-vehicle-picker-meta {
+    display: block;
+    margin-top: 0.15rem;
+    color: #6b7385;
+    font-size: 0.74rem;
+}
+
+.rent-vehicle-picker-plate,
+.rent-vehicle-picker-rate {
+    min-width: 0;
+}
+
+.rent-vehicle-picker-plate-label,
+.rent-vehicle-picker-rate-label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.rent-vehicle-picker-plate-value,
+.rent-vehicle-picker-rate-value {
+    display: block;
+    margin-top: 0.15rem;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.rent-vehicle-picker-action {
+    justify-self: end;
+}
+
+.rent-vehicle-picker-add-label,
+.rent-vehicle-picker-added-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.rent-vehicle-picker-add-label {
+    background: var(--client-navy);
+    color: #fff;
+}
+
+.rent-vehicle-picker-added-label {
+    display: none;
+    background: #e2e8f0;
+    color: #64748b;
+}
+
+.rent-vehicle-picker-option.is-added .rent-vehicle-picker-add-label,
+.rent-vehicle-picker-option:disabled .rent-vehicle-picker-add-label {
+    display: none;
+}
+
+.rent-vehicle-picker-option.is-added .rent-vehicle-picker-added-label,
+.rent-vehicle-picker-option:disabled .rent-vehicle-picker-added-label {
+    display: inline-flex;
+}
+
+.rent-vehicle-picker-empty {
+    border: 1px dashed #dbe3f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.86rem;
+    text-align: center;
+    padding: 1.25rem 1rem;
+}
+
+.rent-vehicle-picker-search-empty {
+    margin-top: 0.75rem;
+}
+
+@media (max-width: 767.98px) {
+    .rent-vehicle-picker-option {
+        grid-template-columns: 64px 1fr auto;
+        grid-template-areas:
+            "thumb identity action"
+            "thumb plate action"
+            "thumb rate action";
+    }
+
+    .rent-vehicle-picker-thumb {
+        grid-area: thumb;
+        width: 64px;
+        height: 48px;
+    }
+
+    .rent-vehicle-picker-identity {
+        grid-area: identity;
+    }
+
+    .rent-vehicle-picker-plate {
+        grid-area: plate;
+    }
+
+    .rent-vehicle-picker-rate {
+        grid-area: rate;
+    }
+
+    .rent-vehicle-picker-action {
+        grid-area: action;
+        align-self: center;
+    }
+}
+
 .booking-vehicles-gallery {
     display: flex;
     flex-direction: column;
@@ -168,7 +563,7 @@
     background: #F9FAFF;
     border: 1px solid #e8ecf3;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
     padding: 1.25rem 1.3rem 1.35rem;
     margin-bottom: 1.15rem;
 }
@@ -331,7 +726,7 @@
     background: #F9FAFF;
     border: 1px solid #e8ecf3;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
     padding: 0.85rem 1rem;
     margin-bottom: 0.9rem;
 }
@@ -399,6 +794,29 @@
     background: #dae2f2;
 }
 
+.client-reservation-page .payment-upload-preview .license-preview-box {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    height: auto;
+    min-height: 120px;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.client-reservation-page .payment-upload-preview .license-preview-box img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: 220px;
+    object-fit: contain;
+}
+
 .client-reservation-page .license-preview-box {
     background: #f3f4f6;
     border: 1px solid #e5e7eb;
@@ -442,7 +860,7 @@
 .client-reservation-page .client-rate-summary {
     background: #F9FAFF;
     border: 1px solid #e8ecf3;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.15);
     border-radius: 20px;
     padding: 1.2rem 1.1rem 1.05rem;
 }
@@ -810,7 +1228,7 @@
     background: #F9FAFF;
     border: none;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.06);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.15);
     padding: 1.15rem 1.2rem 1.2rem;
 }
 
@@ -966,7 +1384,7 @@
 .client-reservation-page .payment-step2-card {
     background: #F9FAFF;
     border: 1px solid #e8ecf3;
-    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.05);
+    box-shadow: 0 10px 28px rgba(26, 43, 93, 0.13);
     padding: 1.25rem 1.3rem 1.35rem;
     margin-bottom: 1.15rem;
 }
@@ -2505,7 +2923,7 @@
     background: #F9FAFF;
     border: 1px solid #e4e7ec;
     border-radius: 18px;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
     padding: 2.25rem 2rem 1.85rem;
 }
 
@@ -2823,4 +3241,367 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* --- Client booking summary step (PayRental + Rental wizard) --- */
+.client-booking-summary-step .booking-summary-card {
+    border: 1px solid #e4e7ec;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.client-booking-summary-step .booking-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.client-booking-summary-step .booking-details-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-title);
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--client-navy);
+}
+
+.client-booking-summary-step .booking-details-title-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #e8eefc;
+    color: #1E3A8A;
+    flex-shrink: 0;
+}
+
+.client-booking-summary-step .booking-details-title-icon--round {
+    border-radius: 50%;
+}
+
+.client-booking-summary-step .booking-summary-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--client-navy);
+    background: #ffffff;
+    border: 1.5px solid var(--client-navy);
+    border-radius: 8px;
+    padding: 0.32rem 0.8rem;
+    line-height: 1.2;
+}
+
+.client-booking-summary-step .booking-summary-edit-btn:hover {
+    background: #f5f7ff;
+    color: #15204f;
+}
+
+.client-booking-summary-step .booking-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.client-booking-summary-step .booking-details-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 2rem;
+}
+
+.client-booking-summary-step .booking-details-col-full {
+    grid-column: 1 / -1;
+}
+
+.client-booking-summary-step .booking-details-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0;
+}
+
+.client-booking-summary-step .booking-details-divider {
+    height: 1px;
+    background: #e4e7ec;
+    margin: 0.35rem 0;
+}
+
+.client-booking-summary-step .booking-details-label {
+    flex: 0 0 auto;
+    max-width: 46%;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #667085;
+    line-height: 1.45;
+}
+
+.client-booking-summary-step .booking-details-value {
+    flex: 1 1 auto;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--client-navy);
+    text-align: right;
+    word-break: break-word;
+    line-height: 1.45;
+}
+
+.client-booking-summary-step .booking-details-value-strong {
+    font-weight: 800;
+}
+
+.client-booking-summary-step .booking-details-value-with-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+}
+
+.client-booking-summary-step .booking-details-section-notes {
+    padding-top: 0.75rem;
+    margin-top: 0.25rem;
+    border-top: 1px solid #e4e7ec;
+}
+
+.client-booking-summary-step .booking-details-section-notes .booking-details-label {
+    display: block;
+    max-width: none;
+    margin-bottom: 0.45rem;
+}
+
+.client-booking-summary-step .booking-summary-notes {
+    background: #f8fafc;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #334155;
+    min-height: 3rem;
+    white-space: pre-wrap;
+}
+
+.client-booking-summary-step .booking-summary-receipt-section {
+    margin-top: 0.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e4e7ec;
+}
+
+.client-booking-summary-step .booking-summary-receipt-label {
+    display: block;
+    max-width: none;
+    margin-bottom: 0.65rem;
+}
+
+.client-booking-summary-step .booking-summary-receipt-frame {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.75rem;
+    background: #f3f4f6;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.client-booking-summary-step .booking-summary-receipt-link {
+    display: block;
+    max-width: 280px;
+}
+
+.client-booking-summary-step .booking-summary-receipt-frame img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.client-pay-rental-page .client-booking-summary-step .rent-step-actions,
+.client-reservation-page .client-booking-summary-step .rent-step-actions {
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+}
+
+.client-pay-rental-page .rent-step-actions .rent-btn-cancel,
+.client-pay-rental-page .rent-step-actions .rent-btn-continue {
+    min-height: 44px;
+}
+
+@media (max-width: 767.98px) {
+    .client-booking-summary-step .booking-details-columns {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .client-booking-summary-step .booking-details-label {
+        max-width: 42%;
+    }
+}
+
+/* --- Pay Later / Complete Payment (PayRental) --- */
+.client-pay-rental-page .account-hub-main {
+    background: #F9FAFF;
+    border-radius: 16px;
+    padding: 1.35rem 1.4rem 1.5rem;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.pay-rental-hero {
+    margin-bottom: 1.35rem;
+}
+
+.pay-rental-hero-eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #d4880f;
+}
+
+.pay-rental-hero-title {
+    margin: 0 0 0.45rem;
+    font-family: var(--font-title);
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--client-navy);
+    letter-spacing: -0.02em;
+}
+
+.pay-rental-hero-text {
+    margin: 0;
+    max-width: 40rem;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: #667085;
+}
+
+.pay-rental-stepper {
+    margin-bottom: 1.5rem;
+}
+
+.pay-rental-alert {
+    margin-bottom: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: #fde8ea;
+    border: 1px solid #f1aeb5;
+    color: #842029;
+    font-size: 0.88rem;
+}
+
+.pay-rental-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+}
+
+.pay-rental-deadline-card {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 1rem 1.05rem;
+    border-radius: 14px;
+    background: #fff8eb;
+    border: 1px solid #f0d9a8;
+}
+
+.pay-rental-deadline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #f59e0b;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+}
+
+.pay-rental-deadline-title {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #92400e;
+}
+
+.pay-rental-deadline-text {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: #7c5a16;
+}
+
+.pay-rental-total-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.85rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 12px;
+    background: #1e296a;
+    color: #fff;
+    font-size: 0.88rem;
+}
+
+.pay-rental-total-bar strong {
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.client-pay-rental-page .payment-type-block,
+.client-pay-rental-page .payment-details-step {
+    max-width: none;
+}
+
+.client-pay-rental-page .payment-option-card {
+    background: #fff;
+}
+
+.client-pay-rental-page .payment-option-card.is-selected {
+    background: #eff5fd;
+}
+
+.client-pay-rental-page .payment-upload-preview .license-preview-box,
+.client-reservation-page .payment-upload-preview .license-preview-box {
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+}
+
+.client-pay-rental-page .payment-upload-preview .license-preview-box img,
+.client-reservation-page .payment-upload-preview .license-preview-box img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 220px;
+}
+
+@media (max-width: 991.98px) {
+    .client-pay-rental-page.account-hub.is-booking-details {
+        grid-template-columns: 250px minmax(0, 1fr);
+        grid-template-areas:
+            "nav nav"
+            "main main"
+            "aside aside";
+    }
+
+    .pay-rental-aside {
+        margin-top: 0.5rem;
+    }
+}
+
 

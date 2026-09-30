@@ -83,12 +83,12 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="driver-wizard-label">Full Name</label>
-                    <input asp-for="Name" id="input-Name" class="form-control driver-wizard-input" placeholder="e.g. Jane Doe" />
+                    <input asp-for="Name" id="input-Name" class="form-control driver-wizard-input" placeholder="@FieldRules.NamePlaceholder" />
                     <span asp-validation-for="Name" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-md-6">
                     <label class="driver-wizard-label">Phone Number</label>
-                    <input asp-for="ContactNo" id="input-Contact" class="form-control driver-wizard-input" placeholder="09123456789 or +639123456789" />
+                    <input asp-for="ContactNo" id="input-Contact" class="form-control driver-wizard-input" placeholder="09123456789" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" />
                     <span asp-validation-for="ContactNo" class="text-danger small mt-1 d-block"></span>
                 </div>
                 <div class="col-12">

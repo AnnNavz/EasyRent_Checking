@@ -69,6 +69,9 @@
         return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant();
     }
 
+    var frontLicensePath = driver?.FrontLicenseImagePath;
+    var backLicensePath = driver?.BackLicenseImagePath;
+
     var reviewCount = Model.ReviewCount;
     var averageRating = reviewCount > 0 ? Model.OverallTen / 2.0 : 0d;
     var filledStars = reviewCount == 0 ? 0 : (int)Math.Round(averageRating, MidpointRounding.AwayFromZero);
@@ -336,118 +339,42 @@
         </div>
 
         <div class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab">
-            @{
-                var documents = Model.Documents;
-                var documentCount = documents.Count;
-                var documentPageSize = 10;
-                var documentTotalPages = documentCount == 0 ? 1 : (int)Math.Ceiling(documentCount / (double)documentPageSize);
-                var documentStart = documentCount == 0 ? 0 : 1;
-                var documentEnd = documentCount;
-            }
-
-            <div class="driver-documents-panel">
-                <div class="driver-documents-panel-head">
-                    <div class="driver-documents-panel-intro">
-                        <span class="driver-documents-panel-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
-                        <div>
-                            <h6 class="driver-documents-panel-title">Documents</h6>
-                            <p class="driver-documents-panel-desc">View and manage driver's uploaded documents.</p>
-                        </div>
+            <div class="driver-license-docs">
+                <div class="driver-license-doc-card">
+                    <span class="driver-license-doc-label">Front License</span>
+                    <div class="driver-license-doc-frame">
+                        @if (!string.IsNullOrWhiteSpace(frontLicensePath))
+                        {
+                            <a href="~/images/@frontLicensePath" target="_blank" rel="noopener">
+                                <img src="~/images/@frontLicensePath" alt="Front license" />
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="driver-license-doc-placeholder" aria-hidden="true">
+                                <i class="bi bi-person-vcard"></i>
+                            </div>
+                        }
                     </div>
-                    <a asp-action="Edit" asp-route-id="@driver?.DriverId" asp-route-returnUrl="@detailsReturnUrl" class="btn driver-documents-upload-btn">
-                        <i class="bi bi-upload"></i> Upload Document
-                    </a>
                 </div>
 
-                @if (documents.Any())
-                {
-                    <div class="table-responsive driver-documents-table-wrap">
-                        <table class="table driver-documents-table mb-0 align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Document Name</th>
-                                    <th>Type</th>
-                                    <th>Upload Date</th>
-                                    <th>Status</th>
-                                    <th class="text-end" style="width: 60px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var document in documents)
-                                {
-                                    <tr>
-                                        <td>
-                                            <div class="driver-document-name-cell">
-                                                <div class="driver-document-thumb">
-                                                    @if (!string.IsNullOrEmpty(document.ImagePath))
-                                                    {
-                                                        <img src="~/images/@document.ImagePath" alt="@document.DisplayName" />
-                                                    }
-                                                    else
-                                                    {
-                                                        <i class="bi bi-file-earmark-image"></i>
-                                                    }
-                                                </div>
-                                                <div class="driver-document-name-meta">
-                                                    <span class="driver-document-display-name">@document.DisplayName</span>
-                                                    <span class="driver-document-file-name">@document.FileName</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="driver-document-type-badge">@document.TypeLabel</span>
-                                        </td>
-                                        <td>@document.UploadedAt.ToString("MMMM dd, yyyy h:mmtt", CultureInfo.InvariantCulture)</td>
-                                        <td>
-                                            @if (document.IsVerified)
-                                            {
-                                                <span class="driver-document-status-badge is-verified">
-                                                    <span class="driver-document-status-dot"></span>
-                                                    Verified
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="driver-document-status-badge is-pending">
-                                                    <span class="driver-document-status-dot"></span>
-                                                    Pending
-                                                </span>
-                                            }
-                                        </td>
-                                        <td class="text-end">
-                                            <button type="button" class="btn btn-link p-0 text-secondary" aria-label="@document.DisplayName options">
-                                                <i class="bi bi-three-dots"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                <div class="driver-license-doc-card">
+                    <span class="driver-license-doc-label">Back License</span>
+                    <div class="driver-license-doc-frame">
+                        @if (!string.IsNullOrWhiteSpace(backLicensePath))
+                        {
+                            <a href="~/images/@backLicensePath" target="_blank" rel="noopener">
+                                <img src="~/images/@backLicensePath" alt="Back license" />
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="driver-license-doc-placeholder" aria-hidden="true">
+                                <i class="bi bi-person-vcard"></i>
+                            </div>
+                        }
                     </div>
-
-                    <div class="driver-documents-pagination">
-                        <div class="driver-documents-pagination-range">@documentStart-@documentEnd of @documentCount</div>
-                        <div class="driver-documents-pagination-nav">
-                            <button type="button" class="btn btn-link p-0 text-secondary disabled opacity-50" disabled aria-label="Previous page">
-                                <i class="bi bi-chevron-left"></i>
-                            </button>
-                            <span>1/@documentTotalPages</span>
-                            <button type="button" class="btn btn-link p-0 text-secondary disabled opacity-50" disabled aria-label="Next page">
-                                <i class="bi bi-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="driver-documents-empty">
-                        <i class="bi bi-folder2-open"></i>
-                        <p>No documents uploaded for this driver yet.</p>
-                        <a asp-action="Edit" asp-route-id="@driver?.DriverId" asp-route-returnUrl="@detailsReturnUrl" class="btn driver-documents-upload-btn">
-                            <i class="bi bi-upload"></i> Upload Document
-                        </a>
-                    </div>
-                }
+                </div>
             </div>
         </div>
     </div>

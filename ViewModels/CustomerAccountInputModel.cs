@@ -15,7 +15,7 @@ namespace EasyRent_Checking.ViewModels
 
 		[Required(ErrorMessage = "Contact number is required.")]
 		[DataType(DataType.PhoneNumber)]
-		[StringLength(20, ErrorMessage = "Contact number cannot exceed 20 characters.")]
+		[StringLength(11, MinimumLength = 11, ErrorMessage = "Contact number must be exactly 11 digits.")]
 		[RegularExpression(FieldRules.PhMobile, ErrorMessage = FieldRules.PhMobileMessage)]
 		[Display(Name = "Contact Number")]
 		public string ContactNumber { get; set; } = string.Empty;
@@ -41,7 +41,7 @@ namespace EasyRent_Checking.ViewModels
 		[Required(ErrorMessage = "Valid ID type is required.")]
 		[StringLength(30, ErrorMessage = "ID type cannot exceed 30 characters.")]
 		[EnumDataType(typeof(ValidIDtype), ErrorMessage = "Please select a valid ID type.")]
-		[Display(Name = "Choose what type of valid IDs")]
+		[Display(Name = "Type of valid IDs")]
 		public string ValidIDtype { get; set; } = string.Empty;
 
 		[StringLength(255)]
@@ -77,13 +77,13 @@ namespace EasyRent_Checking.ViewModels
 			return new CustomerAccountInputModel
 			{
 				CustomerId = profile.CustomerId,
-				FullName = profile.FullName,
-				ContactNumber = profile.ContactNumber,
+				FullName = user.FullName,
+				ContactNumber = user.ContactNumber,
 				Email = user.Email,
 				ValidIDtype = profile.ValidIDtype,
 				FrontValidIDImagePath = profile.FrontValidIDImagePath,
 				BackValidIDImagePath = profile.BackValidIDImagePath,
-				Status = profile.Status,
+				Status = user.Status,
 				LoginMfaEnabled = user.LoginMfaEnabled
 			};
 		}

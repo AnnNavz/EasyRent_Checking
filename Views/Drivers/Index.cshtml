@@ -8,6 +8,7 @@
 
     var totalDriversChange = ViewData["TotalDriversChange"] as decimal? ?? 0m;
     var activeDriversChange = ViewData["ActiveDriversChange"] as decimal? ?? 0m;
+    var expiredLicensesChange = ViewData["ExpiredLicensesChange"] as decimal? ?? 0m;
 
     string FormatTrend(decimal change) =>
         Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
@@ -26,11 +27,13 @@
         currentFilter = ViewData["CurrentFilter"],
         page = ViewData["PageIndex"]
     }) ?? "";
+
+    var today = DateOnly.FromDateTime(DateTime.Today);
 }
 
 <div class="drivers-index-page">
     <div class="row g-4 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="driver-metric-card">
                 <div class="driver-metric-icon" aria-hidden="true">
                     <i class="bi bi-people-fill"></i>
@@ -48,7 +51,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="driver-metric-card">
                 <div class="driver-metric-icon is-gold" aria-hidden="true">
                     <i class="bi bi-people-fill"></i>
@@ -66,6 +69,24 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="driver-metric-card">
+                <div class="driver-metric-icon is-danger" aria-hidden="true">
+                    <i class="bi bi-calendar-x"></i>
+                </div>
+                <div class="driver-metric-body">
+                    <span class="driver-metric-label">License Expiry</span>
+                    <div class="driver-metric-value">@(ViewData["ExpiredLicensesCount"] ?? "0")</div>
+                </div>
+                <div class="driver-metric-trend">
+                    <span class="driver-metric-badge @(expiredLicensesChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(expiredLicensesChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(expiredLicensesChange)
+                    </span>
+                    <span class="driver-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <form asp-action="Index" method="get" class="w-100">
@@ -75,7 +96,7 @@
         <div class="driver-index-toolbar mb-4">
             <div class="driver-index-toolbar-filters">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentSortName
                     </button>
                     <ul class="dropdown-menu">
@@ -87,7 +108,7 @@
                 </div>
 
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-filter dropdown-toggle text-capitalize" type="button" data-bs-toggle="dropdown">
                         @currentFilterName
                     </button>
                     <ul class="dropdown-menu">
@@ -106,8 +127,7 @@
                        name="searchString"
                        value="@ViewData["CurrentSearch"]"
                        class="form-control driver-index-search-input"
-                       placeholder="Search Driver" />
-                <i class="bi bi-mic driver-index-mic-icon" aria-hidden="true"></i>
+                       placeholder="Search Drivers" />
                 @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
                 {
                     <a href="?searchString=&sortBy=@ViewData["CurrentSort"]&currentFilter=@ViewData["CurrentFilter"]"
@@ -133,6 +153,7 @@
                         <th>Contact Number</th>
                         <th>License Number</th>
                         <th>License Expiry</th>
+                        <th>License Status</th>
                         <th class="text-end" style="width: 60px;"></th>
                     </tr>
                 </thead>
@@ -141,6 +162,7 @@
                     {
                         @foreach (var item in Model)
                         {
+                            var licenseIsValid = item.ExpiryDate >= today;
                             <tr>
                                 <td>
                                     <div class="table-driver-avatar mx-auto">
@@ -161,6 +183,11 @@
                                 <td>@Html.DisplayFor(modelItem => item.ContactNo)</td>
                                 <td class="text-uppercase">@Html.DisplayFor(modelItem => item.LicenseNo)</td>
                                 <td>@AdminDates.Format(item.ExpiryDate)</td>
+                                <td>
+                                    <span class="driver-license-status-badge @(licenseIsValid ? "is-valid" : "is-expired")">
+                                        @(licenseIsValid ? "Valid" : "Expired")
+                                    </span>
+                                </td>
                                 <td class="text-end">
                                     <div class="dropdown">
                                         <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Driver actions">
@@ -184,7 +211,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted fw-medium">
+                            <td colspan="8" class="text-center py-5 text-muted fw-medium">
                                 <i class="bi bi-person-badge fs-2 d-block mb-2 text-secondary opacity-50"></i>
                                 No matching drivers located in directory indexes.
                             </td>

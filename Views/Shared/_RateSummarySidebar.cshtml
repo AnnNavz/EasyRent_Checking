@@ -5,7 +5,7 @@
 @{
     decimal succeedingRate = Model.SucceedingFee;
     decimal exampleTotal = Model.BasePrice + (2m * succeedingRate);
-    bool canReserve = Model.Status == VehicleStatus.Available;
+    bool canReserve = Model.IsActive && Model.Status == VehicleStatus.Available;
     bool hideReserveButton = ViewData["HideReserveButton"] as bool? == true;
     bool liveRate = ViewData["LiveRateSummary"] as bool? == true;
     string basePriceAttr = Model.BasePrice.ToString(CultureInfo.InvariantCulture);

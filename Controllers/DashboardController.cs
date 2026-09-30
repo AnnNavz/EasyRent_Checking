@@ -59,7 +59,10 @@ namespace EasyRent_Checking.Controllers
 
 			model.ActiveTrips = await _context.Transits
 				.AsNoTracking()
-				.CountAsync(t => t.TripStatus == TripStatus.Scheduled || t.TripStatus == TripStatus.InTransit);
+				.Where(t => t.TripStatus == TripStatus.Scheduled || t.TripStatus == TripStatus.InTransit)
+				.Select(t => t.RentalID)
+				.Distinct()
+				.CountAsync();
 
 			var thisMonthActivePickups = await CountTripsForPickupRangeAsync(
 				DateOnly.FromDateTime(monthStart),
@@ -87,10 +90,10 @@ namespace EasyRent_Checking.Controllers
 				DateOnly.FromDateTime(monthStart.AddDays(-1)));
 			model.TotalBookingsChange = PctChange(model.TotalBookings, lastMonthBookings, perAddedItem: true);
 
-			var bookingsByDay = await _context.RentalDetails
+			var bookingsByDay = await _context.Rentals
 				.AsNoTracking()
-				.Where(d => d.PickupDate >= trendStart && d.PickupDate <= trendEnd)
-				.GroupBy(d => d.PickupDate)
+				.Where(r => r.PickupDate >= trendStart && r.PickupDate <= trendEnd)
+				.GroupBy(r => r.PickupDate)
 				.Select(g => new { Date = g.Key, Count = g.Count() })
 				.ToListAsync();
 
@@ -125,7 +128,7 @@ namespace EasyRent_Checking.Controllers
 
 			var vehicles = await _context.Vehicles.AsNoTracking().ToListAsync();
 			model.FleetRented = vehicles.Count(v => v.Status == VehicleStatus.Rented);
-			model.FleetAvailable = vehicles.Count(v => v.Status == VehicleStatus.Available || v.Status == VehicleStatus.Unavailable);
+			model.FleetAvailable = vehicles.Count(v => v.IsActive && (v.Status == VehicleStatus.Available || v.Status == VehicleStatus.Unavailable));
 			model.FleetMaintenance = vehicles.Count(v => v.Status == VehicleStatus.InMaintenance);
 			model.TotalFleet = vehicles.Count;
 
@@ -282,11 +285,9 @@ namespace EasyRent_Checking.Controllers
 
 		private async Task<int> CountRentalsAsync(DateOnly start, DateOnly end, RentalStatus? status = null)
 		{
-			var query =
-				from d in _context.RentalDetails.AsNoTracking()
-				join r in _context.Rentals.AsNoTracking() on d.RentalID equals r.RentalId
-				where d.PickupDate >= start && d.PickupDate <= end
-				select r;
+			var query = _context.Rentals
+				.AsNoTracking()
+				.Where(r => r.PickupDate >= start && r.PickupDate <= end);
 
 			if (status == null)
 			{
@@ -300,12 +301,12 @@ namespace EasyRent_Checking.Controllers
 		{
 			return await (
 				from t in _context.Transits.AsNoTracking()
-				join d in _context.RentalDetails.AsNoTracking() on t.RentalID equals d.RentalID
+				join r in _context.Rentals.AsNoTracking() on t.RentalID equals r.RentalId
 				where t.TripStatus != TripStatus.Cancelled
-					&& d.PickupDate >= start
-					&& d.PickupDate <= end
-				select t
-			).CountAsync();
+					&& r.PickupDate >= start
+					&& r.PickupDate <= end
+				select t.RentalID
+			).Distinct().CountAsync();
 		}
 
 		private static decimal PctChange(decimal current, decimal previous, bool perAddedItem = false)

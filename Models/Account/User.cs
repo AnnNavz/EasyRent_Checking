@@ -34,9 +34,32 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Confirm Password")]
 		public string ConfirmPassword { get; set; } = string.Empty;
 
+		[Required(ErrorMessage = "Full name is required.")]
+		[StringLength(100, ErrorMessage = "Full name cannot exceed 100 characters.")]
+		[Display(Name = "Full Name")]
+		public string FullName { get; set; } = string.Empty;
+
+		[StringLength(11, ErrorMessage = "Contact number must be exactly 11 digits.")]
+		[Display(Name = "Contact Number")]
+		public string ContactNumber { get; set; } = string.Empty;
+
+		[StringLength(255, ErrorMessage = "Address cannot exceed 255 characters.")]
+		[Display(Name = "Address")]
+		public string? Address { get; set; }
+
+		[StringLength(255)]
+		[Display(Name = "Profile Image")]
+		public string? ProfileImagePath { get; set; }
+
 		[Required(ErrorMessage = "Role is required.")]
 		[Display(Name = "Role")]
 		public UserRole Role { get; set; } = UserRole.Customer;
+
+		[Display(Name = "Status")]
+		public Status Status { get; set; } = Status.Active;
+
+		[Display(Name = "Self Deactivated")]
+		public bool IsSelfDeactivated { get; set; }
 
 		[Required]
 		[DataType(DataType.DateTime)]
@@ -75,8 +98,6 @@ namespace EasyRent_Checking.Models
 		public bool LoginMfaEnabled { get; set; }
 
 		public CustomerProfile? CustomerProfile { get; set; }
-
-		public AdminProfile? AdminProfile { get; set; }
 
 		/// <summary>
 		/// Hashes the plain <see cref="Password"/> into <see cref="PasswordHash"/>.

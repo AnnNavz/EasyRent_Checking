@@ -30,7 +30,7 @@
     border-radius: 16px;
     padding: 1.25rem 1.5rem;
     min-height: 110px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
 }
 
 .drivers-index-page .driver-metric-icon {
@@ -119,6 +119,29 @@
     font-weight: 500;
 }
 
+.drivers-index-page .driver-license-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 0.32rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.drivers-index-page .driver-license-status-badge.is-valid {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.drivers-index-page .driver-license-status-badge.is-expired {
+    background: #fef3f2;
+    color: #b42318;
+}
+
 .drivers-index-page .driver-index-toolbar {
     display: flex;
     align-items: center;
@@ -127,7 +150,7 @@
     background: #ffffff;
     border-radius: 16px;
     padding: 0.85rem 1rem;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.11);
 }
 
 .drivers-index-page .driver-index-toolbar-filters {
@@ -143,22 +166,14 @@
     min-width: 220px;
 }
 
-.drivers-index-page .driver-index-search-icon,
-.drivers-index-page .driver-index-mic-icon {
+.drivers-index-page .driver-index-search-icon {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     color: #667085;
     font-size: 0.95rem;
     pointer-events: none;
-}
-
-.drivers-index-page .driver-index-search-icon {
     left: 0.95rem;
-}
-
-.drivers-index-page .driver-index-mic-icon {
-    right: 0.95rem;
 }
 
 .drivers-index-page .driver-index-search-input {
@@ -167,7 +182,7 @@
     border-radius: 10px;
     background: #ffffff !important;
     padding-left: 2.5rem;
-    padding-right: 2.5rem;
+    padding-right: 1rem;
     font-size: 0.85rem;
     color: #344054;
 }
@@ -179,7 +194,7 @@
 
 .drivers-index-page .driver-index-search-clear {
     position: absolute;
-    right: 2.35rem;
+    right: 0.85rem;
     top: 50%;
     transform: translateY(-50%);
     color: #667085;
@@ -209,7 +224,7 @@
 }
 
 .drivers-index-page .index-table-panel {
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
 }
 
 .drivers-index-page .index-table-panel .admin-table thead th {

@@ -1,0 +1,316 @@
+@model EasyRent_Checking.ViewModels.ResolveBookingViewModel
+@using EasyRent_Checking.ViewModels
+@using System.Globalization
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Resolve Booking";
+    ViewData["ActivePage"] = "Rentals";
+    ViewData["SectionTitle"] = Model.BookingLabel;
+    ViewData["SectionUrl"] = Url.Action("Details", new { id = Model.RentalId });
+
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+    string FormatPeso(decimal amount) => "₱" + amount.ToString("N2", ph);
+    var hasReplacements = Model.ReplacementVehicles.Count > 0;
+    var activeTab = ViewData["ResolveActiveTab"]?.ToString() ?? (hasReplacements ? "replace" : "refund");
+}
+
+<div class="container-fluid px-4 py-3 resolve-booking-page incident-record-page">
+    <div class="incident-record-header mb-4">
+        <div>
+            <h1 class="incident-record-title">Resolve booking</h1>
+            <p class="incident-record-subtitle">
+                Replace the vehicle to keep the booking, or cancel and refund what the customer paid.
+            </p>
+        </div>
+    </div>
+
+    <div class="resolve-booking-summary mb-4">
+        <div class="resolve-booking-summary-item">
+            <span class="resolve-booking-summary-label">Booking</span>
+            <strong>@Model.BookingLabel</strong>
+        </div>
+        <div class="resolve-booking-summary-item">
+            <span class="resolve-booking-summary-label">Customer</span>
+            <strong>@Model.CustomerName</strong>
+        </div>
+        <div class="resolve-booking-summary-item">
+            <span class="resolve-booking-summary-label">Current vehicle</span>
+            <strong>@Model.CurrentVehicleLabel</strong>
+        </div>
+        <div class="resolve-booking-summary-item">
+            <span class="resolve-booking-summary-label">Amount paid</span>
+            <strong>@FormatPeso(Model.AmountPaid)</strong>
+        </div>
+        @if (Model.PickupDate != null)
+        {
+            <div class="resolve-booking-summary-item">
+                <span class="resolve-booking-summary-label">Pickup</span>
+                <strong>@Model.PickupDate.Value.ToString("MMM d, yyyy", CultureInfo.InvariantCulture) · @Model.PickupTime.ToString("h:mm tt", CultureInfo.InvariantCulture)</strong>
+            </div>
+        }
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="incident-record-card resolve-booking-tabs-card">
+        <div class="incident-vehicle-tabs resolve-booking-tabs" role="tablist" aria-label="Resolve options">
+            <button type="button"
+                    class="incident-vehicle-tab @(activeTab == "replace" ? "is-active" : "") @(hasReplacements ? "" : "is-disabled")"
+                    data-resolve-tab="replace"
+                    role="tab"
+                    aria-selected="@(activeTab == "replace" ? "true" : "false")"
+                    @(hasReplacements ? null : "disabled")>
+                Replace vehicle
+            </button>
+            <button type="button"
+                    class="incident-vehicle-tab @(activeTab == "refund" ? "is-active" : "")"
+                    data-resolve-tab="refund"
+                    role="tab"
+                    aria-selected="@(activeTab == "refund" ? "true" : "false")">
+                Cancel &amp; refund
+            </button>
+        </div>
+
+        <div class="resolve-tab-panel @(activeTab == "replace" ? "is-active" : "")"
+             data-resolve-panel="replace"
+             role="tabpanel"
+             @(activeTab != "replace" ? "hidden" : null)>
+            <div class="resolve-tab-intro">
+                <h2 class="resolve-tab-title">Replace vehicle</h2>
+                <p class="resolve-tab-desc">Keep the booking at the same price and assign another available unit.</p>
+            </div>
+
+            @if (!hasReplacements)
+            {
+                <div class="resolve-booking-empty">
+                    No replacement vehicles are available for this schedule. Use the Cancel &amp; refund tab instead.
+                </div>
+            }
+            else
+            {
+                <form asp-action="ReplaceVehicle" asp-route-id="@Model.RentalId" method="post" class="resolve-booking-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="RentalId" />
+                    <input type="hidden" asp-for="TransitId" />
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <input type="hidden" asp-for="CurrentVehicleId" />
+
+                    <div class="mb-3">
+                        <label asp-for="Reason" class="incident-record-field-label"></label>
+                        <input asp-for="Reason" class="form-control incident-record-input" placeholder="Enter reason" />
+                        <span asp-validation-for="Reason" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="incident-record-field-label d-block">Replacement vehicle</span>
+                        <div class="incident-vehicle-list resolve-vehicle-list">
+                            @foreach (var vehicle in Model.ReplacementVehicles)
+                            {
+                                var isSelected = Model.ReplacementVehicleId == vehicle.VehicleId;
+                                <label class="incident-vehicle-option @(isSelected ? "is-selected" : "")">
+                                    <input type="radio"
+                                           class="incident-vehicle-radio"
+                                           name="ReplacementVehicleId"
+                                           value="@vehicle.VehicleId"
+                                           @(isSelected ? "checked" : null) />
+                                    <span class="incident-vehicle-thumb" aria-hidden="true">
+                                        @if (!string.IsNullOrEmpty(vehicle.ImagePath))
+                                        {
+                                            <img src="~/images/@vehicle.ImagePath" alt="" />
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-truck-front"></i>
+                                        }
+                                    </span>
+                                    <div class="incident-vehicle-identity">
+                                        <strong class="incident-vehicle-name">@vehicle.Title</strong>
+                                        <span class="incident-vehicle-meta">@vehicle.TypeLabel · @vehicle.PassengersCount seats</span>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                        <span asp-validation-for="ReplacementVehicleId" class="text-danger small d-block mt-2"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Notes" class="incident-record-field-label"></label>
+                        <textarea asp-for="Notes" class="form-control incident-record-textarea" rows="3" placeholder="Optional internal note"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn reservation-btn-approve w-100">Confirm replacement &amp; email customer</button>
+                </form>
+            }
+        </div>
+
+        <div class="resolve-tab-panel @(activeTab == "refund" ? "is-active" : "")"
+             data-resolve-panel="refund"
+             role="tabpanel"
+             @(activeTab != "refund" ? "hidden" : null)>
+            <div class="resolve-tab-intro">
+                <h2 class="resolve-tab-title">Cancel &amp; refund</h2>
+                <p class="resolve-tab-desc">Cancel the booking and refund what the customer already paid.</p>
+            </div>
+
+            <form asp-action="CancelWithRefund" asp-route-id="@Model.RentalId" method="post" enctype="multipart/form-data" class="resolve-booking-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="RentalId" />
+                <input type="hidden" asp-for="TransitId" />
+                <input type="hidden" asp-for="ReturnUrl" />
+                <input type="hidden" asp-for="CurrentVehicleId" />
+
+                <div class="mb-3">
+                    <label asp-for="Reason" class="incident-record-field-label"></label>
+                    <input asp-for="Reason" class="form-control incident-record-input" placeholder="Enter reason" />
+                    <span asp-validation-for="Reason" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RefundAmount" class="incident-record-field-label"></label>
+                    <input asp-for="RefundAmount" class="form-control incident-record-input" />
+                    <div class="resolve-field-help">Maximum refundable: @FormatPeso(Model.AmountPaid)</div>
+                    <span asp-validation-for="RefundAmount" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RefundReceiptImageFile" class="incident-record-field-label"></label>
+                    <div class="admin-refund-upload-panel">
+                        <div class="admin-refund-upload-zone" id="resolveRefundReceiptUploadZone">
+                            <div class="admin-refund-upload-empty" id="resolveRefundReceiptUploadEmpty">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                                <strong>Click or drag to upload refund receipt</strong>
+                                <span>PNG, JPG, or JPEG</span>
+                            </div>
+                            <input asp-for="RefundReceiptImageFile"
+                                   id="resolveRefundReceiptImageFile"
+                                   class="admin-refund-upload-input"
+                                   type="file"
+                                   accept=".png,.jpg,.jpeg,image/*" />
+                        </div>
+                        <div class="admin-refund-upload-preview" id="resolveRefundReceiptUploadPreview">
+                            <button type="button" class="admin-refund-upload-preview-box" id="resolveRefundReceiptPreviewBox" title="Click to replace image">
+                                <img id="resolveRefundReceiptPreviewImg" class="d-none" alt="Refund receipt preview" />
+                            </button>
+                            <div class="admin-refund-upload-preview-bar">
+                                <span id="resolveRefundReceiptFilename"></span>
+                                <button type="button" class="admin-refund-upload-remove" id="resolveRefundReceiptRemoveBtn">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="resolve-field-help">Required when refund amount is greater than zero.</div>
+                    <span asp-validation-for="RefundReceiptImageFile" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Notes" class="incident-record-field-label"></label>
+                    <textarea asp-for="Notes" class="form-control incident-record-textarea" rows="3" placeholder="Optional note for internal records"></textarea>
+                </div>
+
+                <button type="submit"
+                        class="btn reservation-btn-reject w-100"
+                        data-confirm="Cancel this booking and issue the refund?"
+                        data-confirm-text="The booking will be cancelled, transits stopped, and the customer will be emailed the refund receipt."
+                        data-confirm-button="Cancel &amp; Refund"
+                        data-confirm-tone="danger"
+                        data-confirm-icon="bi-x-circle">
+                    Cancel booking &amp; send refund
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="resolve-booking-footer mt-4">
+        @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+        {
+            <a href="@Model.ReturnUrl" class="btn btn-page-back">Back</a>
+        }
+        else
+        {
+            <a asp-action="Details" asp-route-id="@Model.RentalId" class="btn btn-page-back">Back to booking</a>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        (function () {
+            const tabs = document.querySelectorAll('[data-resolve-tab]');
+            const panels = document.querySelectorAll('[data-resolve-panel]');
+
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    if (tab.disabled || tab.classList.contains('is-disabled')) return;
+
+                    const target = tab.dataset.resolveTab;
+                    tabs.forEach(function (item) {
+                        const isActive = item.dataset.resolveTab === target;
+                        item.classList.toggle('is-active', isActive);
+                        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    });
+                    panels.forEach(function (panel) {
+                        const isActive = panel.dataset.resolvePanel === target;
+                        panel.classList.toggle('is-active', isActive);
+                        panel.hidden = !isActive;
+                    });
+                });
+            });
+
+            const fileInput = document.getElementById('resolveRefundReceiptImageFile');
+            const emptyState = document.getElementById('resolveRefundReceiptUploadEmpty');
+            const zone = document.getElementById('resolveRefundReceiptUploadZone');
+            const previewState = document.getElementById('resolveRefundReceiptUploadPreview');
+            const previewBox = document.getElementById('resolveRefundReceiptPreviewBox');
+            const previewImg = document.getElementById('resolveRefundReceiptPreviewImg');
+            const filenameLabel = document.getElementById('resolveRefundReceiptFilename');
+            const removeBtn = document.getElementById('resolveRefundReceiptRemoveBtn');
+            if (!fileInput || !previewState || !zone) return;
+
+            function clearReceipt() {
+                fileInput.value = '';
+                if (previewImg) {
+                    previewImg.src = '';
+                    previewImg.classList.add('d-none');
+                }
+                if (filenameLabel) filenameLabel.textContent = '';
+                if (emptyState) emptyState.classList.remove('d-none');
+                zone.classList.remove('d-none');
+                previewState.classList.remove('is-visible');
+            }
+
+            function showReceipt(file) {
+                if (!file || !previewImg) return;
+                if (filenameLabel) filenameLabel.textContent = file.name;
+                zone.classList.add('d-none');
+                if (emptyState) emptyState.classList.add('d-none');
+                previewState.classList.add('is-visible');
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    previewImg.src = event.target?.result || '';
+                    previewImg.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            fileInput.addEventListener('change', function () {
+                if (fileInput.files && fileInput.files[0]) showReceipt(fileInput.files[0]);
+                else clearReceipt();
+            });
+
+            if (previewBox) {
+                previewBox.addEventListener('click', function () {
+                    fileInput.click();
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    clearReceipt();
+                });
+            }
+        })();
+    </script>
+}

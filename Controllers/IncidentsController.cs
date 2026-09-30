@@ -37,6 +37,30 @@ namespace EasyRent_Checking.Controllers
 			ViewData["CurrentSort"] = sortBy;
 			ViewData["CurrentFilter"] = currentFilter;
 
+			var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+			var metricsQuery = _context.IncidentReports.AsNoTracking();
+
+			var underReviewCount = await metricsQuery.CountAsync(i => i.Status == IncidentStatus.UnderReview);
+			var inRepairCount = await metricsQuery.CountAsync(i => i.Status == IncidentStatus.InRepair);
+			var closedCount = await metricsQuery.CountAsync(i => i.Status == IncidentStatus.Closed);
+
+			var underReviewAtMonthStart = await metricsQuery.CountAsync(i =>
+				i.Status == IncidentStatus.UnderReview
+				&& i.CreatedAt < monthStart);
+			var inRepairAtMonthStart = await metricsQuery.CountAsync(i =>
+				i.Status == IncidentStatus.InRepair
+				&& (i.RepairStartedAt ?? i.CreatedAt) < monthStart);
+			var closedAtMonthStart = await metricsQuery.CountAsync(i =>
+				i.Status == IncidentStatus.Closed
+				&& (i.ClosedAt ?? i.CreatedAt) < monthStart);
+
+			ViewData["UnderReviewCount"] = underReviewCount;
+			ViewData["InRepairCount"] = inRepairCount;
+			ViewData["ClosedCount"] = closedCount;
+			ViewData["UnderReviewChange"] = PctChange(underReviewCount, underReviewAtMonthStart);
+			ViewData["InRepairChange"] = PctChange(inRepairCount, inRepairAtMonthStart);
+			ViewData["ClosedChange"] = PctChange(closedCount, closedAtMonthStart);
+
 			var query = _context.IncidentReports
 				.AsNoTracking()
 				.Include(i => i.Vehicle)
@@ -44,10 +68,6 @@ namespace EasyRent_Checking.Controllers
 				.Include(i => i.Transit)
 					.ThenInclude(t => t!.Rental)
 				.AsQueryable();
-
-			ViewData["UnderReviewCount"] = await query.CountAsync(i => i.Status == IncidentStatus.UnderReview);
-			ViewData["InRepairCount"] = await query.CountAsync(i => i.Status == IncidentStatus.InRepair);
-			ViewData["ClosedCount"] = await query.CountAsync(i => i.Status == IncidentStatus.Closed);
 
 			if (!string.IsNullOrEmpty(currentFilter)
 				&& Enum.TryParse(currentFilter, true, out IncidentStatus filterStatus))
@@ -118,9 +138,10 @@ namespace EasyRent_Checking.Controllers
 				Status = IncidentStatus.Reported
 			};
 
+			Transit? transit = null;
 			if (transitid != null)
 			{
-				var transit = await LoadTransitAsync(transitid.Value);
+				transit = await LoadTransitAsync(transitid.Value);
 				if (transit == null)
 				{
 					return NotFound();
@@ -135,12 +156,10 @@ namespace EasyRent_Checking.Controllers
 				report.TransitID = transit.TransitID;
 				report.VehicleId = transit.VehicleID;
 				report.DriverID = transit.DriverID;
-				report.Location = transit.Rental?.Details?.DropoffLocation ?? string.Empty;
-				ViewBag.Transit = transit;
+				report.Location = transit.Rental?.DropoffLocation ?? string.Empty;
 			}
 
-			await PopulateVehicleListAsync(report.VehicleId == 0 ? null : report.VehicleId);
-			return View(report);
+			return View(await BuildCreateViewModelAsync(report, transit));
 		}
 
 		[HttpPost]
@@ -177,23 +196,21 @@ namespace EasyRent_Checking.Controllers
 				report.TransitID = transit.TransitID;
 				report.VehicleId = transit.VehicleID;
 				report.DriverID = transit.DriverID;
-				ViewBag.Transit = transit;
 				ModelState.Remove(nameof(IncidentReport.VehicleId));
 			}
 
 			if (report.VehicleId <= 0)
 			{
-				ModelState.AddModelError(nameof(IncidentReport.VehicleId), "Vehicle is required.");
+				ModelState.AddModelError("Report.VehicleId", "Vehicle is required.");
 			}
 			else if (!await _context.Vehicles.AnyAsync(v => v.VehicleId == report.VehicleId))
 			{
-				ModelState.AddModelError(nameof(IncidentReport.VehicleId), "Selected vehicle was not found.");
+				ModelState.AddModelError("Report.VehicleId", "Selected vehicle was not found.");
 			}
 
 			if (!ModelState.IsValid)
 			{
-				await PopulateVehicleListAsync(report.VehicleId == 0 ? null : report.VehicleId);
-				return View(report);
+				return View(await BuildCreateViewModelAsync(report, transit));
 			}
 
 			if (report.ImageFile != null && report.ImageFile.Length > 0)
@@ -206,6 +223,10 @@ namespace EasyRent_Checking.Controllers
 
 			report.Status = IncidentStatus.Reported;
 			report.CreatedAt = DateTime.Now;
+			if (report.Type == IncidentType.Breakdown)
+			{
+				report.IsUndrivable = true;
+			}
 			report.RepairStartedAt = null;
 			report.ClosedAt = null;
 			report.WorkDone = null;
@@ -215,6 +236,7 @@ namespace EasyRent_Checking.Controllers
 			_context.IncidentReports.Add(report);
 			await _context.SaveChangesAsync();
 			await VehicleStatusSync.ApplyAsync(_context, report.VehicleId);
+			await TransitIssueSync.SyncForIncidentAsync(_context, report.IncidentReportId);
 
 			var vehicle = await _context.Vehicles.AsNoTracking()
 				.FirstOrDefaultAsync(v => v.VehicleId == report.VehicleId);
@@ -222,24 +244,24 @@ namespace EasyRent_Checking.Controllers
 			_logs.Record(
 				SystemLogAction.Created,
 				SystemLogCategory.Incident,
-				$"Filed incident INC-{report.IncidentReportId:D5} for {plate}.",
+				$"Filed incident {IncidentReport.FormatReference(report.IncidentReportId)} for {plate}.",
 				"Incident",
 				report.IncidentReportId);
 			await _context.SaveChangesAsync();
 
 			return View("CreateSuccess", new CreateSuccessViewModel
 			{
-				PageTitle = "Incident Reported",
+				PageTitle = "Record Incident",
 				ActivePage = "Incidents",
-				Heading = "Incident Reported",
-				MessageHtml = $"The report for <strong>{plate}</strong> was saved. Review it next, then start repair or close it.",
-				PrimaryActionText = "View Report",
+				Heading = "Incident Recorded Successfully",
+				MessageHtml = "The vehicle incident report has been successfully logged into the system for review and administrative tracking.",
+				PrimaryActionText = "View Incident Details",
 				PrimaryActionUrl = Url.Action(nameof(Details), new { id = report.IncidentReportId }) ?? "",
-				SecondaryActionText = transit != null ? "Back to Trip" : "All Incidents",
+				SecondaryActionText = transit != null ? "Back to Trip" : "Report Another Incident",
 				SecondaryActionUrl = transit != null
 					? Url.Action("Details", "Transits", new { transitid = transit.TransitID }) ?? ""
-					: Url.Action(nameof(Index)) ?? "",
-				ShowSecondaryPlusIcon = false
+					: Url.Action(nameof(Create)) ?? "",
+				ShowSecondaryPlusIcon = transit == null
 			});
 		}
 
@@ -263,10 +285,11 @@ namespace EasyRent_Checking.Controllers
 			_logs.Record(
 				SystemLogAction.Updated,
 				SystemLogCategory.Incident,
-				$"Moved INC-{report.IncidentReportId:D5} under review.",
+				$"Moved {IncidentReport.FormatReference(report.IncidentReportId)} under review.",
 				"Incident",
 				report.IncidentReportId);
 			await _context.SaveChangesAsync();
+			await TransitIssueSync.SyncForIncidentAsync(_context, report.IncidentReportId);
 			TempData["SuccessMessage"] = "Incident is now under review.";
 			return RedirectToAction(nameof(Details), new { id });
 		}
@@ -292,11 +315,12 @@ namespace EasyRent_Checking.Controllers
 			_logs.Record(
 				SystemLogAction.Started,
 				SystemLogCategory.Incident,
-				$"Started repair for INC-{report.IncidentReportId:D5}.",
+				$"Started repair for {IncidentReport.FormatReference(report.IncidentReportId)}.",
 				"Incident",
 				report.IncidentReportId);
 			await _context.SaveChangesAsync();
 			await VehicleStatusSync.ApplyAsync(_context, report.VehicleId);
+			await TransitIssueSync.SyncForIncidentAsync(_context, report.IncidentReportId);
 
 			TempData["SuccessMessage"] = report.IsUndrivable
 				? "Repair started. The vehicle stays Unavailable until this report is closed."
@@ -332,6 +356,7 @@ namespace EasyRent_Checking.Controllers
 			int id,
 			string? workDone,
 			decimal? cost,
+			string? remarks,
 			IFormFile? imageFile)
 		{
 			var report = await LoadReportAsync(id);
@@ -356,10 +381,16 @@ namespace EasyRent_Checking.Controllers
 				ModelState.AddModelError(nameof(IncidentReport.Cost), "Cost cannot be negative.");
 			}
 
+			if (!string.IsNullOrWhiteSpace(remarks) && remarks.Length > 1000)
+			{
+				ModelState.AddModelError(nameof(IncidentReport.Remarks), "Remarks cannot exceed 1000 characters.");
+			}
+
 			if (!ModelState.IsValid)
 			{
 				report.WorkDone = workDone;
 				report.Cost = cost;
+				report.Remarks = remarks;
 				return View(report);
 			}
 
@@ -373,17 +404,19 @@ namespace EasyRent_Checking.Controllers
 
 			report.WorkDone = workDone?.Trim();
 			report.Cost = cost;
+			report.Remarks = string.IsNullOrWhiteSpace(remarks) ? null : remarks.Trim();
 
 			report.Status = IncidentStatus.Closed;
 			report.ClosedAt = DateTime.Now;
 			_logs.Record(
 				SystemLogAction.Completed,
 				SystemLogCategory.Incident,
-				$"Completed repair and closed INC-{report.IncidentReportId:D5}.",
+				$"Completed repair and closed {IncidentReport.FormatReference(report.IncidentReportId)}.",
 				"Incident",
 				report.IncidentReportId);
 			await _context.SaveChangesAsync();
 			await VehicleStatusSync.ApplyAsync(_context, report.VehicleId);
+			await TransitIssueSync.SyncForIncidentAsync(_context, report.IncidentReportId);
 
 			TempData["SuccessMessage"] = "Repair recorded and the incident was closed.";
 			return RedirectToAction(nameof(Details), new { id });
@@ -410,11 +443,12 @@ namespace EasyRent_Checking.Controllers
 			_logs.Record(
 				SystemLogAction.Closed,
 				SystemLogCategory.Incident,
-				$"Closed INC-{report.IncidentReportId:D5} without shop work.",
+				$"Closed {IncidentReport.FormatReference(report.IncidentReportId)} without shop work.",
 				"Incident",
 				report.IncidentReportId);
 			await _context.SaveChangesAsync();
 			await VehicleStatusSync.ApplyAsync(_context, report.VehicleId);
+			await TransitIssueSync.SyncForIncidentAsync(_context, report.IncidentReportId);
 
 			TempData["SuccessMessage"] = "Incident closed without shop work.";
 			return RedirectToAction(nameof(Details), new { id });
@@ -441,11 +475,12 @@ namespace EasyRent_Checking.Controllers
 			_logs.Record(
 				SystemLogAction.Dismissed,
 				SystemLogCategory.Incident,
-				$"Dismissed INC-{report.IncidentReportId:D5}.",
+				$"Dismissed {IncidentReport.FormatReference(report.IncidentReportId)}.",
 				"Incident",
 				report.IncidentReportId);
 			await _context.SaveChangesAsync();
 			await VehicleStatusSync.ApplyAsync(_context, report.VehicleId);
+			await TransitIssueSync.SyncForIncidentAsync(_context, report.IncidentReportId);
 
 			TempData["SuccessMessage"] = "Incident dismissed.";
 			return RedirectToAction(nameof(Details), new { id });
@@ -458,7 +493,7 @@ namespace EasyRent_Checking.Controllers
 				.Include(i => i.Driver)
 				.Include(i => i.Transit)!
 					.ThenInclude(t => t!.Rental)!
-						.ThenInclude(r => r!.Details)
+						.ThenInclude(r => r!.RentalVehicles)
 				.FirstOrDefaultAsync(i => i.IncidentReportId == id);
 		}
 
@@ -468,27 +503,136 @@ namespace EasyRent_Checking.Controllers
 				.Include(t => t.Vehicle)
 				.Include(t => t.Driver)
 				.Include(t => t.Rental)!
-					.ThenInclude(r => r!.Details)
+					.ThenInclude(r => r!.RentalVehicles)
 				.FirstOrDefaultAsync(t => t.TransitID == transitId);
 		}
 
 		private static bool CanReportFromTransit(Transit transit)
 			=> transit.TripStatus is TripStatus.InTransit or TripStatus.Completed;
 
-		private async Task PopulateVehicleListAsync(int? selectedId)
+		private async Task<IncidentCreateViewModel> BuildCreateViewModelAsync(IncidentReport report, Transit? transit)
 		{
-			ViewBag.VehicleId = new SelectList(
-				await _context.Vehicles.AsNoTracking()
-					.OrderBy(v => v.PlateNumber)
-					.Select(v => new
+			var vehicles = await _context.Vehicles.AsNoTracking()
+				.OrderBy(v => v.PlateNumber)
+				.ThenBy(v => v.Brand)
+				.ToListAsync();
+
+			var activeTransits = await _context.Transits.AsNoTracking()
+				.Include(t => t.Driver)
+				.Where(t => t.TripStatus == TripStatus.InTransit || t.TripStatus == TripStatus.Scheduled)
+				.ToListAsync();
+
+			var transitByVehicle = activeTransits
+				.GroupBy(t => t.VehicleID)
+				.ToDictionary(
+					g => g.Key,
+					g => g.OrderByDescending(t => t.TripStatus == TripStatus.InTransit).First());
+
+			var vehicleItems = vehicles
+				.Select(v =>
+				{
+					transitByVehicle.TryGetValue(v.VehicleId, out var activeTransit);
+					var (fleetStatusLabel, fleetStatusClass) = ResolveFleetVehicleStatus(v);
+					var driver = activeTransit?.Driver;
+					var isOnActiveTransit = activeTransit != null;
+
+					return new IncidentVehicleSelectionItem
 					{
-						v.VehicleId,
-						Label = v.PlateNumber + " — " + v.Brand + " " + v.Model
+						VehicleId = v.VehicleId,
+						Brand = v.Brand,
+						Model = v.Model,
+						Type = VehicleTypes.Display(v.Type),
+						PassengersCount = v.PassengersCount,
+						PlateNumber = v.PlateNumber,
+						ImagePath = v.ImagePath,
+						IsOnActiveTransit = isOnActiveTransit,
+						FleetStatusLabel = fleetStatusLabel,
+						FleetStatusClass = fleetStatusClass,
+						StatusLabel = isOnActiveTransit ? "In Transit" : fleetStatusLabel,
+						StatusClass = isOnActiveTransit ? "is-in-transit" : fleetStatusClass,
+						DriverName = driver?.Name,
+						DriverImagePath = driver?.ImagePath,
+						DriverInitials = BuildInitials(driver?.Name),
+						SearchKey = string.Join(' ',
+							v.PlateNumber,
+							v.Brand,
+							v.Model,
+							fleetStatusLabel,
+							driver?.Name,
+							isOnActiveTransit ? "In Transit" : string.Empty).ToLowerInvariant()
+					};
+				})
+				.ToList();
+
+			if (transit != null)
+			{
+				var transitVehicle = vehicles.FirstOrDefault(v => v.VehicleId == transit.VehicleID);
+				vehicleItems = vehicleItems
+					.Where(v => v.VehicleId == transit.VehicleID)
+					.Select(v =>
+					{
+						if (transit.Driver != null)
+						{
+							v.DriverName = transit.Driver.Name;
+							v.DriverImagePath = transit.Driver.ImagePath;
+							v.DriverInitials = BuildInitials(transit.Driver.Name);
+						}
+
+						if (transitVehicle != null)
+						{
+							var (fleetStatusLabel, fleetStatusClass) = ResolveFleetVehicleStatus(transitVehicle);
+							v.FleetStatusLabel = fleetStatusLabel;
+							v.FleetStatusClass = fleetStatusClass;
+							v.IsOnActiveTransit = transit.TripStatus is TripStatus.InTransit or TripStatus.Scheduled;
+							v.StatusLabel = v.IsOnActiveTransit ? "In Transit" : fleetStatusLabel;
+							v.StatusClass = v.IsOnActiveTransit ? "is-in-transit" : fleetStatusClass;
+						}
+
+						return v;
 					})
-					.ToListAsync(),
-				"VehicleId",
-				"Label",
-				selectedId);
+					.ToList();
+			}
+
+			return new IncidentCreateViewModel
+			{
+				Report = report,
+				Transit = transit,
+				Vehicles = vehicleItems
+			};
+		}
+
+		private static (string Label, string CssClass) ResolveFleetVehicleStatus(Vehicle vehicle)
+		{
+			if (!vehicle.IsActive
+				|| vehicle.Status is VehicleStatus.Unavailable or VehicleStatus.InMaintenance)
+			{
+				return ("Unavailable", "is-unavailable");
+			}
+
+			if (vehicle.Status == VehicleStatus.Available)
+			{
+				return ("Available", "is-available");
+			}
+
+			return ("Unavailable", "is-unavailable");
+		}
+
+		private static string BuildInitials(string? name)
+		{
+			if (string.IsNullOrWhiteSpace(name))
+			{
+				return "—";
+			}
+
+			var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length == 1)
+			{
+				return parts[0].Length >= 2
+					? parts[0][..2].ToUpperInvariant()
+					: parts[0].ToUpperInvariant();
+			}
+
+			return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
 		}
 
 		private static void StripIgnoredCreateFields(IncidentReport report)
@@ -502,5 +646,8 @@ namespace EasyRent_Checking.Controllers
 			report.Remarks = null;
 			report.CreatedAt = DateTime.Now;
 		}
+
+		private static decimal PctChange(decimal current, decimal previous)
+			=> Math.Round((current - previous) * 0.1m, 1);
 	}
 }

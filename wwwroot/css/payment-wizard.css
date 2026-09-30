@@ -1,6 +1,14 @@
-.payment-create-wizard {
+        .payment-create-wizard {
             max-width: 920px;
             margin: 0 auto;
+        }
+
+        .wizard-step-panel {
+            display: none;
+        }
+
+        .wizard-step-panel.active {
+            display: block;
         }
 
         .payment-create-wizard .step-timeline {
@@ -183,7 +191,7 @@
             border-radius: 16px;
             padding: 1.15rem 1.2rem 1.3rem;
             margin-top: 1.35rem;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.11);
         }
 
         .payment-method-title {
@@ -600,7 +608,7 @@
             border-radius: 14px;
             padding: 1.25rem 1.3rem 1.4rem;
             margin-bottom: 1.15rem;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
         }
 
         .payment-step2-heading {
@@ -885,8 +893,9 @@
             background: #f3f4f6;
             border: 1px solid #e5e7eb;
             border-radius: 10px;
-            min-height: 150px;
-            overflow: hidden;
+            height: auto;
+            min-height: 120px;
+            overflow: visible;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -894,9 +903,12 @@
         }
 
         .payment-upload-preview .license-preview-box img {
-            width: 100%;
-            height: 100%;
-            min-height: 150px;
+            display: block;
+            width: auto;
+            max-width: 100%;
+            height: auto;
+            min-height: 0;
+            max-height: 220px;
             object-fit: contain;
         }
 
