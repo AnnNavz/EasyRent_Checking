@@ -9,6 +9,13 @@
         return;
     }
 
+    var availableVehicles = ViewData["AvailableVehicles"] as IEnumerable<Vehicle> ?? Enumerable.Empty<Vehicle>();
+    var initialVehicleIds = Model?.GetNormalizedVehicleIds().ToList() ?? new List<int> { vehicle.VehicleId };
+    if (!initialVehicleIds.Contains(vehicle.VehicleId))
+    {
+        initialVehicleIds.Insert(0, vehicle.VehicleId);
+    }
+
     ViewData["Title"] = "Complete Booking";
     ViewData["ActiveNav"] = "Vehicles";
     ViewData["HideReserveButton"] = true;
@@ -24,6 +31,10 @@
     var returnDateValue = Model?.ReturnDate.Year >= 2000 ? Model.ReturnDate.ToString("yyyy-MM-dd") : "";
     var initialUnavailableDates = ViewData["InitialUnavailableDates"] as IEnumerable<string> ?? Enumerable.Empty<string>();
     var initialUnavailableJson = System.Text.Json.JsonSerializer.Serialize(initialUnavailableDates);
+    var initialVehicleIdsJson = System.Text.Json.JsonSerializer.Serialize(initialVehicleIds);
+    var primaryImageUrl = string.IsNullOrEmpty(vehicle.ImagePath)
+        ? ""
+        : Url.Content($"~/images/{vehicle.ImagePath}");
 }
 
 @section Styles {
@@ -160,6 +171,15 @@
         .client-reservation-step.is-skipped {
             opacity: 0.4;
         }
+        .client-reservation-page .admin-booking-create .payment-option-card {
+            background: #F9FAFF !important;
+        }
+        .client-reservation-page .admin-booking-create .payment-option-card:hover {
+            background: #F9FAFF !important;
+        }
+        .client-reservation-page .admin-booking-create .payment-option-card.is-selected {
+            background: #dae2f2 !important;
+        }
     </style>
 }
 
@@ -221,13 +241,57 @@
                            data-succeeding-fee="@vehicle.SucceedingFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                            data-brand="@vehicle.Brand"
                            data-model="@vehicle.Model"
-                           data-type="@vehicle.Type" />
+                           data-type="@vehicle.Type"
+                           data-type-label="@typeLabel"
+                           data-plate="@vehicle.PlateNumber"
+                           data-image="@primaryImageUrl" />
+                    <div id="selectedVehiclesHidden"></div>
+                    <div id="selectedVehiclesList" class="d-none" aria-hidden="true"></div>
                     <input type="hidden" asp-for="RentalStatus" value="Pending" />
                     <input type="hidden" asp-for="RentalOption" id="input-RentalOption" value="@Model.RentalOption" />
                     <div class="wizard-step-panel active" id="reservationStep1">
                     @{
                         var lockCustomerFields = ViewData["CustomerFieldsLocked"] as bool? == true;
                     }
+                    <!-- Vehicle Information -->
+                    <div class="rent-step-card">
+                        <div class="rent-card-head">
+                            <span class="rent-card-icon"><i class="bi bi-car-front"></i></span>
+                            <h2>Vehicle Information</h2>
+                        </div>
+                        <p class="rent-card-hint mb-3">
+                            Review the vehicles on this booking. Add more if you need extra capacity — they share one schedule and one checkout.
+                        </p>
+
+                        <div id="bookingVehiclesGallery" class="booking-vehicles-gallery" aria-live="polite"></div>
+
+                        <label class="rent-field-label mt-3" for="input-VehiclePicker">Add another vehicle</label>
+                        <div class="d-flex flex-wrap gap-2 align-items-stretch">
+                            <div class="flex-grow-1">
+                                <select id="input-VehiclePicker" class="rent-field-input form-select">
+                                    <option value="">Select a vehicle to add</option>
+                                    @foreach (var optionVehicle in availableVehicles.Where(v => v.VehicleId != vehicle.VehicleId))
+                                    {
+                                        <option value="@optionVehicle.VehicleId"
+                                                data-capacity="@optionVehicle.PassengersCount"
+                                                data-base-price="@optionVehicle.BasePrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                data-succeeding-fee="@optionVehicle.SucceedingFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                data-brand="@optionVehicle.Brand"
+                                                data-model="@optionVehicle.Model"
+                                                data-type="@optionVehicle.Type"
+                                                data-type-label="@VehicleTypes.DisplayUpper(optionVehicle.Type)"
+                                                data-plate="@optionVehicle.PlateNumber"
+                                                data-image="@(string.IsNullOrEmpty(optionVehicle.ImagePath) ? "" : Url.Content($"~/images/{optionVehicle.ImagePath}"))">
+                                            @optionVehicle.Brand @optionVehicle.Model (@optionVehicle.PlateNumber)
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <button type="button" class="rent-btn-continue" id="btnAddVehicle" style="white-space:nowrap;">+ Add vehicle</button>
+                        </div>
+                        <span class="rent-field-help">All vehicles share the same pick-up / return schedule. You can remove extras anytime before checkout.</span>
+                    </div>
+
                     <!-- Rental Information -->
                     <div class="rent-step-card">
                         <div class="rent-card-head">
@@ -519,60 +583,6 @@
                                 No payment is collected online now. You must pay within @reserveWindowDays days after submitting, or this hold expires automatically.
                             </div>
 
-                            <div class="payment-method-panel mt-4" id="acceptedMethodsPanel">
-                                <div class="payment-method-title">
-                                    <i class="bi bi-credit-card-2-front"></i>
-                                    <span>Payment Method</span>
-                                </div>
-
-                                <div class="payment-method-info-grid rent-pay-methods">
-                                    <div class="payment-method-info-card">
-                                        <div class="payment-method-info-header">
-                                            <img src="~/images/System Images/GcashImage.jpg" alt="GCash" class="payment-method-info-logo" />
-                                            <div>
-                                                <div class="payment-method-info-name">GCash</div>
-                                                <div class="payment-method-info-channel">QR only</div>
-                                            </div>
-                                        </div>
-                                        <p class="payment-method-info-desc">Scan GCash QR code and send the exact amount.</p>
-                                        <div class="payment-method-info-footer">
-                                            <i class="bi bi-qr-code"></i>
-                                            <span>QR Code provided on next</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="payment-method-info-card">
-                                        <div class="payment-method-info-header">
-                                            <img src="~/images/System Images/BDOimage.png" alt="BDO" class="payment-method-info-logo" />
-                                            <div>
-                                                <div class="payment-method-info-name">BDO</div>
-                                                <div class="payment-method-info-channel">QR only</div>
-                                            </div>
-                                        </div>
-                                        <p class="payment-method-info-desc">Scan QR code or bank transfer via BDO online banking.</p>
-                                        <div class="payment-method-info-footer">
-                                            <i class="bi bi-qr-code"></i>
-                                            <span>QR Code provided on next</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="payment-method-info-card">
-                                        <div class="payment-method-info-header">
-                                            <div class="payment-method-info-logo-fallback"><i class="bi bi-shop"></i></div>
-                                            <div>
-                                                <div class="payment-method-info-name">Walk-in</div>
-                                                <div class="payment-method-info-channel">Pay at Office</div>
-                                            </div>
-                                        </div>
-                                        <p class="payment-method-info-desc">Visit our office and pay in person. Cash or card accepted.</p>
-                                        <div class="payment-method-info-footer">
-                                            <i class="bi bi-geo-alt"></i>
-                                            <span>Address shown on confirmation</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div class="rent-step-actions rent-step-actions--split payment-type-actions">
                                 <button type="button" class="rent-btn-cancel" data-wizard-back="1">Back</button>
                                 <button type="button" class="rent-btn-continue" data-wizard-next="2" id="paymentOptionContinueBtn">
@@ -603,8 +613,8 @@
         </div>
 
         <aside class="client-details-sidebar" id="clientRateSidebar">
-            <div class="rent-vehicle-preview">
-                <div class="rent-vehicle-preview-image">
+            <div class="rent-vehicle-preview" id="rateSidebarVehiclePreview">
+                <div class="rent-vehicle-preview-image" id="rateSidebarPreviewImage">
                     @if (!string.IsNullOrEmpty(vehicle.ImagePath))
                     {
                         <img src="/images/@vehicle.ImagePath" alt="@vehicleTitle" />
@@ -615,8 +625,9 @@
                     }
                 </div>
                 <div class="rent-vehicle-preview-meta">
-                    <strong>@vehicle.Model</strong>
-                    <p>@typeLabel • @capacity seater</p>
+                    <strong id="rateSidebarPreviewName">@vehicle.Model</strong>
+                    <p id="rateSidebarPreviewSpec">@typeLabel • @capacity seater</p>
+                    <p id="rateSidebarPreviewExtra" class="rent-vehicle-preview-extra d-none"></p>
                 </div>
             </div>
             <partial name="_RateSummarySidebar" model="vehicle" />
@@ -637,6 +648,11 @@
             const pickupTimeInput = document.getElementById('input-PickupTime');
             const returnTimeInput = document.getElementById('input-ReturnTime');
             const vehicleInput = document.getElementById('input-VehicleId');
+            const vehiclePicker = document.getElementById('input-VehiclePicker');
+            const selectedVehiclesList = document.getElementById('selectedVehiclesList');
+            const selectedVehiclesHidden = document.getElementById('selectedVehiclesHidden');
+            const bookingVehiclesGallery = document.getElementById('bookingVehiclesGallery');
+            const btnAddVehicle = document.getElementById('btnAddVehicle');
             const passengerInput = document.getElementById('input-PassengerCount');
             const capacityHint = document.getElementById('capacityHint');
             const discountSelect = document.getElementById('input-Discount');
@@ -663,8 +679,227 @@
             const dropoffLocationInput = document.getElementById('DropoffLocation');
             const rateSidebar = document.getElementById('clientRateSidebar');
             const tripSidebar = document.getElementById('clientTripSummarySidebar');
-            const maxCapacity = @capacity;
+            const primaryVehicleId = Number(vehicleInput?.value || '0');
+            let selectedVehicleIds = (@Html.Raw(initialVehicleIdsJson) || []).map(Number).filter(function (id) { return id > 0; });
+            if (primaryVehicleId && selectedVehicleIds.indexOf(primaryVehicleId) < 0) {
+                selectedVehicleIds.unshift(primaryVehicleId);
+            }
             let calendar;
+
+            function getVehicleMeta(vehicleId) {
+                if (String(vehicleId) === String(primaryVehicleId) && vehicleInput) {
+                    return {
+                        id: primaryVehicleId,
+                        capacity: parseInt(vehicleInput.dataset.capacity || '0', 10) || 0,
+                        basePrice: parseFloat(vehicleInput.dataset.basePrice || '0') || 0,
+                        succeedingFee: parseFloat(vehicleInput.dataset.succeedingFee || '0') || 0,
+                        brand: vehicleInput.dataset.brand || '',
+                        model: vehicleInput.dataset.model || '',
+                        type: vehicleInput.dataset.type || '',
+                        typeLabel: vehicleInput.dataset.typeLabel || vehicleInput.dataset.type || '',
+                        plate: vehicleInput.dataset.plate || '',
+                        image: vehicleInput.dataset.image || '',
+                        locked: true
+                    };
+                }
+                const opt = vehiclePicker
+                    ? Array.from(vehiclePicker.options).find(function (o) { return String(o.value) === String(vehicleId); })
+                    : null;
+                if (!opt) return null;
+                return {
+                    id: Number(opt.value),
+                    capacity: parseInt(opt.dataset.capacity || '0', 10) || 0,
+                    basePrice: parseFloat(opt.dataset.basePrice || '0') || 0,
+                    succeedingFee: parseFloat(opt.dataset.succeedingFee || '0') || 0,
+                    brand: opt.dataset.brand || '',
+                    model: opt.dataset.model || '',
+                    type: opt.dataset.type || '',
+                    typeLabel: opt.dataset.typeLabel || opt.dataset.type || '',
+                    plate: opt.dataset.plate || '',
+                    image: opt.dataset.image || '',
+                    locked: false
+                };
+            }
+
+            function escapeHtml(value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function getSelectedVehicleMetas() {
+                return selectedVehicleIds
+                    .map(getVehicleMeta)
+                    .filter(function (meta) { return !!meta; });
+            }
+
+            function renderVehicleGallery(metas) {
+                if (!bookingVehiclesGallery) return;
+                bookingVehiclesGallery.innerHTML = metas.map(function (meta) {
+                    const name = escapeHtml((meta.brand + ' ' + meta.model).trim());
+                    const typeLabel = escapeHtml(meta.typeLabel || meta.type || 'Vehicle');
+                    const plate = escapeHtml(meta.plate || '—');
+                    const media = meta.image
+                        ? '<img src="' + escapeHtml(meta.image) + '" alt="' + name + '" />'
+                        : '<span class="booking-vehicle-info-placeholder" aria-hidden="true"><i class="bi bi-car-front"></i></span>';
+                    const removeBtn = meta.locked
+                        ? '<span class="booking-vehicle-info-badge">Primary</span>'
+                        : '<button type="button" class="booking-vehicle-info-remove" data-remove-vehicle="' + meta.id + '" aria-label="Remove vehicle"><i class="bi bi-x-lg"></i></button>';
+                    return ''
+                        + '<article class="booking-vehicle-info-card" data-vehicle-id="' + meta.id + '">'
+                        +   '<div class="booking-vehicle-info-media">' + media + '</div>'
+                        +   '<div class="booking-vehicle-info-body">'
+                        +     '<span class="booking-vehicle-info-type">' + typeLabel + '</span>'
+                        +     '<h3 class="booking-vehicle-info-name">' + name + '</h3>'
+                        +     '<p class="booking-vehicle-info-specs">' + plate + ' • ' + meta.capacity + ' seater</p>'
+                        +     '<p class="booking-vehicle-info-rates">'
+                        +       'Base ' + formatPeso(meta.basePrice)
+                        +       ' · +' + formatPeso(meta.succeedingFee) + '/hr after 8h'
+                        +     '</p>'
+                        +   '</div>'
+                        +   '<div class="booking-vehicle-info-actions">' + removeBtn + '</div>'
+                        + '</article>';
+                }).join('');
+            }
+
+            function updateRateSidebarPreview(metas) {
+                const primary = metas[0];
+                if (!primary) return;
+                const imageWrap = document.getElementById('rateSidebarPreviewImage');
+                const nameEl = document.getElementById('rateSidebarPreviewName');
+                const specEl = document.getElementById('rateSidebarPreviewSpec');
+                const extraEl = document.getElementById('rateSidebarPreviewExtra');
+                if (imageWrap) {
+                    if (primary.image) {
+                        imageWrap.innerHTML = '<img src="' + escapeHtml(primary.image) + '" alt="' + escapeHtml((primary.brand + ' ' + primary.model).trim()) + '" />';
+                    } else {
+                        imageWrap.innerHTML = '<i class="bi bi-car-front"></i>';
+                    }
+                }
+                if (nameEl) {
+                    nameEl.textContent = metas.length > 1
+                        ? (metas.length + ' vehicles')
+                        : ((primary.brand + ' ' + primary.model).trim() || primary.model);
+                }
+                if (specEl) {
+                    specEl.textContent = metas.length > 1
+                        ? ('Shared schedule • up to ' + Math.max.apply(null, metas.map(function (m) { return m.capacity || 0; })) + ' seater')
+                        : ((primary.typeLabel || primary.type || 'Vehicle') + ' • ' + primary.capacity + ' seater');
+                }
+                if (extraEl) {
+                    if (metas.length > 1) {
+                        extraEl.textContent = metas.map(function (m) {
+                            return (m.brand + ' ' + m.model).trim();
+                        }).join(' · ');
+                        extraEl.classList.remove('d-none');
+                    } else {
+                        extraEl.textContent = '';
+                        extraEl.classList.add('d-none');
+                    }
+                }
+            }
+
+            function updateRatePackageCards(metas, basePrice, succeedingFee) {
+                const count = metas.length || 1;
+                const basePriceEl = document.getElementById('ratePackageBasePrice');
+                const succeedingPriceEl = document.getElementById('ratePackageSucceedingPrice');
+                const baseSubtitleEl = document.getElementById('ratePackageBaseSubtitle');
+                const succeedingSubtitleEl = document.getElementById('ratePackageSucceedingSubtitle');
+                const succeedingNoteEl = document.getElementById('ratePackageSucceedingNote');
+                const breakdownEl = document.getElementById('rateVehicleBreakdown');
+                const baseLabelEl = document.getElementById('rateBaseLabel');
+
+                if (basePriceEl) basePriceEl.textContent = formatPeso(basePrice);
+                if (succeedingPriceEl) succeedingPriceEl.textContent = formatPeso(succeedingFee);
+                if (baseSubtitleEl) {
+                    baseSubtitleEl.textContent = count > 1
+                        ? ('(First 8 hours × ' + count + ' vehicles)')
+                        : '(First 8 hours)';
+                }
+                if (succeedingSubtitleEl) {
+                    succeedingSubtitleEl.textContent = count > 1
+                        ? ('(Combined per hour after 8 hours)')
+                        : '(Per hour (after 8 hours))';
+                }
+                if (succeedingNoteEl) {
+                    succeedingNoteEl.innerHTML = '<strong>Note:</strong> Fuel cost for succeeding is charged separately and not included in '
+                        + formatPeso(succeedingFee) + '/per hour rate.';
+                }
+                if (baseLabelEl) {
+                    baseLabelEl.textContent = count > 1
+                        ? ('Base packages (8 hrs × ' + count + ')')
+                        : 'Base package (8 hrs)';
+                }
+                if (breakdownEl) {
+                    if (count > 1) {
+                        breakdownEl.classList.remove('d-none');
+                        breakdownEl.innerHTML = metas.map(function (meta) {
+                            return '<div class="client-rate-vehicle-line">'
+                                + '<span>' + escapeHtml((meta.brand + ' ' + meta.model).trim()) + '</span>'
+                                + '<span>' + formatPeso(meta.basePrice) + ' + ' + formatPeso(meta.succeedingFee) + '/hr</span>'
+                                + '</div>';
+                        }).join('');
+                    } else {
+                        breakdownEl.classList.add('d-none');
+                        breakdownEl.innerHTML = '';
+                    }
+                }
+            }
+
+            function syncVehicleFormFields() {
+                if (selectedVehiclesHidden) {
+                    selectedVehiclesHidden.innerHTML = selectedVehicleIds.map(function (id, index) {
+                        return '<input type="hidden" name="VehicleIds[' + index + ']" value="' + id + '" />';
+                    }).join('');
+                }
+                const metas = getSelectedVehicleMetas();
+                if (selectedVehiclesList) {
+                    selectedVehiclesList.innerHTML = metas.map(function (meta) {
+                        const label = (meta.brand + ' ' + meta.model + (meta.plate ? ' (' + meta.plate + ')' : '')).trim();
+                        const removeBtn = meta.locked
+                            ? ''
+                            : '<button type="button" class="selected-vehicle-remove" data-remove-vehicle="' + meta.id + '" aria-label="Remove vehicle">&times;</button>';
+                        return '<span class="selected-vehicle-chip" data-vehicle-id="' + meta.id + '"><span>' + label + '</span>' + removeBtn + '</span>';
+                    }).join('');
+                }
+                renderVehicleGallery(metas);
+                updateRateSidebarPreview(metas);
+                if (vehiclePicker) {
+                    Array.from(vehiclePicker.options).forEach(function (opt) {
+                        if (!opt.value) return;
+                        opt.disabled = selectedVehicleIds.indexOf(Number(opt.value)) >= 0;
+                    });
+                }
+            }
+
+            function addSelectedVehicle(vehicleId) {
+                const id = Number(vehicleId);
+                if (!id || selectedVehicleIds.indexOf(id) >= 0) return false;
+                selectedVehicleIds.push(id);
+                syncVehicleFormFields();
+                updateCapacityHint();
+                refreshAvailabilityAndFares();
+                return true;
+            }
+
+            function removeSelectedVehicle(vehicleId) {
+                const id = Number(vehicleId);
+                if (id === primaryVehicleId) return;
+                selectedVehicleIds = selectedVehicleIds.filter(function (x) { return x !== id; });
+                syncVehicleFormFields();
+                updateCapacityHint();
+                refreshAvailabilityAndFares();
+            }
+
+            function refreshAvailabilityAndFares() {
+                recalculateRate();
+                if (typeof refreshFareTotals === 'function') refreshFareTotals();
+                if (calendar && typeof calendar.loadAvailability === 'function') {
+                    calendar.loadAvailability();
+                }
+            }
 
             function formatPeso(amount) {
                 return '₱' + Math.round(amount).toLocaleString('en-PH');
@@ -675,10 +910,13 @@
 
                 const emptyEl = document.getElementById('rateEstimateEmpty');
                 const detailsEl = document.getElementById('rateEstimateDetails');
-                const basePrice = parseFloat(rateRoot.dataset.basePrice) || 0;
-                const succeedingFee = parseFloat(rateRoot.dataset.succeedingFee) || 0;
                 const baseHours = parseInt(rateRoot.dataset.baseHours, 10) || 8;
                 const discountPercent = parseFloat(rateRoot.dataset.discountPercent) || 10;
+                const metas = getSelectedVehicleMetas();
+                const basePrice = metas.reduce(function (sum, meta) { return sum + meta.basePrice; }, 0);
+                const succeedingFee = metas.reduce(function (sum, meta) { return sum + meta.succeedingFee; }, 0);
+                updateRatePackageCards(metas, basePrice, succeedingFee);
+                updateRateSidebarPreview(metas);
 
                 const pickupDate = pickupDateInput.value;
                 const returnDate = returnDateInput.value;
@@ -688,7 +926,8 @@
                 if (!pickupDate || !returnDate) {
                     emptyEl.classList.add('d-none');
                     detailsEl.classList.remove('d-none');
-                    document.getElementById('rateEstimateTitle').textContent = 'EXAMPLE: 10-HOUR TRIP';
+                    document.getElementById('rateEstimateTitle').textContent =
+                        metas.length > 1 ? ('EXAMPLE: 10-HOUR TRIP (' + metas.length + ' vehicles)') : 'EXAMPLE: 10-HOUR TRIP';
                     document.getElementById('rateBaseAmount').textContent = formatPeso(basePrice);
                     document.getElementById('rateSucceedingRow').classList.remove('d-none');
                     document.getElementById('rateSucceedingLabel').textContent =
@@ -719,7 +958,8 @@
 
                 emptyEl.classList.add('d-none');
                 detailsEl.classList.remove('d-none');
-                document.getElementById('rateEstimateTitle').textContent = 'YOUR TRIP ESTIMATE';
+                document.getElementById('rateEstimateTitle').textContent =
+                    metas.length > 1 ? ('YOUR TRIP ESTIMATE (' + metas.length + ' vehicles)') : 'YOUR TRIP ESTIMATE';
 
                 document.getElementById('rateBaseAmount').textContent = formatPeso(basePrice);
 
@@ -748,8 +988,25 @@
             }
 
             function updateCapacityHint() {
+                const metas = getSelectedVehicleMetas();
+                const maxCapacity = metas.length
+                    ? Math.max.apply(null, metas.map(function (m) { return m.capacity || 0; }))
+                    : @capacity;
                 if (capacityHint) {
                     capacityHint.textContent = 'Maximum capacity: ' + maxCapacity + ' passengers';
+                }
+                if (passengerInput) {
+                    const current = parseInt(passengerInput.value || '0', 10);
+                    passengerInput.innerHTML = '<option value="">Select Capacity</option>';
+                    for (let i = 1; i <= maxCapacity; i++) {
+                        const opt = document.createElement('option');
+                        opt.value = String(i);
+                        opt.textContent = String(i);
+                        passengerInput.appendChild(opt);
+                    }
+                    if (current > 0 && current <= maxCapacity) {
+                        passengerInput.value = String(current);
+                    }
                 }
             }
 
@@ -853,8 +1110,13 @@
                     return false;
                 }
                 const count = parseInt(passengerInput.value, 10);
-                if (!count || count < 1 || count > maxCapacity) {
-                    alert('Passenger count must be between 1 and ' + maxCapacity + '.');
+                const capacityLimit = Math.max.apply(null, getSelectedVehicleMetas().map(function (m) { return m.capacity || 0; }).concat([0]));
+                if (!count || count < 1 || count > capacityLimit) {
+                    alert('Passenger count must be between 1 and ' + capacityLimit + '.');
+                    return false;
+                }
+                if (!selectedVehicleIds.length) {
+                    alert('Please keep at least one vehicle on this booking.');
                     return false;
                 }
                 if (discountSelect.value === 'Yes' && !(fileInput.files && fileInput.files[0])) {
@@ -881,8 +1143,9 @@
                     returnDateInput.value,
                     returnTimeInput.value
                 );
-                const basePrice = parseFloat(vehicleInput.dataset.basePrice || '0');
-                const succeedingFee = parseFloat(vehicleInput.dataset.succeedingFee || '0');
+                const metas = getSelectedVehicleMetas();
+                const basePrice = metas.reduce(function (sum, meta) { return sum + meta.basePrice; }, 0);
+                const succeedingFee = metas.reduce(function (sum, meta) { return sum + meta.succeedingFee; }, 0);
                 const succeedingHours = Math.max(0, hours - 8);
                 const succeedingAmount = succeedingHours * succeedingFee;
                 const hasDiscount = discountSelect.value === 'Yes';
@@ -892,7 +1155,7 @@
                 const percent = parseFloat(paymentBlock?.dataset.depositPercent || '5');
                 // Partial payment = 5% of the total rental amount.
                 const deposit = Math.round((total * (percent / 100)) * 100) / 100;
-                return { hours, succeedingHours, succeedingAmount, discountedBase: total, total, deposit };
+                return { hours, succeedingHours, succeedingAmount, discountedBase: total, total, deposit, vehicleCount: metas.length };
             }
 
             function computeFareTotal() {
@@ -1069,7 +1332,6 @@
                     card.classList.toggle('is-selected', card.getAttribute('data-pay-option') === value);
                 });
                 payLaterNotice?.classList.toggle('d-none', value !== 'Reserve');
-                document.getElementById('acceptedMethodsPanel')?.classList.toggle('d-none', value === 'Reserve');
 
                 const continueBtn = document.getElementById('paymentOptionContinueBtn');
                 if (continueBtn) {
@@ -1202,10 +1464,24 @@
                     discount: discountSelect.value,
                     discountFileName: (fileInput.files && fileInput.files[0]) ? fileInput.files[0].name : '',
                     notes: notesInput ? notesInput.value.trim() : '',
-                    vehicleName: ((vehicleInput.dataset.brand || '') + ' ' + (vehicleInput.dataset.model || '')).trim(),
-                    vehicleType: vehicleInput.dataset.type || '',
-                    basePrice: parseFloat(vehicleInput.dataset.basePrice || '0'),
-                    succeedingFee: parseFloat(vehicleInput.dataset.succeedingFee || '0'),
+                    vehicleName: (function () {
+                        const metas = getSelectedVehicleMetas();
+                        if (!metas.length) return '';
+                        if (metas.length === 1) {
+                            return (metas[0].brand + ' ' + metas[0].model).trim();
+                        }
+                        return metas.map(function (m) {
+                            return (m.brand + ' ' + m.model).trim();
+                        }).join(', ');
+                    })(),
+                    vehicleType: (function () {
+                        const metas = getSelectedVehicleMetas();
+                        if (!metas.length) return '';
+                        if (metas.length === 1) return metas[0].type || '';
+                        return metas.length + ' vehicles';
+                    })(),
+                    basePrice: getSelectedVehicleMetas().reduce(function (sum, meta) { return sum + meta.basePrice; }, 0),
+                    succeedingFee: getSelectedVehicleMetas().reduce(function (sum, meta) { return sum + meta.succeedingFee; }, 0),
                     baseHours: 8,
                     paymentType: payLater ? null : (paymentTypeInput?.value || ''),
                     paymentMethod: payLater ? null : (paymentMethodInput?.value || ''),
@@ -1296,7 +1572,11 @@
                 paymentDateInput.value = now.toISOString().slice(0, 16);
             }
 
-            discountSelect.addEventListener('change', toggleDiscountUpload);
+            discountSelect.addEventListener('change', function () {
+                toggleDiscountUpload();
+                recalculateRate();
+                if (typeof refreshFareTotals === 'function') refreshFareTotals();
+            });
             pickupTimeInput.addEventListener('change', recalculateRate);
             returnTimeInput.addEventListener('change', recalculateRate);
             bindDiscountUpload(frontUploadZone, fileInput, showFrontDiscountPreview);
@@ -1306,14 +1586,38 @@
             frontPreviewBox?.addEventListener('click', function () { fileInput?.click(); });
             backPreviewBox?.addEventListener('click', function () { backFileInput?.click(); });
 
+            btnAddVehicle?.addEventListener('click', function () {
+                const value = vehiclePicker?.value || '';
+                if (!value) {
+                    alert('Select a vehicle to add.');
+                    return;
+                }
+                if (addSelectedVehicle(value)) {
+                    vehiclePicker.value = '';
+                }
+            });
+            bookingVehiclesGallery?.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-remove-vehicle]');
+                if (!btn) return;
+                removeSelectedVehicle(btn.getAttribute('data-remove-vehicle'));
+            });
+            selectedVehiclesList?.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-remove-vehicle]');
+                if (!btn) return;
+                removeSelectedVehicle(btn.getAttribute('data-remove-vehicle'));
+            });
+
+            syncVehicleFormFields();
             updateCapacityHint();
             toggleDiscountUpload();
             calendar = AvailabilityCalendar.init({
                 vehicleInput: vehicleInput,
+                getVehicleIds: function () { return selectedVehicleIds.slice(); },
                 availabilityUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Availability", "ClientSide"))),
                 initialUnavailable: @Html.Raw(initialUnavailableJson),
                 onDatesChange: recalculateRate
             });
+            recalculateRate();
         })();
     </script>
 }

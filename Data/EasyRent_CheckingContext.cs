@@ -15,6 +15,7 @@ namespace EasyRent_Checking.Data
 		public DbSet<AdminProfile> AdminProfiles { get; set; } = default!;
 		public DbSet<Rental> Rentals { get; set; } = default!;
 		public DbSet<RentalDetails> RentalDetails { get; set; } = default!;
+		public DbSet<RentalVehicle> RentalVehicles { get; set; } = default!;
 		public DbSet<Payment> Payments { get; set; } = default!;
 		public DbSet<Driver> Drivers { get; set; } = default!;
 		public DbSet<Vehicle> Vehicles { get; set; } = default!;
@@ -96,6 +97,25 @@ namespace EasyRent_Checking.Data
 				entity.HasIndex(e => e.RentalID).IsUnique();
 			});
 
+			modelBuilder.Entity<RentalVehicle>(entity =>
+			{
+				entity.ToTable("RentalVehicle");
+				entity.HasKey(e => e.RentalVehicleId);
+
+				entity.HasOne(e => e.Rental)
+					.WithMany(r => r.RentalVehicles)
+					.HasForeignKey(e => e.RentalId)
+					.OnDelete(DeleteBehavior.Cascade);
+
+				entity.HasOne(e => e.Vehicle)
+					.WithMany()
+					.HasForeignKey(e => e.VehicleId)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				entity.HasIndex(e => new { e.RentalId, e.VehicleId }).IsUnique();
+				entity.HasIndex(e => e.VehicleId);
+			});
+
 			modelBuilder.Entity<Transit>(entity =>
 			{
 				entity.ToTable("Transit");
@@ -116,7 +136,14 @@ namespace EasyRent_Checking.Data
 					.HasForeignKey(e => e.VehicleID)
 					.OnDelete(DeleteBehavior.Restrict);
 
-				entity.HasIndex(e => e.RentalID).IsUnique();
+				entity.HasOne(e => e.RentalVehicle)
+					.WithMany()
+					.HasForeignKey(e => e.RentalVehicleId)
+					.OnDelete(DeleteBehavior.SetNull);
+
+				// Multi-vehicle: one transit per vehicle line (not unique on RentalID alone).
+				entity.HasIndex(e => new { e.RentalID, e.VehicleID }).IsUnique();
+				entity.HasIndex(e => e.RentalVehicleId);
 			});
 
 			modelBuilder.Entity<Driver>().ToTable("Driver");

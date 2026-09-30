@@ -38,6 +38,10 @@ namespace EasyRent_Checking.Models
 		[Display(Name = "Back of Valid ID")]
 		public string? BackValidIDImagePath { get; set; }
 
+		[StringLength(255)]
+		[Display(Name = "Profile Image")]
+		public string? ProfileImagePath { get; set; }
+
 		[Required(ErrorMessage = "Status is required.")]
 		[Display(Name = "Status")]
 		public Status Status { get; set; } = Status.Pending;

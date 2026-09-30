@@ -67,6 +67,11 @@ namespace EasyRent_Checking.ViewModels
 		[Display(Name = "Email sign-in code")]
 		public bool LoginMfaEnabled { get; set; }
 
+		[NotMapped]
+		[MustBeTrue(ErrorMessage = "You must agree to the Terms & Conditions and Privacy Policy.")]
+		[Display(Name = "Terms and Privacy")]
+		public bool AgreeTerms { get; set; }
+
 		public static CustomerAccountInputModel FromEntities(User user, CustomerProfile profile)
 		{
 			return new CustomerAccountInputModel

@@ -74,9 +74,9 @@
         <div class="client-footer-bottom-inner">
             <p>&copy; 2026 EasyRent. All rights reserved.</p>
             <p>
-                <a href="#terms">Terms &amp; Conditions</a>
+                <a asp-controller="ClientSide" asp-action="TermsConditions" data-legal-modal="terms">Terms &amp; Conditions</a>
                 <span aria-hidden="true">•</span>
-                <a asp-controller="ClientSide" asp-action="PrivacyPolicy">Privacy &amp; Policy</a>
+                <a asp-controller="ClientSide" asp-action="PrivacyPolicy" data-legal-modal="privacy">Privacy &amp; Policy</a>
             </p>
         </div>
     </div>

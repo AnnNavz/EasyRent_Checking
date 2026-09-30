@@ -35,9 +35,16 @@ namespace EasyRent_Checking.ViewModels
 		[DataType(DataType.DateTime)]
 		public DateTime? PaymentDueAt { get; set; }
 
-		[Required(ErrorMessage = "Vehicle is required.")]
+		[Required(ErrorMessage = "At least one vehicle is required.")]
 		[Display(Name = "Vehicle")]
 		public int VehicleId { get; set; }
+
+		/// <summary>
+		/// All vehicles on this booking (includes <see cref="VehicleId"/> as first).
+		/// Bound from hidden inputs on admin create/edit.
+		/// </summary>
+		[Display(Name = "Vehicles")]
+		public List<int> VehicleIds { get; set; } = new();
 
 		[Required(ErrorMessage = "Pickup location is required.")]
 		[StringLength(200, ErrorMessage = "Pickup location cannot exceed 200 characters.")]
@@ -128,9 +135,21 @@ namespace EasyRent_Checking.ViewModels
 		public static RentalInputModel FromEntities(
 			Rental rental,
 			RentalDetails? details = null,
-			Payment? payment = null)
+			Payment? payment = null,
+			IEnumerable<RentalVehicle>? rentalVehicles = null)
 		{
 			details ??= rental.Details;
+			var vehicleIds = (rentalVehicles ?? rental.RentalVehicles ?? Enumerable.Empty<RentalVehicle>())
+				.OrderBy(v => v.SortOrder)
+				.ThenBy(v => v.RentalVehicleId)
+				.Select(v => v.VehicleId)
+				.Distinct()
+				.ToList();
+			if (vehicleIds.Count == 0 && details?.VehicleId > 0)
+			{
+				vehicleIds.Add(details.VehicleId);
+			}
+
 			return new RentalInputModel
 			{
 				RentalId = rental.RentalId,
@@ -141,7 +160,10 @@ namespace EasyRent_Checking.ViewModels
 				RentalStatus = rental.RentalStatus,
 				RentalOption = rental.RentalOption,
 				PaymentDueAt = rental.PaymentDueAt,
-				VehicleId = details?.VehicleId ?? 0,
+				VehicleId = vehicleIds.FirstOrDefault() > 0
+					? vehicleIds.First()
+					: (details?.VehicleId ?? 0),
+				VehicleIds = vehicleIds,
 				PickupLocation = details?.PickupLocation ?? string.Empty,
 				DropoffLocation = details?.DropoffLocation ?? string.Empty,
 				PickupDate = details?.PickupDate ?? default,
@@ -165,6 +187,24 @@ namespace EasyRent_Checking.ViewModels
 			};
 		}
 
+		public IReadOnlyList<int> GetNormalizedVehicleIds()
+		{
+			var ids = (VehicleIds ?? new List<int>())
+				.Where(id => id > 0)
+				.Distinct()
+				.ToList();
+			if (ids.Count == 0 && VehicleId > 0)
+			{
+				ids.Add(VehicleId);
+			}
+			else if (VehicleId > 0 && !ids.Contains(VehicleId))
+			{
+				ids.Insert(0, VehicleId);
+			}
+
+			return ids;
+		}
+
 		public void ApplyTo(Rental rental, RentalDetails details)
 		{
 			rental.CustomerName = CustomerName;
@@ -173,6 +213,10 @@ namespace EasyRent_Checking.ViewModels
 			rental.RentalStatus = RentalStatus;
 			rental.RentalOption = RentalOption;
 			rental.PaymentDueAt = PaymentDueAt;
+
+			var vehicleIds = GetNormalizedVehicleIds();
+			VehicleId = vehicleIds.FirstOrDefault();
+			VehicleIds = vehicleIds.ToList();
 
 			details.VehicleId = VehicleId;
 			details.PickupLocation = PickupLocation;

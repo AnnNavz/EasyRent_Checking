@@ -25,4 +25,12 @@ namespace EasyRent_Checking.ViewModels
 		public string Comment { get; set; } = string.Empty;
 		public double Rating { get; set; }
 	}
+
+	public class SavedVehiclesPageViewModel
+	{
+		public IList<HomeVehicleCard> Items { get; set; } = new List<HomeVehicleCard>();
+		public string Sort { get; set; } = "newest";
+		public string Filter { get; set; } = "all";
+		public IList<string> TypeFilters { get; set; } = new List<string>();
+	}
 }

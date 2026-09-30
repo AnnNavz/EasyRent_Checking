@@ -17,6 +17,14 @@
     justify-content: center;
     flex-shrink: 0;
     font-size: 2.1rem;
+    overflow: hidden;
+}
+
+.customer-details-page .customer-details-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .customer-details-page .customer-details-personal-grid {

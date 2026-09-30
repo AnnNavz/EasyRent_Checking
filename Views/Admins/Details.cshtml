@@ -1,0 +1,131 @@
+@model EasyRent_Checking.Models.AdminProfile
+@using EasyRent_Checking.Models
+@using System.Globalization
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Admin Details";
+    ViewData["ActivePage"] = "Admins";
+
+    var email = Model.User?.Email ?? "—";
+    var createdAt = Model.User?.CreatedAt;
+    var adminLabel = Model.AdminId.ToString("D8");
+    var currentAdminId = ViewData["CurrentAdminId"] as int?;
+    var canDeleteAdmins = ViewData["CanDeleteAdmins"] as bool? ?? false;
+    var isCurrent = currentAdminId.HasValue && Model.AdminId == currentAdminId.Value;
+    var safeName = (Model.FullName ?? "this admin")
+        .Replace("\\", "\\\\")
+        .Replace("'", "\\'");
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "AD";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0][..2].ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
+        }
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    string FormatTimestamp(DateTime value) =>
+        value.ToString("MMM. d, yyyy", CultureInfo.InvariantCulture)
+        + " • "
+        + value.ToString("h:mm tt", CultureInfo.InvariantCulture);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/rentals.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/customer-details.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admins.css" asp-append-version="true" />
+}
+
+<div class="container-fluid px-4 py-3 reservation-details-page customer-details-page">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+            <div class="reservation-details-id-card mb-3">
+                <div class="reservation-details-id-main">
+                    <span class="reservation-view-id-label">Admin ID</span>
+                    <h1 class="reservation-view-id mb-0">@adminLabel</h1>
+                </div>
+                <span class="booking-status-badge @(Model.IsSelfDeactivated ? "booking-status-cancelled" : "booking-status-approved")">
+                    <i class="bi @(Model.IsSelfDeactivated ? "bi-pause-circle" : "bi-shield-lock")"></i>@(Model.IsSelfDeactivated ? "Inactive" : "Admin")
+                </span>
+            </div>
+
+            <div class="reservation-view-card mb-4">
+                <div class="customer-details-personal">
+                    <div class="customer-details-avatar is-initials" aria-hidden="true">
+                        @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+                        {
+                            <img src="~/images/@Model.ProfileImagePath" alt="" />
+                        }
+                        else
+                        {
+                            @GetInitials(Model.FullName)
+                        }
+                    </div>
+                    <div class="customer-details-personal-grid">
+                        <div>
+                            <span class="reservation-view-label">Full Name</span>
+                            <span class="reservation-view-value">@Model.FullName</span>
+                        </div>
+                        <div>
+                            <span class="reservation-view-label">Email Address</span>
+                            <span class="reservation-view-value">@email</span>
+                        </div>
+                        <div>
+                            <span class="reservation-view-label">Role</span>
+                            <span class="reservation-view-value">Admin</span>
+                        </div>
+                        <div>
+                            <span class="reservation-view-label">Member since</span>
+                            <span class="reservation-view-value">@AdminDates.Format(createdAt)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="details-page-actions reservation-details-side-actions mb-3">
+                <a asp-action="Index" class="btn btn-page-back">Back</a>
+            </div>
+
+            <div class="reservation-view-side-card mb-4">
+                <h6 class="reservation-view-side-title">
+                    <i class="bi bi-calendar3 me-2"></i>Account Activity
+                </h6>
+                <div class="customer-activity-timeline">
+                    <div class="customer-activity-item">
+                        <span class="customer-activity-dot"></span>
+                        <div>
+                            <strong>
+                                @(createdAt.HasValue ? FormatTimestamp(createdAt.Value) : "—")
+                            </strong>
+                            <span>Admin account created</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (canDeleteAdmins && !isCurrent)
+                {
+                    <button type="button" class="btn reservation-btn-reject w-100" onclick="openDeletePopup('@Model.AdminId', '@safeName')">
+                        Delete Admin
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@{
+    ViewData["DeleteModalId"] = "adminDeletePopup";
+    ViewData["DeleteHiddenInputId"] = "popupAdminId";
+    ViewData["DeleteHiddenInputName"] = "adminid";
+    ViewData["DeleteMessageId"] = "deletePopupMessage";
+    ViewData["DeleteEntityLabel"] = "admin";
+}
+<partial name="_DeleteConfirmModal" />

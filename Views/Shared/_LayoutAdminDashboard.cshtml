@@ -1,4 +1,8 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using System.Security.Claims
+@using EasyRent_Checking.Data
+@using Microsoft.EntityFrameworkCore
+@inject EasyRent_CheckingContext Db
 @{
     var activePage = ViewData["ActivePage"]?.ToString();
     var isRentalSection = activePage is "Rentals" or "Transit";
@@ -14,6 +18,19 @@
             ? adminDisplayName.Trim()[..2].ToUpperInvariant()
             : adminDisplayName.Trim()[..1].ToUpperInvariant())
         : "AD";
+    string? adminProfileImageUrl = null;
+    if (User.Identity?.IsAuthenticated == true
+        && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var adminUserId))
+    {
+        var adminImagePath = Db.AdminProfiles.AsNoTracking()
+            .Where(p => p.AdminId == adminUserId)
+            .Select(p => p.ProfileImagePath)
+            .FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(adminImagePath))
+        {
+            adminProfileImageUrl = Url.Content("~/images/" + adminImagePath);
+        }
+    }
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -39,9 +56,19 @@
     {
         <link rel="stylesheet" href="~/css/admin/vehicles.css" asp-append-version="true" />
     }
-    else if (activePage == "Customers")
+    else if (activePage == "Customers" || activePage == "Admins")
     {
         <link rel="stylesheet" href="~/css/admin/customers.css" asp-append-version="true" />
+        @if (activePage == "Admins")
+        {
+            <link rel="stylesheet" href="~/css/admin/admins.css" asp-append-version="true" />
+        }
+    }
+    else if (activePage == "AccountSettings")
+    {
+        <link rel="stylesheet" href="~/css/client/auth.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/client/account-settings.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/admin/admin-account-settings.css" asp-append-version="true" />
     }
     else if (activePage == "SystemLogs")
     {
@@ -192,12 +219,30 @@
                             data-bs-toggle="dropdown"
                             aria-expanded="false"
                             title="Admin profile">
-                        <div class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold">@adminInitials</div>
+                        <div class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold">
+                            @if (!string.IsNullOrEmpty(adminProfileImageUrl))
+                            {
+                                <img src="@adminProfileImageUrl" alt="" />
+                            }
+                            else
+                            {
+                                @adminInitials
+                            }
+                        </div>
                         <span class="profile-name">@adminDisplayName</span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end admin-profile-menu shadow border-0">
                         <div class="admin-profile-menu-header">
-                            <div class="admin-profile-menu-avatar" aria-hidden="true">@adminInitials.Substring(0, 1)</div>
+                            <div class="admin-profile-menu-avatar" aria-hidden="true">
+                                @if (!string.IsNullOrEmpty(adminProfileImageUrl))
+                                {
+                                    <img src="@adminProfileImageUrl" alt="" />
+                                }
+                                else
+                                {
+                                    @adminInitials.Substring(0, 1)
+                                }
+                            </div>
                             <div class="admin-profile-menu-identity">
                                 <span class="admin-profile-menu-name">@adminDisplayName</span>
                                 <span class="admin-profile-menu-role">System Administrator</span>
@@ -207,22 +252,11 @@
 
                         <div class="admin-profile-menu-divider" role="separator"></div>
 
-                        <a class="admin-profile-menu-item" asp-controller="Admins" asp-action="Index">
+                        <a class="admin-profile-menu-item" asp-controller="Admins" asp-action="Settings">
                             <i class="bi bi-gear admin-profile-menu-icon" aria-hidden="true"></i>
                             <span class="admin-profile-menu-copy">
                                 <span class="admin-profile-menu-item-title">Account Settings</span>
                                 <span class="admin-profile-menu-item-sub">Password, preferences, security</span>
-                            </span>
-                            <i class="bi bi-chevron-right admin-profile-menu-chevron" aria-hidden="true"></i>
-                        </a>
-
-                        <div class="admin-profile-menu-divider" role="separator"></div>
-
-                        <a class="admin-profile-menu-item" asp-controller="SystemLogs" asp-action="Index">
-                            <i class="bi bi-clock-history admin-profile-menu-icon" aria-hidden="true"></i>
-                            <span class="admin-profile-menu-copy">
-                                <span class="admin-profile-menu-item-title">Activity Logs</span>
-                                <span class="admin-profile-menu-item-sub">View create, approve, and delete history</span>
                             </span>
                             <i class="bi bi-chevron-right admin-profile-menu-chevron" aria-hidden="true"></i>
                         </a>
@@ -244,7 +278,10 @@
         <div class="admin-main-wrapper">
             <main>
                 <div class="container-fluid px-0">
-                    <partial name="_AdminFlashMessages" />
+                    @if (activePage != "AccountSettings")
+                    {
+                        <partial name="_AdminFlashMessages" />
+                    }
                     @RenderBody()
                 </div>
             </main>

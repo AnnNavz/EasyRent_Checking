@@ -8,9 +8,14 @@
     ViewData["ActivePage"] = "Rentals";
 
     var details = Model?.Details;
-    var vehicle = details?.Vehicle;
+    var rentalVehicles = (Model?.RentalVehicles ?? Enumerable.Empty<RentalVehicle>())
+        .OrderBy(rv => rv.SortOrder)
+        .ThenBy(rv => rv.RentalVehicleId)
+        .ToList();
+    var vehicle = rentalVehicles.FirstOrDefault()?.Vehicle ?? details?.Vehicle;
     var latestPayment = ViewData["LatestPayment"] as Payment;
     var transit = ViewData["Transit"] as Transit;
+    var transits = ViewData["Transits"] as IList<Transit> ?? new List<Transit>();
     var isPending = Model?.RentalStatus == RentalStatus.Pending;
     var isApproved = Model?.RentalStatus == RentalStatus.Approved;
     var isCancelled = Model?.RentalStatus == RentalStatus.Cancelled;
@@ -142,11 +147,36 @@
                             }
                         </div>
                         <div>
-                            <div class="reservation-view-vehicle-label">Selected Vehicle</div>
-                            <div class="reservation-view-vehicle-name">
-                                @(vehicle != null ? $"{vehicle.Model} {vehicle.Brand}" : "Unassigned")
+                            <div class="reservation-view-vehicle-label">
+                                @(rentalVehicles.Count > 1 ? $"Selected Vehicles ({rentalVehicles.Count})" : "Selected Vehicle")
                             </div>
-                            <div class="reservation-view-vehicle-type">@vehicleTypeLabel</div>
+                            <div class="reservation-view-vehicle-name">
+                                @if (rentalVehicles.Count > 0)
+                                {
+                                    @string.Join(", ", rentalVehicles.Select(rv =>
+                                        rv.Vehicle != null
+                                            ? $"{rv.Vehicle.Model} {rv.Vehicle.Brand}".Trim()
+                                            : $"Vehicle #{rv.VehicleId}"))
+                                }
+                                else if (vehicle != null)
+                                {
+                                    @($"{vehicle.Model} {vehicle.Brand}")
+                                }
+                                else
+                                {
+                                    @:Unassigned
+                                }
+                            </div>
+                            <div class="reservation-view-vehicle-type">
+                                @if (rentalVehicles.Count > 1)
+                                {
+                                    @:Multiple vehicles · shared schedule
+                                }
+                                else
+                                {
+                                    @vehicleTypeLabel
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>

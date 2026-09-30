@@ -158,7 +158,7 @@
 .driver-create-wizard .driver-profile-upload-circle img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 
 .driver-create-wizard .driver-profile-upload-label {
@@ -309,7 +309,7 @@
 .driver-create-wizard .driver-review-avatar img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 
 .driver-create-wizard .driver-review-avatar i {

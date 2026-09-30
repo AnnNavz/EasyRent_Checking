@@ -28,6 +28,13 @@ namespace EasyRent_Checking.Models
 		[ForeignKey(nameof(VehicleID))]
 		public Vehicle? Vehicle { get; set; }
 
+		/// <summary>Optional link to the rental vehicle line (multi-vehicle bookings).</summary>
+		[Display(Name = "Rental Vehicle")]
+		public int? RentalVehicleId { get; set; }
+
+		[ForeignKey(nameof(RentalVehicleId))]
+		public RentalVehicle? RentalVehicle { get; set; }
+
 		[DataType(DataType.Time)]
 		[Display(Name = "Departure Time")]
 		public TimeOnly? DepartureTime { get; set; }

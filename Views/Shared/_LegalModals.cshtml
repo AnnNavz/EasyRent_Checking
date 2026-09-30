@@ -1,0 +1,93 @@
+<div class="modal fade legal-modal" id="legalTermsModal" tabindex="-1" aria-labelledby="legalTermsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg legal-modal-dialog">
+        <div class="modal-content legal-modal-content border-0 shadow-lg">
+            <div class="modal-header legal-modal-header">
+                <div class="legal-modal-heading">
+                    <span class="legal-modal-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+                    <div>
+                        <h2 class="legal-modal-title" id="legalTermsTitle">Terms &amp; Conditions</h2>
+                        <p class="legal-modal-date">Effective Date: August 2026</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body legal-modal-body">
+                <div class="legal-modal-copy">
+                    <partial name="_TermsBody" />
+                </div>
+            </div>
+            <div class="modal-footer legal-modal-footer">
+                <button type="button" class="btn legal-modal-close" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade legal-modal" id="legalPrivacyModal" tabindex="-1" aria-labelledby="legalPrivacyTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg legal-modal-dialog">
+        <div class="modal-content legal-modal-content border-0 shadow-lg">
+            <div class="modal-header legal-modal-header">
+                <div class="legal-modal-heading">
+                    <span class="legal-modal-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+                    <div>
+                        <h2 class="legal-modal-title" id="legalPrivacyTitle">Privacy Policy</h2>
+                        <p class="legal-modal-date">Effective Date: August 2026</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body legal-modal-body">
+                <div class="legal-modal-copy">
+                    <partial name="_PrivacyBody" />
+                </div>
+            </div>
+            <div class="modal-footer legal-modal-footer">
+                <button type="button" class="btn legal-modal-close" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var termsEl = document.getElementById('legalTermsModal');
+        var privacyEl = document.getElementById('legalPrivacyModal');
+        if (!termsEl || !privacyEl || typeof bootstrap === 'undefined') return;
+
+        var termsModal = bootstrap.Modal.getOrCreateInstance(termsEl);
+        var privacyModal = bootstrap.Modal.getOrCreateInstance(privacyEl);
+
+        function resetScroll(modalEl) {
+            var body = modalEl.querySelector('.modal-body');
+            if (body) body.scrollTop = 0;
+        }
+
+        termsEl.addEventListener('shown.bs.modal', function () { resetScroll(termsEl); });
+        privacyEl.addEventListener('shown.bs.modal', function () { resetScroll(privacyEl); });
+
+        function showLegal(which) {
+            var target = which === 'privacy' ? privacyModal : termsModal;
+            var otherEl = which === 'privacy' ? termsEl : privacyEl;
+            var other = which === 'privacy' ? termsModal : privacyModal;
+
+            if (otherEl.classList.contains('show')) {
+                otherEl.addEventListener('hidden.bs.modal', function onHidden() {
+                    otherEl.removeEventListener('hidden.bs.modal', onHidden);
+                    target.show();
+                });
+                other.hide();
+                return;
+            }
+
+            target.show();
+        }
+
+        document.addEventListener('click', function (event) {
+            var link = event.target.closest('[data-legal-modal]');
+            if (!link) return;
+            event.preventDefault();
+            event.stopPropagation();
+            showLegal(link.getAttribute('data-legal-modal'));
+        });
+    })();
+</script>

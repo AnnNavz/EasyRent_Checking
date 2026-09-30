@@ -192,27 +192,39 @@
         </div>
     </section>
 
-    <section class="home-section home-reviews">
-        <div class="home-wrap">
-            <h2 class="home-reviews-title">What our customer say</h2>
-            <div class="home-review-grid">
-                @foreach (var review in Model.Testimonials)
-                {
-                    <article class="home-review-card">
-                        <span class="home-rating">
-                            <i class="bi bi-star-fill"></i>
-                            @review.Rating.ToString("0.0")
-                        </span>
-                        <p>&ldquo;@review.Comment&rdquo;</p>
-                        <div class="home-review-user">
-                            <span class="home-review-avatar">@Initial(review.CustomerName)</span>
-                            <strong>@review.CustomerName</strong>
-                        </div>
-                    </article>
-                }
+    @if (Model.Testimonials.Count > 0)
+    {
+        <section class="home-section home-reviews">
+            <div class="home-wrap">
+                <h2 class="home-reviews-title">What our customer say</h2>
+                <div class="home-review-grid">
+                    @foreach (var review in Model.Testimonials)
+                    {
+                        <article class="home-review-card">
+                            <span class="home-rating">
+                                <i class="bi bi-star-fill"></i>
+                                @review.Rating.ToString("0.0")
+                            </span>
+                            <p>&ldquo;@review.Comment&rdquo;</p>
+                            <div class="home-review-user">
+                                <span class="home-review-avatar">@Initial(review.CustomerName)</span>
+                                <strong>@review.CustomerName</strong>
+                            </div>
+                        </article>
+                    }
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    }
+    else
+    {
+        <section class="home-section home-reviews">
+            <div class="home-wrap">
+                <h2 class="home-reviews-title">What our customer say</h2>
+                <p class="home-reviews-empty">No customer reviews yet.</p>
+            </div>
+        </section>
+    }
 
     <section class="home-section home-cta-section">
         <div class="home-wrap">

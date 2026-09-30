@@ -1,4 +1,8 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using System.Security.Claims
+@using EasyRent_Checking.Data
+@using Microsoft.EntityFrameworkCore
+@inject EasyRent_CheckingContext Db
 @{
     var activeNav = ViewData["ActiveNav"]?.ToString() ?? "";
     var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
@@ -7,7 +11,8 @@
     var isAboutUs = activeNav == "AboutUs" || action == "AboutUs";
     var isContactUs = activeNav == "ContactUs" || action == "ContactUs";
     var isPrivacyPolicy = action == "PrivacyPolicy";
-    var isHome = activeNav is "Home" or "AboutUs" or "ContactUs" or "FAQs" || action == "Homepage" || isHowItWorks || isAboutUs || isContactUs || isPrivacyPolicy || action == "Browse" || action == "MyFavorites";
+    var isTermsConditions = action == "TermsConditions";
+    var isHome = activeNav is "Home" or "AboutUs" or "ContactUs" or "FAQs" || action == "Homepage" || isHowItWorks || isAboutUs || isContactUs || isPrivacyPolicy || isTermsConditions || action == "Browse" || action == "MyFavorites";
     var isVehicles = activeNav == "Vehicles"
         || action is "Browse" or "VehicleDetails" or "Rental" or "PayRental" or "ChooseRentalOption" or "MyFavorites";
     var isAuth = controller == "Account";
@@ -18,6 +23,18 @@
     var avatarInitial = !string.IsNullOrWhiteSpace(displayName)
         ? char.ToUpperInvariant(displayName.Trim()[0]).ToString()
         : "U";
+    string? profileImageUrl = null;
+    if (isSignedIn && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var signedInUserId))
+    {
+        var profileImagePath = Db.CustomerProfiles.AsNoTracking()
+            .Where(p => p.CustomerId == signedInUserId)
+            .Select(p => p.ProfileImagePath)
+            .FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(profileImagePath))
+        {
+            profileImageUrl = Url.Content("~/images/" + profileImagePath);
+        }
+    }
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -47,14 +64,14 @@
     {
         <link rel="stylesheet" href="~/css/client/bookings.css" asp-append-version="true" />
     }
-    @if (isAccountSettings || action is "MyBookings" or "PaymentHistory" or "MyBookingDetails")
+    @if (isAccountSettings || action is "MyBookings" or "PaymentHistory" or "MyBookingDetails" or "RateTrip" or "MyFavorites")
     {
         <link rel="stylesheet" href="~/css/client/account-settings.css" asp-append-version="true" />
     }
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="client-body@(action is "Homepage" or "HowItWorks" or "AboutUs" or "ContactUs" or "PrivacyPolicy" or "Browse" ? " client-body-home" : "")">
+<body class="client-body@(action is "Homepage" or "HowItWorks" or "AboutUs" or "ContactUs" or "PrivacyPolicy" or "TermsConditions" or "Browse" ? " client-body-home" : "")">
 
     <header class="client-navbar">
         <div class="client-navbar-inner">
@@ -79,11 +96,29 @@
                         <div class="dropdown">
                             <button class="client-profile-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <span class="client-profile-name">@displayName</span>
-                                <span class="client-profile-avatar">@avatarInitial</span>
+                                <span class="client-profile-avatar">
+                                    @if (!string.IsNullOrEmpty(profileImageUrl))
+                                    {
+                                        <img src="@profileImageUrl" alt="" />
+                                    }
+                                    else
+                                    {
+                                        @avatarInitial
+                                    }
+                                </span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end client-profile-menu shadow border-0">
                                 <div class="client-profile-menu-header">
-                                    <div class="client-profile-menu-avatar" aria-hidden="true">@avatarInitial</div>
+                                    <div class="client-profile-menu-avatar" aria-hidden="true">
+                                        @if (!string.IsNullOrEmpty(profileImageUrl))
+                                        {
+                                            <img src="@profileImageUrl" alt="" />
+                                        }
+                                        else
+                                        {
+                                            @avatarInitial
+                                        }
+                                    </div>
                                     <div class="client-profile-menu-identity">
                                         <span class="client-profile-menu-name">@displayName</span>
                                         <span class="client-profile-menu-role">Customer</span>
@@ -93,22 +128,22 @@
 
                                 <div class="client-profile-menu-divider" role="separator"></div>
 
-                                <a class="client-profile-menu-item" asp-controller="ClientSide" asp-action="MyBookings">
-                                    <i class="bi bi-calendar2-check client-profile-menu-icon" aria-hidden="true"></i>
+                                <a class="client-profile-menu-item" asp-controller="ClientSide" asp-action="MyFavorites">
+                                    <i class="bi bi-heart client-profile-menu-icon" aria-hidden="true"></i>
                                     <span class="client-profile-menu-copy">
-                                        <span class="client-profile-menu-item-title">Transactions &amp; Rentals</span>
-                                        <span class="client-profile-menu-item-sub">Active and past rentals</span>
+                                        <span class="client-profile-menu-item-title">Saved Vehicles</span>
+                                        <span class="client-profile-menu-item-sub">Vehicles you marked as favorites</span>
                                     </span>
                                     <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
                                 </a>
 
                                 <div class="client-profile-menu-divider" role="separator"></div>
 
-                                <a class="client-profile-menu-item" asp-controller="ClientSide" asp-action="MyFavorites">
-                                    <i class="bi bi-heart client-profile-menu-icon" aria-hidden="true"></i>
+                                <a class="client-profile-menu-item" asp-controller="ClientSide" asp-action="MyBookings">
+                                    <i class="bi bi-calendar2-check client-profile-menu-icon" aria-hidden="true"></i>
                                     <span class="client-profile-menu-copy">
-                                        <span class="client-profile-menu-item-title">Saved Vehicles</span>
-                                        <span class="client-profile-menu-item-sub">Vehicles you marked as favorites</span>
+                                        <span class="client-profile-menu-item-title">Transactions &amp; Rentals</span>
+                                        <span class="client-profile-menu-item-sub">Active and past rentals</span>
                                     </span>
                                     <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
                                 </a>
@@ -177,7 +212,16 @@
                     {
                         <div class="client-profile-mobile">
                             <div class="client-profile-menu-header">
-                                <div class="client-profile-menu-avatar" aria-hidden="true">@avatarInitial</div>
+                                <div class="client-profile-menu-avatar" aria-hidden="true">
+                                    @if (!string.IsNullOrEmpty(profileImageUrl))
+                                    {
+                                        <img src="@profileImageUrl" alt="" />
+                                    }
+                                    else
+                                    {
+                                        @avatarInitial
+                                    }
+                                </div>
                                 <div class="client-profile-menu-identity">
                                     <span class="client-profile-menu-name">@displayName</span>
                                     <span class="client-profile-menu-role">Customer</span>
@@ -185,20 +229,20 @@
                                 </div>
                             </div>
                             <div class="client-profile-menu-divider" role="separator"></div>
-                            <a asp-controller="ClientSide" asp-action="MyBookings" class="client-profile-menu-item">
-                                <i class="bi bi-calendar2-check client-profile-menu-icon" aria-hidden="true"></i>
-                                <span class="client-profile-menu-copy">
-                                    <span class="client-profile-menu-item-title">Transactions &amp; Rentals</span>
-                                    <span class="client-profile-menu-item-sub">Active and past rentals</span>
-                                </span>
-                                <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
-                            </a>
-                            <div class="client-profile-menu-divider" role="separator"></div>
                             <a asp-controller="ClientSide" asp-action="MyFavorites" class="client-profile-menu-item">
                                 <i class="bi bi-heart client-profile-menu-icon" aria-hidden="true"></i>
                                 <span class="client-profile-menu-copy">
                                     <span class="client-profile-menu-item-title">Saved Vehicles</span>
                                     <span class="client-profile-menu-item-sub">Vehicles you marked as favorites</span>
+                                </span>
+                                <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
+                            </a>
+                            <div class="client-profile-menu-divider" role="separator"></div>
+                            <a asp-controller="ClientSide" asp-action="MyBookings" class="client-profile-menu-item">
+                                <i class="bi bi-calendar2-check client-profile-menu-icon" aria-hidden="true"></i>
+                                <span class="client-profile-menu-copy">
+                                    <span class="client-profile-menu-item-title">Transactions &amp; Rentals</span>
+                                    <span class="client-profile-menu-item-sub">Active and past rentals</span>
                                 </span>
                                 <i class="bi bi-chevron-right client-profile-menu-chevron" aria-hidden="true"></i>
                             </a>
@@ -242,6 +286,8 @@
         </div>
     </header>
 
+    @await Html.PartialAsync("_ClientFlashMessages")
+
     <main class="client-main">
         @RenderBody()
     </main>
@@ -249,7 +295,9 @@
     @await Html.PartialAsync("_ClientFooter")
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/client-flash.js" asp-append-version="true"></script>
     <partial name="_LogoutConfirmModal" />
+    <partial name="_LegalModals" />
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

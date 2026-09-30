@@ -2,52 +2,223 @@
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Add New Admin";
     ViewData["ActivePage"] = "Admins";
 }
 
-<div class="container-fluid px-4 py-4">
-    <h1 class="h4 mb-3">Create Admin</h1>
-    <hr />
-    <div class="row">
-        <div class="col-md-4">
-            <form asp-action="Create">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/customer-create.css" asp-append-version="true" />
+}
 
-                <div class="form-group mb-3">
-                    <label asp-for="FullName" class="control-label"></label>
-                    <input asp-for="FullName" class="form-control" />
-                    <span asp-validation-for="FullName" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Email" class="control-label"></label>
-                    <input asp-for="Email" class="form-control" />
-                    <span asp-validation-for="Email" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Password" class="control-label"></label>
-                    <p class="form-text mt-0 mb-1">Must be at least 8 characters and include a number.</p>
-                    <input asp-for="Password" class="form-control" />
-                    <span asp-validation-for="Password" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="ConfirmPassword" class="control-label"></label>
-                    <input asp-for="ConfirmPassword" class="form-control" />
-                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                </div>
-
-                <div class="form-group">
-                    <input type="submit" value="Create" class="btn btn-primary" />
-                    <a asp-action="Index" class="btn btn-link">Back to List</a>
-                </div>
-            </form>
+<div class="wizard-max-wrapper customer-create-wizard py-3">
+    <div class="step-timeline">
+        <div class="step-node active" id="node-1">
+            <div class="step-circle" id="circle-1">1</div>
+            <div class="step-label">INFO</div>
+        </div>
+        <div class="step-node" id="node-2">
+            <div class="step-circle" id="circle-2">2</div>
+            <div class="step-label">REVIEW</div>
+        </div>
+        <div class="step-node" id="node-3">
+            <div class="step-circle" id="circle-3">3</div>
+            <div class="step-label">COMPLETE</div>
         </div>
     </div>
+
+    <form asp-action="Create" id="adminWizardForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <div class="wizard-step-panel active" id="stepPanel-1">
+            <div class="text-start mb-2">
+                <h5 class="customer-wizard-heading">Create Admin Account</h5>
+                <p class="customer-wizard-subheading">Enter the admin's name, email, and password.</p>
+            </div>
+
+            <div class="customer-wizard-card">
+                <div class="customer-wizard-section-head">
+                    <span class="customer-wizard-section-icon"><i class="bi bi-person-fill"></i></span>
+                    <h6 class="customer-wizard-section-title">Account Information</h6>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="customer-wizard-label">Full Name</label>
+                        <input asp-for="FullName" id="input-FullName" class="form-control customer-wizard-input" placeholder="e.g. Jane Doe" />
+                        <span asp-validation-for="FullName" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-12">
+                        <label class="customer-wizard-label">Email Address</label>
+                        <input asp-for="Email" id="input-Email" class="form-control customer-wizard-input" placeholder="name@example.com" />
+                        <span asp-validation-for="Email" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-12">
+                        <p class="customer-password-hint">Must be at least 8 characters and include a number.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="customer-wizard-label">Password</label>
+                        <div class="customer-password-wrap">
+                            <input asp-for="Password" id="input-Password" class="form-control customer-wizard-input customer-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                            <button type="button" class="customer-password-toggle" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="customer-wizard-label">Confirm Password</label>
+                        <div class="customer-password-wrap">
+                            <input asp-for="ConfirmPassword" id="input-ConfirmPassword" class="form-control customer-wizard-input customer-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                            <button type="button" class="customer-password-toggle" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wizard-step-panel" id="stepPanel-2">
+            <div class="text-start mb-2">
+                <h5 class="customer-wizard-heading">Reviews &amp; Verify</h5>
+                <p class="customer-wizard-subheading">Please confirm the admin details before saving.</p>
+            </div>
+
+            <div class="customer-wizard-card">
+                <div class="customer-review-card-head">
+                    <div class="customer-wizard-section-head mb-0">
+                        <span class="customer-wizard-section-icon"><i class="bi bi-person-fill"></i></span>
+                        <h6 class="customer-wizard-section-title">Account Information</h6>
+                    </div>
+                    <button type="button" class="customer-review-edit-btn" onclick="goToStep(1)">
+                        Edit <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+                <div class="customer-review-personal-layout">
+                    <div class="customer-review-avatar" id="review-avatar">AD</div>
+                    <div class="customer-review-grid">
+                        <div>
+                            <span class="customer-review-field-label">Full Name</span>
+                            <span id="review-Name" class="customer-review-field-value">—</span>
+                        </div>
+                        <div>
+                            <span class="customer-review-field-label">Email Address</span>
+                            <span id="review-Email" class="customer-review-field-value">—</span>
+                        </div>
+                        <div>
+                            <span class="customer-review-field-label">Role</span>
+                            <span class="customer-review-field-value">Admin</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="customer-wizard-actions">
+            <button type="button" class="btn customer-wizard-btn-back" id="btnWizardBack">Cancel</button>
+            <button type="button" class="btn customer-wizard-btn-next" id="btnWizardNext">Continue</button>
+        </div>
+    </form>
 </div>
 
+<script>
+    let currentStep = 1;
+
+    function getInitials(name) {
+        const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return 'AD';
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function validateStep1() {
+        const form = document.getElementById('adminWizardForm');
+        const names = ['FullName', 'Email', 'Password', 'ConfirmPassword'];
+        let valid = true;
+        let firstInvalid = null;
+
+        if (typeof jQuery !== 'undefined' && jQuery.fn.validate) {
+            const validator = jQuery(form).validate();
+            names.forEach(function (name) {
+                const el = form.querySelector('[name="' + name + '"]');
+                if (el && !validator.element(el)) {
+                    valid = false;
+                    if (!firstInvalid) firstInvalid = el;
+                }
+            });
+        } else {
+            names.forEach(function (name) {
+                const el = form.querySelector('[name="' + name + '"]');
+                if (!el) return;
+                if (!el.value.trim()) {
+                    valid = false;
+                    if (!firstInvalid) firstInvalid = el;
+                }
+            });
+        }
+
+        if (!valid && firstInvalid) firstInvalid.focus();
+        return valid;
+    }
+
+    function compileReview() {
+        const name = document.getElementById('input-FullName').value.trim();
+        document.getElementById('review-Name').innerText = name || '—';
+        document.getElementById('review-Email').innerText = document.getElementById('input-Email').value.trim() || '—';
+        document.getElementById('review-avatar').innerText = getInitials(name);
+    }
+
+    function goToStep(step) {
+        currentStep = step;
+        document.getElementById('stepPanel-1').classList.toggle('active', step === 1);
+        document.getElementById('stepPanel-2').classList.toggle('active', step === 2);
+
+        document.getElementById('node-1').classList.toggle('active', step === 1);
+        document.getElementById('node-1').classList.toggle('completed', step === 2);
+        document.getElementById('node-2').classList.toggle('active', step === 2);
+        document.getElementById('node-2').classList.remove('completed');
+        document.getElementById('node-3').classList.remove('active', 'completed');
+
+        document.getElementById('circle-1').innerHTML = step === 2
+            ? '<i class="bi bi-check-lg"></i>'
+            : '1';
+        document.getElementById('circle-2').textContent = '2';
+
+        const backBtn = document.getElementById('btnWizardBack');
+        backBtn.innerText = step === 1 ? 'Cancel' : 'Back';
+    }
+
+    document.getElementById('btnWizardNext').addEventListener('click', function () {
+        if (currentStep === 1) {
+            if (!validateStep1()) return;
+            compileReview();
+            goToStep(2);
+            return;
+        }
+        document.getElementById('adminWizardForm').submit();
+    });
+
+    document.getElementById('btnWizardBack').addEventListener('click', function () {
+        if (currentStep === 1) {
+            window.location.href = '@Url.Action("Index")';
+            return;
+        }
+        goToStep(1);
+    });
+
+    document.querySelectorAll('.customer-password-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = btn.parentElement.querySelector('.customer-password-input');
+            if (!input) return;
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+</script>
+
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

@@ -109,60 +109,6 @@
         </div>
     }
 
-    <div class="payment-method-panel mt-4 @(initialChoice == "Reserve" ? "d-none" : "")" id="acceptedMethodsPanel">
-        <div class="payment-method-title">
-            <i class="bi bi-credit-card-2-front"></i>
-            <span>Payment Method</span>
-        </div>
-
-        <div class="payment-method-info-grid">
-            <div class="payment-method-info-card">
-                <div class="payment-method-info-header">
-                    <img src="~/images/System Images/GcashImage.jpg" alt="GCash" class="payment-method-info-logo" />
-                    <div>
-                        <div class="payment-method-info-name">GCash</div>
-                        <div class="payment-method-info-channel">QR only</div>
-                    </div>
-                </div>
-                <p class="payment-method-info-desc">Scan GCash QR code and send the exact amount.</p>
-                <div class="payment-method-info-footer">
-                    <i class="bi bi-qr-code"></i>
-                    <span>QR Code provided on next</span>
-                </div>
-            </div>
-
-            <div class="payment-method-info-card">
-                <div class="payment-method-info-header">
-                    <img src="~/images/System Images/BDOimage.png" alt="BDO" class="payment-method-info-logo" />
-                    <div>
-                        <div class="payment-method-info-name">BDO</div>
-                        <div class="payment-method-info-channel">QR only</div>
-                    </div>
-                </div>
-                <p class="payment-method-info-desc">Scan QR code or bank transfer via BDO online banking.</p>
-                <div class="payment-method-info-footer">
-                    <i class="bi bi-qr-code"></i>
-                    <span>QR Code provided on next</span>
-                </div>
-            </div>
-
-            <div class="payment-method-info-card">
-                <div class="payment-method-info-header">
-                    <div class="payment-method-info-logo-fallback"><i class="bi bi-shop"></i></div>
-                    <div>
-                        <div class="payment-method-info-name">Walk-in</div>
-                        <div class="payment-method-info-channel">Pay at Office</div>
-                    </div>
-                </div>
-                <p class="payment-method-info-desc">Visit our office and pay in person. Cash or card accepted.</p>
-                <div class="payment-method-info-footer">
-                    <i class="bi bi-geo-alt"></i>
-                    <span>Address shown on confirmation</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="rent-step-actions rent-step-actions--split payment-type-actions">
         @if (!string.IsNullOrEmpty(paymentTypeBackUrl))
         {

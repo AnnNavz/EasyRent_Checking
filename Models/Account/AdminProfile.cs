@@ -16,5 +16,12 @@ namespace EasyRent_Checking.Models
 		[StringLength(100, ErrorMessage = "Full name cannot exceed 100 characters.")]
 		[Display(Name = "Full Name")]
 		public string FullName { get; set; } = string.Empty;
+
+		[StringLength(255)]
+		[Display(Name = "Profile Image")]
+		public string? ProfileImagePath { get; set; }
+
+		[Display(Name = "Self Deactivated")]
+		public bool IsSelfDeactivated { get; set; }
 	}
 }

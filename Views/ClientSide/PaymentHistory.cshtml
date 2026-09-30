@@ -9,65 +9,206 @@
 
     string FormatPeso(decimal amount) =>
         "₱" + Math.Max(0, amount).ToString("N2", ph);
+
+    string FilterLabel = Model.Filter switch
+    {
+        "gcash" => "GCash",
+        "bdo" => "BDO",
+        "walkin" => "Walk-in",
+        _ => "All payments"
+    };
+
+    string SortLabel = Model.Sort switch
+    {
+        "oldest" => "Oldest",
+        "amount" => "Amount",
+        _ => "Newest"
+    };
+
+    string MethodLogo(string method)
+    {
+        if (method.Equals("GCash", StringComparison.OrdinalIgnoreCase))
+            return Url.Content("~/images/System Images/GcashImage.jpg");
+        if (method.Equals("BDO", StringComparison.OrdinalIgnoreCase))
+            return Url.Content("~/images/System Images/BDOimage.png");
+        return string.Empty;
+    }
 }
 
 <div class="client-page account-hub is-wide-main my-bookings-page payment-history-page">
     <partial name="_AccountHubNav" />
 
     <section class="account-hub-main">
-    <div class="my-bookings-header">
-        <div>
-            <h1 class="my-bookings-title">Payments &amp; Balance</h1>
-            <p class="my-bookings-subtitle">See what you have paid and what is still due on your rentals.</p>
+        <div class="my-bookings-header">
+            <div>
+                <h1 class="my-bookings-title">Payments &amp; Balance</h1>
+                <p class="my-bookings-subtitle">See what you have paid and what is still due on your rentals.</p>
+            </div>
+            <div class="my-bookings-toolbar">
+                <div class="dropdown">
+                    <button class="my-bookings-tool" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Sorting by
+                        <span>@SortLabel</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item @(Model.Sort == "newest" ? "active" : null)" asp-action="PaymentHistory" asp-route-filter="@Model.Filter" asp-route-sort="newest">Newest</a></li>
+                        <li><a class="dropdown-item @(Model.Sort == "oldest" ? "active" : null)" asp-action="PaymentHistory" asp-route-filter="@Model.Filter" asp-route-sort="oldest">Oldest</a></li>
+                        <li><a class="dropdown-item @(Model.Sort == "amount" ? "active" : null)" asp-action="PaymentHistory" asp-route-filter="@Model.Filter" asp-route-sort="amount">Amount</a></li>
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="my-bookings-tool" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Filters
+                        <span>@FilterLabel</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item @(Model.Filter == "all" ? "active" : null)" asp-action="PaymentHistory" asp-route-filter="all" asp-route-sort="@Model.Sort">All payments</a></li>
+                        <li><a class="dropdown-item @(Model.Filter == "gcash" ? "active" : null)" asp-action="PaymentHistory" asp-route-filter="gcash" asp-route-sort="@Model.Sort">GCash</a></li>
+                        <li><a class="dropdown-item @(Model.Filter == "bdo" ? "active" : null)" asp-action="PaymentHistory" asp-route-filter="bdo" asp-route-sort="@Model.Sort">BDO</a></li>
+                        <li><a class="dropdown-item @(Model.Filter == "walkin" ? "active" : null)" asp-action="PaymentHistory" asp-route-filter="walkin" asp-route-sort="@Model.Sort">Walk-in</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="payment-history-kpis">
-        <article class="payment-history-kpi">
-            <span>Total paid</span>
-            <strong>@FormatPeso(Model.TotalPaid)</strong>
-            <small>@(Model.PaymentCount == 1 ? "1 payment" : $"{Model.PaymentCount} payments")</small>
-        </article>
-        <article class="payment-history-kpi @(Model.OutstandingBalance > 0 ? "is-due" : "")">
-            <span>Outstanding balance</span>
-            <strong>@FormatPeso(Model.OutstandingBalance)</strong>
-            <small>@(Model.OutstandingBalance > 0 ? "Due on remaining rentals" : "All active rentals are settled")</small>
-        </article>
-    </div>
+        <div class="payment-history-kpis">
+            <article class="payment-history-kpi">
+                <span class="payment-history-kpi-icon is-paid" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
+                <div>
+                    <span class="payment-history-kpi-label">Total paid</span>
+                    <strong>@FormatPeso(Model.TotalPaid)</strong>
+                    <small>@(Model.PaymentCount == 1 ? "1 payment" : $"{Model.PaymentCount} payments")</small>
+                </div>
+            </article>
+            <article class="payment-history-kpi @(Model.OutstandingBalance > 0 ? "is-due" : "")">
+                <span class="payment-history-kpi-icon is-balance" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
+                <div>
+                    <span class="payment-history-kpi-label">Outstanding balance</span>
+                    <strong>@FormatPeso(Model.OutstandingBalance)</strong>
+                    <small>@(Model.OutstandingBalance > 0 ? "Due on remaining rentals" : "All active rentals are settled")</small>
+                </div>
+            </article>
+        </div>
 
-    @if (Model.Payments.Count > 0)
-    {
-        <div class="payment-history-list">
-            @foreach (var entry in Model.Payments)
+        @if (Model.Payments.Count > 0)
+        {
+            <div class="payment-history-list">
+                @foreach (var entry in Model.Payments)
+                {
+                    var logo = MethodLogo(entry.PaymentMethod);
+                    <article class="payment-history-row">
+                        <div class="payment-history-vehicle">
+                            <div class="payment-history-thumb" aria-hidden="true">
+                                @if (!string.IsNullOrEmpty(entry.VehicleImagePath))
+                                {
+                                    <img src="~/images/@entry.VehicleImagePath" alt="@entry.VehicleTitle" />
+                                }
+                                else
+                                {
+                                    <i class="bi bi-car-front"></i>
+                                }
+                            </div>
+                            <div>
+                                <h2>@entry.VehicleTitle</h2>
+                                <p>
+                                    @(string.IsNullOrWhiteSpace(entry.VehicleTypeLabel) ? "Vehicle" : entry.VehicleTypeLabel)
+                                    @if (entry.PassengersCount > 0)
+                                    {
+                                        <text> • @entry.PassengersCount seater</text>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="payment-history-method">
+                            @if (!string.IsNullOrEmpty(logo))
+                            {
+                                <img src="@logo" alt="@entry.PaymentMethod" class="payment-history-method-logo" />
+                            }
+                            else
+                            {
+                                <span class="payment-history-method-fallback" aria-hidden="true"><i class="bi bi-shop"></i></span>
+                            }
+                            <div>
+                                <strong>@entry.PaymentMethod</strong>
+                                <time datetime="@entry.PaymentDate.ToString("o")">@entry.PaymentDate.ToString("MMMM d, yyyy h:mm tt", ph)</time>
+                                @if (!string.IsNullOrWhiteSpace(entry.TransactionReference))
+                                {
+                                    <span>Reference: @entry.TransactionReference</span>
+                                }
+                                else
+                                {
+                                    <span>@entry.PaymentType</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="payment-history-amount">
+                            <strong>@FormatPeso(entry.AmountPaid)</strong>
+                            <a asp-action="MyBookingDetails" asp-route-id="@entry.RentalId">
+                                View booking
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            @if (Model.TotalPages > 1)
             {
-                <article class="payment-history-row">
-                    <div class="payment-history-main">
-                        <h2>@entry.VehicleTitle</h2>
-                        <p>@entry.BookingLabel · @entry.PaymentType</p>
-                    </div>
-                    <div class="payment-history-meta">
-                        <span>@entry.PaymentMethod</span>
-                        <span>@entry.PaymentDate.ToString("MMM d, yyyy h:mm tt", ph)</span>
-                        @if (!string.IsNullOrWhiteSpace(entry.TransactionReference))
-                        {
-                            <span>Ref @entry.TransactionReference</span>
-                        }
-                    </div>
-                    <div class="payment-history-amount">
-                        <strong>@FormatPeso(entry.AmountPaid)</strong>
-                        <a asp-action="MyBookingDetails" asp-route-id="@entry.RentalId">View booking</a>
-                    </div>
-                </article>
+                <nav class="payment-history-pager" aria-label="Payment history pages">
+                    @if (Model.Page > 1)
+                    {
+                        <a class="payment-history-page-btn"
+                           asp-action="PaymentHistory"
+                           asp-route-sort="@Model.Sort"
+                           asp-route-filter="@Model.Filter"
+                           asp-route-page="@(Model.Page - 1)"
+                           aria-label="Previous page">
+                            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="payment-history-page-btn is-disabled" aria-hidden="true"><i class="bi bi-chevron-left"></i></span>
+                    }
+
+                    @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                    {
+                        <a class="payment-history-page-btn @(pageNumber == Model.Page ? "is-active" : null)"
+                           asp-action="PaymentHistory"
+                           asp-route-sort="@Model.Sort"
+                           asp-route-filter="@Model.Filter"
+                           asp-route-page="@pageNumber">@pageNumber</a>
+                    }
+
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a class="payment-history-page-btn"
+                           asp-action="PaymentHistory"
+                           asp-route-sort="@Model.Sort"
+                           asp-route-filter="@Model.Filter"
+                           asp-route-page="@(Model.Page + 1)"
+                           aria-label="Next page">
+                            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="payment-history-page-btn is-disabled" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                    }
+                </nav>
             }
-        </div>
-    }
-    else
-    {
-        <div class="my-bookings-empty">
-            <i class="bi bi-receipt" aria-hidden="true"></i>
-            <p>No payments yet.</p>
-            <a asp-action="Browse" class="my-booking-btn-primary">Book a Vehicle</a>
-        </div>
-    }
+        }
+        else
+        {
+            <div class="my-bookings-empty">
+                <i class="bi bi-receipt" aria-hidden="true"></i>
+                <p>No payments yet.</p>
+                <a asp-action="Browse" class="my-booking-btn-primary">Book a Vehicle</a>
+            </div>
+        }
     </section>
 </div>

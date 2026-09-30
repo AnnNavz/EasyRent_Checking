@@ -32,6 +32,13 @@ namespace EasyRent_Checking.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("IsSelfDeactivated")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ProfileImagePath")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.HasKey("AdminId");
 
                     b.ToTable("AdminProfiles");
@@ -42,29 +49,33 @@ namespace EasyRent_Checking.Migrations
                     b.Property<int>("CustomerId")
                         .HasColumnType("int");
 
+                    b.Property<string>("BackValidIDImagePath")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<string>("ContactNumber")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("FrontValidIDImagePath")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsSelfDeactivated")
                         .HasColumnType("bit");
 
-                    b.Property<string>("BackValidIDImagePath")
+                    b.Property<string>("ProfileImagePath")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("FrontValidIDImagePath")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("ValidIDtype")
                         .IsRequired()
@@ -529,6 +540,88 @@ namespace EasyRent_Checking.Migrations
                     b.ToTable("RentalDetails", (string)null);
                 });
 
+            modelBuilder.Entity("EasyRent_Checking.Models.RentalVehicle", b =>
+                {
+                    b.Property<int>("RentalVehicleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RentalVehicleId"));
+
+                    b.Property<decimal>("LineBaseAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LineSucceedingFeeTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LineTotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("RentalId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RentalVehicleId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("RentalId", "VehicleId")
+                        .IsUnique();
+
+                    b.ToTable("RentalVehicle", (string)null);
+                });
+
+            modelBuilder.Entity("EasyRent_Checking.Models.SystemLog", b =>
+                {
+                    b.Property<int>("SystemLogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SystemLogId"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ActorName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("ActorUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("SystemLogId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Category", "Action");
+
+                    b.ToTable("SystemLog", (string)null);
+                });
+
             modelBuilder.Entity("EasyRent_Checking.Models.Transit", b =>
                 {
                     b.Property<int>("TransitID")
@@ -570,6 +663,9 @@ namespace EasyRent_Checking.Migrations
                     b.Property<int>("RentalID")
                         .HasColumnType("int");
 
+                    b.Property<int?>("RentalVehicleId")
+                        .HasColumnType("int");
+
                     b.Property<TimeOnly?>("ReturnTime")
                         .HasColumnType("time");
 
@@ -591,10 +687,12 @@ namespace EasyRent_Checking.Migrations
 
                     b.HasIndex("DriverID");
 
-                    b.HasIndex("RentalID")
-                        .IsUnique();
+                    b.HasIndex("RentalVehicleId");
 
                     b.HasIndex("VehicleID");
+
+                    b.HasIndex("RentalID", "VehicleID")
+                        .IsUnique();
 
                     b.ToTable("Transit", (string)null);
                 });
@@ -631,6 +729,9 @@ namespace EasyRent_Checking.Migrations
                     b.Property<DateTime?>("LockoutEndUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("LoginMfaEnabled")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("LoginOtpExpiresUtc")
                         .HasColumnType("datetime2");
 
@@ -643,9 +744,6 @@ namespace EasyRent_Checking.Migrations
 
                     b.Property<DateTime?>("LoginOtpSentAtUtc")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("LoginMfaEnabled")
-                        .HasColumnType("bit");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -764,52 +862,6 @@ namespace EasyRent_Checking.Migrations
                     b.ToTable("VehicleFavorite", (string)null);
                 });
 
-            modelBuilder.Entity("EasyRent_Checking.Models.SystemLog", b =>
-                {
-                    b.Property<int>("SystemLogId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SystemLogId"));
-
-                    b.Property<int>("Action")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ActorName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int?>("ActorUserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Category")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("EntityId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("EntityType")
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
-
-                    b.Property<string>("Summary")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.HasKey("SystemLogId");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("Category", "Action");
-
-                    b.ToTable("SystemLog", (string)null);
-                });
-
             modelBuilder.Entity("EasyRent_Checking.Models.AdminProfile", b =>
                 {
                     b.HasOne("EasyRent_Checking.Models.User", "User")
@@ -849,25 +901,6 @@ namespace EasyRent_Checking.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Transit");
-                });
-
-            modelBuilder.Entity("EasyRent_Checking.Models.VehicleFavorite", b =>
-                {
-                    b.HasOne("EasyRent_Checking.Models.CustomerProfile", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EasyRent_Checking.Models.Vehicle", "Vehicle")
-                        .WithMany()
-                        .HasForeignKey("VehicleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("EasyRent_Checking.Models.IncidentReport", b =>
@@ -964,6 +997,25 @@ namespace EasyRent_Checking.Migrations
                     b.Navigation("Vehicle");
                 });
 
+            modelBuilder.Entity("EasyRent_Checking.Models.RentalVehicle", b =>
+                {
+                    b.HasOne("EasyRent_Checking.Models.Rental", "Rental")
+                        .WithMany("RentalVehicles")
+                        .HasForeignKey("RentalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EasyRent_Checking.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Rental");
+
+                    b.Navigation("Vehicle");
+                });
+
             modelBuilder.Entity("EasyRent_Checking.Models.Transit", b =>
                 {
                     b.HasOne("EasyRent_Checking.Models.Driver", "Driver")
@@ -977,6 +1029,11 @@ namespace EasyRent_Checking.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("EasyRent_Checking.Models.RentalVehicle", "RentalVehicle")
+                        .WithMany()
+                        .HasForeignKey("RentalVehicleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("EasyRent_Checking.Models.Vehicle", "Vehicle")
                         .WithMany()
                         .HasForeignKey("VehicleID")
@@ -986,6 +1043,27 @@ namespace EasyRent_Checking.Migrations
                     b.Navigation("Driver");
 
                     b.Navigation("Rental");
+
+                    b.Navigation("RentalVehicle");
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("EasyRent_Checking.Models.VehicleFavorite", b =>
+                {
+                    b.HasOne("EasyRent_Checking.Models.CustomerProfile", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EasyRent_Checking.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Vehicle");
                 });
@@ -998,6 +1076,8 @@ namespace EasyRent_Checking.Migrations
             modelBuilder.Entity("EasyRent_Checking.Models.Rental", b =>
                 {
                     b.Navigation("Details");
+
+                    b.Navigation("RentalVehicles");
                 });
 
             modelBuilder.Entity("EasyRent_Checking.Models.Transit", b =>

@@ -182,7 +182,23 @@
                             <td class="fw-semibold text-dark font-monospace">@bookingLabel</td>
                             <td>
                                 <div class="booking-customer-cell">
-                                    <span class="booking-customer-avatar">@GetInitials(customerName)</span>
+                                    @if (item.Rental?.CustomerId is int customerId)
+                                    {
+                                        <a asp-controller="Customers" asp-action="Details" asp-route-customerid="@customerId" class="booking-customer-avatar" aria-label="View @customerName profile">
+                                            @if (!string.IsNullOrEmpty(item.Rental.Customer?.ProfileImagePath))
+                                            {
+                                                <img src="~/images/@item.Rental.Customer.ProfileImagePath" alt="" />
+                                            }
+                                            else
+                                            {
+                                                @GetInitials(customerName)
+                                            }
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="booking-customer-avatar" aria-hidden="true">@GetInitials(customerName)</span>
+                                    }
                                     <div class="booking-customer-meta">
                                         <span class="booking-customer-name">@customerName</span>
                                         <span class="booking-customer-phone">@contact</span>

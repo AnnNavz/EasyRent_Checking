@@ -8,8 +8,15 @@
     ViewData["ActiveNav"] = "Vehicles";
 
     var details = Model.Details;
-    var vehicle = details?.Vehicle;
-    string vehicleTitle = vehicle != null ? $"{vehicle.Model} {vehicle.Brand}".Trim() : "Vehicle";
+    var rentalVehicles = (Model.RentalVehicles ?? Enumerable.Empty<RentalVehicle>())
+        .Where(rv => rv.Vehicle != null)
+        .OrderBy(rv => rv.SortOrder)
+        .ThenBy(rv => rv.RentalVehicleId)
+        .ToList();
+    var vehicle = rentalVehicles.FirstOrDefault()?.Vehicle ?? details?.Vehicle;
+    string vehicleTitle = rentalVehicles.Count > 1
+        ? $"{rentalVehicles.Count} vehicles"
+        : (vehicle != null ? $"{vehicle.Model} {vehicle.Brand}".Trim() : "Vehicle");
     string breadcrumbLabel = vehicle != null ? $"{vehicle.Brand} {vehicle.Model}".Trim() : "Vehicle";
     string bookingId = $"BK-{Model.RentalId:D5}";
     string destination = details?.DropoffLocation ?? "—";
@@ -75,7 +82,14 @@
             </div>
             <h1 class="booking-request-sent-title">Booking Request Sent</h1>
             <p class="booking-request-sent-subtitle">
-                Your request for the @vehicleTitle is now being reviewed by our staff.
+                @if (rentalVehicles.Count > 1)
+                {
+                    @:Your request for @rentalVehicles.Count vehicles (@string.Join(", ", rentalVehicles.Select(rv => $"{rv.Vehicle!.Brand} {rv.Vehicle.Model}"))) is now being reviewed by our staff.
+                }
+                else
+                {
+                    @:Your request for the @vehicleTitle is now being reviewed by our staff.
+                }
             </p>
         </div>
 

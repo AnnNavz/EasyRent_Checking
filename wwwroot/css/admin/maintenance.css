@@ -8,8 +8,23 @@
 }
 
 .pms-index-page .driver-metric-icon {
-    background: #e8eef8;
-    color: #1a3275;
+    background: #1a3275;
+    color: #ffffff;
+}
+
+.pms-index-page .driver-metric-icon.is-gold {
+    background: #F5B301;
+    color: #ffffff;
+}
+
+.pms-index-page .driver-metric-icon.is-danger {
+    background: #c21f00;
+    color: #ffffff;
+}
+
+.pms-index-page .driver-metric-icon.is-success {
+    background: #32b935;
+    color: #ffffff;
 }
 
 .pms-index-page .index-table-panel .admin-table thead th {

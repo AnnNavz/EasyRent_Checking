@@ -27,7 +27,7 @@
 
         <form asp-controller="Account" asp-action="Registration" method="post" enctype="multipart/form-data" class="auth-form auth-form-login" novalidate>
             <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
-            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+            <div asp-validation-summary="ModelOnly" class="auth-alert auth-alert-error"></div>
 
             <div class="auth-field">
                 <label asp-for="FullName" class="auth-label auth-label-login">Full Name</label>
@@ -64,7 +64,7 @@
                         <label asp-for="Password" class="auth-label auth-label-login">Password</label>
                         <div class="auth-input-wrap">
                             <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
-                            <input asp-for="Password" class="auth-input auth-input-login auth-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                            <input asp-for="Password" class="auth-input auth-input-login auth-password-input" type="password" placeholder="••••••••••" value="@Model.Password" autocomplete="new-password" />
                             <button type="button" class="auth-password-toggle" aria-label="Show password">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -75,7 +75,7 @@
                         <label asp-for="ConfirmPassword" class="auth-label auth-label-login">Confirm Password</label>
                         <div class="auth-input-wrap">
                             <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
-                            <input asp-for="ConfirmPassword" class="auth-input auth-input-login auth-password-input" type="password" placeholder="••••••••••" autocomplete="new-password" />
+                            <input asp-for="ConfirmPassword" class="auth-input auth-input-login auth-password-input" type="password" placeholder="••••••••••" value="@Model.ConfirmPassword" autocomplete="new-password" />
                             <button type="button" class="auth-password-toggle" aria-label="Show password">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -100,6 +100,9 @@
                 </div>
                 <span asp-validation-for="ValidIDtype" class="text-danger small"></span>
             </div>
+
+            <input type="hidden" asp-for="FrontValidIDImagePath" />
+            <input type="hidden" asp-for="BackValidIDImagePath" />
 
             <div id="validIdUploadSection" class="auth-upload-section @(string.IsNullOrWhiteSpace(Model.ValidIDtype) ? "d-none" : "")">
                 <div class="auth-id-upload-grid">
@@ -148,10 +151,13 @@
                 </div>
             </div>
 
-            <label class="auth-check auth-check-login auth-check-terms">
-                <input type="checkbox" name="AgreeTerms" value="true" required />
-                <span>I agree to the <a href="#" class="auth-inline-link">Terms &amp; Conditions</a> and <a asp-controller="ClientSide" asp-action="PrivacyPolicy" class="auth-inline-link">Privacy Policy</a>.</span>
-            </label>
+            <div class="auth-terms-block">
+                <label class="auth-check auth-check-login auth-check-terms">
+                    <input asp-for="AgreeTerms" />
+                    <span>I agree to the <a asp-controller="ClientSide" asp-action="TermsConditions" class="auth-inline-link" data-legal-modal="terms">Terms &amp; Conditions</a> and <a asp-controller="ClientSide" asp-action="PrivacyPolicy" class="auth-inline-link" data-legal-modal="privacy">Privacy Policy</a>.</span>
+                </label>
+                <span asp-validation-for="AgreeTerms" class="text-danger small"></span>
+            </div>
 
             <button type="submit" class="auth-submit auth-submit-login">Create Account</button>
         </form>
@@ -168,6 +174,17 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        (function () {
+            var password = document.getElementById('Password');
+            var confirm = document.getElementById('ConfirmPassword');
+            if (password) {
+                password.value = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Password ?? ""));
+            }
+            if (confirm) {
+                confirm.value = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ConfirmPassword ?? ""));
+            }
+        })();
+
         document.querySelectorAll('.auth-password-toggle').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var input = btn.parentElement.querySelector('.auth-password-input');
@@ -183,14 +200,19 @@
         (function () {
             var idTypeSelect = document.getElementById('input-ValidIDtype');
             var uploadSection = document.getElementById('validIdUploadSection');
+            var existingFrontUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrEmpty(Model.FrontValidIDImagePath) ? null : Url.Content("~/images/" + Model.FrontValidIDImagePath)));
+            var existingFrontName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrEmpty(Model.FrontValidIDImagePath) ? null : System.IO.Path.GetFileName(Model.FrontValidIDImagePath)));
+            var existingBackUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrEmpty(Model.BackValidIDImagePath) ? null : Url.Content("~/images/" + Model.BackValidIDImagePath)));
+            var existingBackName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrEmpty(Model.BackValidIDImagePath) ? null : System.IO.Path.GetFileName(Model.BackValidIDImagePath)));
 
-            function bindIdUpload(zoneId, inputId, previewId, filenameId, removeId, imageId) {
+            function bindIdUpload(zoneId, inputId, previewId, filenameId, removeId, imageId, pathInputId) {
                 var uploadZone = document.getElementById(zoneId);
                 var fileInput = document.getElementById(inputId);
                 var previewState = document.getElementById(previewId);
                 var filenameLabel = document.getElementById(filenameId);
                 var removeBtn = document.getElementById(removeId);
                 var previewImg = document.getElementById(imageId);
+                var pathInput = document.getElementById(pathInputId);
                 if (!uploadZone || !fileInput || !previewState || !filenameLabel || !removeBtn || !previewImg) return;
 
                 function clearFile() {
@@ -199,6 +221,15 @@
                     previewImg.removeAttribute('src');
                     previewState.classList.add('d-none');
                     uploadZone.classList.remove('d-none');
+                    if (pathInput) pathInput.value = '';
+                }
+
+                function showSaved(url, fileName) {
+                    if (!url) return;
+                    filenameLabel.textContent = fileName || 'Uploaded ID';
+                    previewImg.src = url;
+                    uploadZone.classList.add('d-none');
+                    previewState.classList.remove('d-none');
                 }
 
                 function showPreview(file) {
@@ -240,35 +271,39 @@
                     showPreview(files[0]);
                 });
 
-                return clearFile;
+                return { clear: clearFile, showSaved: showSaved };
             }
 
-            var clearFront = bindIdUpload(
+            var frontUpload = bindIdUpload(
                 'valid-id-front-upload-zone',
                 'input-FrontValidIDFile',
                 'valid-id-front-preview-state',
                 'valid-id-front-filename',
                 'valid-id-front-remove-btn',
-                'valid-id-front-preview-img');
-            var clearBack = bindIdUpload(
+                'valid-id-front-preview-img',
+                'FrontValidIDImagePath');
+            var backUpload = bindIdUpload(
                 'valid-id-back-upload-zone',
                 'input-BackValidIDFile',
                 'valid-id-back-preview-state',
                 'valid-id-back-filename',
                 'valid-id-back-remove-btn',
-                'valid-id-back-preview-img');
+                'valid-id-back-preview-img',
+                'BackValidIDImagePath');
 
             function toggleUploadSection() {
                 var hasType = !!idTypeSelect.value;
                 uploadSection.classList.toggle('d-none', !hasType);
                 if (!hasType) {
-                    if (clearFront) clearFront();
-                    if (clearBack) clearBack();
+                    if (frontUpload) frontUpload.clear();
+                    if (backUpload) backUpload.clear();
                 }
             }
 
             idTypeSelect.addEventListener('change', toggleUploadSection);
             toggleUploadSection();
+            if (frontUpload) frontUpload.showSaved(existingFrontUrl, existingFrontName);
+            if (backUpload) backUpload.showSaved(existingBackUrl, existingBackName);
         })();
     </script>
 }

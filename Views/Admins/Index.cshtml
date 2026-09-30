@@ -1,38 +1,219 @@
 @model IEnumerable<EasyRent_Checking.Models.AdminProfile>
+@using EasyRent_Checking.Models
+@using System.Globalization
 
 @{
     Layout = "_LayoutAdminDashboard";
-    ViewData["Title"] = "Admins";
+    ViewData["Title"] = "Admin Management";
     ViewData["ActivePage"] = "Admins";
+
+    var totalAdminsChange = ViewData["TotalAdminsChange"] as decimal? ?? 0m;
+    var addedThisMonthChange = ViewData["AddedThisMonthChange"] as decimal? ?? 0m;
+    var currentAdminId = ViewData["CurrentAdminId"] as int?;
+    var canDeleteAdmins = ViewData["CanDeleteAdmins"] as bool? ?? false;
+
+    string FormatTrend(decimal change) =>
+        Math.Abs(change).ToString("0.0", CultureInfo.InvariantCulture) + "%";
+
+    string currentSortName = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "Name" => "Name",
+        "Email" => "Email",
+        _ => "Sorting by"
+    };
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "??";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0][..2].ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
+        }
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
 }
 
-<div class="container-fluid px-4 py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h4 mb-0">Admins</h1>
-        <a asp-action="Create" class="btn btn-primary btn-sm">Create New</a>
+<div class="customers-index-page admins-index-page">
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="customer-metric-card">
+                <div class="customer-metric-icon is-total" aria-hidden="true">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <div class="customer-metric-body">
+                    <span class="customer-metric-label">Total Admins</span>
+                    <div class="customer-metric-value">@(ViewData["TotalAdminsCount"] ?? "0")</div>
+                </div>
+                <div class="customer-metric-trend">
+                    <span class="customer-metric-badge @(totalAdminsChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(totalAdminsChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(totalAdminsChange)
+                    </span>
+                    <span class="customer-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="customer-metric-card">
+                <div class="customer-metric-icon is-new" aria-hidden="true">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <div class="customer-metric-body">
+                    <span class="customer-metric-label">Added this month</span>
+                    <div class="customer-metric-value">@(ViewData["AddedThisMonthCount"] ?? "0")</div>
+                </div>
+                <div class="customer-metric-trend">
+                    <span class="customer-metric-badge @(addedThisMonthChange >= 0 ? "is-up" : "is-down")">
+                        <i class="bi @(addedThisMonthChange >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatTrend(addedThisMonthChange)
+                    </span>
+                    <span class="customer-metric-compare">vs last month</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>@Html.DisplayNameFor(model => model.FullName)</th>
-                <th>Email</th>
-            </tr>
-        </thead>
-        <tbody>
-@foreach (var item in Model)
-{
-            <tr>
-                <td>@Html.DisplayFor(modelItem => item.FullName)</td>
-                <td>@(item.User?.Email)</td>
-            </tr>
-}
-@if (!Model.Any())
-{
-            <tr>
-                <td colspan="2" class="text-muted">No admin profiles yet.</td>
-            </tr>
-}
-        </tbody>
-    </table>
+    <form asp-action="Index" method="get" class="w-100">
+        <input type="hidden" name="sortBy" value="@ViewData["CurrentSort"]" />
+
+        <div class="customer-index-toolbar mb-4">
+            <div class="customer-index-toolbar-filters">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle border px-3 fw-semibold text-secondary btn-filter text-capitalize" type="button" data-bs-toggle="dropdown">
+                        @currentSortName
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?sortBy=Name&amp;searchString=@ViewData["CurrentSearch"]">Name</a></li>
+                        <li><a class="dropdown-item" href="?sortBy=Email&amp;searchString=@ViewData["CurrentSearch"]">Email</a></li>
+                        <li><hr class="dropdown-menu-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="?sortBy=&amp;searchString=@ViewData["CurrentSearch"]">Clear Sorting</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="customer-index-toolbar-search">
+                <i class="bi bi-search customer-index-search-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="searchString"
+                       value="@ViewData["CurrentSearch"]"
+                       class="form-control customer-index-search-input"
+                       placeholder="Search Admin" />
+                <i class="bi bi-mic customer-index-mic-icon" aria-hidden="true"></i>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
+                {
+                    <a href="?searchString=&amp;sortBy=@ViewData["CurrentSort"]"
+                       class="customer-index-search-clear"
+                       aria-label="Clear search">&times;</a>
+                }
+            </div>
+
+            <a asp-action="Create" class="btn customer-index-add-btn">
+                <i class="bi bi-plus-lg"></i> Add Admin
+            </a>
+        </div>
+    </form>
+
+    <div class="index-table-panel mb-4">
+        <div class="table-responsive">
+            <table class="table admin-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Admin Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Date Added</th>
+                        <th class="text-end" style="width: 80px;" aria-label="Actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var safeName = (item.FullName ?? "this admin")
+                                .Replace("\\", "\\\\")
+                                .Replace("'", "\\'");
+                            var isCurrent = currentAdminId.HasValue && item.AdminId == currentAdminId.Value;
+                            <tr>
+                                <td>
+                                    <div class="table-customer-cell">
+                                        <div class="table-customer-avatar" aria-hidden="true">
+                                            @if (!string.IsNullOrEmpty(item.ProfileImagePath))
+                                            {
+                                                <img src="~/images/@item.ProfileImagePath" alt="" />
+                                            }
+                                            else
+                                            {
+                                                @GetInitials(item.FullName)
+                                            }
+                                        </div>
+                                        <span class="table-customer-name">
+                                            @item.FullName
+                                            @if (isCurrent)
+                                            {
+                                                <span class="admin-you-pill">You</span>
+                                            }
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>@(item.User?.Email ?? "—")</td>
+                                <td>
+                                    @if (item.IsSelfDeactivated)
+                                    {
+                                        <span class="customer-status-badge is-inactive">Inactive</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="customer-status-badge is-approved">Admin</span>
+                                    }
+                                </td>
+                                <td>@AdminDates.Format(item.User?.CreatedAt)</td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="admin-row-action" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed","placement":"bottom-end"}' data-bs-boundary="viewport" aria-label="Admin actions">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                            <li><a class="dropdown-item" asp-action="Details" asp-route-adminid="@item.AdminId"><i class="bi bi-info-circle me-2"></i> Details</a></li>
+                                            @if (canDeleteAdmins && !isCurrent)
+                                            {
+                                                <li><hr class="dropdown-menu-divider"></li>
+                                                <li>
+                                                    <button type="button" class="dropdown-item text-danger" onclick="openDeletePopup('@item.AdminId', '@safeName')">
+                                                        <i class="bi bi-trash me-2"></i> Delete
+                                                    </button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted fw-medium">
+                                <i class="bi bi-shield-lock fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                No matching admins found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AdminPagination" />
+    </div>
 </div>
+
+@{
+    ViewData["DeleteModalId"] = "adminDeletePopup";
+    ViewData["DeleteHiddenInputId"] = "popupAdminId";
+    ViewData["DeleteHiddenInputName"] = "adminid";
+    ViewData["DeleteMessageId"] = "deletePopupMessage";
+    ViewData["DeleteEntityLabel"] = "admin";
+}
+<partial name="_DeleteConfirmModal" />

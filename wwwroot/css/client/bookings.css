@@ -125,10 +125,16 @@
     grid-area: paid;
 }
 
-.my-booking-spec {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--client-muted);
+.booking-side-vehicle-list {
+    margin: 0.35rem 0 0;
+    padding: 0;
+    font-size: 0.88rem;
+    color: var(--client-muted, #64748b);
+    line-height: 1.45;
+}
+
+.booking-side-vehicle-list li + li {
+    margin-top: 0.2rem;
 }
 
 .my-booking-meta-label {
@@ -780,7 +786,7 @@
 }
 
 .client-btn-reserve-secondary:hover {
-    background: #eef2ff !important;
+    background: #dae2f2 !important;
     color: #172e6e !important;
 }
 
@@ -790,9 +796,16 @@
     margin-bottom: 1rem;
 }
 
+.rate-trip-hub .account-hub-main {
+    background: #F9FAFF;
+    border-radius: 16px;
+    padding: 1.35rem 1.4rem 1.5rem;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
 .rate-trip-page {
-    max-width: 720px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
 }
 
 .rate-trip-back {
@@ -803,61 +816,66 @@
     text-decoration: none;
     font-weight: 600;
     font-size: 0.9rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.15rem;
 }
 
 .rate-trip-back:hover {
-    color: #1E3A8A;
+    color: var(--client-navy);
 }
 
 .rate-trip-card {
-    background: #f3f3f3;
-    border-radius: 18px;
-    padding: 1.75rem 1.5rem 1.5rem;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
 }
 
 .rate-trip-vehicle {
     display: flex;
-    gap: 1rem;
+    gap: 1.1rem;
     align-items: center;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.6rem;
 }
 
 .rate-trip-thumb {
-    width: 88px;
-    height: 64px;
-    border-radius: 10px;
-    background: #ddd;
+    width: 120px;
+    height: 86px;
+    border-radius: 12px;
+    background: #dae2f2;
     overflow: hidden;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--client-navy);
+    font-size: 1.6rem;
 }
 
 .rate-trip-thumb img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 
 .rate-trip-eyebrow {
     margin: 0;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #1f6b4f;
+    color: #15803d;
 }
 
 .rate-trip-title {
-    margin: 0.2rem 0 0.35rem;
+    margin: 0.25rem 0 0.4rem;
     font-size: 1.55rem;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--client-navy);
 }
 
 .rate-trip-meta {
     margin: 0;
     font-size: 0.88rem;
-    color: #666;
+    color: #6b7280;
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
@@ -866,14 +884,14 @@
 .rate-trip-label {
     display: block;
     font-weight: 700;
-    font-size: 0.92rem;
-    color: #333;
+    font-size: 0.95rem;
+    color: #111;
     margin-bottom: 0.65rem;
 }
 
 .rate-trip-optional {
     font-weight: 500;
-    color: #888;
+    color: #6b7280;
 }
 
 .rate-trip-stars {
@@ -893,7 +911,7 @@
 
 .rate-trip-star-label {
     cursor: pointer;
-    color: #cfcfcf;
+    color: #d1d5db;
     font-size: 2rem;
     line-height: 1;
     transition: color 0.15s ease, transform 0.15s ease;
@@ -915,16 +933,16 @@
 }
 
 .rate-trip-group {
-    margin-bottom: 1.35rem;
-    padding-bottom: 1.2rem;
-    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.15rem;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .rate-trip-group-title {
-    margin: 0 0 0.2rem;
+    margin: 0 0 0.85rem;
     font-size: 1.05rem;
     font-weight: 700;
-    color: #1a1a1a;
+    color: #111;
 }
 
 .rate-trip-group-hint {
@@ -935,16 +953,16 @@
 
 .rate-trip-category-row {
     display: grid;
-    grid-template-columns: 130px 1fr;
+    grid-template-columns: 140px 1fr;
     align-items: center;
     gap: 0.65rem;
-    margin-bottom: 0.45rem;
+    margin-bottom: 0.55rem;
 }
 
 .rate-trip-category-label {
-    font-size: 0.88rem;
+    font-size: 0.9rem;
     font-weight: 600;
-    color: #333;
+    color: #374151;
 }
 
 .rate-trip-category-row .rate-trip-star-label {
@@ -957,7 +975,7 @@
 
 .rate-trip-category-error {
     display: block;
-    margin: -0.15rem 0 0.55rem 130px;
+    margin: -0.15rem 0 0.55rem 140px;
     font-size: 0.8rem;
 }
 
@@ -993,12 +1011,22 @@
     font-size: 0.95rem;
 }
 
+.rate-trip-comment-block {
+    margin-top: 0.15rem;
+}
+
 .rate-trip-comment {
     border-radius: 12px;
-    border: 1px solid #d5d5d5;
-    background: #F9FAFF;
+    border: 1px solid #dbe3ef;
+    background: #fff;
     resize: vertical;
-    min-height: 120px;
+    min-height: 130px;
+    padding: 0.85rem 1rem;
+}
+
+.rate-trip-comment:focus {
+    border-color: var(--client-navy);
+    box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.12);
 }
 
 .rate-trip-char-count {
@@ -1012,7 +1040,13 @@
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
-    margin-top: 1.5rem;
+    margin-top: 1.35rem;
+}
+
+.rate-trip-submit {
+    min-height: 42px;
+    padding: 0.55rem 1.35rem;
+    font-size: 0.9rem;
 }
 
 .booking-feedback-panel {
@@ -1176,20 +1210,46 @@
 .payment-history-kpis {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
+    gap: 1rem;
     margin-bottom: 1.25rem;
 }
 
 .payment-history-kpi {
-    background: #ececec;
-    border-radius: 14px;
-    padding: 1.1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #F9FAFF;
+    border: 1px solid #e6ecf5;
+    border-radius: 16px;
+    padding: 1.15rem 1.25rem;
+    box-shadow: 0 1px 2px rgba(26, 43, 93, 0.04);
 }
 
-.payment-history-kpi span,
+.payment-history-kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.payment-history-kpi-icon.is-paid {
+    background: #dae2f2;
+    color: var(--client-navy);
+}
+
+.payment-history-kpi-icon.is-balance {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.payment-history-kpi-label,
 .payment-history-kpi small {
     display: block;
-    color: #777;
+    color: #6b7280;
     font-size: 0.8rem;
 }
 
@@ -1198,8 +1258,14 @@
     font-family: var(--font-title);
     font-size: 1.55rem;
     font-weight: 700;
-    color: #111;
-    margin: 0.25rem 0 0.2rem;
+    color: var(--client-navy);
+    margin: 0.15rem 0 0.15rem;
+    letter-spacing: -0.02em;
+}
+
+.payment-history-kpi.is-due .payment-history-kpi-icon.is-balance {
+    background: #ffedd5;
+    color: #c2410c;
 }
 
 .payment-history-kpi.is-due strong {
@@ -1209,53 +1275,136 @@
 .payment-history-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.85rem;
 }
 
 .payment-history-row {
     display: grid;
-    grid-template-columns: minmax(160px, 1.3fr) minmax(160px, 1fr) auto;
-    gap: 1rem;
+    grid-template-columns: minmax(220px, 1.15fr) minmax(220px, 1.2fr) auto;
+    gap: 1.15rem;
     align-items: center;
-    background: #ececec;
-    border-radius: 14px;
-    padding: 1rem 1.15rem;
+    background: #F9FAFF;
+    border: 1px solid #e6ecf5;
+    border-radius: 16px;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 1px 2px rgba(26, 43, 93, 0.04);
 }
 
-.payment-history-main h2 {
+.payment-history-vehicle {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.payment-history-thumb {
+    width: 72px;
+    height: 54px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #dae2f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--client-navy);
+    font-size: 1.25rem;
+}
+
+.payment-history-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.payment-history-vehicle h2 {
     font-family: var(--font-title);
     font-size: 1.02rem;
     font-weight: 700;
     margin: 0 0 0.15rem;
-    color: #111;
+    color: var(--client-navy);
 }
 
-.payment-history-main p,
-.payment-history-meta span {
+.payment-history-vehicle p {
     margin: 0;
     font-size: 0.8rem;
-    color: #666;
+    color: #6b7280;
 }
 
-.payment-history-meta {
+.payment-history-method {
     display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.payment-history-method-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #e6ecf5;
+    padding: 0.2rem;
+    flex-shrink: 0;
+}
+
+.payment-history-method-fallback {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #dae2f2;
+    color: var(--client-navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.payment-history-method-fallback i {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.payment-history-method strong,
+.payment-history-method time,
+.payment-history-method div span {
+    display: block;
+    line-height: 1.35;
+}
+
+.payment-history-method strong {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--client-navy);
+}
+
+.payment-history-method time,
+.payment-history-method span {
+    font-size: 0.78rem;
+    color: #6b7280;
 }
 
 .payment-history-amount {
     text-align: right;
+    justify-self: end;
 }
 
 .payment-history-amount strong {
     display: block;
-    font-size: 1.05rem;
-    color: #111;
-    margin-bottom: 0.25rem;
+    font-family: var(--font-title);
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: var(--client-navy);
+    margin-bottom: 0.35rem;
 }
 
 .payment-history-amount a {
-    font-size: 0.78rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--client-navy);
     text-decoration: none;
@@ -1265,15 +1414,220 @@
     text-decoration: underline;
 }
 
-@media (max-width: 767.98px) {
-    .payment-history-kpis,
-    .payment-history-row,
-    .booking-payment-totals {
+.payment-history-amount a i {
+    font-size: 0.72rem;
+}
+
+.payment-history-pager {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 1.5rem;
+}
+
+.payment-history-page-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid #d0d7e6;
+    background: #F9FAFF;
+    color: var(--client-navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.payment-history-page-btn.is-active {
+    background: var(--client-navy);
+    border-color: var(--client-navy);
+    color: #fff;
+}
+
+.payment-history-page-btn.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.payment-history-page-btn:hover:not(.is-active):not(.is-disabled) {
+    background: #dae2f2;
+}
+
+@media (max-width: 991.98px) {
+    .payment-history-row {
         grid-template-columns: 1fr;
+        align-items: start;
     }
 
     .payment-history-amount {
         text-align: left;
+        justify-self: start;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .payment-history-amount strong {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .payment-history-kpis,
+    .booking-payment-totals {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Saved Vehicles --- */
+.saved-vehicles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.saved-vehicle-row {
+    display: grid;
+    grid-template-columns: 110px minmax(140px, 1.2fr) minmax(140px, 1fr) auto;
+    gap: 1rem 1.25rem;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e6ebf3;
+    border-radius: 16px;
+    padding: 1rem 1.15rem;
+    box-shadow: 0 8px 22px rgba(26, 43, 93, 0.05);
+}
+
+.saved-vehicle-thumb {
+    width: 110px;
+    height: 78px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #dae2f2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--client-navy);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.saved-vehicle-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.saved-vehicle-info h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--client-navy);
+}
+
+.saved-vehicle-info p {
+    margin: 0;
+    font-size: 0.86rem;
+    color: #6b7280;
+}
+
+.saved-vehicle-price {
+    text-align: right;
+}
+
+.saved-vehicle-price strong {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--client-navy);
+    margin-bottom: 0.2rem;
+}
+
+.saved-vehicle-price span {
+    display: block;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.saved-vehicle-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    justify-content: flex-end;
+}
+
+.saved-vehicle-favorite {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #e6ebf3;
+    background: #fff;
+    color: #ef4444;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.saved-vehicle-favorite:hover {
+    background: #fff5f5;
+}
+
+.saved-vehicle-favorite i {
+    display: block;
+    line-height: 1;
+}
+
+.saved-vehicle-details {
+    white-space: nowrap;
+}
+
+@media (max-width: 991.98px) {
+    .saved-vehicle-row {
+        grid-template-columns: 96px 1fr auto;
+        grid-template-areas:
+            "thumb info actions"
+            "thumb price actions";
+    }
+
+    .saved-vehicle-thumb { grid-area: thumb; width: 96px; height: 72px; }
+    .saved-vehicle-info { grid-area: info; }
+    .saved-vehicle-price { grid-area: price; text-align: left; }
+    .saved-vehicle-actions { grid-area: actions; align-self: center; }
+}
+
+@media (max-width: 575.98px) {
+    .saved-vehicle-row {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "thumb"
+            "info"
+            "price"
+            "actions";
+    }
+
+    .saved-vehicle-thumb {
+        width: 100%;
+        height: 160px;
+    }
+
+    .saved-vehicle-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .saved-vehicle-details {
+        flex: 1;
     }
 }
 

@@ -109,7 +109,7 @@ app.MapControllerRoute(
     name: "legacy-client-from-vehicles",
     pattern: "Vehicles/{action}/{id?}",
     defaults: new { controller = "ClientSide" },
-    constraints: new { action = "Homepage|HowItWorks|AboutUs|ContactUs|PrivacyPolicy|Browse|VehicleDetails|Rental|PayRental|MyBookings|MyBookingDetails|RateTrip|MyFavorites|ToggleFavorite" });
+    constraints: new { action = "Homepage|HowItWorks|AboutUs|ContactUs|PrivacyPolicy|TermsConditions|Browse|VehicleDetails|Rental|PayRental|MyBookings|MyBookingDetails|RateTrip|MyFavorites|ToggleFavorite" });
 
 app.MapControllerRoute(
     name: "legacy-admin-dashboard",

@@ -32,6 +32,7 @@ namespace EasyRent_Checking.ViewModels
 	{
 		public string FullName { get; set; } = string.Empty;
 		public string AvatarInitials { get; set; } = "U";
+		public string? ProfileImagePath { get; set; }
 		public string Filter { get; set; } = "all";
 		public string Sort { get; set; } = "newest";
 		public List<MyBookingListItem> Items { get; set; } = new();

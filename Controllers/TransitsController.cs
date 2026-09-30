@@ -46,6 +46,7 @@ public class TransitsController : Controller
 		var transitsQuery = _context.Transits
 			.AsNoTracking()
 			.Include(t => t.Rental)
+				.ThenInclude(r => r!.Customer)
 			.AsQueryable();
 
 		ViewData["TotalBookingsCount"] = await transitsQuery.CountAsync();
@@ -625,6 +626,7 @@ public class TransitsController : Controller
 
 	/// <summary>
 	/// Creates transit rows for approved payments that do not have one yet (backfill).
+	/// One transit per rental vehicle line.
 	/// </summary>
 	private async Task SyncMissingTransitsAsync()
 	{
@@ -640,34 +642,62 @@ public class TransitsController : Controller
 			return;
 		}
 
-		var existingRentalIds = await _context.Transits
+		var rentalVehicles = await _context.RentalVehicles
+			.AsNoTracking()
+			.Where(rv => approvedRentalIds.Contains(rv.RentalId))
+			.ToListAsync();
+
+		var existingPairs = await _context.Transits
 			.AsNoTracking()
 			.Where(t => approvedRentalIds.Contains(t.RentalID))
-			.Select(t => t.RentalID)
+			.Select(t => new { t.RentalID, t.VehicleID })
 			.ToListAsync();
+		var existingKeys = existingPairs
+			.Select(p => (p.RentalID, p.VehicleID))
+			.ToHashSet();
 
-		var missingIds = approvedRentalIds.Except(existingRentalIds).ToList();
-		if (missingIds.Count == 0)
+		var added = 0;
+		foreach (var line in rentalVehicles)
 		{
-			return;
+			if (existingKeys.Contains((line.RentalId, line.VehicleId)))
+			{
+				continue;
+			}
+
+			_context.Transits.Add(new Transit
+			{
+				RentalID = line.RentalId,
+				VehicleID = line.VehicleId,
+				RentalVehicleId = line.RentalVehicleId,
+				TripStatus = TripStatus.Scheduled
+			});
+			added++;
 		}
 
-		var detailsList = await _context.RentalDetails
+		// Legacy rentals without RentalVehicle rows yet.
+		var rentalsWithLines = rentalVehicles.Select(rv => rv.RentalId).ToHashSet();
+		var legacyDetails = await _context.RentalDetails
 			.AsNoTracking()
-			.Where(d => missingIds.Contains(d.RentalID))
+			.Where(d => approvedRentalIds.Contains(d.RentalID) && !rentalsWithLines.Contains(d.RentalID))
 			.ToListAsync();
 
-		foreach (var details in detailsList)
+		foreach (var details in legacyDetails)
 		{
+			if (existingKeys.Contains((details.RentalID, details.VehicleId)))
+			{
+				continue;
+			}
+
 			_context.Transits.Add(new Transit
 			{
 				RentalID = details.RentalID,
 				VehicleID = details.VehicleId,
 				TripStatus = TripStatus.Scheduled
 			});
+			added++;
 		}
 
-		if (detailsList.Count > 0)
+		if (added > 0)
 		{
 			await _context.SaveChangesAsync();
 		}

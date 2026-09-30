@@ -50,7 +50,7 @@ namespace EasyRent_Checking.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Registration([Bind("FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,FrontValidIDImageFile,BackValidIDImageFile")] CustomerAccountInputModel model, string? returnUrl)
+		public async Task<IActionResult> Registration([Bind("FullName,ContactNumber,Email,Password,ConfirmPassword,ValidIDtype,FrontValidIDImageFile,BackValidIDImageFile,FrontValidIDImagePath,BackValidIDImagePath,AgreeTerms")] CustomerAccountInputModel model, string? returnUrl)
 		{
 			model.Status = Status.Pending;
 			PrepareAuthReminder(returnUrl);
@@ -60,17 +60,37 @@ namespace EasyRent_Checking.Controllers
 				ModelState.AddModelError(nameof(model.Password), "Password is required.");
 			}
 
+			if (model.FrontValidIDImageFile != null)
+			{
+				model.FrontValidIDImagePath = await ImageStorage.SaveAsync(
+					_webHostEnvironment,
+					model.FrontValidIDImageFile,
+					ImageStorage.CustomersFolder);
+			}
+
+			if (model.BackValidIDImageFile != null)
+			{
+				model.BackValidIDImagePath = await ImageStorage.SaveAsync(
+					_webHostEnvironment,
+					model.BackValidIDImageFile,
+					ImageStorage.CustomersFolder);
+			}
+
 			if (string.IsNullOrWhiteSpace(model.ValidIDtype))
 			{
 				ModelState.AddModelError(nameof(model.ValidIDtype), "Please choose a valid ID type.");
 			}
-			else if (model.FrontValidIDImageFile == null)
+			else
 			{
-				ModelState.AddModelError(nameof(model.FrontValidIDImageFile), "Please upload the front of your valid ID.");
-			}
-			else if (model.BackValidIDImageFile == null)
-			{
-				ModelState.AddModelError(nameof(model.BackValidIDImageFile), "Please upload the back of your valid ID.");
+				if (string.IsNullOrWhiteSpace(model.FrontValidIDImagePath))
+				{
+					ModelState.AddModelError(nameof(model.FrontValidIDImageFile), "Please upload the front of your valid ID.");
+				}
+
+				if (string.IsNullOrWhiteSpace(model.BackValidIDImagePath))
+				{
+					ModelState.AddModelError(nameof(model.BackValidIDImageFile), "Please upload the back of your valid ID.");
+				}
 			}
 
 			if (!string.IsNullOrWhiteSpace(model.Email))
@@ -87,15 +107,6 @@ namespace EasyRent_Checking.Controllers
 			{
 				return View(model);
 			}
-
-			var frontImagePath = await ImageStorage.SaveAsync(
-				_webHostEnvironment,
-				model.FrontValidIDImageFile!,
-				ImageStorage.CustomersFolder);
-			var backImagePath = await ImageStorage.SaveAsync(
-				_webHostEnvironment,
-				model.BackValidIDImageFile!,
-				ImageStorage.CustomersFolder);
 
 			var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
@@ -119,8 +130,8 @@ namespace EasyRent_Checking.Controllers
 				FullName = model.FullName.Trim(),
 				ContactNumber = model.ContactNumber.Trim(),
 				ValidIDtype = model.ValidIDtype,
-				FrontValidIDImagePath = frontImagePath,
-				BackValidIDImagePath = backImagePath,
+				FrontValidIDImagePath = model.FrontValidIDImagePath!,
+				BackValidIDImagePath = model.BackValidIDImagePath!,
 				Status = Status.Pending
 			};
 
@@ -189,30 +200,32 @@ namespace EasyRent_Checking.Controllers
 		{
 			ClearMfaPendingCookie();
 			PrepareAuthReminder(returnUrl);
-			return View();
+			return View(new LoginInputModel());
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Login(string email, string password, string? returnUrl)
+		public async Task<IActionResult> Login(LoginInputModel model, string? returnUrl)
 		{
 			PrepareAuthReminder(returnUrl);
+			model.Email ??= string.Empty;
+			model.Password ??= string.Empty;
 
-			if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+			if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
 			{
 				ModelState.AddModelError(string.Empty, "Email and password are required.");
-				return View();
+				return View(model);
 			}
 
 			var user = await _context.Users
 				.Include(u => u.CustomerProfile)
 				.Include(u => u.AdminProfile)
-				.FirstOrDefaultAsync(u => u.Email == email.Trim());
+				.FirstOrDefaultAsync(u => u.Email == model.Email.Trim());
 
 			if (user == null)
 			{
 				ModelState.AddModelError(string.Empty, "Invalid email or password.");
-				return View();
+				return View(model);
 			}
 
 			var utcNow = DateTime.UtcNow;
@@ -225,21 +238,21 @@ namespace EasyRent_Checking.Controllers
 			if (user.IsLockedOut(utcNow))
 			{
 				AddLockoutError(user.RemainingLockoutMinutes(utcNow));
-				return View();
+				return View(model);
 			}
 
-			if (!user.VerifyPassword(password))
+			if (!user.VerifyPassword(model.Password))
 			{
 				if (user.RegisterFailedAttempt(utcNow))
 				{
 					await _context.SaveChangesAsync();
 					AddLockoutError(user.RemainingLockoutMinutes(utcNow));
-					return View();
+					return View(model);
 				}
 
 				await _context.SaveChangesAsync();
 				ModelState.AddModelError(string.Empty, "Invalid email or password.");
-				return View();
+				return View(model);
 			}
 
 			if (user.AccessFailedCount > 0 || user.LockoutEndUtc != null)
@@ -251,7 +264,7 @@ namespace EasyRent_Checking.Controllers
 			if (!user.EmailConfirmed)
 			{
 				ModelState.AddModelError(string.Empty, "Please verify your email before logging in. Check your inbox for the confirmation link.");
-				return View();
+				return View(model);
 			}
 
 			if (user.Role == UserRole.Customer)
@@ -259,13 +272,13 @@ namespace EasyRent_Checking.Controllers
 				if (user.CustomerProfile == null || user.CustomerProfile.Status == Status.Pending)
 				{
 					ModelState.AddModelError(string.Empty, "Your account is not approved yet. Please wait for admin approval.");
-					return View();
+					return View(model);
 				}
 
 				if (user.CustomerProfile.Status != Status.Active)
 				{
 					ModelState.AddModelError(string.Empty, "Your account is not approved yet. Please wait for admin approval.");
-					return View();
+					return View(model);
 				}
 
 				if (user.CustomerProfile.IsSelfDeactivated)
@@ -274,6 +287,14 @@ namespace EasyRent_Checking.Controllers
 					await _context.SaveChangesAsync();
 					TempData["SuccessMessage"] = "Your account has been reactivated.";
 				}
+			}
+
+			if (user.Role is UserRole.Admin or UserRole.Staff
+				&& user.AdminProfile?.IsSelfDeactivated == true)
+			{
+				user.AdminProfile.IsSelfDeactivated = false;
+				await _context.SaveChangesAsync();
+				TempData["SuccessMessage"] = "Your account has been reactivated.";
 			}
 
 			if (user.LoginMfaEnabled)
@@ -548,6 +569,40 @@ namespace EasyRent_Checking.Controllers
 
 			await _context.SaveChangesAsync();
 			TempData["SuccessMessage"] = "Your identity details have been updated.";
+			return RedirectToSettings("profile");
+		}
+
+		[Authorize]
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> UpdateProfileImage(IFormFile? profileImageFile)
+		{
+			var customer = await GetLoggedInCustomerUserAsync();
+			var profile = customer?.CustomerProfile;
+			if (customer == null || profile == null)
+			{
+				return RedirectAwayFromCustomerSettings();
+			}
+
+			if (profileImageFile == null || profileImageFile.Length == 0)
+			{
+				TempData["ErrorMessage"] = "Please choose a profile photo to upload.";
+				return RedirectToSettings("profile");
+			}
+
+			if (!IsAllowedProfileImage(profileImageFile))
+			{
+				TempData["ErrorMessage"] = "Profile photo must be a JPG, PNG, or WEBP image under 5 MB.";
+				return RedirectToSettings("profile");
+			}
+
+			profile.ProfileImagePath = await ImageStorage.SaveAsync(
+				_webHostEnvironment,
+				profileImageFile,
+				ImageStorage.CustomersFolder);
+
+			await _context.SaveChangesAsync();
+			TempData["SuccessMessage"] = "Your profile photo has been updated.";
 			return RedirectToSettings("profile");
 		}
 
@@ -881,6 +936,7 @@ namespace EasyRent_Checking.Controllers
 					&& !string.IsNullOrWhiteSpace(profile.BackValidIDImagePath),
 				LoginMfaEnabled = user.LoginMfaEnabled,
 				AvatarInitials = GetInitials(profile.FullName),
+				ProfileImagePath = profile.ProfileImagePath,
 				MemberSince = user.CreatedAt,
 				TotalRentals = rentals.Count,
 				CompletedTrips = completedTrips,
@@ -888,6 +944,23 @@ namespace EasyRent_Checking.Controllers
 				FrontValidIDImagePath = profile.FrontValidIDImagePath,
 				BackValidIDImagePath = profile.BackValidIDImagePath
 			};
+		}
+
+		private static bool IsAllowedProfileImage(IFormFile file)
+		{
+			if (file.Length <= 0 || file.Length > 5 * 1024 * 1024)
+			{
+				return false;
+			}
+
+			var contentType = (file.ContentType ?? string.Empty).ToLowerInvariant();
+			if (contentType is "image/jpeg" or "image/jpg" or "image/png" or "image/webp")
+			{
+				return true;
+			}
+
+			var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+			return extension is ".jpg" or ".jpeg" or ".png" or ".webp";
 		}
 
 		private static string FormatValidIdType(string? value)

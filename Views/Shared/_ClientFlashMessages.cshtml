@@ -1,0 +1,35 @@
+@{
+    var messages = new List<(string Type, string Text)>();
+
+    void AddMessage(string? key, string type)
+    {
+        if (TempData[key] is string text && !string.IsNullOrWhiteSpace(text))
+        {
+            messages.Add((type, text));
+        }
+    }
+
+    AddMessage("SuccessMessage", "success");
+    AddMessage("RateTripSuccess", "success");
+    AddMessage("RentalSuccess", "success");
+    AddMessage("ErrorMessage", "error");
+    AddMessage("RateTripError", "error");
+    AddMessage("CancelError", "error");
+    AddMessage("RentalError", "error");
+    AddMessage("RateTripInfo", "info");
+}
+
+@if (messages.Count > 0)
+{
+    <div class="client-flash-stack" id="clientFlashStack" aria-live="polite">
+        @foreach (var message in messages)
+        {
+            <div class="client-flash client-flash-@message.Type" role="@(message.Type == "error" ? "alert" : "status")">
+                <span class="client-flash-text">@message.Text</span>
+                <button type="button" class="client-flash-close" aria-label="Dismiss notification">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+        }
+    </div>
+}

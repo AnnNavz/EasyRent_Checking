@@ -1,0 +1,38 @@
+/* Admin account settings: client settings layout without the hub sidebar. */
+
+.admin-account-settings.account-hub {
+    --client-navy: var(--admin-navy, #1e3a8a);
+    grid-template-columns: minmax(0, 1fr) 250px;
+    padding: 0.35rem 0 1.5rem;
+}
+
+.admin-account-settings .account-hub-aside {
+    top: calc(var(--topbar-height) + 1rem);
+}
+
+.admin-account-settings .account-profile-card dd {
+    word-break: break-word;
+    text-align: right;
+}
+
+.admin-account-settings .account-danger-last-admin {
+    margin: 0 0 0.85rem;
+    font-size: 0.82rem;
+    color: #9f1239;
+}
+
+.admin-account-settings .account-btn-outline-danger:disabled,
+.admin-account-settings .account-btn-danger:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+@media (max-width: 1199.98px) {
+    .admin-account-settings.account-hub {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-account-settings .account-hub-aside {
+        display: none;
+    }
+}

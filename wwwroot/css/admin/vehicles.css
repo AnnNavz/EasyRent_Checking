@@ -28,6 +28,11 @@
     flex-shrink: 0;
 }
 
+.vehicles-index-page .vehicle-metric-icon.is-gold {
+    background: #F5B301;
+    color: #ffffff;
+}
+
 .vehicles-index-page .vehicle-metric-body {
     flex: 1;
     min-width: 0;
@@ -225,7 +230,8 @@
 .vehicles-index-page .table-vehicle-thumb img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    display: block;
 }
 
 .vehicles-index-page .table-vehicle-thumb i {

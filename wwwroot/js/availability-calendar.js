@@ -151,6 +151,16 @@
             return id === '0' ? '' : id;
         }
 
+        function getVehicleIds() {
+            if (typeof options.getVehicleIds === 'function') {
+                return (options.getVehicleIds() || [])
+                    .map(function (id) { return String(id || '').trim(); })
+                    .filter(function (id) { return id && id !== '0'; });
+            }
+            var single = getVehicleId();
+            return single ? [single] : [];
+        }
+
         function syncDisplays() {
             if (pickupDisplay) {
                 var pickup = parseDate(pickupDateInput.value);
@@ -430,14 +440,19 @@
         }
 
         function loadAvailability() {
-            var vehicleId = getVehicleId();
-            if (!vehicleId) {
+            var vehicleIds = getVehicleIds();
+            if (!vehicleIds.length) {
                 unavailableDates = new Set();
                 renderCalendar();
                 return Promise.resolve();
             }
 
-            return fetch(availabilityUrl + '?vehicleId=' + encodeURIComponent(vehicleId), {
+            var query = vehicleIds.map(function (id) {
+                return 'vehicleIds=' + encodeURIComponent(id);
+            }).join('&');
+            query += '&vehicleId=' + encodeURIComponent(vehicleIds[0]);
+
+            return fetch(availabilityUrl + '?' + query, {
                 headers: { 'Accept': 'application/json' },
                 credentials: 'same-origin'
             }).then(function (response) {

@@ -82,7 +82,14 @@
             <div class="reservation-view-card mb-4">
                 <div class="customer-details-personal">
                     <div class="customer-details-avatar" aria-hidden="true">
-                        <i class="bi bi-person-fill"></i>
+                        @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+                        {
+                            <img src="~/images/@Model.ProfileImagePath" alt="" />
+                        }
+                        else
+                        {
+                            <i class="bi bi-person-fill"></i>
+                        }
                     </div>
                     <div class="customer-details-personal-grid">
                         <div>

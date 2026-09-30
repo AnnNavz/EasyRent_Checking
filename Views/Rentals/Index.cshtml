@@ -102,7 +102,7 @@
         </div>
         <div class="col-md-6">
             <div class="inquiry-metric-card">
-                <div class="inquiry-metric-icon" aria-hidden="true">
+                <div class="inquiry-metric-icon is-gold" aria-hidden="true">
                     <i class="bi bi-clipboard2-pulse"></i>
                 </div>
                 <div class="inquiry-metric-body">
@@ -201,7 +201,23 @@
                                 <td class="fw-semibold text-dark font-monospace">@bookingLabel</td>
                                 <td>
                                     <div class="booking-customer-cell">
-                                        <span class="booking-customer-avatar">@GetInitials(item.CustomerName)</span>
+                                        @if (item.CustomerId.HasValue)
+                                        {
+                                            <a asp-controller="Customers" asp-action="Details" asp-route-customerid="@item.CustomerId" class="booking-customer-avatar" aria-label="View @item.CustomerName profile">
+                                                @if (!string.IsNullOrEmpty(item.Customer?.ProfileImagePath))
+                                                {
+                                                    <img src="~/images/@item.Customer.ProfileImagePath" alt="" />
+                                                }
+                                                else
+                                                {
+                                                    @GetInitials(item.CustomerName)
+                                                }
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="booking-customer-avatar" aria-hidden="true">@GetInitials(item.CustomerName)</span>
+                                        }
                                         <div class="booking-customer-meta">
                                             <span class="booking-customer-name">@item.CustomerName</span>
                                             <span class="booking-customer-phone">@item.ContactNumber</span>

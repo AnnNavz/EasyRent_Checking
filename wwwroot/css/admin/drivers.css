@@ -10,11 +10,11 @@
     background-color: #e9ecef;
 }
 
-/* Enforces image aspect containment without squeezing or stretching */
+/* Fills the circle without empty side gaps */
 .table-driver-avatar img {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
 }
 
 /* --- Drivers index page (mockup layout) --- */
@@ -44,6 +44,21 @@
     justify-content: center;
     font-size: 1.35rem;
     flex-shrink: 0;
+}
+
+.drivers-index-page .driver-metric-icon.is-gold {
+    background: #F5B301;
+    color: #ffffff;
+}
+
+.drivers-index-page .driver-metric-icon.is-danger {
+    background: #c21f00;
+    color: #ffffff;
+}
+
+.drivers-index-page .driver-metric-icon.is-success {
+    background: #32b935;
+    color: #ffffff;
 }
 
 .drivers-index-page .driver-metric-body {

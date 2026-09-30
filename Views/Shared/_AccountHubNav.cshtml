@@ -1,20 +1,17 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-    var fullName = ViewData["HubFullName"]?.ToString() ?? "Customer";
-    var initials = ViewData["HubInitials"]?.ToString() ?? "U";
     var active = ViewData["HubActive"]?.ToString() ?? "";
 }
 
 <aside class="account-hub-nav">
-    <div class="account-hub-user">
-        <div class="account-hub-user-avatar" aria-hidden="true">@initials</div>
-        <div>
-            <p class="account-hub-user-name">@fullName</p>
-            <span class="account-hub-online">Online</span>
-        </div>
-    </div>
-
     <nav class="account-hub-menu">
+        <a asp-controller="ClientSide" asp-action="MyFavorites" class="account-hub-link @(active == "favorites" ? "is-active" : null)">
+            <i class="bi bi-heart" aria-hidden="true"></i>
+            <span>
+                <strong>Saved Vehicles</strong>
+                <small>Your favorite cars</small>
+            </span>
+        </a>
         <a asp-controller="ClientSide" asp-action="MyBookings" class="account-hub-link @(active == "bookings" ? "is-active" : null)">
             <i class="bi bi-calendar2-check" aria-hidden="true"></i>
             <span>
@@ -23,7 +20,7 @@
             </span>
         </a>
         <a asp-controller="ClientSide" asp-action="PaymentHistory" class="account-hub-link @(active == "payments" ? "is-active" : null)">
-            <i class="bi bi-wallet2" aria-hidden="true"></i>
+            <i class="bi bi-receipt" aria-hidden="true"></i>
             <span>
                 <strong>Payments &amp; Balance</strong>
                 <small>History and remaining balance</small>
@@ -44,12 +41,4 @@
             </span>
         </a>
     </nav>
-
-    <div class="account-hub-help">
-        <i class="bi bi-telephone" aria-hidden="true"></i>
-        <div>
-            <strong>Need help?</strong>
-            <p>Our staff will assist you every step of the way.</p>
-        </div>
-    </div>
 </aside>

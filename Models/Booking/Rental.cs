@@ -71,6 +71,8 @@ namespace EasyRent_Checking.Models
 
 		public RentalDetails? Details { get; set; }
 
+		public ICollection<RentalVehicle> RentalVehicles { get; set; } = new List<RentalVehicle>();
+
 		[NotMapped]
 		public bool IsUnpaidReserve =>
 			RentalOption == RentalOption.Reserve

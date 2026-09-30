@@ -1,6 +1,8 @@
-﻿@{
+﻿@model EasyRent_Checking.ViewModels.LoginInputModel
+@{
     Layout = "~/Views/Shared/_LayoutLogin.cshtml";
     ViewData["Title"] = "Login";
+    var keepTypedValues = string.Equals(Context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="auth-page auth-page-login">
@@ -15,37 +17,34 @@
     <div class="auth-card auth-card-login">
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert alert-success small py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+            <div class="auth-alert auth-alert-success" role="alert">@TempData["SuccessMessage"]</div>
         }
         @if (TempData["ErrorMessage"] != null)
         {
-            <div class="alert alert-danger small py-2 px-3 mb-3" role="alert">@TempData["ErrorMessage"]</div>
+            <div class="auth-alert auth-alert-error" role="alert">@TempData["ErrorMessage"]</div>
         }
         @if (ViewData["LoginReminder"] != null)
         {
-            <div class="auth-reminder" role="status">
-                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
-                <p>@ViewData["LoginReminder"]</p>
-            </div>
+            <div class="auth-alert auth-alert-info" role="status">@ViewData["LoginReminder"]</div>
         }
 
         <form asp-controller="Account" asp-action="Login" method="post" class="auth-form auth-form-login" autocomplete="off" novalidate>
             <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
-            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+            <div asp-validation-summary="ModelOnly" class="auth-alert auth-alert-error"></div>
 
             <div class="auth-field">
-                <label class="auth-label auth-label-login" for="loginEmail">Email Address</label>
+                <label asp-for="Email" class="auth-label auth-label-login">Email Address</label>
                 <div class="auth-input-wrap">
                     <i class="bi bi-envelope auth-input-icon auth-input-icon-login"></i>
-                    <input id="loginEmail" name="Email" type="email" class="auth-input auth-input-login" placeholder="name@example.com" value="" autocomplete="off" autocapitalize="off" spellcheck="false" required />
+                    <input asp-for="Email" class="auth-input auth-input-login" placeholder="name@example.com" autocomplete="off" autocapitalize="off" spellcheck="false" />
                 </div>
             </div>
 
             <div class="auth-field">
-                <label class="auth-label auth-label-login" for="loginPassword">Password</label>
+                <label asp-for="Password" class="auth-label auth-label-login">Password</label>
                 <div class="auth-input-wrap">
                     <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
-                    <input id="loginPassword" name="Password" type="password" class="auth-input auth-input-login auth-password-input" placeholder="••••••••••" value="" autocomplete="new-password" required />
+                    <input asp-for="Password" type="password" class="auth-input auth-input-login auth-password-input" placeholder="••••••••••" value="@Model.Password" autocomplete="new-password" />
                     <button type="button" class="auth-password-toggle" aria-label="Show password">
                         <i class="bi bi-eye"></i>
                     </button>
@@ -71,30 +70,38 @@
 @section Scripts {
     <script>
         (function () {
+            var email = document.getElementById('Email');
+            var password = document.getElementById('Password');
+            var keepTypedValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.Equals(Context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase)));
+
             function clearLoginFields() {
-                var email = document.getElementById('loginEmail');
-                var password = document.getElementById('loginPassword');
+                if (keepTypedValues) return;
                 if (email) email.value = '';
                 if (password) password.value = '';
             }
 
-            // Browsers often autofill after paint / on bfcache restore — clear then and shortly after.
-            clearLoginFields();
-            window.addEventListener('pageshow', clearLoginFields);
-            setTimeout(clearLoginFields, 50);
-            setTimeout(clearLoginFields, 300);
-
-            document.querySelectorAll('.auth-password-toggle').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var input = btn.parentElement.querySelector('.auth-password-input');
-                    var icon = btn.querySelector('i');
-                    if (!input) return;
-                    var show = input.type === 'password';
-                    input.type = show ? 'text' : 'password';
-                    icon.classList.toggle('bi-eye', !show);
-                    icon.classList.toggle('bi-eye-slash', show);
-                });
-            });
+            if (keepTypedValues) {
+                if (password) {
+                    password.value = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Password ?? ""));
+                }
+            } else {
+                clearLoginFields();
+                window.addEventListener('pageshow', clearLoginFields);
+                setTimeout(clearLoginFields, 50);
+                setTimeout(clearLoginFields, 300);
+            }
         })();
+
+        document.querySelectorAll('.auth-password-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = btn.parentElement.querySelector('.auth-password-input');
+                var icon = btn.querySelector('i');
+                if (!input) return;
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !show);
+                icon.classList.toggle('bi-eye-slash', show);
+            });
+        });
     </script>
 }

@@ -1,77 +1,122 @@
-@model IList<EasyRent_Checking.ViewModels.HomeVehicleCard>
-@using EasyRent_Checking.Models
+@model EasyRent_Checking.ViewModels.SavedVehiclesPageViewModel
+@using System.Globalization
 
 @{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
     ViewData["Title"] = "Saved Vehicles";
+    ViewData["HubActive"] = "favorites";
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+
+    string SortLabel = Model.Sort switch
+    {
+        "oldest" => "Oldest",
+        "price-asc" => "Price: low to high",
+        "price-desc" => "Price: high to low",
+        "name" => "Name",
+        _ => "Newest"
+    };
+
+    string FilterLabel = Model.Filter == "all"
+        ? "All vehicles"
+        : Model.TypeFilters.FirstOrDefault(t => t.Equals(Model.Filter, StringComparison.OrdinalIgnoreCase)) ?? "All vehicles";
 }
 
-<div class="client-home browse-page favorites-page">
-<div class="client-page my-bookings-page">
-    <div class="my-bookings-header">
-        <div>
-            <h1 class="my-bookings-title">Saved Vehicles</h1>
-            <p class="my-bookings-subtitle">Vehicles you saved from Browse and vehicle details.</p>
+<div class="client-page account-hub is-wide-main my-bookings-page saved-vehicles-page">
+    <partial name="_AccountHubNav" />
+
+    <section class="account-hub-main">
+        <div class="my-bookings-header">
+            <div>
+                <h1 class="my-bookings-title">Saved Vehicles</h1>
+                <p class="my-bookings-subtitle">Your favorite cars, all in one place.</p>
+            </div>
+            <div class="my-bookings-toolbar">
+                <div class="dropdown">
+                    <button class="my-bookings-tool" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Sorting by
+                        <span>@SortLabel</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item @(Model.Sort == "newest" ? "active" : null)" asp-action="MyFavorites" asp-route-filter="@Model.Filter" asp-route-sort="newest">Newest</a></li>
+                        <li><a class="dropdown-item @(Model.Sort == "oldest" ? "active" : null)" asp-action="MyFavorites" asp-route-filter="@Model.Filter" asp-route-sort="oldest">Oldest</a></li>
+                        <li><a class="dropdown-item @(Model.Sort == "price-asc" ? "active" : null)" asp-action="MyFavorites" asp-route-filter="@Model.Filter" asp-route-sort="price-asc">Price: low to high</a></li>
+                        <li><a class="dropdown-item @(Model.Sort == "price-desc" ? "active" : null)" asp-action="MyFavorites" asp-route-filter="@Model.Filter" asp-route-sort="price-desc">Price: high to low</a></li>
+                        <li><a class="dropdown-item @(Model.Sort == "name" ? "active" : null)" asp-action="MyFavorites" asp-route-filter="@Model.Filter" asp-route-sort="name">Name</a></li>
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="my-bookings-tool" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Filters
+                        <span>@FilterLabel</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item @(Model.Filter == "all" ? "active" : null)" asp-action="MyFavorites" asp-route-filter="all" asp-route-sort="@Model.Sort">All vehicles</a></li>
+                        @foreach (var type in Model.TypeFilters)
+                        {
+                            var key = type.ToLowerInvariant();
+                            <li><a class="dropdown-item @(Model.Filter.Equals(key, StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-action="MyFavorites" asp-route-filter="@key" asp-route-sort="@Model.Sort">@type</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
         </div>
-    </div>
 
-    @Html.AntiForgeryToken()
+        @Html.AntiForgeryToken()
 
-    <div class="browse-grid" data-favorites-grid>
-        @if (Model.Any())
-        {
-            @foreach (var item in Model)
+        <div class="saved-vehicles-list" data-favorites-grid>
+            @if (Model.Items.Count > 0)
             {
-                <article class="browse-card" data-favorite-card>
-                    <div class="browse-card-image">
-                        @if (!string.IsNullOrEmpty(item.ImagePath))
-                        {
-                            <img src="/images/@item.ImagePath" alt="@item.Model" />
-                        }
-                        else
-                        {
-                            <div class="browse-card-placeholder"><i class="bi bi-car-front"></i></div>
-                        }
-                        <button type="button"
-                                class="client-details-icon-btn is-favorite browse-card-favorite"
-                                data-favorite-toggle
-                                data-remove-on-unfavorite
-                                data-toggle-url="@Url.Action("ToggleFavorite", "ClientSide", new { id = item.VehicleId })"
-                                aria-pressed="true"
-                                aria-label="Remove from favorites">
-                            <i class="bi bi-heart-fill"></i>
-                        </button>
-                    </div>
-                    <div class="browse-card-body">
-                        <div class="browse-card-top">
-                            <h2>@item.Model</h2>
-                            @if (item.Rating.HasValue)
+                @foreach (var item in Model.Items)
+                {
+                    <article class="saved-vehicle-row" data-favorite-card>
+                        <div class="saved-vehicle-thumb" aria-hidden="true">
+                            @if (!string.IsNullOrEmpty(item.ImagePath))
                             {
-                                <span class="home-rating">
-                                    <i class="bi bi-star-fill"></i>
-                                    @item.Rating.Value.ToString("0.0")
-                                </span>
+                                <img src="~/images/@item.ImagePath" alt="@item.Model" />
                             }
                             else
                             {
-                                <span class="home-rating-empty">No reviews yet</span>
+                                <i class="bi bi-car-front"></i>
                             }
                         </div>
-                        <p>@item.TypeLabel • @item.PassengersCount seater</p>
-                        <strong>₱@item.BasePrice.ToString("N0") / 8 hours</strong>
-                        <small>₱@item.SucceedingFee.ToString("N0") succeeding rate</small>
-                        <a asp-action="VehicleDetails" asp-route-id="@item.VehicleId" class="home-btn home-btn-primary browse-card-btn">
-                            Browse Vehicle
-                            <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </article>
-            }
-        }
-    </div>
 
-    <p class="home-empty @(Model.Any() ? "d-none" : "")" data-favorites-empty>You have not saved any vehicles yet. Open a vehicle and tap the heart to save it here.</p>
-</div>
+                        <div class="saved-vehicle-info">
+                            <h2>@item.Model</h2>
+                            <p>@item.TypeLabel • @item.PassengersCount seater</p>
+                        </div>
+
+                        <div class="saved-vehicle-price">
+                            <strong>₱@item.BasePrice.ToString("N0", ph) /8 hours</strong>
+                            <span>₱@item.SucceedingFee.ToString("N0", ph) succeeding rate</span>
+                        </div>
+
+                        <div class="saved-vehicle-actions">
+                            <button type="button"
+                                    class="saved-vehicle-favorite is-favorite"
+                                    data-favorite-toggle
+                                    data-remove-on-unfavorite
+                                    data-toggle-url="@Url.Action("ToggleFavorite", "ClientSide", new { id = item.VehicleId })"
+                                    aria-pressed="true"
+                                    aria-label="Remove from favorites">
+                                <i class="bi bi-heart-fill"></i>
+                            </button>
+                            <a asp-action="VehicleDetails" asp-route-id="@item.VehicleId" class="my-booking-btn-primary saved-vehicle-details">
+                                View Details
+                                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </article>
+                }
+            }
+        </div>
+
+        <div class="my-bookings-empty @(Model.Items.Count > 0 ? "d-none" : "")" data-favorites-empty>
+            <p>You have not saved any vehicles yet.</p>
+            <a asp-action="Browse" class="my-booking-btn-primary">Browse Vehicles</a>
+        </div>
+    </section>
 </div>
 
 @section Scripts {

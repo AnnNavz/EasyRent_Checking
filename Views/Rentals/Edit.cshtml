@@ -48,49 +48,53 @@
 
         <div class="rent-step-card">
             <div class="rent-card-head">
+                <span class="rent-card-icon"><i class="bi bi-car-front"></i></span>
+                <h2>Vehicle Information</h2>
+            </div>
+            <p class="rent-card-hint mb-3">
+                Review vehicles on this booking. Add or remove vehicles as needed — they share the same schedule.
+            </p>
+
+            <div id="bookingVehiclesGallery" class="booking-vehicles-gallery" aria-live="polite"></div>
+
+            <label class="rent-field-label mt-3" for="input-VehiclePicker">Add vehicle</label>
+            <div class="d-flex flex-wrap gap-2 align-items-stretch">
+                <div class="flex-grow-1">
+                    <select id="input-VehiclePicker" class="rent-field-input form-select">
+                        <option value="">Select vehicle to add</option>
+                        @foreach (var vehicle in vehicles)
+                        {
+                            var imageUrl = string.IsNullOrEmpty(vehicle.ImagePath) ? "" : Url.Content($"~/images/{vehicle.ImagePath}");
+                            <option value="@vehicle.VehicleId"
+                                    data-capacity="@vehicle.PassengersCount"
+                                    data-base-price="@vehicle.BasePrice.ToString(CultureInfo.InvariantCulture)"
+                                    data-succeeding-fee="@vehicle.SucceedingFee.ToString(CultureInfo.InvariantCulture)"
+                                    data-brand="@vehicle.Brand"
+                                    data-model="@vehicle.Model"
+                                    data-type="@vehicle.Type"
+                                    data-type-label="@VehicleTypes.DisplayUpper(vehicle.Type)"
+                                    data-plate="@vehicle.PlateNumber"
+                                    data-image="@imageUrl">
+                                @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
+                            </option>
+                        }
+                    </select>
+                </div>
+                <button type="button" class="rent-btn-continue" id="btnAddVehicle" style="white-space:nowrap;">+ Add vehicle</button>
+            </div>
+            <input type="hidden" asp-for="VehicleId" id="input-VehicleId" />
+            <div id="selectedVehiclesHidden"></div>
+            <span class="rent-field-help">All selected vehicles share one schedule.</span>
+            <span asp-validation-for="VehicleId" class="text-danger small mt-1 d-block"></span>
+        </div>
+
+        <div class="rent-step-card">
+            <div class="rent-card-head">
                 <span class="rent-card-icon"><i class="bi bi-file-earmark-text"></i></span>
                 <h2>Rental Information</h2>
             </div>
 
             <div class="row g-3">
-                <div class="col-12">
-                    <label asp-for="VehicleId" class="rent-field-label">Vehicle</label>
-                    <select asp-for="VehicleId" id="input-VehicleId" class="rent-field-input form-select">
-                        <option value="">Select vehicle</option>
-                        @foreach (var vehicle in vehicles)
-                        {
-                            var imageUrl = string.IsNullOrEmpty(vehicle.ImagePath) ? "" : Url.Content($"~/images/{vehicle.ImagePath}");
-                            if (Model.VehicleId == vehicle.VehicleId)
-                            {
-                                <option value="@vehicle.VehicleId"
-                                        data-capacity="@vehicle.PassengersCount"
-                                        data-base-price="@vehicle.BasePrice.ToString(CultureInfo.InvariantCulture)"
-                                        data-succeeding-fee="@vehicle.SucceedingFee.ToString(CultureInfo.InvariantCulture)"
-                                        data-brand="@vehicle.Brand"
-                                        data-model="@vehicle.Model"
-                                        data-type="@vehicle.Type"
-                                        data-image="@imageUrl"
-                                        selected>
-                                    @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
-                                </option>
-                            }
-                            else
-                            {
-                                <option value="@vehicle.VehicleId"
-                                        data-capacity="@vehicle.PassengersCount"
-                                        data-base-price="@vehicle.BasePrice.ToString(CultureInfo.InvariantCulture)"
-                                        data-succeeding-fee="@vehicle.SucceedingFee.ToString(CultureInfo.InvariantCulture)"
-                                        data-brand="@vehicle.Brand"
-                                        data-model="@vehicle.Model"
-                                        data-type="@vehicle.Type"
-                                        data-image="@imageUrl">
-                                    @vehicle.Brand @vehicle.Model (@vehicle.PlateNumber)
-                                </option>
-                            }
-                        }
-                    </select>
-                    <span asp-validation-for="VehicleId" class="text-danger small mt-1 d-block"></span>
-                </div>
                 <div class="col-md-6">
                     <label asp-for="CustomerName" class="rent-field-label">Customer Name</label>
                     <input asp-for="CustomerName" class="rent-field-input" placeholder="e.g. Jane Doe" />
@@ -263,6 +267,134 @@
             const paymentMethodInput = document.getElementById('input-PaymentMethod');
             const discountSelect = document.getElementById('input-Discount');
             const discountSection = document.getElementById('discountUploadSection');
+            const vehicleSelect = document.getElementById('input-VehicleId');
+            const vehiclePicker = document.getElementById('input-VehiclePicker');
+            const selectedVehiclesHidden = document.getElementById('selectedVehiclesHidden');
+            const bookingVehiclesGallery = document.getElementById('bookingVehiclesGallery');
+            const btnAddVehicle = document.getElementById('btnAddVehicle');
+            const initialVehicleIds = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.GetNormalizedVehicleIds() ?? Array.Empty<int>()));
+            let selectedVehicleIds = Array.isArray(initialVehicleIds) ? initialVehicleIds.map(Number).filter(function (id) { return id > 0; }) : [];
+
+            function getPickerOption(vehicleId) {
+                if (!vehiclePicker) return null;
+                return Array.from(vehiclePicker.options).find(function (o) { return String(o.value) === String(vehicleId); }) || null;
+            }
+
+            function escapeHtml(value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function formatPeso(amount) {
+                return BookingSummary.formatPeso(amount);
+            }
+
+            function getVehicleMeta(vehicleId) {
+                const opt = getPickerOption(vehicleId);
+                if (!opt) return null;
+                return {
+                    id: Number(opt.value),
+                    capacity: parseInt(opt.dataset.capacity || '0', 10) || 0,
+                    basePrice: parseFloat(opt.dataset.basePrice || '0') || 0,
+                    succeedingFee: parseFloat(opt.dataset.succeedingFee || '0') || 0,
+                    brand: opt.dataset.brand || '',
+                    model: opt.dataset.model || '',
+                    typeLabel: opt.dataset.typeLabel || opt.dataset.type || '',
+                    plate: opt.dataset.plate || '',
+                    image: opt.dataset.image || ''
+                };
+            }
+
+            function renderVehicleGallery() {
+                if (!bookingVehiclesGallery) return;
+                if (!selectedVehicleIds.length) {
+                    bookingVehiclesGallery.innerHTML = '<p class="booking-vehicles-empty text-muted small mb-0">No vehicles on this booking yet.</p>';
+                    return;
+                }
+
+                bookingVehiclesGallery.innerHTML = selectedVehicleIds.map(function (id) {
+                    const meta = getVehicleMeta(id);
+                    if (!meta) {
+                        return '<article class="booking-vehicle-info-card"><div class="booking-vehicle-info-body"><h3 class="booking-vehicle-info-name">Vehicle #' + id + '</h3></div></article>';
+                    }
+                    const name = escapeHtml((meta.brand + ' ' + meta.model).trim());
+                    const typeLabel = escapeHtml(meta.typeLabel || 'Vehicle');
+                    const plate = escapeHtml(meta.plate || '—');
+                    const media = meta.image
+                        ? '<img src="' + escapeHtml(meta.image) + '" alt="' + name + '" />'
+                        : '<span class="booking-vehicle-info-placeholder" aria-hidden="true"><i class="bi bi-car-front"></i></span>';
+                    return ''
+                        + '<article class="booking-vehicle-info-card" data-vehicle-id="' + meta.id + '">'
+                        +   '<div class="booking-vehicle-info-media">' + media + '</div>'
+                        +   '<div class="booking-vehicle-info-body">'
+                        +     '<span class="booking-vehicle-info-type">' + typeLabel + '</span>'
+                        +     '<h3 class="booking-vehicle-info-name">' + name + '</h3>'
+                        +     '<p class="booking-vehicle-info-specs">' + plate + ' • ' + meta.capacity + ' seater</p>'
+                        +     '<p class="booking-vehicle-info-rates">'
+                        +       'Base ' + formatPeso(meta.basePrice)
+                        +       ' · +' + formatPeso(meta.succeedingFee) + '/hr after 8h'
+                        +     '</p>'
+                        +   '</div>'
+                        +   '<div class="booking-vehicle-info-actions">'
+                        +     '<button type="button" class="booking-vehicle-info-remove" data-remove-vehicle="' + meta.id + '" aria-label="Remove vehicle"><i class="bi bi-x-lg"></i></button>'
+                        +   '</div>'
+                        + '</article>';
+                }).join('');
+            }
+
+            function syncVehicleFormFields() {
+                if (vehicleSelect) vehicleSelect.value = selectedVehicleIds[0] ? String(selectedVehicleIds[0]) : '';
+                if (selectedVehiclesHidden) {
+                    selectedVehiclesHidden.innerHTML = selectedVehicleIds.map(function (id, index) {
+                        return '<input type="hidden" name="VehicleIds[' + index + ']" value="' + id + '" />';
+                    }).join('');
+                }
+                renderVehicleGallery();
+                if (vehiclePicker) {
+                    Array.from(vehiclePicker.options).forEach(function (opt) {
+                        if (!opt.value) return;
+                        opt.disabled = selectedVehicleIds.indexOf(Number(opt.value)) >= 0;
+                    });
+                }
+            }
+
+            function addSelectedVehicle(vehicleId) {
+                const id = Number(vehicleId);
+                if (!id || selectedVehicleIds.indexOf(id) >= 0) return false;
+                selectedVehicleIds.push(id);
+                syncVehicleFormFields();
+                return true;
+            }
+
+            function removeSelectedVehicle(vehicleId) {
+                const id = Number(vehicleId);
+                selectedVehicleIds = selectedVehicleIds.filter(function (x) { return x !== id; });
+                syncVehicleFormFields();
+            }
+
+            btnAddVehicle?.addEventListener('click', function () {
+                const id = vehiclePicker?.value;
+                if (!id) {
+                    alert('Select a vehicle first.');
+                    return;
+                }
+                if (!addSelectedVehicle(id)) {
+                    alert('That vehicle is already on this booking.');
+                    return;
+                }
+                if (vehiclePicker) vehiclePicker.value = '';
+            });
+
+            bookingVehiclesGallery?.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-remove-vehicle]');
+                if (!btn) return;
+                removeSelectedVehicle(btn.getAttribute('data-remove-vehicle'));
+            });
+
+            syncVehicleFormFields();
 
             function syncDiscountSection() {
                 if (!discountSection || !discountSelect) return;

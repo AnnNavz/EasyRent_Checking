@@ -14,6 +14,10 @@ namespace EasyRent_Checking.ViewModels
 		public decimal TotalPaid { get; set; }
 		public decimal OutstandingBalance { get; set; }
 		public int PaymentCount { get; set; }
+		public string Sort { get; set; } = "newest";
+		public string Filter { get; set; } = "all";
+		public int Page { get; set; } = 1;
+		public int TotalPages { get; set; } = 1;
 		public IList<PaymentHistoryRow> Payments { get; set; } = new List<PaymentHistoryRow>();
 	}
 
@@ -23,6 +27,9 @@ namespace EasyRent_Checking.ViewModels
 		public int RentalId { get; set; }
 		public string BookingLabel { get; set; } = string.Empty;
 		public string VehicleTitle { get; set; } = string.Empty;
+		public string VehicleTypeLabel { get; set; } = string.Empty;
+		public int PassengersCount { get; set; }
+		public string? VehicleImagePath { get; set; }
 		public DateTime PaymentDate { get; set; }
 		public string PaymentMethod { get; set; } = string.Empty;
 		public string PaymentType { get; set; } = string.Empty;

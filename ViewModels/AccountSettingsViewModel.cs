@@ -17,10 +17,12 @@ namespace EasyRent_Checking.ViewModels
 		public bool IsIdentityVerified { get; set; }
 		public bool LoginMfaEnabled { get; set; }
 		public string AvatarInitials { get; set; } = "U";
+		public string? ProfileImagePath { get; set; }
 		public DateTime MemberSince { get; set; }
 		public int TotalRentals { get; set; }
 		public int CompletedTrips { get; set; }
 		public decimal OutstandingBalance { get; set; }
+		public bool CanCloseAccount { get; set; }
 		public string? FrontValidIDImagePath { get; set; }
 		public string? BackValidIDImagePath { get; set; }
 

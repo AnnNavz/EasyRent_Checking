@@ -5,8 +5,6 @@
 @{
     Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
     ViewData["Title"] = "Transaction and Rentals";
-    ViewData["HubFullName"] = Model.FullName;
-    ViewData["HubInitials"] = Model.AvatarInitials;
     ViewData["HubActive"] = "bookings";
 
     string StatusLabel(RentalStatus status) => status switch
@@ -98,7 +96,17 @@
                         <div class="my-booking-main">
                             <span class="my-booking-status @StatusClass(item.RentalStatus)">@StatusLabel(item.RentalStatus)</span>
                             <h2 class="my-booking-vehicle">@item.VehicleTitle</h2>
-                            <p class="my-booking-spec">@item.VehicleTypeLabel • @item.PassengersCount seater</p>
+                            <p class="my-booking-spec">
+                                @if (item.VehicleTitle.EndsWith("vehicles", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    @item.VehicleTypeLabel
+                                    <text> • up to @item.PassengersCount seater</text>
+                                }
+                                else
+                                {
+                                    @item.VehicleTypeLabel <text>• @item.PassengersCount seater</text>
+                                }
+                            </p>
                         </div>
 
                         <div class="my-booking-meta my-booking-schedule">

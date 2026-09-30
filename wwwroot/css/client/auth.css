@@ -53,32 +53,46 @@
     max-width: 420px;
 }
 
-.auth-reminder {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.65rem;
-    background: #F9FAFF;
-    border: 1px solid #c9d4ea;
-    border-left: 4px solid #1e3a8a;
+.auth-alert {
     border-radius: 10px;
-    padding: 0.75rem 0.9rem;
+    padding: 0.7rem 0.95rem;
     margin-bottom: 1rem;
-}
-
-.auth-reminder i {
-    color: #1e3a8a;
-    font-size: 1.05rem;
-    margin-top: 0.1rem;
-    flex-shrink: 0;
-}
-
-.auth-reminder p {
-    margin: 0;
-    font-family: var(--font-body);
-    font-size: 0.82rem;
+    font-size: 0.875rem;
     font-weight: 500;
-    color: #333;
     line-height: 1.45;
+    text-align: center;
+}
+
+.auth-alert-success {
+    background: #d1e7dd;
+    border: 1px solid #a3cfbb;
+    color: #0f5132;
+}
+
+.auth-alert-error {
+    background: #f8d7da;
+    border: 1px solid #f1aeb5;
+    color: #842029;
+}
+
+.auth-alert-info {
+    background: #dae2f2;
+    border: 1px solid #c5d0e6;
+    color: #1e3a8a;
+}
+
+.auth-alert.validation-summary-valid {
+    display: none;
+}
+
+.auth-alert ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.auth-alert li {
+    margin: 0;
 }
 
 .auth-card-brand {
@@ -720,11 +734,21 @@
 .auth-upload-zone-login:hover,
 .auth-upload-zone-login.is-dragover {
     border-color: var(--client-navy);
-    background: #eef2ff;
+    background: #dae2f2;
 }
 
 .auth-check-terms {
     margin-top: 0.25rem;
+}
+
+.auth-terms-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.auth-terms-block .field-validation-error {
+    margin-left: 1.45rem;
 }
 
 .auth-inline-link {
@@ -767,7 +791,7 @@
     width: 100%;
     max-width: 440px;
     padding: 1rem 1.1rem 1.1rem;
-    background: #eef2ff;
+    background: #dae2f2;
     border: 1px solid #dbeafe;
     border-radius: 12px;
 }

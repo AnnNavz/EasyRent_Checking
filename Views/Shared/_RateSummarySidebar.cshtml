@@ -30,9 +30,9 @@
         <div class="client-rate-card-header">
             <div class="client-rate-card-icon"><i class="bi bi-clock"></i></div>
             <div class="client-rate-card-info">
-                <span class="client-rate-card-label">BASE PACKAGE <span class="client-rate-card-subtitle">(First 8 hours)</span></span>
+                <span class="client-rate-card-label">BASE PACKAGE <span class="client-rate-card-subtitle" id="ratePackageBaseSubtitle">(First 8 hours)</span></span>
             </div>
-            <span class="client-rate-card-price">₱@Model.BasePrice.ToString("N0")</span>
+            <span class="client-rate-card-price" id="ratePackageBasePrice">₱@Model.BasePrice.ToString("N0")</span>
         </div>
         <hr class="client-rate-card-divider" />
         <ul class="client-rate-includes">
@@ -47,13 +47,13 @@
         <div class="client-rate-card-header">
             <div class="client-rate-card-icon client-rate-card-icon--circle"><i class="bi bi-plus-lg"></i></div>
             <div class="client-rate-card-info">
-                <span class="client-rate-card-label">SUCCEEDING HOURS <span class="client-rate-card-subtitle">(Per hour (after 8 hours))</span></span>
+                <span class="client-rate-card-label">SUCCEEDING HOURS <span class="client-rate-card-subtitle" id="ratePackageSucceedingSubtitle">(Per hour (after 8 hours))</span></span>
             </div>
-            <span class="client-rate-card-price">₱@succeedingRate.ToString("N0")</span>
+            <span class="client-rate-card-price" id="ratePackageSucceedingPrice">₱@succeedingRate.ToString("N0")</span>
         </div>
         <p class="client-rate-footnote">
             <i class="bi bi-info-circle"></i>
-            <span><strong>Note:</strong> Fuel cost for succeeding is charged separately and not included in @succeedingRate.ToString("N0")/per hour rate.</span>
+            <span id="ratePackageSucceedingNote"><strong>Note:</strong> Fuel cost for succeeding is charged separately and not included in @succeedingRate.ToString("N0")/per hour rate.</span>
         </p>
     </div>
 
@@ -68,6 +68,7 @@
         </p>
 
         <div id="rateEstimateDetails">
+            <div id="rateVehicleBreakdown" class="client-rate-vehicle-breakdown d-none"></div>
             <div class="client-rate-example-row">
                 <span id="rateBaseLabel">Base package (8 hrs)</span>
                 <span id="rateBaseAmount">₱@Model.BasePrice.ToString("N0")</span>

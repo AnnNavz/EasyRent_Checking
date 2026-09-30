@@ -1,0 +1,25 @@
+.admins-index-page .customer-metric-icon.is-new {
+    background: #32b935;
+    color: #ffffff;
+}
+
+.admins-index-page .admin-you-pill {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.45rem;
+    padding: 0.08rem 0.45rem;
+    border-radius: 999px;
+    background: #e8f1ff;
+    color: #1a3275;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.customer-details-page .customer-details-avatar.is-initials {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}

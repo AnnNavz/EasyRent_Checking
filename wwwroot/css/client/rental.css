@@ -10,6 +10,160 @@
     padding-top: 1.25rem;
 }
 
+.rent-vehicle-preview-extra {
+    margin: 0.35rem 0 0;
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.35;
+}
+
+.booking-vehicles-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.booking-vehicle-info-card {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr) auto;
+    gap: 0.95rem;
+    align-items: center;
+    padding: 0.85rem;
+    border: 1px solid #e4e8f0;
+    border-radius: 14px;
+    background: #f4f6fb;
+}
+
+.booking-vehicle-info-media {
+    width: 132px;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #e8eef7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.booking-vehicle-info-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.booking-vehicle-info-placeholder {
+    color: #94a3b8;
+    font-size: 1.6rem;
+}
+
+.booking-vehicle-info-body {
+    min-width: 0;
+}
+
+.booking-vehicle-info-type {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #1E296A;
+    background: #e8eef7;
+    border-radius: 999px;
+    padding: 0.18rem 0.55rem;
+    margin-bottom: 0.35rem;
+}
+
+.booking-vehicle-info-name {
+    margin: 0;
+    font-family: var(--font-title);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1E296A;
+    line-height: 1.25;
+}
+
+.booking-vehicle-info-specs,
+.booking-vehicle-info-rates {
+    margin: 0.2rem 0 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.booking-vehicle-info-rates {
+    color: #1E3A8A;
+    font-weight: 600;
+}
+
+.booking-vehicle-info-actions {
+    align-self: start;
+}
+
+.booking-vehicle-info-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #1E296A;
+    background: #dae2f2;
+    border-radius: 999px;
+    padding: 0.28rem 0.6rem;
+}
+
+.booking-vehicle-info-remove {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #e4e8f0;
+    border-radius: 10px;
+    background: #fff;
+    color: #c21f00;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.booking-vehicle-info-remove:hover {
+    background: #fff5f4;
+}
+
+.client-rate-vehicle-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px dashed #d7deeb;
+}
+
+.client-rate-vehicle-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+.client-rate-vehicle-line span:last-child {
+    font-weight: 600;
+    color: #1E296A;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .booking-vehicle-info-card {
+        grid-template-columns: 96px minmax(0, 1fr);
+    }
+
+    .booking-vehicle-info-media {
+        width: 96px;
+    }
+
+    .booking-vehicle-info-actions {
+        grid-column: 1 / -1;
+        justify-self: end;
+    }
+}
+
 .rent-step-card {
     background: #F9FAFF;
     border: 1px solid #e8ecf3;
@@ -199,7 +353,8 @@
 .rent-vehicle-preview-image img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    display: block;
 }
 
 .rent-vehicle-preview-meta strong {
@@ -241,7 +396,7 @@
 }
 
 .client-reservation-page .discount-id-upload-zone.is-dragover {
-    background: #eef2ff;
+    background: #dae2f2;
 }
 
 .client-reservation-page .license-preview-box {
@@ -392,20 +547,23 @@
     color: #1E296A;
 }
 
-.client-reservation-page .payment-option-card {
-    background: #f4f6fb;
+.client-reservation-page .payment-option-card,
+.client-reservation-page .admin-booking-create .payment-option-card {
+    background: #F9FAFF !important;
     border: 1.5px solid #e4e8f0;
     border-radius: 14px;
     padding: 1rem 1.1rem;
     box-shadow: none;
 }
 
-.client-reservation-page .payment-option-card:hover {
-    background: #eef2f8;
+.client-reservation-page .payment-option-card:hover,
+.client-reservation-page .admin-booking-create .payment-option-card:hover {
+    background: #F9FAFF !important;
 }
 
-.client-reservation-page .payment-option-card.is-selected {
-    background: #eef2ff;
+.client-reservation-page .payment-option-card.is-selected,
+.client-reservation-page .admin-booking-create .payment-option-card.is-selected {
+    background: #dae2f2 !important;
     border-color: #1E296A;
     box-shadow: 0 2px 10px rgba(30, 41, 106, 0.1);
 }
@@ -490,12 +648,18 @@
     gap: 0.85rem;
 }
 
-.client-reservation-page .payment-method-info-card {
-    background: #f4f6fb;
+.client-reservation-page .payment-method-info-card,
+.client-reservation-page .admin-booking-create .payment-method-info-card {
+    background: #F9FAFF !important;
     border: 1px solid #e4e8f0;
     border-radius: 14px;
     padding: 0.95rem 0.9rem 0.85rem;
     pointer-events: none;
+}
+
+.client-reservation-page .payment-method-info-footer,
+.client-reservation-page .admin-booking-create .payment-method-info-footer {
+    display: none !important;
 }
 
 .client-reservation-page .payment-method-info-name {

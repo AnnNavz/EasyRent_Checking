@@ -1,0 +1,74 @@
+﻿@{
+    Layout = "~/Views/Shared/_LayoutClientSide.cshtml";
+    ViewData["Title"] = "Terms & Conditions";
+}
+
+<div class="client-home terms-page">
+    <section class="privacy-hero">
+        <span class="privacy-hero-icon terms-hero-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+        <h1>Terms &amp; Conditions</h1>
+        <p>Please read these Terms and Conditions carefully before using the EasyRent Vehicle Rental System. By using our website and rental services, you agree to follow these Terms.</p>
+        <p class="privacy-hero-date">Effective Date: August 2026</p>
+        <span class="how-hero-rule"></span>
+    </section>
+
+    <section class="privacy-body">
+        <div class="home-wrap terms-shell">
+            <article class="terms-content">
+                <partial name="_TermsBody" />
+            </article>
+
+            <aside class="terms-aside">
+                <div class="terms-reminders">
+                    <h2>Key Reminders</h2>
+                    <ul>
+                        <li>
+                            <span class="terms-reminder-icon" aria-hidden="true"><i class="bi bi-person-badge"></i></span>
+                            <div>
+                                <strong>Driver-Assisted Only</strong>
+                                <p>EasyRent vehicles are operated by an assigned driver. Self-driving is not allowed.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="terms-reminder-icon" aria-hidden="true"><i class="bi bi-person-vcard"></i></span>
+                            <div>
+                                <strong>Bring Valid ID</strong>
+                                <p>Have a valid identification document ready for verification.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="terms-reminder-icon" aria-hidden="true"><i class="bi bi-clock"></i></span>
+                            <div>
+                                <strong>On-Time Pickup &amp; Return</strong>
+                                <p>Be ready at the agreed time and location to avoid extra charges.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="terms-reminder-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+                            <div>
+                                <strong>Respect Driver &amp; Vehicle</strong>
+                                <p>Follow driver instructions and treat the vehicle with care.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="terms-reminder-icon" aria-hidden="true"><i class="bi bi-receipt"></i></span>
+                            <div>
+                                <strong>Payment Policy</strong>
+                                <p>Complete the required payment or deposit to confirm your booking.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="terms-help">
+                    <i class="bi bi-headset" aria-hidden="true"></i>
+                    <div>
+                        <strong>Need help?</strong>
+                        <p>Our staff will assist you every step of the way.</p>
+                    </div>
+                    <a asp-action="ContactUs" class="home-btn home-btn-primary terms-help-btn">Contact Us</a>
+                </div>
+            </aside>
+        </div>
+    </section>
+</div>

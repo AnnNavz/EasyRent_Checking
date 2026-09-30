@@ -39,6 +39,7 @@ namespace EasyRent_Checking.ViewModels
 
 		public string BookingLabel { get; set; } = string.Empty;
 		public string VehicleTitle { get; set; } = string.Empty;
+		public string? VehicleTypeLabel { get; set; }
 		public string? VehicleImagePath { get; set; }
 		public string? DriverName { get; set; }
 

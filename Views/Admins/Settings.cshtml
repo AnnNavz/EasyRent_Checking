@@ -1,0 +1,324 @@
+@model EasyRent_Checking.ViewModels.AccountSettingsViewModel
+@using System.Globalization
+
+@{
+    Layout = "_LayoutAdminDashboard";
+    ViewData["Title"] = "Account Settings";
+    ViewData["ActivePage"] = "AccountSettings";
+    var ph = CultureInfo.GetCultureInfo("en-PH");
+    var isProfile = Model.Tab == "profile";
+    var isPassword = Model.Tab == "password";
+    var isSecurity = Model.Tab == "security";
+    var editingName = Model.EditField == "name";
+    var editingEmail = Model.EditField == "email";
+}
+
+<div class="account-hub admin-account-settings">
+    <section class="account-hub-main">
+        <header class="account-hub-header">
+            <h1>Account Settings</h1>
+            <p>Manage your account information and security.</p>
+        </header>
+
+        <nav class="account-hub-tabs" aria-label="Account settings sections">
+            <a asp-action="Settings" asp-route-tab="profile" class="@(isProfile ? "is-active" : null)">My Profile</a>
+            <a asp-action="Settings" asp-route-tab="password" class="@(isPassword ? "is-active" : null)">Change Password</a>
+            <a asp-action="Settings" asp-route-tab="security" class="@(isSecurity ? "is-active" : null)">Security &amp; Privacy</a>
+        </nav>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger py-2 px-3 mb-3" role="alert">@TempData["ErrorMessage"]</div>
+        }
+
+        @if (isProfile)
+        {
+            <article class="account-panel">
+                <header class="account-panel-head">
+                    <span class="account-panel-icon"><i class="bi bi-person"></i></span>
+                    <h2>Personal Information</h2>
+                </header>
+
+                <div class="account-photo-row">
+                    <div class="account-photo-preview" id="accountPhotoPreview" aria-hidden="true">
+                        @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+                        {
+                            <img id="accountPhotoPreviewImg" src="~/images/@Model.ProfileImagePath" alt="" />
+                        }
+                        else
+                        {
+                            <img id="accountPhotoPreviewImg" class="d-none" alt="" />
+                            <span id="accountPhotoPreviewInitials">@Model.AvatarInitials</span>
+                        }
+                    </div>
+                    <div class="account-photo-copy">
+                        <strong>Profile photo</strong>
+                        <p>JPG, PNG, or WEBP up to 5 MB. Choose a photo to preview, then click Upload.</p>
+                        <form asp-action="UpdateProfileImage" method="post" enctype="multipart/form-data" class="account-photo-form" id="accountPhotoForm">
+                            @Html.AntiForgeryToken()
+                            <label class="account-btn-edit account-photo-pick">
+                                Choose photo
+                                <input type="file" name="profileImageFile" id="accountPhotoInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden />
+                            </label>
+                            <button type="submit" class="account-btn-save" id="accountPhotoUploadBtn" disabled>Upload</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="account-field-row @(editingName ? "is-editing" : null)">
+                    <span class="account-field-label">Full Name</span>
+                    @if (editingName)
+                    {
+                        <form asp-action="UpdateFullName" method="post" class="account-field-edit">
+                            @Html.AntiForgeryToken()
+                            <input name="fullName" value="@Model.FullName" class="account-field-input" maxlength="100" autocomplete="name" />
+                            <button type="submit" class="account-btn-save">Save</button>
+                            <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="account-field-value">@Model.FullName</div>
+                        <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="name" class="account-btn-edit">Edit</a>
+                    }
+                </div>
+
+                <div class="account-field-row @(editingEmail ? "is-editing" : null)">
+                    <span class="account-field-label">Email Address</span>
+                    @if (editingEmail)
+                    {
+                        <form asp-action="UpdateEmail" method="post" class="account-field-edit">
+                            @Html.AntiForgeryToken()
+                            <input name="email" type="email" value="@Model.Email" class="account-field-input" autocomplete="email" />
+                            <button type="submit" class="account-btn-save">Save</button>
+                            <a asp-action="Settings" asp-route-tab="profile" class="account-btn-cancel">Cancel</a>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="account-field-value">@Model.Email</div>
+                        <a asp-action="Settings" asp-route-tab="profile" asp-route-edit="email" class="account-btn-edit">Edit</a>
+                    }
+                </div>
+            </article>
+
+            <div class="account-info-banner" role="note">
+                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                <p>To update your information, click the Edit button next to each field.</p>
+            </div>
+        }
+
+        @if (isPassword)
+        {
+            <article class="account-panel account-password-panel">
+                <header class="account-panel-head">
+                    <span class="account-panel-icon"><i class="bi bi-shield-lock"></i></span>
+                    <div>
+                        <h2>Change Password</h2>
+                        <p>Update your password to keep your account secure.</p>
+                    </div>
+                </header>
+
+                <form asp-action="ChangePassword" method="post" class="account-password-form" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="account-password-row">
+                        <label asp-for="Password.CurrentPassword">Current Password</label>
+                        <div>
+                            <div class="auth-input-wrap">
+                                <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                                <input asp-for="Password.CurrentPassword" class="auth-input auth-input-login auth-password-input" placeholder="Enter your current password" autocomplete="current-password" />
+                                <button type="button" class="auth-password-toggle" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <span asp-validation-for="Password.CurrentPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="account-password-row">
+                        <label asp-for="Password.NewPassword">New Password</label>
+                        <div>
+                            <div class="auth-input-wrap">
+                                <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                                <input asp-for="Password.NewPassword" class="auth-input auth-input-login auth-password-input" placeholder="Enter your new password" autocomplete="new-password" />
+                                <button type="button" class="auth-password-toggle" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <p class="account-password-hint">Must be at least 8 characters and include a number.</p>
+                            <span asp-validation-for="Password.NewPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="account-password-row">
+                        <label asp-for="Password.ConfirmPassword">Confirm New Password</label>
+                        <div>
+                            <div class="auth-input-wrap">
+                                <i class="bi bi-lock auth-input-icon auth-input-icon-login"></i>
+                                <input asp-for="Password.ConfirmPassword" class="auth-input auth-input-login auth-password-input" placeholder="Confirm your new password" autocomplete="new-password" />
+                                <button type="button" class="auth-password-toggle" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <span asp-validation-for="Password.ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="account-password-actions">
+                        <button type="submit" class="account-btn-primary">Update Password</button>
+                    </div>
+                </form>
+            </article>
+        }
+
+        @if (isSecurity)
+        {
+            <article class="account-panel account-mfa-panel">
+                <div class="account-mfa-row">
+                    <div class="account-mfa-copy">
+                        <span class="account-panel-icon"><i class="bi bi-shield-check"></i></span>
+                        <div>
+                            <h2>Email sign-in code</h2>
+                            <p>When this is on, we email a 6-digit code after you enter your password.</p>
+                        </div>
+                    </div>
+                    <form asp-action="UpdateMfa" method="post" id="mfaToggleForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="enabled" id="mfaEnabledInput" value="@(Model.LoginMfaEnabled ? "true" : "false")" />
+                        <label class="account-mfa-switch">
+                            <input type="checkbox" id="mfaToggle" checked="@Model.LoginMfaEnabled" />
+                            <span class="account-mfa-slider" aria-hidden="true"></span>
+                            <span class="visually-hidden">Turn email sign-in code on or off</span>
+                        </label>
+                    </form>
+                </div>
+                <p class="account-mfa-state">@(Model.LoginMfaEnabled ? "On" : "Off")</p>
+            </article>
+
+            <section class="account-danger-zone">
+                <header>
+                    <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+                    <div>
+                        <h2>Danger Zone</h2>
+                        <p>These actions affect access to your account. Deactivate is temporary; delete is permanent.</p>
+                    </div>
+                </header>
+
+                @if (!Model.CanCloseAccount)
+                {
+                    <p class="account-danger-last-admin">This is the last active admin account, so it cannot be deactivated or deleted.</p>
+                }
+
+                <div class="account-danger-card">
+                    <div class="account-danger-icon" aria-hidden="true"><i class="bi bi-pause-circle"></i></div>
+                    <div>
+                        <h3>Deactivate Account</h3>
+                        <p>Temporarily deactivate your account. You can reactivate it anytime by signing in again.</p>
+                    </div>
+                    @if (Model.CanCloseAccount)
+                    {
+                        <form asp-action="DeactivateAccount" method="post" data-confirm="Deactivate your account?" data-confirm-text="You can sign in again anytime to reactivate it." data-confirm-button="Deactivate" data-confirm-tone="warn" data-confirm-icon="bi-pause-circle" data-confirm-submit-icon="bi-pause-circle">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="account-btn-outline-danger">Deactivate</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <button type="button" class="account-btn-outline-danger" disabled>Deactivate</button>
+                    }
+                </div>
+
+                <div class="account-danger-card">
+                    <div class="account-danger-icon" aria-hidden="true"><i class="bi bi-trash3"></i></div>
+                    <div>
+                        <h3>Delete Account</h3>
+                        <p>Permanently delete your admin account. This cannot be undone.</p>
+                    </div>
+                    @if (Model.CanCloseAccount)
+                    {
+                        <form asp-action="DeleteAccount" method="post" data-confirm="Delete your account?" data-confirm-text="This cannot be undone. Another admin must remain to manage the system." data-confirm-button="Delete Account" data-confirm-tone="danger" data-confirm-icon="bi-trash3" data-confirm-submit-icon="bi-trash3">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="account-btn-danger">Delete Account</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <button type="button" class="account-btn-danger" disabled>Delete Account</button>
+                    }
+                </div>
+            </section>
+        }
+    </section>
+
+    <aside class="account-hub-aside">
+        <div class="account-profile-card">
+            <dl>
+                <div>
+                    <dt>Member since</dt>
+                    <dd>@Model.MemberSince.ToString("MMMM d, yyyy", ph)</dd>
+                </div>
+                <div>
+                    <dt>Role</dt>
+                    <dd>Administrator</dd>
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    <dd>@Model.Email</dd>
+                </div>
+            </dl>
+        </div>
+    </aside>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.auth-password-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = btn.parentElement.querySelector('.auth-password-input');
+                var icon = btn.querySelector('i');
+                if (!input) return;
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !show);
+                icon.classList.toggle('bi-eye-slash', show);
+            });
+        });
+
+        (function () {
+            var toggle = document.getElementById('mfaToggle');
+            var form = document.getElementById('mfaToggleForm');
+            var hidden = document.getElementById('mfaEnabledInput');
+            if (!toggle || !form || !hidden) return;
+            toggle.addEventListener('change', function () {
+                hidden.value = toggle.checked ? 'true' : 'false';
+                form.submit();
+            });
+        })();
+
+        (function () {
+            var input = document.getElementById('accountPhotoInput');
+            var previewImg = document.getElementById('accountPhotoPreviewImg');
+            var initials = document.getElementById('accountPhotoPreviewInitials');
+            var uploadBtn = document.getElementById('accountPhotoUploadBtn');
+            if (!input || !previewImg || !uploadBtn) return;
+
+            input.addEventListener('change', function () {
+                var file = input.files && input.files[0];
+                if (!file) {
+                    uploadBtn.disabled = true;
+                    return;
+                }
+
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    if (initials) initials.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+                uploadBtn.disabled = false;
+            });
+        })();
+    </script>
+}

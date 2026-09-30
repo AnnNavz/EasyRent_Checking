@@ -169,7 +169,7 @@
                         <th>Contact Number</th>
                         <th>Email</th>
                         <th>Status</th>
-                        <th class="text-end" style="width: 80px;">Actions</th>
+                        <th class="text-end" style="width: 80px;" aria-label="Actions"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -183,9 +183,16 @@
                             <tr>
                                 <td>
                                     <div class="table-customer-cell">
-                                        <div class="table-customer-avatar" aria-hidden="true">
-                                            @GetInitials(item.FullName)
-                                        </div>
+                                        <a asp-action="Details" asp-route-customerid="@item.CustomerId" class="table-customer-avatar" aria-label="View @item.FullName profile">
+                                            @if (!string.IsNullOrEmpty(item.ProfileImagePath))
+                                            {
+                                                <img src="~/images/@item.ProfileImagePath" alt="" />
+                                            }
+                                            else
+                                            {
+                                                @GetInitials(item.FullName)
+                                            }
+                                        </a>
                                         <span class="table-customer-name">@item.FullName</span>
                                     </div>
                                 </td>

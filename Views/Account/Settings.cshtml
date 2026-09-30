@@ -28,8 +28,6 @@
     var hasBackIdImage = !string.IsNullOrEmpty(Model.BackValidIDImagePath);
     var frontIdFileName = GetDisplayFileName(Model.FrontValidIDImagePath, "front.png");
     var backIdFileName = GetDisplayFileName(Model.BackValidIDImagePath, "back.png");
-    ViewData["HubFullName"] = Model.FullName;
-    ViewData["HubInitials"] = Model.AvatarInitials;
     ViewData["HubActive"] = "settings";
 }
 
@@ -48,15 +46,6 @@
             <a asp-action="Settings" asp-route-tab="security" class="@(isSecurity ? "is-active" : null)">Security &amp; Privacy</a>
         </nav>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger py-2 px-3 mb-3" role="alert">@TempData["ErrorMessage"]</div>
-        }
-
         @if (isProfile)
         {
             <article class="account-panel">
@@ -64,6 +53,32 @@
                     <span class="account-panel-icon"><i class="bi bi-person"></i></span>
                     <h2>Personal Information</h2>
                 </header>
+
+                <div class="account-photo-row">
+                    <div class="account-photo-preview" id="accountPhotoPreview" aria-hidden="true">
+                        @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+                        {
+                            <img id="accountPhotoPreviewImg" src="~/images/@Model.ProfileImagePath" alt="" />
+                        }
+                        else
+                        {
+                            <img id="accountPhotoPreviewImg" class="d-none" alt="" />
+                            <span id="accountPhotoPreviewInitials">@Model.AvatarInitials</span>
+                        }
+                    </div>
+                    <div class="account-photo-copy">
+                        <strong>Profile photo</strong>
+                        <p>JPG, PNG, or WEBP up to 5 MB. Choose a photo to preview, then click Upload.</p>
+                        <form asp-action="UpdateProfileImage" method="post" enctype="multipart/form-data" class="account-photo-form" id="accountPhotoForm">
+                            @Html.AntiForgeryToken()
+                            <label class="account-btn-edit account-photo-pick">
+                                Choose photo
+                                <input type="file" name="profileImageFile" id="accountPhotoInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden />
+                            </label>
+                            <button type="submit" class="account-btn-save" id="accountPhotoUploadBtn" disabled>Upload</button>
+                        </form>
+                    </div>
+                </div>
 
                 <div class="account-field-row @(editingName ? "is-editing" : null)">
                     <span class="account-field-label">Full Name</span>
@@ -365,9 +380,6 @@
 
     <aside class="account-hub-aside">
         <div class="account-profile-card">
-            <div class="account-profile-avatar" aria-hidden="true">@Model.AvatarInitials</div>
-            <h2>@Model.FullName</h2>
-            <span class="account-hub-online">Online</span>
             <dl>
                 <div>
                     <dt>Member since</dt>
@@ -432,6 +444,31 @@
             toggle.addEventListener('change', function () {
                 hidden.value = toggle.checked ? 'true' : 'false';
                 form.submit();
+            });
+        })();
+
+        (function () {
+            var input = document.getElementById('accountPhotoInput');
+            var previewImg = document.getElementById('accountPhotoPreviewImg');
+            var initials = document.getElementById('accountPhotoPreviewInitials');
+            var uploadBtn = document.getElementById('accountPhotoUploadBtn');
+            if (!input || !previewImg || !uploadBtn) return;
+
+            input.addEventListener('change', function () {
+                var file = input.files && input.files[0];
+                if (!file) {
+                    uploadBtn.disabled = true;
+                    return;
+                }
+
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    if (initials) initials.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+                uploadBtn.disabled = false;
             });
         })();
 

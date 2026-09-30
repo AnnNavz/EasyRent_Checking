@@ -9,7 +9,12 @@
     ViewData["HubActive"] = "bookings";
 
     var details = Model.Details;
-    var vehicle = details?.Vehicle;
+    var rentalVehicles = (Model.RentalVehicles ?? Enumerable.Empty<RentalVehicle>())
+        .Where(rv => rv.Vehicle != null)
+        .OrderBy(rv => rv.SortOrder)
+        .ThenBy(rv => rv.RentalVehicleId)
+        .ToList();
+    var vehicle = rentalVehicles.FirstOrDefault()?.Vehicle ?? details?.Vehicle;
     var payment = ViewData["LatestPayment"] as Payment;
     var paymentSummary = ViewData["PaymentSummary"] as BookingPaymentSummary
         ?? new BookingPaymentSummary();
@@ -18,10 +23,16 @@
     var canRate = ViewData["CanRate"] as bool? == true;
     var canCancel = ViewData["CanCancel"] as bool? == true;
     var bookingLabel = $"BK-{Model.RentalId:D5}";
-    var vehicleTitle = vehicle?.Model ?? "your vehicle";
-    var vehicleSpec = vehicle != null
-        ? $"{VehicleTypes.DisplayUpper(vehicle.Type)} • {vehicle.PassengersCount} seater"
-        : "—";
+    var vehicleCount = Math.Max(1, rentalVehicles.Count > 0 ? rentalVehicles.Count : (vehicle != null ? 1 : 0));
+    var vehicleTitle = vehicleCount > 1
+        ? $"{vehicleCount} vehicles"
+        : (vehicle?.Model ?? "your vehicle");
+    var vehicleSpec = vehicleCount > 1
+        ? string.Join(" · ", rentalVehicles.Select(rv =>
+            $"{rv.Vehicle!.Brand} {rv.Vehicle.Model}"))
+        : (vehicle != null
+            ? $"{VehicleTypes.DisplayUpper(vehicle.Type)} • {vehicle.PassengersCount} seater"
+            : "—");
 
     var isCancelled = Model.RentalStatus == RentalStatus.Cancelled;
     var isExpired = Model.RentalStatus == RentalStatus.Expired;
@@ -32,8 +43,15 @@
     var isInTransit = transit?.TripStatus == TripStatus.InTransit;
     var tripCompleted = transit?.TripStatus == TripStatus.Completed;
     var recordedCancelFee = Model.CancellationFee ?? 0m;
-    var fare = vehicle != null && details != null
-        ? RentalFareCalculator.Calculate(vehicle, details)
+    var fareVehicles = rentalVehicles.Select(rv => rv.Vehicle!).ToList();
+    if (fareVehicles.Count == 0 && vehicle != null)
+    {
+        fareVehicles.Add(vehicle);
+    }
+    var fare = fareVehicles.Count > 0 && details != null
+        ? RentalFareCalculator.Aggregate(
+            RentalFareCalculator.CalculateLines(fareVehicles, details),
+            details.Discount == Discount.Yes)
         : (RentalFareBreakdown?)null;
     var hasSeniorDiscount = details?.Discount == Discount.Yes;
 
@@ -159,31 +177,6 @@
     <partial name="_AccountHubNav" />
 
     <section class="account-hub-main">
-        @if (TempData["RateTripSuccess"] != null)
-        {
-            <div class="alert alert-success rate-trip-alert" role="status">@TempData["RateTripSuccess"]</div>
-        }
-        @if (TempData["RateTripInfo"] != null)
-        {
-            <div class="alert alert-info rate-trip-alert" role="status">@TempData["RateTripInfo"]</div>
-        }
-        @if (TempData["RateTripError"] != null)
-        {
-            <div class="alert alert-warning rate-trip-alert" role="status">@TempData["RateTripError"]</div>
-        }
-        @if (TempData["CancelError"] != null)
-        {
-            <div class="alert alert-warning rate-trip-alert" role="alert">@TempData["CancelError"]</div>
-        }
-        @if (TempData["RentalError"] != null)
-        {
-            <div class="alert alert-warning rate-trip-alert" role="alert">@TempData["RentalError"]</div>
-        }
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success py-2 px-3 mb-3" role="alert">@TempData["SuccessMessage"]</div>
-        }
-
         <a asp-action="MyBookings" class="booking-details-back">
             <i class="bi bi-arrow-left" aria-hidden="true"></i>
             Back to Transaction &amp; Rentals
@@ -409,8 +402,20 @@
                     <img src="~/images/@vehicle.ImagePath" alt="@vehicleTitle" />
                 }
             </div>
-            <h2>@vehicleTitle</h2>
-            <p>@vehicleSpec</p>
+            <h2>@(vehicleCount > 1 ? "Vehicles" : vehicleTitle)</h2>
+            @if (rentalVehicles.Count > 1)
+            {
+                <ul class="booking-side-vehicle-list list-unstyled mb-0">
+                    @foreach (var line in rentalVehicles)
+                    {
+                        <li>@line.Vehicle!.Brand @line.Vehicle.Model <span class="text-muted">(@line.Vehicle.PlateNumber)</span></li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>@vehicleSpec</p>
+            }
         </div>
 
         <div class="booking-side-card">

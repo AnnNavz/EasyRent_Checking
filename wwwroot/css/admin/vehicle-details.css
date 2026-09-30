@@ -26,7 +26,8 @@
 .vehicle-details-page .vehicle-details-photo img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    display: block;
 }
 
 .vehicle-details-page .vehicle-details-photo i {
